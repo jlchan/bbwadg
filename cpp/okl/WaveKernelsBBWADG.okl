@@ -1,0 +1,80 @@
+#define NGEO   (p_Nvgeo+p_Nfgeo*p_Nfaces) // total number of geometric factors
+#define ddot4(a,b)  a.x*b.x + a.y*b.y + a.z*b.z + a.w*b.w
+
+// defined in WaveOKL3d (initWave3d)
+#if USE_DOUBLE
+#define dfloat double
+#define dfloat4 double4
+#else
+#define dfloat float
+#define dfloat4 float4
+#endif
+
+// polynomial mult, write to global mem
+kernel void polymult_BBWADG(const int K,
+			    const int * restrict subtet_ids,
+			    const dfloat * restrict rhsQ,
+			    const dfloat * restrict c2_bb,
+			    dfloat * restrict Qtmp){
+
+  for(int k1=0; k1<(K+p_KblkU-1)/p_KblkU; ++k1; outer0){
+
+    shared dfloat sp[p_KblkV][p_Np];
+    shared dfloat sc2[p_KblkV][p_Np];
+
+    // may be too heavy on smem at higher orders here
+    // can optimize
+    shared dfloat sprod[p_KblkV][p_N2p]; // (2N+1)(2N+2)(2N+3)/6
+    exclusive int k;
+    
+    for(int k2 = 0; k2 < p_KblkU; ++k2; inner1){
+      for(int i = 0; i < p_Np; ++i; inner0){
+
+	k = k1*p_KblkU + k2; // no need for klist here for heterogeneous WADG
+
+	if (k < K ){
+	  int id = i + k*p_Np*p_Nfields;
+
+	  // read in pressure rhs, scale by bb
+	  sp[k2][i] = rhsQ[id];
+	  sc2[k2][i] = c2_bb[i + k*p_Np];
+	}
+      }
+    }
+    barrier(localMemFence);
+    
+    for (int j = 0; j < p_Np; ++j){
+
+      for(int k2 = 0; k2 < p_KblkU; ++k2; inner1){
+	for(int i = 0; i < p_Np; ++i; inner0){
+	  
+	  if (k < K){   
+
+	    // this can be optimized:
+	    // - bitpack ints together
+	    // - reduce loads: increment id when possible instead of reloading
+	    const int id = subtet_ids[i + j*p_Np]; 
+	    sprod[k2][id] += sc2[k2][j]*sp[k2][i];
+
+	  }
+	}
+      }
+
+      barrier(localMemFence); // not sure if needed - can use smem atomics?
+      
+    } // for (j < p_Np)
+
+    // write result to global mem
+    for(int k2 = 0; k2 < p_KblkU; ++k2; inner1){
+      for(int i = 0; i < p_Np; ++i; inner0){
+	int ii = i;
+	while (ii < p_N2p){
+	  Qtmp[ii + k*p_N2p] = sprod[k2][ii];
+	  ii += p_Np;
+	}
+      }
+    }
+
+  }// outer 0
+}
+
