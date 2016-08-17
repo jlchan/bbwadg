@@ -1,0 +1,14 @@
+make clean;make N=2 -j; nvprof --log-file strongBlkN2.log --metrics dram_read_throughput,dram_write_throughput,flops_sp ./main meshes/sphere49748.msh .1 9 8 2 1 1
+make clean;make N=3 -j; nvprof --log-file strongBlkN3.log --metrics dram_read_throughput,dram_write_throughput,flops_sp ./main meshes/sphere49748.msh .1 3 5 2 1 1
+make clean;make N=4 -j; nvprof --log-file strongBlkN4.log --metrics dram_read_throughput,dram_write_throughput,flops_sp ./main meshes/sphere49748.msh .1 7 2 2 1 1
+make clean;make N=5 -j; nvprof --log-file strongBlkN5.log --metrics dram_read_throughput,dram_write_throughput,flops_sp ./main meshes/sphere49748.msh .1 2 1 1 1 1
+
+#make clean;make N=2 -j; nvprof --log-file strongN2.log --metrics dram_read_throughput,dram_write_throughput,flops_sp ./main meshes/sphere49748.msh .1 9 8 2 1 1
+#make clean;make N=3 -j; nvprof --log-file strongN3.log --metrics dram_read_throughput,dram_write_throughput,flops_sp ./main meshes/sphere49748.msh .1 5 5 2 1 1
+#make clean;make N=4 -j; nvprof --log-file strongN4.log --metrics dram_read_throughput,dram_write_throughput,flops_sp ./main meshes/sphere49748.msh .1 3 2 2 1 1
+#make clean;make N=5 -j; nvprof --log-file strongN5.log --metrics dram_read_throughput,dram_write_throughput,flops_sp ./main meshes/sphere49748.msh .1 1 1 1 1 1
+
+#make clean;make N=2 -j; nvprof --log-file skewN2.log --metrics dram_read_throughput,dram_write_throughput,flops_sp ./main meshes/sphere49748.msh .1 9 1 4 1 7
+#make clean;make N=3 -j; nvprof --log-file skewN3.log --metrics dram_read_throughput,dram_write_throughput,flops_sp ./main meshes/sphere49748.msh .1 8 2 2 1 4
+#make clean;make N=4 -j; nvprof --log-file skewN4.log --metrics dram_read_throughput,dram_write_throughput,flops_sp ./main meshes/sphere49748.msh .1 6 2 2 1 5
+#make clean;make N=5 -j; nvprof --log-file skewN5.log --metrics dram_read_throughput,dram_write_throughput,flops_sp ./main meshes/sphere49748.msh .1 3 1 1 1 8

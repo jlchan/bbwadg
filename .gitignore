@@ -1,0 +1,17 @@
+*~
+matlab/*/*.m~
+docs/*.aux
+docs/*.bbl
+docs/*.blg
+docs/*.log
+docs/*.out
+docs/*.DS_STORE
+docs/*.synctex.gz
+docs/figs/*eps-converted-to.pdf
+
+*.dSYM/
+*/*/*.DS_Store
+
+cpp/obj/*.o
+matlab/.DS_Store
+.DS_Store

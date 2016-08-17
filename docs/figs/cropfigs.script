@@ -1,0 +1,6 @@
+#!/bin/bash
+for i in $( ls p*.png ); do
+    mogrify -crop +450+200 +repage $i
+    mogrify -crop -450-0 +repage $i
+done
+
