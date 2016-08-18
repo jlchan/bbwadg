@@ -11,12 +11,433 @@
 #endif
 
 // polynomial mult, write to global mem
-kernel void polymult_BBWADG(const int K,
-			    const int * restrict subtet_ids,
-			    const dfloat * restrict rhsQ,
-			    const dfloat * restrict c2_bb,
-			    dfloat * restrict Qtmp){
+kernel void rk_update_BBWADG(const int K,
+			     const int * restrict subtet_ids,
+			     const dfloat * restrict CNscale,
+			     const dfloat * restrict invC2Nscale,
+			     const dfloat4 * restrict Ei_vals,
+			     const int4 * restrict Ei_ids,
+			     const dfloat4 * restrict EiTr_vals,
+			     const int4 * restrict EiTr_ids,
+			     const dfloat * restrict cj,
+			     const dfloat * restrict c2_bb,
+			     const dfloat * restrict PN,			     
+			     dfloat * restrict rhsQ){
 
+  for(int k1=0; k1<(K+p_KblkU-1)/p_KblkU; ++k1; outer0){
+
+    shared dfloat sp[p_KblkU][p_Np];
+    shared dfloat sc2[p_KblkU][p_Np];
+
+    // may be too heavy on smem at higher orders here
+    // can optimize
+    shared dfloat stmp[p_KblkU][p_N2p]; // (2N+1)(2N+2)(2N+3)/6
+
+    shared dfloat s_cj[p_N+1]; // constants in projection matrix
+    
+    exclusive int k;
+    exclusive dfloat rtmp[p_max8Np1D]; // tmp register memory
+    
+    for(int k2 = 0; k2 < p_KblkU; ++k2; inner1){
+      for(int i = 0; i < p_Np; ++i; inner0){
+
+	k = k1*p_KblkU + k2; // no need for klist here for heterogeneous WADG
+	if (k2==0 && i < (p_N+1)){
+	  s_cj[i] = cj[i];
+	}
+	
+	if (k < K){
+	  const dfloat CN = CNscale[i];
+	  
+	  // read in pressure rhs, scale by bb and CN
+	  sp[k2][i] = rhsQ[i + k*p_Np*p_Nfields]*CN;
+	  sc2[k2][i] = c2_bb[i + k*p_Np]*CN;
+
+	}
+      }
+    }
+    barrier(localMemFence);
+    
+    for (int j = 0; j < p_Np; ++j){
+      for(int k2 = 0; k2 < p_KblkU; ++k2; inner1){
+	for(int i = 0; i < p_Np; ++i; inner0){
+	  
+	  if (k < K){   
+
+	    // to optimize:
+	    // - bitpack ints together
+	    // - reduce loads: increment id when possible instead of reloading
+	    const int id = subtet_ids[i + j*p_Np]; 
+	    stmp[k2][id] += sc2[k2][j]*sp[k2][i];
+
+	  }
+	}
+      }
+      barrier(localMemFence); // not sure if needed - can use smem atomics?
+      
+    } // for (j < p_Np)
+
+    // rescale by 1/C2N
+    for(int k2 = 0; k2 < p_KblkU; ++k2; inner1){
+      for(int i = 0; i < p_Np; ++i; inner0){
+	int ii = i;
+	while (ii < p_N2p){
+	  const dfloat invC2N = invC2Nscale[ii];
+	  stmp[k2][ii] *= invC2N;
+	  ii += p_Np;
+	}
+      }
+    }
+    barrier(localMemFence);
+
+    // ===================== end polynomial multiplication step
+
+    // =================== do degree reductions from 2N to N
+    for (int j = 0; j < p_N; ++j){
+      
+      for(int k2 = 0; k2 < p_KblkU; ++k2; inner1){
+	for(int i = 0; i < p_Np; ++i; inner0){
+	  const int Nj = 2*p_N-j;
+	  int Np_reduce = (Nj+1)*(Nj+2)*(Nj+3)/6;
+	  int ii = i;
+	  while (ii < Np_reduce){
+
+	    // offset to use 2N degree reduc
+	    const int idE = ii + (Nj-1)*p_N2p; 
+	    const int4 Ei_id = EiTr_ids[idE];
+	    const dfloat4 Ei_val = EiTr_vals[idE];
+    
+	    rtmp[ii/p_Np] =
+	      Ei_val.x*stmp[k2][Ei_id.x] +
+	      Ei_val.y*stmp[k2][Ei_id.y] +
+	      Ei_val.z*stmp[k2][Ei_id.z] +
+	      Ei_val.w*stmp[k2][Ei_id.w];
+
+	    ii += p_Np;
+	  }
+	}
+      }
+      barrier(localMemFence);
+
+      // reuse smem to store reduction
+      for(int k2 = 0; k2 < p_KblkU; ++k2; inner1){
+	for(int i = 0; i < p_Np; ++i; inner0){
+	  const int Nj = 2*p_N-j;
+	  const int Np_reduce = (Nj+1)*(Nj+2)*(Nj+3)/6;
+	  int ii = i;	  
+	  while (ii < Np_reduce){
+	    stmp[k2][ii] = rtmp[ii/p_Np];
+	    ii += p_Np;
+	  }
+	}
+      }
+      
+    } // =============  end loop over 2N->N degree reduction
+
+    barrier(localMemFence); // ensure stmp has degree reduced results
+    
+    // ============ apply sum of E*E' operators in 2 sweeps
+
+    // sweep #1 - degree reduce down from degree N to 0
+    for (int j = 0; j <= p_N; ++j){
+
+      for(int k2 = 0; k2 < p_KblkU; ++k2; inner1){
+	for(int i = 0; i < p_Np; ++i; inner0){
+
+	  if (j==0){
+	    
+	    // save reduced result to register
+	    rtmp[j] = stmp[k2][i];
+	    
+	  }else{
+	    
+	    const int Nj = p_N-j;
+	    const int Np_reduce = (Nj+1)*(Nj+2)*(Nj+3)/6;    
+	    if (i < Np_reduce){
+	      
+	      // degree reduce and save to shared
+	      const int idE = ii + (Nj-1)*p_N2p; // use (Nj-1) to Nj elevation 
+	      const int4 Ei_id = Ei_ids[idE];
+	      const dfloat4 Ei_val = Ei_vals[idE];    
+	      
+	      // save current reduced value to register
+	      rtmp[j] = 
+		Ei_val.x*stmp[k2][Ei_id.x] +
+		Ei_val.y*stmp[k2][Ei_id.y] +
+		Ei_val.z*stmp[k2][Ei_id.z] +
+		Ei_val.w*stmp[k2][Ei_id.w];	    
+
+	    } // if i < Np_reduce
+	    
+	  } // else
+	}
+      } // end inner loops
+
+      barrier(localMemFence); 
+
+      // reuse smem
+      for(int k2 = 0; k2 < p_KblkU; ++k2; inner1){
+	for(int i = 0; i < p_Np; ++i; inner0){
+	  const int Nj = p_N-j;
+	  const int Np_reduce = (Nj+1)*(Nj+2)*(Nj+3)/6;
+	  if (i < Np_reduce){
+	    stmp[k2][i] = r_utmp[j];
+	    rtmp[j] *= s_cj[j]; // scale by coeff after writing to smem
+	  }
+	}
+      }      
+
+      barrier(localMemFence);
+      
+    } // end loop over j - end degree reduction sweep
+
+    // sweep #2 - elevate up from degree 0 to N.
+    for (int j = 0; j < p_N; ++j){
+
+      for(int k2 = 0; k2 < p_KblkU; ++k2; inner1){
+	for(int i = 0; i < p_Np; ++i; inner0){
+
+	  if (j>0){
+	    // if j==0, skip. degree elev from N=0 to N=1 done when copy to smem
+	    	    
+	    // elevate from degree j to j+1
+	    const int Nj = j+1;
+	    const int Npj = (Nj+1)*(Nj+2)*(Nj+3)/6;    
+	    if (i < Npj){
+	      // use jth degree elev op = from degree j to j+1
+	      const int idE = ii + (Nj-1)*p_N2p; 
+	      const int4 Ei_id = Ei_ids[idE];
+	      const dfloat4 Ei_val = Ei_vals[idE];    
+	      
+	      const dfloat val =
+		Ei_val.x*stmp[k2][Ei_id.x] +
+		Ei_val.y*stmp[k2][Ei_id.y] +
+		Ei_val.z*stmp[k2][Ei_id.z] +
+		Ei_val.w*stmp[k2][Ei_id.w];    
+	      
+	      // rtmp = c_j*E_{N-j}^N applied to coeffs
+	      rtmp[p_N-j] += val;
+	    }
+	  }	  
+	}
+      }
+
+      barrier(localMemFence);
+
+      // copy over result from register
+      for(int k2 = 0; k2 < p_KblkU; ++k2; inner1){
+	for(int i = 0; i < p_Np; ++i; inner0){
+	  const int Nj = j+1;
+	  const int Npj = (Nj+1)*(Nj+2)*(Nj+3)/6;
+	  if (i < Npj){
+	    stmp[k2][i] = rtmp[p_N-j];
+	  }
+	}
+      }
+      barrier(localMemFence);
+      
+    } // loop over j degree elevations    
+
+    // add accumulated result to all Np coeffs and write to global mem
+    for(int k2 = 0; k2 < p_KblkU; ++k2; inner1){
+      for(int i = 0; i < p_Np; ++i; inner0){
+	rhsQ[i + k*p_Np*p_Nfields] = rtmp[0] + stmp[k2][i];
+      }
+    }
+    
+  }// outer 0
+}
+
+
+// Nq loop
+kernel void mult_quad(const int K,
+		      const dfloat * restrict Vq,
+		      const dfloat * restrict Pq,
+		      const dfloat * restrict Jq,
+		      const dfloat * restrict c2q,
+		      const dfloat fa,
+		      const dfloat fb,
+		      const dfloat fdt,
+		      dfloat * restrict rhsQ,
+		      dfloat * restrict resQ,
+		      dfloat * restrict Q){
+
+  for(int k1=0; k1<(K+p_KblkU-1)/p_KblkU; ++k1; outer0){
+
+    shared dfloat sp[p_KblkV][p_Nq_reduced];
+
+    exclusive dfloat rpq;
+    exclusive int k;
+    
+    for(int k2 = 0; k2 < p_KblkU; ++k2; inner1){
+      for(int n = 0; n < p_Nq_reduced; ++n; inner0){
+
+	k = k1*p_KblkU + k2; // no need for klist here for heterogeneous WADG
+
+	// initialize register vars
+	rpq = 0.f; 
+
+	if (k < K && n < p_Np){
+	  const int id = n + k*p_Np*p_Nfields;
+	  sp[k2][n] = rhsQ[id]; 
+	}
+
+      }
+    }
+    barrier(localMemFence);
+
+    for(int k2 = 0; k2 < p_KblkU; ++k2; inner1){
+      for(int n = 0; n < p_Nq_reduced; ++n; inner0){
+
+	if (k < K){
+
+	  // prefetch
+	  rpq = 0.f; 
+	  for (int j = 0; j < p_Np; ++j){
+
+	    const dfloat Vq_ij = Vq[n + j*p_Nq_reduced];
+	    rpq += Vq_ij * sp[k2][j];
+	  }
+	}
+      }
+    }
+    barrier(localMemFence);
+
+    for(int k2 = 0; k2 < p_KblkU; ++k2; inner1){
+      for(int n = 0; n < p_Nq_reduced; ++n;inner0){
+
+	if (k < K){
+
+          const dfloat c2 = c2q[n + k*p_Nq_reduced];
+	  sp[k2][n] = rpq * c2;
+
+	}
+      } // inner0
+    } // inner1
+    barrier(localMemFence);
+
+    for(int k2 = 0; k2 < p_KblkU; ++k2; inner1){
+      for(int n = 0; n < p_Nq_reduced; ++n;inner0){
+
+	if (k < K && n < p_Np){
+
+	  dfloat rp = 0.f;
+	  for (int j = 0; j < p_Nq_reduced; ++j){
+
+	    const dfloat Pq_ij = Pq[n + j*p_Np];
+
+	    // accumulate into private vars
+	    rp += Pq_ij * sp[k2][j];
+	  }
+
+	  rhsQ[n + k*p_Np*p_Nfields] = rp;
+	  /*
+	  dfloat resx,resy,resz,resw;
+	  int id = n + k*p_Np*p_Nfields;
+	  resx = resQ[id]; id += p_Np;
+	  resy = resQ[id]; id += p_Np;
+	  resz = resQ[id]; id += p_Np;
+	  resw = resQ[id];
+
+	  resx = fa*resx + fdt*rp;
+	  resy = fa*resy + fdt*ru;
+	  resz = fa*resz + fdt*rv;
+	  resw = fa*resw + fdt*rw;
+
+	  id = n + k*p_Np*p_Nfields;
+	  resQ[id] = resx; id += p_Np;
+	  resQ[id] = resy; id += p_Np;
+	  resQ[id] = resz; id += p_Np;
+	  resQ[id] = resw;
+
+	  id = n + k * p_Np * p_Nfields;
+	  Q[id] += fb*resx; id += p_Np;
+	  Q[id] += fb*resy; id += p_Np;
+	  Q[id] += fb*resz; id += p_Np;
+	  Q[id] += fb*resw;
+	  */
+	}
+
+      } // inner 0
+    } // inner1
+  }// outer 0
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/*
+// for testing - unfinished
+kernel void hexInterp(const int K,
+		      const dfloat * restrict Vq1D,
+		      const dfloat * c2q,		      
+		      dfloat * Qtmp){
+  for(int k1=0; k1<(K+p_KblkU-1)/p_KblkU; ++k1; outer0){
+
+    shared dfloat sp[p_KblkU][p_Nq3];
+    shared dfloat sc2[p_KblkU][p_Nq3];
+    shared dfloat sVq[p_Nq2];    
+
+    shared dfloat sprod[p_KblkV][p_Nq3]; 
+    exclusive int k;
+    
+    for(int k2 = 0; k2 < p_KblkU; ++k2; inner1){
+      for(int i = 0; i < p_Nq3; ++i; inner0){
+
+	k = k1*p_KblkU + k2; // no need for klist here for heterogeneous WADG
+
+	if (k < K ){
+	  int id = i + k*p_Nq3*p_Nfields;
+
+	  // read in pressure rhs, scale by bb
+	  sc2[k2][i] = c2q[i + k*p_Np];
+	  sp[k2][i] = Qtmp[id];
+
+	  // read in op to smem
+	  if (k2==0 && i < p_Nq2){
+	    sVq[i] = Vq1D[i];
+	  }
+	}
+      }
+    }
+    barrier(localMemFence);
+
+    // do TP interp
+    for(int k2 = 0; k2 < p_KblkU; ++k2; inner1){
+      for(int i = 0; i < p_Nq3; ++i; inner0){
+	// ...
+      }
+    }
+    
+  }
+  
+}
+
+// to compare with non-slabbed
+kernel void hexInterpSlab(const int K,
+			  const dfloat * restrict Vq1D,
+			  dfloat * Qtmp){
+  
+}
+*/
+/*
+kernel void BBtetToHex(const int K,
+		       const dfloat * restrict Evals,
+		       const int * restrict Eids,
+		       const dfloat * restrict rhsQ,
+		       const dfloat * restrict c2_bb,
+		       dfloat * restrict Qtmp){
+  
   for(int k1=0; k1<(K+p_KblkU-1)/p_KblkU; ++k1; outer0){
 
     shared dfloat sp[p_KblkV][p_Np];
@@ -43,38 +464,6 @@ kernel void polymult_BBWADG(const int K,
     }
     barrier(localMemFence);
     
-    for (int j = 0; j < p_Np; ++j){
-
-      for(int k2 = 0; k2 < p_KblkU; ++k2; inner1){
-	for(int i = 0; i < p_Np; ++i; inner0){
-	  
-	  if (k < K){   
-
-	    // this can be optimized:
-	    // - bitpack ints together
-	    // - reduce loads: increment id when possible instead of reloading
-	    const int id = subtet_ids[i + j*p_Np]; 
-	    sprod[k2][id] += sc2[k2][j]*sp[k2][i];
-
-	  }
-	}
-      }
-
-      barrier(localMemFence); // not sure if needed - can use smem atomics?
-      
-    } // for (j < p_Np)
-
-    // write result to global mem
-    for(int k2 = 0; k2 < p_KblkU; ++k2; inner1){
-      for(int i = 0; i < p_Np; ++i; inner0){
-	int ii = i;
-	while (ii < p_N2p){
-	  Qtmp[ii + k*p_N2p] = sprod[k2][ii];
-	  ii += p_Np;
-	}
-      }
-    }
-
-  }// outer 0
+  }
 }
-
+*/

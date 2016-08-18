@@ -10,13 +10,16 @@ double PulseInitialCondition(double x, double y, double z, double time){
 };
 
 double WaveField(double x, double y, double z){
-  //return 1.0 + .25*cos(2.0*M_PI*x); 
+  //return 1.0 + .25*cos(2.0*M_PI*x);
+  //return 1.0 + x;   
   return 1.0; // const for verification
 };
 
 
 int main(int argc, char **argv){
 
+  printf("running heterogeneous subelem main\n");
+  
   Mesh *mesh;
   int k,n, sk=0;
 
@@ -67,6 +70,11 @@ int main(int argc, char **argv){
   compute_error(mesh, 0.0, Q, uexptr, L2err, relL2err);
   printf("Initial L2 error = %6.6e\n",L2err);
 
+  // === test ===
+
+  test_RK(mesh); return 0;
+
+  
   // =============  run solver  ================
 
   // load data onto GPU

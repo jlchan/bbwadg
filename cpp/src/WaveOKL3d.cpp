@@ -78,7 +78,23 @@ occa::memory c_mapPq; // map for flux rhs
 occa::memory c_Qtmp; // stores rhs at quad points
 occa::memory c_Qf; // stores solution values at face quad points
 
-// curvilinear specific kernels
+// ================ BB WADG =================
+
+// poly mult vars
+occa::memory c_subtet_ids;
+occa::memory c_CNscale, c_invC2Nscale;
+occa::memory c_c2_bb;
+occa::memory c_Ei_vals, c_Ei_ids;
+occa::memory c_EiTr_vals, c_EiTr_ids;
+occa::memory c_cj;
+
+occa::kernel mult_quad; // for comparison
+occa::kernel rk_update_BBWADG;
+
+// duffy vars
+occa::memory c_Vq1D;
+
+// ================ curvilinear specific kernels ====================
 occa::kernel rk_volume_WADG;
 occa::kernel rk_surface_WADG;
 occa::kernel rk_volume_planar;
@@ -400,18 +416,6 @@ void InitWADG_subelem(Mesh *mesh,double(*c2_ptr)(double,double,double)){
   MatrixXd Vqtmp = Vandermonde3D(p_N,rq,sq,tq);
   MatrixXd Vq_reduced = mrdivide(Vqtmp,mesh->V);
 
-  MatrixXd Vrqtmp,Vsqtmp,Vtqtmp;
-  GradVandermonde3D(p_N,rq,sq,tq,Vrqtmp,Vsqtmp,Vtqtmp);
-  MatrixXd Vrq_reduced = mrdivide(Vrqtmp,mesh->V);
-  MatrixXd Vsq_reduced = mrdivide(Vsqtmp,mesh->V);
-  MatrixXd Vtq_reduced = mrdivide(Vtqtmp,mesh->V);
-
-  MatrixXd invM = mesh->V*mesh->V.transpose();
-  MatrixXd Pq_reduced = invM*Vq_reduced.transpose()*wq.asDiagonal();
-  MatrixXd Prq_reduced  = invM*Vrq_reduced.transpose()*wq.asDiagonal();
-  MatrixXd Psq_reduced  = invM*Vsq_reduced.transpose()*wq.asDiagonal();
-  MatrixXd Ptq_reduced  = invM*Vtq_reduced.transpose()*wq.asDiagonal();
-
   // array of wavefield at quadrature points
   MatrixXd Jq_reduced(Vq_reduced.rows(),mesh->K); Jq_reduced.fill(1.0);
   MatrixXd c2q(Vq_reduced.rows(),mesh->K);
@@ -429,6 +433,167 @@ void InitWADG_subelem(Mesh *mesh,double(*c2_ptr)(double,double,double)){
   }
   printf("Max wavespeed value = %f\n",c2q.maxCoeff());
 
+#if USE_BERN
+  Vq_reduced = BernTet(p_N,rq,sq,tq);
+  MatrixXd M = Vq_reduced.transpose()*wq.asDiagonal()*Vq_reduced;
+  Vqtmp = Vq_reduced.transpose()*wq.asDiagonal();
+  MatrixXd Pq_reduced = mldivide(M,Vqtmp);
+
+  // project c2 to BB coeffs
+  MatrixXd c2_bb = Pq_reduced * c2q;
+
+  // setup bb mult indices
+  int NN, kksk, jjsk, ksk, jsk;
+
+  MatrixXi subtet_ids(p_Np,p_Np); subtet_ids.fill(0);
+  int idsubtet = 0;
+
+  kksk = 0;
+  for (int kk = 0; kk <= p_N; ++kk){
+    jjsk = 0;
+    for (int jj = 0; jj <= p_N-kk; ++jj){
+      for (int ii = 0; ii <= p_N-jj-kk; ++ii){
+
+	// subtet indices
+	int idtet = 0;
+	ksk = 0;
+	for (int k = 0; k <= p_N; ++k){
+	  jsk = 0;
+	  for (int j = 0; j <= p_N-k; ++j){
+	    for (int i = 0; i <= p_N-j-k; ++i){
+	      subtet_ids(idtet,idsubtet) = i + ii + jsk + ksk + jjsk + kksk;
+	      ++idtet;
+	    }
+	    NN = 2*p_N - j-jj - k-kk;
+	    jsk += (NN+1);
+	  }
+	  NN = 2*p_N - k-kk;
+	  ksk += (NN+1)*(NN+2)/2 - jj;
+	}	
+	++idsubtet;
+	
+      }
+      NN = 2*p_N-jj-kk;
+      jjsk += (NN+1);
+    }
+    NN = 2*p_N - kk;
+    kksk += (NN+1)*(NN+2)/2;
+  }
+  //cout << "subtet_ids = " << endl << subtet_ids << endl;  
+
+  VectorXd CNscale(p_Np);
+  int sk = 0;
+  for (int l = 0; l <= p_N; ++l){
+    for (int k = 0; k <= p_N-l; ++k){
+      for (int j = 0; j <= p_N-k-l; ++j){
+	int i = p_N-j-k-l;
+	int denom = factorial(i)*factorial(j)*factorial(k)*factorial(l);
+	CNscale(sk) = factorial(p_N)/denom;
+	++sk;
+      }
+    }
+  }
+
+  int N2p = (2*p_N+1)*(2*p_N+2)*(2*p_N+3)/6;
+  VectorXd C2Nscale(N2p);
+  sk = 0;
+  for (int l = 0; l <= 2*p_N; ++l){
+    for (int k = 0; k <= 2*p_N-l; ++k){
+      for (int j = 0; j <= 2*p_N-k-l; ++j){
+	int i = 2*p_N-j-k-l;
+	int denom = factorial(i)*factorial(j)*factorial(k)*factorial(l);
+	C2Nscale(sk) = factorial(2*p_N)/denom;
+	++sk;
+      }
+    }
+  }
+  
+  // degree reduction operators
+  VectorXd rr,ss,tt;
+  Nodes3D(2*p_N,rr,ss,tt);
+
+  VectorXd Ei_vals4(2*p_N*N2p*4); // pack all Ei into Ei_vals4
+  VectorXi Ei_ids4(2*p_N*N2p*4);
+  Ei_vals4.fill(0.0);
+  Ei_ids4.fill(0);    
+  
+  VectorXd EiTr_vals4(2*p_N*N2p*4); 
+  VectorXi EiTr_ids4(2*p_N*N2p*4);
+  EiTr_vals4.fill(0.0);
+  EiTr_ids4.fill(0);
+
+  int offset = 0;
+  for (int i = 0; i < 2*p_N; ++i){
+    int N1 = i+1;
+    int N2 = i;
+    int Np1 = (N1-i+1)*(N1-i+2)*(N1-i+3)/6;
+    int Np2 = (N2-i+1)*(N2-i+2)*(N2-i+3)/6;
+    MatrixXd Ei(Np1,Np2);
+    MatrixXd VB1 = BernTet(N1,rr,ss,tt);
+    MatrixXd VB2 = BernTet(N2,rr,ss,tt);
+    Ei = mldivide(VB1,VB2);
+
+    MatrixXi Ei_ids;
+    MatrixXd Ei_vals;
+    get_sparse_ids(Ei,Ei_ids,Ei_vals);
+    for (int ii = 0; ii < Ei_ids.rows(); ++ii){
+      for (int jj = 0; jj < Ei_ids.cols(); ++jj){
+	int row = ii + i*N2p;  // offset with degree reduc op
+	Ei_vals4(4*row + jj) = Ei_vals(ii,jj);
+	Ei_ids4(4*row + jj) = Ei_ids(ii,jj);	
+      }
+    }
+
+    MatrixXi EiTr_ids;
+    MatrixXd EiTr_vals;
+    get_sparse_ids(Ei.transpose(),EiTr_ids,EiTr_vals);
+    for (int ii = 0; ii < EiTr_ids.rows(); ++ii){
+      for (int jj = 0; jj < EiTr_ids.cols(); ++jj){
+	int row = ii + i*N2p; 	
+	EiTr_vals4(4*row + jj) = EiTr_vals(ii,jj);
+	EiTr_ids4(4*row + jj) = EiTr_ids(ii,jj);	
+      }
+    }
+  }
+
+  // set occa vars
+  VectorXd invC2Nscale = C2Nscale.array().inverse();
+  setOccaArray(CNscale,c_CNscale);
+  setOccaArray(invC2Nscale,c_invC2Nscale);  
+  setOccaArray(c2_bb,c_c2_bb);
+  setOccaIntArray(subtet_ids,c_subtet_ids);
+
+  // degree reductions + transposes
+  setOccaArray(Ei_vals4,c_Ei_vals);
+  setOccaIntArray(Ei_ids4,c_Ei_ids);  
+  setOccaArray(EiTr_vals4,c_EiTr_vals);
+  setOccaIntArray(EiTr_ids4,c_EiTr_ids);  
+
+  VectorXd cj(p_N+1); cj.fill(0.0); // todo FIX. solve (N+1)x(N+1) system for c_j.
+  setOccaArray(cj,c_cj);
+  dgInfo.addDefine("p_N2p",N2p);
+  dgInfo.addDefine("p_max8Np1D",max(8,p_N+1));  
+  
+  // =============== quadrature-based duffy for BB ==================
+
+  int Nq1D = p_N+1; // this may change
+  int Nq2 = Nq1D*Nq1D;
+  int Nq3 = Nq2*Nq1D;
+  MatrixXd Vq1D(Nq1D,Nq1D);
+  Vq1D.fill(0.0);
+  MatrixXd Qtmp(Nq3,mesh->K); // tmp storage
+  setOccaArray(Vq1D,c_Vq1D);
+  dgInfo.addDefine("p_Nq1D",Nq1D);
+  dgInfo.addDefine("p_Nq2",Nq2);
+  dgInfo.addDefine("p_Nq3",Nq3);  
+
+
+  
+#else
+  MatrixXd invM = mesh->V*mesh->V.transpose();
+  MatrixXd Pq_reduced = invM*Vq_reduced.transpose()*wq.asDiagonal();
+#endif
+  
   dgInfo.addDefine("p_Nq_reduced",Vq_reduced.rows()); // for update step quadrature
 
   // not used in WADG subelem - just to compile other kernels
@@ -447,6 +612,11 @@ void InitWADG_subelem(Mesh *mesh,double(*c2_ptr)(double,double,double)){
   printf("Building heterogeneous wave propagation WADG kernel from %s\n",src.c_str());
   rk_update_WADG  = device.buildKernelFromSource(src.c_str(), "rk_update_WADG", dgInfo);
 
+
+  std::string srcBB = "okl/WaveKernelsBBWADG.okl";
+  rk_update_BBWADG  = device.buildKernelFromSource(srcBB.c_str(), "rk_update_BBWADG", dgInfo);
+  mult_quad  = device.buildKernelFromSource(srcBB.c_str(), "mult_quad", dgInfo);  
+  
 }
 
 // applies Gordon Hall to a sphere - just changes xyz coordinates.
@@ -1608,13 +1778,27 @@ void Wave_RK(Mesh *mesh, dfloat FinalTime, dfloat dt, int useWADG){
 // defaults to nodal!!
 void RK_step_WADG_subelem(Mesh *mesh, dfloat rka, dfloat rkb, dfloat fdt){
 
+#if USE_BERN
+  rk_volume_bern(mesh->K, c_vgeo,
+		 c_D_ids1, c_D_ids2, c_D_ids3, c_D_ids4, c_Dvals4,
+		 c_Q, c_rhsQ);
+  
+  rk_surface_bern(mesh->K, c_fgeo, c_Fmask, c_vmapP,
+		  c_slice_ids,
+		  c_EEL_ids, c_EEL_vals,
+   		  c_L0_ids, c_L0_vals,
+		  c_cEL,
+      		  c_Q, c_rhsQ);
+#else
   rk_volume(mesh->K, c_vgeo, c_Dr, c_Ds, c_Dt, c_Q, c_rhsQ);
   rk_surface(mesh->K, c_fgeo, c_Fmask, c_vmapP, c_LIFT, c_Q, c_rhsQ);
+#endif
+
   //rk_update(mesh->K, rka, rkb, fdt, c_rhsQ, c_resQ, c_Q);
   rk_update_WADG(mesh->K, c_Vq_reduced, c_Pq_reduced,
-		 c_Jq_reduced, c_c2q,
-                 rka, rkb, fdt,
-		 c_rhsQ, c_resQ, c_Q);
+  		 c_Jq_reduced, c_c2q,
+		 rka, rkb, fdt,
+  		 c_rhsQ, c_resQ, c_Q);
 
 
 }
@@ -1750,13 +1934,43 @@ void test_RK(Mesh *mesh){
   MatrixXd Qtest(p_Nfields*p_Np,mesh->K);
   Qtest.fill(0.0);
   for (int e = 0; e < mesh->K; ++e){
-    //Qtest.col(e).setLinSpaced(p_Nfields*p_Np,p_Nfields*p_Np,2*p_Nfields*p_Np);
     for (int i = 0; i < p_Np; ++i){
       Qtest(i,e) = (dfloat) i + e;
     }
   }
   occa::memory c_Qtest;
   setOccaArray(Qtest,c_Qtest);
+
+  occa::initTimer(device);
+
+  double elapsed1 = 0.0;
+  double elapsed2 = 0.0;  
+  for (int i = 0; i < 10; ++i){  
+    occa::tic("");
+    mult_quad(mesh->K,
+	      c_Vq_reduced, c_Pq_reduced, c_Jq_reduced,c_c2q,
+	      1.f,1.f,1.f,
+	      c_rhsQ, c_resQ, c_Qtest);
+    device.finish();
+    elapsed1 += occa::toc("update_WADG",rk_update_WADG, 0.0,0.0);  
+    
+    occa::tic("");  
+    rk_update_BBWADG(mesh->K,
+		     c_subtet_ids,
+		     c_CNscale, c_invC2Nscale,
+		     c_Ei_vals, c_Ei_ids,
+		     c_EiTr_vals, c_EiTr_ids,
+		     c_cj,
+		     c_c2_bb,
+		     c_PN,
+		     c_Qtest);
+    device.finish();  
+    elapsed2 += occa::toc("",rk_update_BBWADG, 0.0,0.0);
+  }
+  printf("elapsed1 = %g, elapsed2 = %g\n",elapsed1,elapsed2);
+  
+  return;
+  
 
   dfloat *rhsQtmp = (dfloat*) calloc(p_Nfields*mesh->K*p_Np,sizeof(dfloat));
 #if 0

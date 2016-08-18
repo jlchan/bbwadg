@@ -77,10 +77,10 @@ void StartUp3d(Mesh *mesh){
     }
   }
 
-  //int qN = min(21,2*p_N+1); // max order = 21
-  //int qNf = min(21,2*p_N+1);
-  int qN = min(21,4*p_N-3); // max order = 21
-  int qNf = min(21,4*p_N-2);
+  int qN = min(21,2*p_N+1); // max order = 21
+  int qNf = min(21,2*p_N+1);
+  //int qN = min(21,4*p_N-3); // max order = 21
+  //int qNf = min(21,4*p_N-2);
 
   VectorXd rq,sq,tq,wq;
   tet_cubature(qN,rq,sq,tq,wq); // can increase quadrature degree up to 21
