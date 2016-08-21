@@ -12,12 +12,11 @@ fprintf(fid, sprintf('#ifndef NODEDATA\n\n'));
 fprintf(fid, sprintf('#define NODEDATA 1\n\n'));
 for N = 1:21 % to 3*N for N = 7
     fprintf('on N = %d\n',N)
-    if N <= 10
-        [r s t] = Nodes3D(N); [r s t] = xyztorst(r,s,t);
-        write_vector(fid,sprintf('r_N%d',N),r);
-        write_vector(fid,sprintf('s_N%d',N),s);
-        write_vector(fid,sprintf('t_N%d',N),t);
-    end
+    
+    [r s t] = Nodes3D(N); [r s t] = xyztorst(r,s,t);
+    write_vector(fid,sprintf('r_N%d',N),r);
+    write_vector(fid,sprintf('s_N%d',N),s);
+    write_vector(fid,sprintf('t_N%d',N),t);    
     
     [rq sq tq wq] = tet_cubature(N);
     fprintf(fid,'int p_Nq_N%d = %d;\n',N,length(wq));
