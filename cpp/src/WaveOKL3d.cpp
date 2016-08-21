@@ -469,9 +469,9 @@ void InitWADG_subelem(Mesh *mesh,double(*c2_ptr)(double,double,double)){
 	  }
 	  NN = 2*p_N - k-kk;
 	  ksk += (NN+1)*(NN+2)/2 - jj;
-	}	
+	}
 	++idsubtet;
-	
+
       }
       NN = 2*p_N-jj-kk;
       jjsk += (NN+1);
@@ -479,7 +479,7 @@ void InitWADG_subelem(Mesh *mesh,double(*c2_ptr)(double,double,double)){
     NN = 2*p_N - kk;
     kksk += (NN+1)*(NN+2)/2;
   }
-  //cout << "subtet_ids = " << endl << subtet_ids << endl;  
+  //cout << "subtet_ids = " << endl << subtet_ids << endl;
 
   VectorXd CNscale(p_Np);
   int sk = 0;
@@ -507,17 +507,14 @@ void InitWADG_subelem(Mesh *mesh,double(*c2_ptr)(double,double,double)){
       }
     }
   }
-  
-  // degree reduction operators
-  VectorXd rr,ss,tt;
-  Nodes3D(2*p_N,rr,ss,tt);
 
+  // degree reduction operators
   VectorXd Ei_vals4((2*p_N)*N2p*4); // pack all Ei into Ei_vals4
   VectorXi Ei_ids4((2*p_N)*N2p*4);
   Ei_vals4.fill(0.0);
-  Ei_ids4.fill(0);    
-  
-  VectorXd EiTr_vals4(2*p_N*N2p*4); 
+  Ei_ids4.fill(0);
+
+  VectorXd EiTr_vals4(2*p_N*N2p*4);
   VectorXi EiTr_ids4(2*p_N*N2p*4);
   EiTr_vals4.fill(0.0);
   EiTr_ids4.fill(0);
@@ -526,6 +523,10 @@ void InitWADG_subelem(Mesh *mesh,double(*c2_ptr)(double,double,double)){
   for (int i = 0; i < 2*p_N; ++i){
     int N1 = i+1;
     int N2 = i;
+
+    VectorXd rr,ss,tt;
+    Nodes3D(N1,rr,ss,tt);
+
     int Np1 = (N1-i+1)*(N1-i+2)*(N1-i+3)/6;
     int Np2 = (N2-i+1)*(N2-i+2)*(N2-i+3)/6;
     MatrixXd Ei(Np1,Np2);
@@ -536,38 +537,45 @@ void InitWADG_subelem(Mesh *mesh,double(*c2_ptr)(double,double,double)){
     MatrixXi Ei_ids;
     MatrixXd Ei_vals;
     get_sparse_ids(Ei,Ei_ids,Ei_vals);
+    printf("i = %d, Ei_ids # cols = %d\n",i, Ei_ids.cols());
     for (int ii = 0; ii < Ei_ids.rows(); ++ii){
       for (int jj = 0; jj < Ei_ids.cols(); ++jj){
 	int row = ii + i*N2p;  // offset with degree reduc op
-	Ei_vals4(4*row + jj) = Ei_vals(ii,jj);
-	Ei_ids4(4*row + jj) = Ei_ids(ii,jj);	
+	//Ei_vals4(4*row + jj) = Ei_vals(ii,jj);
+	//Ei_ids4(4*row + jj) = Ei_ids(ii,jj);
       }
     }
 
+    // PROBLEM HERE - why so many damn columns
     MatrixXi EiTr_ids;
     MatrixXd EiTr_vals;
     get_sparse_ids(Ei.transpose(),EiTr_ids,EiTr_vals);
+    printf("EiTr_ids # cols = %d\n",EiTr_ids.cols());
+    //    if (EiTr_ids.cols() > 4){
+    //      cout << "from N1 = " << N1 << " to N2 = " << N2 << ", EiTr = " << Ei.transpose() << endl;
+    //    }
     for (int ii = 0; ii < EiTr_ids.rows(); ++ii){
       for (int jj = 0; jj < EiTr_ids.cols(); ++jj){
-	int row = ii + i*N2p; 	
-	EiTr_vals4(4*row + jj) = EiTr_vals(ii,jj);
-	EiTr_ids4(4*row + jj) = EiTr_ids(ii,jj);	
+	int row = ii + i*N2p;
+	//EiTr_vals4(4*row + jj) = EiTr_vals(ii,jj);
+	//EiTr_ids4(4*row + jj) = EiTr_ids(ii,jj);
       }
     }
   }
-
   // set occa vars
+  // degree reductions + transposes
+  setOccaArray(Ei_vals4,c_Ei_vals);
+  setOccaIntArray(Ei_ids4,c_Ei_ids);
+  setOccaArray(EiTr_vals4,c_EiTr_vals);
+  setOccaIntArray(EiTr_ids4,c_EiTr_ids);
+
+
   VectorXd invC2Nscale = C2Nscale.array().inverse();
   setOccaArray(CNscale,c_CNscale);
-  setOccaArray(invC2Nscale,c_invC2Nscale);  
+  setOccaArray(invC2Nscale,c_invC2Nscale);
   setOccaArray(c2_bb,c_c2_bb);
   setOccaIntArray(subtet_ids,c_subtet_ids);
 
-  // degree reductions + transposes
-  setOccaArray(Ei_vals4,c_Ei_vals);
-  setOccaIntArray(Ei_ids4,c_Ei_ids);  
-  setOccaArray(EiTr_vals4,c_EiTr_vals);
-  setOccaIntArray(EiTr_ids4,c_EiTr_ids);  
 
   // solve system for c_j coefficients
   int d = 3;
@@ -587,13 +595,13 @@ void InitWADG_subelem(Mesh *mesh,double(*c2_ptr)(double,double,double)){
     b(i,0) = (double) factorial_ratio(Nj,Nj-i)/factorial_ratio(Nj+i+d,Nj);
   }
   //  cout << "L = " << L << endl;
-  //  cout << "b = " << b << endl;  
+  //  cout << "b = " << b << endl;
   VectorXd cj = mldivide(L,b);
   //cout << "for N = " << p_N << ", cj = " << endl << cj << endl;
   setOccaArray(cj,c_cj);
   dgInfo.addDefine("p_N2p",N2p);
-  dgInfo.addDefine("p_max8Np1D",max(8,p_N+1));  
-  
+  dgInfo.addDefine("p_max8Np1D",max(8,p_N+1));
+
   // =============== quadrature-based duffy for BB ==================
 
   int Nq1D = p_N+1; // this may change
@@ -605,15 +613,15 @@ void InitWADG_subelem(Mesh *mesh,double(*c2_ptr)(double,double,double)){
   setOccaArray(Vq1D,c_Vq1D);
   dgInfo.addDefine("p_Nq1D",Nq1D);
   dgInfo.addDefine("p_Nq2",Nq2);
-  dgInfo.addDefine("p_Nq3",Nq3);  
+  dgInfo.addDefine("p_Nq3",Nq3);
 
 
-  
+
 #else
   MatrixXd invM = mesh->V*mesh->V.transpose();
   MatrixXd Pq_reduced = invM*Vq_reduced.transpose()*wq.asDiagonal();
 #endif
-  
+
   dgInfo.addDefine("p_Nq_reduced",Vq_reduced.rows()); // for update step quadrature
 
   // not used in WADG subelem - just to compile other kernels
@@ -635,8 +643,8 @@ void InitWADG_subelem(Mesh *mesh,double(*c2_ptr)(double,double,double)){
 
   std::string srcBB = "okl/WaveKernelsBBWADG.okl";
   rk_update_BBWADG  = device.buildKernelFromSource(srcBB.c_str(), "rk_update_BBWADG", dgInfo);
-  mult_quad  = device.buildKernelFromSource(srcBB.c_str(), "mult_quad", dgInfo);  
-  
+  mult_quad  = device.buildKernelFromSource(srcBB.c_str(), "mult_quad", dgInfo);
+
 }
 
 // applies Gordon Hall to a sphere - just changes xyz coordinates.
@@ -1802,7 +1810,7 @@ void RK_step_WADG_subelem(Mesh *mesh, dfloat rka, dfloat rkb, dfloat fdt){
   rk_volume_bern(mesh->K, c_vgeo,
 		 c_D_ids1, c_D_ids2, c_D_ids3, c_D_ids4, c_Dvals4,
 		 c_Q, c_rhsQ);
-  
+
   rk_surface_bern(mesh->K, c_fgeo, c_Fmask, c_vmapP,
 		  c_slice_ids,
 		  c_EEL_ids, c_EEL_vals,
@@ -1880,7 +1888,7 @@ void RK_step_WADG(Mesh *mesh, dfloat rka, dfloat rkb, dfloat fdt){
   rk_surface_WADG(mesh->KCurved, c_KlistCurved,
 		  c_fgeo,c_fgeoq,c_VfqFace,c_Pfq,c_Fmask,c_vmapP,
 		  c_Q, c_rhsQ);
-  
+
 
 #endif
 
@@ -1964,17 +1972,17 @@ void test_RK(Mesh *mesh){
   occa::initTimer(device);
 
   double elapsed1 = 0.0;
-  double elapsed2 = 0.0;  
-  for (int i = 0; i < 10; ++i){  
+  double elapsed2 = 0.0;
+  for (int i = 0; i < 10; ++i){
     occa::tic("");
     mult_quad(mesh->K,
 	      c_Vq_reduced, c_Pq_reduced, c_Jq_reduced,c_c2q,
 	      1.f,1.f,1.f,
 	      c_rhsQ, c_resQ, c_Qtest);
     device.finish();
-    elapsed1 += occa::toc("update_WADG",rk_update_WADG, 0.0,0.0);  
-    
-    occa::tic("");  
+    elapsed1 += occa::toc("update_WADG",rk_update_WADG, 0.0,0.0);
+
+    occa::tic("");
     rk_update_BBWADG(mesh->K,
 		     c_subtet_ids,
 		     c_CNscale, c_invC2Nscale,
@@ -1983,13 +1991,13 @@ void test_RK(Mesh *mesh){
 		     c_cj,
 		     c_c2_bb,
 		     c_rhsQ);
-    device.finish();  
+    device.finish();
     elapsed2 += occa::toc("",rk_update_BBWADG, 0.0,0.0);
   }
   printf("elapsed1 = %g, elapsed2 = %g\n",elapsed1,elapsed2);
-  
+
   return;
-  
+
 
   dfloat *rhsQtmp = (dfloat*) calloc(p_Nfields*mesh->K*p_Np,sizeof(dfloat));
 #if 0

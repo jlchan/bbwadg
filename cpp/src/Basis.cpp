@@ -363,7 +363,7 @@ void VandermondeHier(int N, VectorXd r, VectorXd s, VectorXd t,
   vertV.resize(Npts,4);
   edgeV.resize(Npts,6*(N-1));
   faceV.resize(Npts,4*(N-2)*(N-1)/2);
-  
+
   // vertex functions
   vertV.col(0) = -(1.0 + r.array() + s.array() + t.array())/2.0;
   vertV.col(1) = (1.0 + r.array())/2.0;
@@ -372,7 +372,7 @@ void VandermondeHier(int N, VectorXd r, VectorXd s, VectorXd t,
 
   MatrixXi edges(6,2);
   edges << 0,3,
-    1, 3, 
+    1, 3,
     2, 3,
     0, 1,
     1, 2,
@@ -388,17 +388,17 @@ void VandermondeHier(int N, VectorXd r, VectorXd s, VectorXd t,
       V1 = vertV.col(vertex1);
       V2 = vertV.col(vertex2);
       VectorXd JP = JacobiP(V1.array()-V2.array(),0,0,i);
-      edgeV.col(sk) = V1.array()*V2.array()*JacobiP(V1.array()-V2.array(),0,0,i).array(); 
+      edgeV.col(sk) = V1.array()*V2.array()*JacobiP(V1.array()-V2.array(),0,0,i).array();
       ++sk;
     }
   }
-    
+
   MatrixXi faces(4,3);
   faces << 0,1,3,
     1,2,3,
     2,0,3,
     0,1,2;
-  
+
   // face basis functions
   sk = 0;
   VectorXd rr,ss;
@@ -415,8 +415,8 @@ void VandermondeHier(int N, VectorXd r, VectorXd s, VectorXd t,
     barytors(V1,V2,V3,rr,ss); // convert affine coords to r,s
     MatrixXd Vface = Vandermonde2D(N-3,rr,ss);
     for (int i = 0; i < Vface.cols(); ++i){
-      faceV.col(sk) = V1.array()*V2.array()*V3.array()*Vface.col(i).array(); 
-      ++sk;     
+      faceV.col(sk) = V1.array()*V2.array()*V3.array()*Vface.col(i).array();
+      ++sk;
     }
   }
 }
@@ -435,7 +435,7 @@ MatrixXd VandermondeGHsurf(int N, int Npsurf, VectorXd r, VectorXd s, VectorXd t
 
   MatrixXi edges(6,2);
   edges << 0,3,
-    1, 3, 
+    1, 3,
     2, 3,
     0, 1,
     1, 2,
@@ -451,17 +451,17 @@ MatrixXd VandermondeGHsurf(int N, int Npsurf, VectorXd r, VectorXd s, VectorXd t
       V1 = V.col(vertex1);
       V2 = V.col(vertex2);
       VectorXd JP = JacobiP(V1.array()-V2.array(),0,0,i);
-      V.col(sk) = V1.array()*V2.array()*JacobiP(V1.array()-V2.array(),0,0,i).array(); 
+      V.col(sk) = V1.array()*V2.array()*JacobiP(V1.array()-V2.array(),0,0,i).array();
       ++sk;
     }
   }
-    
+
   MatrixXi faces(4,3);
   faces << 0,1,3,
     1,2,3,
     2,0,3,
     0,1,2;
-  
+
   // face basis functions
   VectorXd rr,ss;
   for (int f = 0; f < 4; ++f){
@@ -477,8 +477,8 @@ MatrixXd VandermondeGHsurf(int N, int Npsurf, VectorXd r, VectorXd s, VectorXd t
     barytors(V1,V2,V3,rr,ss); // convert affine coords to r,s
     MatrixXd Vface = Vandermonde2D(N-3,rr,ss);
     for (int i = 0; i < Vface.cols(); ++i){
-      V.col(sk) = V1.array()*V2.array()*V3.array()*Vface.col(i).array(); 
-      ++sk;     
+      V.col(sk) = V1.array()*V2.array()*V3.array()*Vface.col(i).array();
+      ++sk;
     }
   }
   return V;
@@ -893,8 +893,8 @@ void get_sparse_ids(MatrixXd A, MatrixXi &cols, MatrixXd &vals){
   int ncols = A.cols();
 
   double maxVal = A.array().abs().maxCoeff();
-  double tol = 1e-4; 
-  MatrixXi boolA = ((A.array().abs())>tol).cast<int>();
+  double tol = 1e-6;
+  MatrixXi boolA = ((A.array().abs())>tol*maxVal).cast<int>();
   int max_col_vals = (boolA.rowwise().sum()).maxCoeff();
   //printf("max col vals = %d\n",max_col_vals);
   cols.resize(nrows,max_col_vals);
