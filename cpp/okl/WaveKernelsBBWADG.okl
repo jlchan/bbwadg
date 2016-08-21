@@ -21,7 +21,6 @@ kernel void rk_update_BBWADG(const int K,
 			     const int4 * restrict EiTr_ids,
 			     const dfloat * restrict cj,
 			     const dfloat * restrict c2_bb,
-			     const dfloat * restrict PN,			     
 			     dfloat * restrict rhsQ){
 
   for(int k1=0; k1<(K+p_KblkU-1)/p_KblkU; ++k1; outer0){
@@ -135,11 +134,12 @@ kernel void rk_update_BBWADG(const int K,
     } // =============  end loop over 2N->N degree reduction
 
     barrier(localMemFence); // ensure stmp has degree reduced results
-    
+
     // ============ apply sum of E*E' operators in 2 sweeps
 
     // sweep #1 - degree reduce down from degree N to 0
     for (int j = 0; j <= p_N; ++j){
+
 
       for(int k2 = 0; k2 < p_KblkU; ++k2; inner1){
 	for(int i = 0; i < p_Np; ++i; inner0){
@@ -148,18 +148,22 @@ kernel void rk_update_BBWADG(const int K,
 	    
 	    // save reduced result to register
 	    rtmp[j] = stmp[k2][i];
-	    
+
 	  }else{
-	    
+
 	    const int Nj = p_N-j;
 	    const int Np_reduce = (Nj+1)*(Nj+2)*(Nj+3)/6;    
 	    if (i < Np_reduce){
 	      
 	      // degree reduce and save to shared
-	      const int idE = ii + (Nj-1)*p_N2p; // use (Nj-1) to Nj elevation 
+	      const int idE = i + (Nj)*p_N2p; // use (Nj-1) to Nj elevation 
 	      const int4 Ei_id = Ei_ids[idE];
 	      const dfloat4 Ei_val = Ei_vals[idE];    
-	      
+
+	      //	      if (k==0){
+	      //		printf("Ei_id[%d] = %d, %d, %d, %d\n",idE,Ei_id.x,Ei_id.y,Ei_id.z,Ei_id.w);
+	      //	      }
+
 	      // save current reduced value to register
 	      rtmp[j] = 
 		Ei_val.x*stmp[k2][Ei_id.x] +
@@ -169,7 +173,9 @@ kernel void rk_update_BBWADG(const int K,
 
 	    } // if i < Np_reduce
 	    
-	  } // else
+	    
+	  } // end ifelse
+
 	}
       } // end inner loops
 
@@ -180,10 +186,12 @@ kernel void rk_update_BBWADG(const int K,
 	for(int i = 0; i < p_Np; ++i; inner0){
 	  const int Nj = p_N-j;
 	  const int Np_reduce = (Nj+1)*(Nj+2)*(Nj+3)/6;
+
 	  if (i < Np_reduce){
-	    stmp[k2][i] = r_utmp[j];
+	    stmp[k2][i] = rtmp[j];
 	    rtmp[j] *= s_cj[j]; // scale by coeff after writing to smem
 	  }
+
 	}
       }      
 
@@ -191,34 +199,36 @@ kernel void rk_update_BBWADG(const int K,
       
     } // end loop over j - end degree reduction sweep
 
+#if 1
     // sweep #2 - elevate up from degree 0 to N.
     for (int j = 0; j < p_N; ++j){
 
       for(int k2 = 0; k2 < p_KblkU; ++k2; inner1){
 	for(int i = 0; i < p_Np; ++i; inner0){
-
-	  if (j>0){
-	    // if j==0, skip. degree elev from N=0 to N=1 done when copy to smem
-	    	    
-	    // elevate from degree j to j+1
-	    const int Nj = j+1;
-	    const int Npj = (Nj+1)*(Nj+2)*(Nj+3)/6;    
-	    if (i < Npj){
-	      // use jth degree elev op = from degree j to j+1
-	      const int idE = ii + (Nj-1)*p_N2p; 
-	      const int4 Ei_id = Ei_ids[idE];
-	      const dfloat4 Ei_val = Ei_vals[idE];    
-	      
-	      const dfloat val =
-		Ei_val.x*stmp[k2][Ei_id.x] +
-		Ei_val.y*stmp[k2][Ei_id.y] +
-		Ei_val.z*stmp[k2][Ei_id.z] +
-		Ei_val.w*stmp[k2][Ei_id.w];    
-	      
+	    
+	  // elevate from degree j to j+1
+	  const int Nj = j+1;
+	  const int Npj = (Nj+1)*(Nj+2)*(Nj+3)/6;    
+	  if (i < Npj){
+	    // use jth degree elev op = from degree j to j+1
+	    const int idE = i + (Nj-1)*p_N2p; 
+	    const int4 Ei_id = Ei_ids[idE];
+	    const dfloat4 Ei_val = Ei_vals[idE];    
+	    
+	    const dfloat val =
+	      Ei_val.x*stmp[k2][Ei_id.x] +
+	      Ei_val.y*stmp[k2][Ei_id.y] +
+	      Ei_val.z*stmp[k2][Ei_id.z] +
+	      Ei_val.w*stmp[k2][Ei_id.w];    
+	    
+	    // if j==0, don't accumulate. degree elev + scale by cj
+	    if (j == 0){
+	      rtmp[p_N] = val*s_cj[p_N];
+	    }else{
 	      // rtmp = c_j*E_{N-j}^N applied to coeffs
 	      rtmp[p_N-j] += val;
 	    }
-	  }	  
+	  } // i < Npj	  
 	}
       }
 
@@ -237,7 +247,7 @@ kernel void rk_update_BBWADG(const int K,
       barrier(localMemFence);
       
     } // loop over j degree elevations    
-
+#endif
     // add accumulated result to all Np coeffs and write to global mem
     for(int k2 = 0; k2 < p_KblkU; ++k2; inner1){
       for(int i = 0; i < p_Np; ++i; inner0){

@@ -512,8 +512,8 @@ void InitWADG_subelem(Mesh *mesh,double(*c2_ptr)(double,double,double)){
   VectorXd rr,ss,tt;
   Nodes3D(2*p_N,rr,ss,tt);
 
-  VectorXd Ei_vals4(2*p_N*N2p*4); // pack all Ei into Ei_vals4
-  VectorXi Ei_ids4(2*p_N*N2p*4);
+  VectorXd Ei_vals4((2*p_N)*N2p*4); // pack all Ei into Ei_vals4
+  VectorXi Ei_ids4((2*p_N)*N2p*4);
   Ei_vals4.fill(0.0);
   Ei_ids4.fill(0);    
   
@@ -569,7 +569,27 @@ void InitWADG_subelem(Mesh *mesh,double(*c2_ptr)(double,double,double)){
   setOccaArray(EiTr_vals4,c_EiTr_vals);
   setOccaIntArray(EiTr_ids4,c_EiTr_ids);  
 
-  VectorXd cj(p_N+1); cj.fill(0.0); // todo FIX. solve (N+1)x(N+1) system for c_j.
+  // solve system for c_j coefficients
+  int d = 3;
+  double sizeDhat = 4.0/3.0;
+  MatrixXd L(p_N+1,p_N+1); L.fill(0.0);
+  for (int j = 0; j <= p_N; ++j){
+    for (int i = 0; i <= p_N-j; ++i){
+      int Nj = p_N - j;
+      //unsigned int denom = factorial(Nj + i + d) * factorial(Nj-i);
+      //L(i,j) = sizeDhat * factorial(Nj)*factorial(Nj)*factorial(d) / denom;
+      L(i,j) = (double) factorial_ratio(Nj,Nj-i) / factorial_ratio(Nj+i+d,Nj);
+    }
+  }
+  MatrixXd b(p_N+1,1);
+  for (int i = 0; i <= p_N; ++i){
+    int Nj = 2*p_N;
+    b(i,0) = (double) factorial_ratio(Nj,Nj-i)/factorial_ratio(Nj+i+d,Nj);
+  }
+  //  cout << "L = " << L << endl;
+  //  cout << "b = " << b << endl;  
+  VectorXd cj = mldivide(L,b);
+  //cout << "for N = " << p_N << ", cj = " << endl << cj << endl;
   setOccaArray(cj,c_cj);
   dgInfo.addDefine("p_N2p",N2p);
   dgInfo.addDefine("p_max8Np1D",max(8,p_N+1));  
@@ -1962,8 +1982,7 @@ void test_RK(Mesh *mesh){
 		     c_EiTr_vals, c_EiTr_ids,
 		     c_cj,
 		     c_c2_bb,
-		     c_PN,
-		     c_Qtest);
+		     c_rhsQ);
     device.finish();  
     elapsed2 += occa::toc("",rk_update_BBWADG, 0.0,0.0);
   }

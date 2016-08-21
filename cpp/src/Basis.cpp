@@ -486,6 +486,14 @@ MatrixXd VandermondeGHsurf(int N, int Npsurf, VectorXd r, VectorXd s, VectorXd t
 
 // =============== Bernstein basis ================
 
+unsigned int factorial_ratio(int n1,int n2){
+  unsigned int val = 1;
+  for (int i = n1; i > n2; --i){
+    val *= i;
+  }
+  return val;
+}
+
 unsigned int factorial(int n){
   return (n == 1 || n == 0) ? 1 : factorial(n - 1) * n;
 }

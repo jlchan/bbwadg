@@ -53,6 +53,7 @@ void tri_cubature(int N, VectorXd &rq, VectorXd &sq, VectorXd &wq);
 
 // helper routines not present in C++ std lib
 unsigned int factorial(int n);
+unsigned int factorial_ratio(int n1,int n2);
 unsigned int nchoosek(int n,int k);
 
 // linalg helper routines (emulate Matlab)
