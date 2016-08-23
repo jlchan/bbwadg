@@ -737,6 +737,16 @@ void Nodes3D(int N, VectorXd &r, VectorXd &s, VectorXd &t){
     case 8: loadnodes(8); break;
     case 9: loadnodes(9); break;
     case 10: loadnodes(10); break;
+    case 11: loadnodes(11); break;
+    case 12: loadnodes(12); break;
+    case 13: loadnodes(13); break;
+    case 14: loadnodes(14); break;
+    case 15: loadnodes(15); break;
+    case 16: loadnodes(16); break;
+    case 17: loadnodes(17); break;
+    case 18: loadnodes(18); break;
+    case 19: loadnodes(10); break;
+    case 20: loadnodes(20); break;
     }
   }
 }

@@ -31,12 +31,13 @@ kernel void rk_update_BBWADG(const int K,
     // may be too heavy on smem at higher orders here
     // can optimize
     shared dfloat stmp[p_KblkU][p_N2p]; // (2N+1)(2N+2)(2N+3)/6
+    //shared dfloat stmp[p_KblkU][p_Np]; // (2N+1)(2N+2)(2N+3)/6
 
     shared dfloat s_cj[p_N+1]; // constants in projection matrix
-    
-    exclusive int k;
+
+    exclusive int k, jj;
     exclusive dfloat rtmp[p_max8Np1D]; // tmp register memory
-    
+
     for(int k2 = 0; k2 < p_KblkU; ++k2; inner1){
       for(int i = 0; i < p_Np; ++i; inner0){
 
@@ -44,36 +45,50 @@ kernel void rk_update_BBWADG(const int K,
 	if (k2==0 && i < (p_N+1)){
 	  s_cj[i] = cj[i];
 	}
-	
+
 	if (k < K){
 	  const dfloat CN = CNscale[i];
-	  
+
 	  // read in pressure rhs, scale by bb and CN
 	  sp[k2][i] = rhsQ[i + k*p_Np*p_Nfields]*CN;
 	  sc2[k2][i] = c2_bb[i + k*p_Np]*CN;
 
 	}
+
+        // initialize counter
+        jj = 0;
       }
     }
     barrier(localMemFence);
-    
-    for (int j = 0; j < p_Np; ++j){
-      for(int k2 = 0; k2 < p_KblkU; ++k2; inner1){
-	for(int i = 0; i < p_Np; ++i; inner0){
-	  
-	  if (k < K){   
 
-	    // to optimize:
-	    // - bitpack ints together
-	    // - reduce loads: increment id when possible instead of reloading
-	    const int id = subtet_ids[i + j*p_Np]; 
-	    stmp[k2][id] += sc2[k2][j]*sp[k2][i];
+#if 1
+    // ============= polynomial multiplication
 
-	  }
+    //for (int j = 0; j < p_Np; ++j){
+    for (int k = 0; k <= p_N; ++k){
+      for (int j = 0; j <= p_N-k; ++j){
+        for(int k2 = 0; k2 < p_KblkU; ++k2; inner1){
+          for(int i = 0; i < p_Np; ++i; inner0){
+
+            if (k < K){
+
+              // to optimize:
+              // - bitpack ints together
+              // - reduce loads: increment id when possible instead of reloading
+              int id = subtet_ids[i + jj*p_Np];
+
+              for (int ii = 0; ii <=p_N-j-k; ++ii){
+                stmp[k2][id] += sc2[k2][j]*sp[k2][i];
+                ++id;
+              }
+            }
+
+          }
+
 	}
       }
       barrier(localMemFence); // not sure if needed - can use smem atomics?
-      
+
     } // for (j < p_Np)
 
     // rescale by 1/C2N
@@ -90,10 +105,12 @@ kernel void rk_update_BBWADG(const int K,
     barrier(localMemFence);
 
     // ===================== end polynomial multiplication step
+#endif
 
     // =================== do degree reductions from 2N to N
+#if 1
     for (int j = 0; j < p_N; ++j){
-      
+
       for(int k2 = 0; k2 < p_KblkU; ++k2; inner1){
 	for(int i = 0; i < p_Np; ++i; inner0){
 	  const int Nj = 2*p_N-j;
@@ -102,11 +119,12 @@ kernel void rk_update_BBWADG(const int K,
 	  while (ii < Np_reduce){
 
 	    // offset to use 2N degree reduc
-	    const int idE = ii + (Nj-1)*p_N2p; 
+	    const int idE = ii + (Nj-1)*p_N2p;
 	    const int4 Ei_id = EiTr_ids[idE];
 	    const dfloat4 Ei_val = EiTr_vals[idE];
-    
-	    rtmp[ii/p_Np] =
+
+	    //rtmp[ii/p_Np] =
+            rtmp[i] =
 	      Ei_val.x*stmp[k2][Ei_id.x] +
 	      Ei_val.y*stmp[k2][Ei_id.y] +
 	      Ei_val.z*stmp[k2][Ei_id.z] +
@@ -123,20 +141,23 @@ kernel void rk_update_BBWADG(const int K,
 	for(int i = 0; i < p_Np; ++i; inner0){
 	  const int Nj = 2*p_N-j;
 	  const int Np_reduce = (Nj+1)*(Nj+2)*(Nj+3)/6;
-	  int ii = i;	  
+	  int ii = i;
 	  while (ii < Np_reduce){
-	    stmp[k2][ii] = rtmp[ii/p_Np];
+	    //stmp[k2][ii] = rtmp[ii/p_Np];
+            stmp[k2][ii] = rtmp[i];
 	    ii += p_Np;
 	  }
 	}
       }
-      
+
     } // =============  end loop over 2N->N degree reduction
 
     barrier(localMemFence); // ensure stmp has degree reduced results
+#endif
 
     // ============ apply sum of E*E' operators in 2 sweeps
 
+#if 1
     // sweep #1 - degree reduce down from degree N to 0
     for (int j = 0; j <= p_N; ++j){
 
@@ -145,41 +166,41 @@ kernel void rk_update_BBWADG(const int K,
 	for(int i = 0; i < p_Np; ++i; inner0){
 
 	  if (j==0){
-	    
+
 	    // save reduced result to register
 	    rtmp[j] = stmp[k2][i];
 
 	  }else{
 
 	    const int Nj = p_N-j;
-	    const int Np_reduce = (Nj+1)*(Nj+2)*(Nj+3)/6;    
+	    const int Np_reduce = (Nj+1)*(Nj+2)*(Nj+3)/6;
 	    if (i < Np_reduce){
-	      
+
 	      // degree reduce and save to shared
-	      const int idE = i + (Nj)*p_N2p; // use (Nj-1) to Nj elevation 
+	      const int idE = i + (Nj)*p_N2p; // use (Nj-1) to Nj elevation
 	      const int4 Ei_id = Ei_ids[idE];
-	      const dfloat4 Ei_val = Ei_vals[idE];    
+	      const dfloat4 Ei_val = Ei_vals[idE];
 
 	      //	      if (k==0){
 	      //		printf("Ei_id[%d] = %d, %d, %d, %d\n",idE,Ei_id.x,Ei_id.y,Ei_id.z,Ei_id.w);
 	      //	      }
 
 	      // save current reduced value to register
-	      rtmp[j] = 
+	      rtmp[j] =
 		Ei_val.x*stmp[k2][Ei_id.x] +
 		Ei_val.y*stmp[k2][Ei_id.y] +
 		Ei_val.z*stmp[k2][Ei_id.z] +
-		Ei_val.w*stmp[k2][Ei_id.w];	    
+		Ei_val.w*stmp[k2][Ei_id.w];
 
 	    } // if i < Np_reduce
-	    
-	    
+
+
 	  } // end ifelse
 
 	}
       } // end inner loops
 
-      barrier(localMemFence); 
+      barrier(localMemFence);
 
       // reuse smem
       for(int k2 = 0; k2 < p_KblkU; ++k2; inner1){
@@ -193,11 +214,13 @@ kernel void rk_update_BBWADG(const int K,
 	  }
 
 	}
-      }      
+      }
 
       barrier(localMemFence);
-      
+
     } // end loop over j - end degree reduction sweep
+
+#endif
 
 #if 1
     // sweep #2 - elevate up from degree 0 to N.
@@ -205,22 +228,22 @@ kernel void rk_update_BBWADG(const int K,
 
       for(int k2 = 0; k2 < p_KblkU; ++k2; inner1){
 	for(int i = 0; i < p_Np; ++i; inner0){
-	    
+
 	  // elevate from degree j to j+1
 	  const int Nj = j+1;
-	  const int Npj = (Nj+1)*(Nj+2)*(Nj+3)/6;    
+	  const int Npj = (Nj+1)*(Nj+2)*(Nj+3)/6;
 	  if (i < Npj){
 	    // use jth degree elev op = from degree j to j+1
-	    const int idE = i + (Nj-1)*p_N2p; 
+	    const int idE = i + (Nj-1)*p_N2p;
 	    const int4 Ei_id = Ei_ids[idE];
-	    const dfloat4 Ei_val = Ei_vals[idE];    
-	    
+	    const dfloat4 Ei_val = Ei_vals[idE];
+
 	    const dfloat val =
 	      Ei_val.x*stmp[k2][Ei_id.x] +
 	      Ei_val.y*stmp[k2][Ei_id.y] +
 	      Ei_val.z*stmp[k2][Ei_id.z] +
-	      Ei_val.w*stmp[k2][Ei_id.w];    
-	    
+	      Ei_val.w*stmp[k2][Ei_id.w];
+
 	    // if j==0, don't accumulate. degree elev + scale by cj
 	    if (j == 0){
 	      rtmp[p_N] = val*s_cj[p_N];
@@ -228,7 +251,7 @@ kernel void rk_update_BBWADG(const int K,
 	      // rtmp = c_j*E_{N-j}^N applied to coeffs
 	      rtmp[p_N-j] += val;
 	    }
-	  } // i < Npj	  
+	  } // i < Npj
 	}
       }
 
@@ -245,16 +268,19 @@ kernel void rk_update_BBWADG(const int K,
 	}
       }
       barrier(localMemFence);
-      
-    } // loop over j degree elevations    
+
+    } // loop over j degree elevations
+
 #endif
+
+#if 1
     // add accumulated result to all Np coeffs and write to global mem
     for(int k2 = 0; k2 < p_KblkU; ++k2; inner1){
       for(int i = 0; i < p_Np; ++i; inner0){
 	rhsQ[i + k*p_Np*p_Nfields] = rtmp[0] + stmp[k2][i];
       }
     }
-    
+#endif
   }// outer 0
 }
 
@@ -278,18 +304,18 @@ kernel void mult_quad(const int K,
 
     exclusive dfloat rpq;
     exclusive int k;
-    
+
     for(int k2 = 0; k2 < p_KblkU; ++k2; inner1){
       for(int n = 0; n < p_Nq_reduced; ++n; inner0){
 
 	k = k1*p_KblkU + k2; // no need for klist here for heterogeneous WADG
 
 	// initialize register vars
-	rpq = 0.f; 
+	rpq = 0.f;
 
 	if (k < K && n < p_Np){
 	  const int id = n + k*p_Np*p_Nfields;
-	  sp[k2][n] = rhsQ[id]; 
+	  sp[k2][n] = rhsQ[id];
 	}
 
       }
@@ -302,7 +328,7 @@ kernel void mult_quad(const int K,
 	if (k < K){
 
 	  // prefetch
-	  rpq = 0.f; 
+	  rpq = 0.f;
 	  for (int j = 0; j < p_Np; ++j){
 
 	    const dfloat Vq_ij = Vq[n + j*p_Nq_reduced];
@@ -390,17 +416,17 @@ kernel void mult_quad(const int K,
 // for testing - unfinished
 kernel void hexInterp(const int K,
 		      const dfloat * restrict Vq1D,
-		      const dfloat * c2q,		      
+		      const dfloat * c2q,
 		      dfloat * Qtmp){
   for(int k1=0; k1<(K+p_KblkU-1)/p_KblkU; ++k1; outer0){
 
     shared dfloat sp[p_KblkU][p_Nq3];
     shared dfloat sc2[p_KblkU][p_Nq3];
-    shared dfloat sVq[p_Nq2];    
+    shared dfloat sVq[p_Nq2];
 
-    shared dfloat sprod[p_KblkV][p_Nq3]; 
+    shared dfloat sprod[p_KblkV][p_Nq3];
     exclusive int k;
-    
+
     for(int k2 = 0; k2 < p_KblkU; ++k2; inner1){
       for(int i = 0; i < p_Nq3; ++i; inner0){
 
@@ -428,16 +454,16 @@ kernel void hexInterp(const int K,
 	// ...
       }
     }
-    
+
   }
-  
+
 }
 
 // to compare with non-slabbed
 kernel void hexInterpSlab(const int K,
 			  const dfloat * restrict Vq1D,
 			  dfloat * Qtmp){
-  
+
 }
 */
 /*
@@ -447,7 +473,7 @@ kernel void BBtetToHex(const int K,
 		       const dfloat * restrict rhsQ,
 		       const dfloat * restrict c2_bb,
 		       dfloat * restrict Qtmp){
-  
+
   for(int k1=0; k1<(K+p_KblkU-1)/p_KblkU; ++k1; outer0){
 
     shared dfloat sp[p_KblkV][p_Np];
@@ -457,7 +483,7 @@ kernel void BBtetToHex(const int K,
     // can optimize
     shared dfloat sprod[p_KblkV][p_N2p]; // (2N+1)(2N+2)(2N+3)/6
     exclusive int k;
-    
+
     for(int k2 = 0; k2 < p_KblkU; ++k2; inner1){
       for(int i = 0; i < p_Np; ++i; inner0){
 
@@ -473,7 +499,7 @@ kernel void BBtetToHex(const int K,
       }
     }
     barrier(localMemFence);
-    
+
   }
 }
 */

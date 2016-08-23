@@ -526,6 +526,7 @@ void InitWADG_subelem(Mesh *mesh,double(*c2_ptr)(double,double,double)){
 
     VectorXd rr,ss,tt;
     Nodes3D(N1,rr,ss,tt);
+    //printf("%d = number of nodes for N = %d\n", rr.rows(), N1);
 
     int Np1 = (N1-i+1)*(N1-i+2)*(N1-i+3)/6;
     int Np2 = (N2-i+1)*(N2-i+2)*(N2-i+3)/6;
@@ -541,8 +542,8 @@ void InitWADG_subelem(Mesh *mesh,double(*c2_ptr)(double,double,double)){
     for (int ii = 0; ii < Ei_ids.rows(); ++ii){
       for (int jj = 0; jj < Ei_ids.cols(); ++jj){
 	int row = ii + i*N2p;  // offset with degree reduc op
-	//Ei_vals4(4*row + jj) = Ei_vals(ii,jj);
-	//Ei_ids4(4*row + jj) = Ei_ids(ii,jj);
+	Ei_vals4(4*row + jj) = Ei_vals(ii,jj);
+	Ei_ids4(4*row + jj) = Ei_ids(ii,jj);
       }
     }
 
@@ -557,8 +558,8 @@ void InitWADG_subelem(Mesh *mesh,double(*c2_ptr)(double,double,double)){
     for (int ii = 0; ii < EiTr_ids.rows(); ++ii){
       for (int jj = 0; jj < EiTr_ids.cols(); ++jj){
 	int row = ii + i*N2p;
-	//EiTr_vals4(4*row + jj) = EiTr_vals(ii,jj);
-	//EiTr_ids4(4*row + jj) = EiTr_ids(ii,jj);
+	EiTr_vals4(4*row + jj) = EiTr_vals(ii,jj);
+	EiTr_ids4(4*row + jj) = EiTr_ids(ii,jj);
       }
     }
   }
@@ -614,6 +615,21 @@ void InitWADG_subelem(Mesh *mesh,double(*c2_ptr)(double,double,double)){
   dgInfo.addDefine("p_Nq1D",Nq1D);
   dgInfo.addDefine("p_Nq2",Nq2);
   dgInfo.addDefine("p_Nq3",Nq3);
+
+  // get TP nodes for cubature (interpolation)
+  for (int i = 0; i <= p_N; ++i){
+    VectorXd rqtri,sqtri,wqtri;
+    tri_cubature(i+1,rqtri,sqtri,wqtri);
+    MatrixXd V1 = BernTri(i+1,rqtri,sqtri);
+    MatrixXd V2 = BernTri(i,rqtri,sqtri);
+    MatrixXd EiTri = mldivide(V1,V2);
+
+    MatrixXi Ei_ids;
+    MatrixXd Ei_vals;
+    get_sparse_ids(EiTri,Ei_ids,Ei_vals);
+
+
+  }
 
 
 
