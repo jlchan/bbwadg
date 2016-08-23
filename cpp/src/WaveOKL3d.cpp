@@ -93,6 +93,7 @@ occa::kernel rk_update_BBWADG;
 
 // duffy vars
 occa::memory c_Vq1D;
+occa::memory c_ETri_vals, c_ETri_ids;
 
 // ================ curvilinear specific kernels ====================
 occa::kernel rk_volume_WADG;
@@ -538,7 +539,7 @@ void InitWADG_subelem(Mesh *mesh,double(*c2_ptr)(double,double,double)){
     MatrixXi Ei_ids;
     MatrixXd Ei_vals;
     get_sparse_ids(Ei,Ei_ids,Ei_vals);
-    printf("i = %d, Ei_ids # cols = %d\n",i, Ei_ids.cols());
+    //printf("i = %d, Ei_ids # cols = %d\n",i, Ei_ids.cols());
     for (int ii = 0; ii < Ei_ids.rows(); ++ii){
       for (int jj = 0; jj < Ei_ids.cols(); ++jj){
 	int row = ii + i*N2p;  // offset with degree reduc op
@@ -551,7 +552,7 @@ void InitWADG_subelem(Mesh *mesh,double(*c2_ptr)(double,double,double)){
     MatrixXi EiTr_ids;
     MatrixXd EiTr_vals;
     get_sparse_ids(Ei.transpose(),EiTr_ids,EiTr_vals);
-    printf("EiTr_ids # cols = %d\n",EiTr_ids.cols());
+    //printf("EiTr_ids # cols = %d\n",EiTr_ids.cols());
     //    if (EiTr_ids.cols() > 4){
     //      cout << "from N1 = " << N1 << " to N2 = " << N2 << ", EiTr = " << Ei.transpose() << endl;
     //    }
@@ -605,19 +606,19 @@ void InitWADG_subelem(Mesh *mesh,double(*c2_ptr)(double,double,double)){
 
   // =============== quadrature-based duffy for BB ==================
 
-  int Nq1D = p_N+1; // this may change
+  int Nq1D = p_N+2; // N+1 for GQ(1,0) in vert, N+2 for GQ(0,0) in vert.
   int Nq2 = Nq1D*Nq1D;
   int Nq3 = Nq2*Nq1D;
-  MatrixXd Vq1D(Nq1D,Nq1D);
-  Vq1D.fill(0.0);
   MatrixXd Qtmp(Nq3,mesh->K); // tmp storage
-  setOccaArray(Vq1D,c_Vq1D);
-  dgInfo.addDefine("p_Nq1D",Nq1D);
-  dgInfo.addDefine("p_Nq2",Nq2);
-  dgInfo.addDefine("p_Nq3",Nq3);
 
   // get TP nodes for cubature (interpolation)
-  for (int i = 0; i <= p_N; ++i){
+  int NpTri = (p_N+1)*(p_N+2)/2;
+  VectorXd ETri_vals4(p_N*NpTri*4); // pack all Ei into Ei_vals4
+  VectorXi ETri_ids4(p_N*NpTri*4);
+  ETri_vals4.fill(0.0);
+  ETri_ids4.fill(0);
+  
+  for (int i = 0; i < p_N; ++i){
     VectorXd rqtri,sqtri,wqtri;
     tri_cubature(i+1,rqtri,sqtri,wqtri);
     MatrixXd V1 = BernTri(i+1,rqtri,sqtri);
@@ -627,10 +628,29 @@ void InitWADG_subelem(Mesh *mesh,double(*c2_ptr)(double,double,double)){
     MatrixXi Ei_ids;
     MatrixXd Ei_vals;
     get_sparse_ids(EiTri,Ei_ids,Ei_vals);
-
-
+    
+    for (int ii = 0; ii < Ei_ids.rows(); ++ii){
+      for (int jj = 0; jj < Ei_ids.cols(); ++jj){
+	int row = ii + i*NpTri;
+	ETri_vals4(4*row + jj) = Ei_vals(ii,jj);
+	ETri_ids4(4*row + jj) = Ei_ids(ii,jj);
+      }
+    }
   }
 
+  //printf("setting duffy vars\n");
+  dgInfo.addDefine("p_Nq1D",Nq1D);
+  dgInfo.addDefine("p_Nq2",Nq2);
+  dgInfo.addDefine("p_Nq3",Nq3);
+  dgInfo.addDefine("p_NpTri",NpTri);
+
+  setOccaArray(ETri_vals4,c_ETri_vals);
+  setOccaIntArray(ETri_ids4,c_ETri_ids);
+  
+  MatrixXd Vq1D(Nq1D,Nq1D);
+  Vq1D.fill(0.0);
+  // todo: fix! add real Vq1D to eval at bernstein points.
+  setOccaArray(Vq1D,c_Vq1D);
 
 
 #else

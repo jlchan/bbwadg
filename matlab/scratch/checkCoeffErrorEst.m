@@ -1,5 +1,6 @@
+clear
 % check difference in control points vs interpolant
-N = 8;
+N = 5;
 r = JacobiGL(0,0,N);
 
 VB = bern_basis_1D(N,r);
@@ -14,16 +15,19 @@ M = Vq'*diag(w)*Vq;
 
 Ve = bern_basis_1D(N,req);
 sk = 1;
-kvec = .1:.1:5;
+kvec = .1:.1:10;
 for k = kvec
-    u = M\(Vq'*(w.*sin(k*pi*rq)));
-    err(sk) = sqrt(sum(w.*(Vq*u-sin(k*pi*rq)).^2));
+    % fk = sin(k*pi*rq);
+    fk = sqrt(rq.^2+k);
+    u = M\(Vq'*(w.*fk));
+    err(sk) = sqrt(sum(w.*(Vq*u-fk).^2));
     pterr1(sk) = sum(abs(Ve*u-u));
     pterr2(sk) = sqrt(sum((Ve*u-u).^2));
     pterrInf(sk) = max(abs(Ve*u-u));
     sk = sk + 1;
 end
-semilogy(kvec,err./pterr1)
+semilogy(kvec,err)
 hold on;
-semilogy(kvec,err./pterr2,'--')
-semilogy(kvec,err./pterrInf,'.-')
+semilogy(kvec,pterr1,'o--')
+semilogy(kvec,pterr2,'--')
+semilogy(kvec,pterrInf,'.-')
