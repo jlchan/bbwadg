@@ -92,8 +92,12 @@ occa::kernel mult_quad; // for comparison
 occa::kernel rk_update_BBWADG;
 
 // duffy vars
-occa::memory c_Vq1D;
+occa::memory c_Vab1D, c_Vc1D;
 occa::memory c_ETri_vals, c_ETri_ids;
+occa::memory c_c2qDuffy;
+occa::memory c_quad_ids;
+
+occa::kernel rk_update_BBWADGq;
 
 // ================ curvilinear specific kernels ====================
 occa::kernel rk_volume_WADG;
@@ -606,7 +610,7 @@ void InitWADG_subelem(Mesh *mesh,double(*c2_ptr)(double,double,double)){
 
   // =============== quadrature-based duffy for BB ==================
 
-  int Nq1D = p_N+2; // N+1 for GQ(1,0) in vert, N+2 for GQ(0,0) in vert.
+  int Nq1D = p_N+1; // N+1 for GQ(1,0) in vert, N+1 for GQ(0,0)
   int Nq2 = Nq1D*Nq1D;
   int Nq3 = Nq2*Nq1D;
   MatrixXd Qtmp(Nq3,mesh->K); // tmp storage
@@ -617,24 +621,43 @@ void InitWADG_subelem(Mesh *mesh,double(*c2_ptr)(double,double,double)){
   VectorXi ETri_ids4(p_N*NpTri*4);
   ETri_vals4.fill(0.0);
   ETri_ids4.fill(0);
-  
+
+  VectorXi quad_ids(NpTri);
+  int sk1 = 0;
+  int sk2 = 0;
+  for (int j = 0; j <= p_N; ++j){
+    for (int i = 0; i <= p_N; ++i){
+      if (i <= p_N-j){
+	quad_ids(sk1) = sk2;;
+	++sk1;
+      }
+      ++sk2;
+    }
+  }
+  //cout << "quad_ids = " << endl << quad_ids << endl;
+  setOccaIntArray(quad_ids,c_quad_ids);
+
+  VectorXd rqtri,sqtri,wqtri;
+  tri_cubature(2*p_N+1,rqtri,sqtri,wqtri);
   for (int i = 0; i < p_N; ++i){
-    VectorXd rqtri,sqtri,wqtri;
-    tri_cubature(i+1,rqtri,sqtri,wqtri);
     MatrixXd V1 = BernTri(i+1,rqtri,sqtri);
     MatrixXd V2 = BernTri(i,rqtri,sqtri);
     MatrixXd EiTri = mldivide(V1,V2);
 
+    cout << "EiTri for i = " << i << endl << EiTri << endl;
     MatrixXi Ei_ids;
     MatrixXd Ei_vals;
     get_sparse_ids(EiTri,Ei_ids,Ei_vals);
-    
+
+    // pack into float4
     for (int ii = 0; ii < Ei_ids.rows(); ++ii){
+      int row = ii + i*NpTri;
       for (int jj = 0; jj < Ei_ids.cols(); ++jj){
-	int row = ii + i*NpTri;
 	ETri_vals4(4*row + jj) = Ei_vals(ii,jj);
 	ETri_ids4(4*row + jj) = Ei_ids(ii,jj);
       }
+      // pack extra int into ids: offset into (N+1)^2 quad ids
+      ETri_ids4(4*row + 3) = 0; 
     }
   }
 
@@ -646,12 +669,24 @@ void InitWADG_subelem(Mesh *mesh,double(*c2_ptr)(double,double,double)){
 
   setOccaArray(ETri_vals4,c_ETri_vals);
   setOccaIntArray(ETri_ids4,c_ETri_ids);
-  
-  MatrixXd Vq1D(Nq1D,Nq1D);
-  Vq1D.fill(0.0);
-  // todo: fix! add real Vq1D to eval at bernstein points.
-  setOccaArray(Vq1D,c_Vq1D);
 
+  VectorXd a1D,wa,c1D,wc;
+  JacobiGQ(p_N,0,0,a1D,wa);
+  JacobiGQ(p_N,2,0,c1D,wc);
+  //cout << "c1D = " << c1D << endl;
+  //cout << "wc1D = " << wc << endl; 
+ 
+  MatrixXd Vab1D = Bern1D(p_N,a1D);
+  MatrixXd Vc1D = Bern1D(p_N,c1D);  
+    
+  // todo: fix! add real Vq1D to eval at bernstein points.
+  setOccaArray(Vab1D,c_Vab1D);
+  setOccaArray(Vc1D,c_Vc1D);
+  //  cout << "Vab1D = " << endl << Vab1D << endl;
+  //  cout << "Vc1D = " << endl << Vc1D << endl;  
+
+  MatrixXd c2qDuffy(Nq3,mesh->K);  
+  setOccaArray(c2qDuffy,c_c2qDuffy);
 
 #else
   MatrixXd invM = mesh->V*mesh->V.transpose();
@@ -679,6 +714,7 @@ void InitWADG_subelem(Mesh *mesh,double(*c2_ptr)(double,double,double)){
 
   std::string srcBB = "okl/WaveKernelsBBWADG.okl";
   rk_update_BBWADG  = device.buildKernelFromSource(srcBB.c_str(), "rk_update_BBWADG", dgInfo);
+  rk_update_BBWADGq  = device.buildKernelFromSource(srcBB.c_str(), "rk_update_BBWADGq", dgInfo);  
   mult_quad  = device.buildKernelFromSource(srcBB.c_str(), "mult_quad", dgInfo);
 
 }
@@ -1999,20 +2035,32 @@ void test_RK(Mesh *mesh){
   Qtest.fill(0.0);
   for (int e = 0; e < mesh->K; ++e){
     for (int i = 0; i < p_Np; ++i){
-      Qtest(i,e) = (dfloat) i + e;
+      //Qtest(i,e) = (dfloat) i + e;
+      Qtest(i,e) = (dfloat) i+1;
     }
   }
   occa::memory c_Qtest;
   setOccaArray(Qtest,c_Qtest);
 
+  int Nq3 = (p_N+1)*(p_N+1)*(p_N+1);
+  MatrixXd c2Test(p_Nfields*Nq3,mesh->K);
+  for (int e = 0; e < mesh->K; ++e){
+    for (int i = 0; i < Nq3; ++i){
+      c2Test(i,e) = (dfloat) i+1;
+    }
+  }
+  occa::memory c_c2Test;
+  setOccaArray(c2Test,c_c2Test);  
+
   occa::initTimer(device);
 
   double elapsed1 = 0.0;
   double elapsed2 = 0.0;
-  for (int i = 0; i < 10; ++i){
+  double elapsed3 = 0.0;  
+  for (int i = 0; i < 1; ++i){
     occa::tic("");
     mult_quad(mesh->K,
-	      c_Vq_reduced, c_Pq_reduced, c_Jq_reduced,c_c2q,
+	      c_Vq_reduced, c_Pq_reduced, c_Jq_reduced,c_c2Test,
 	      1.f,1.f,1.f,
 	      c_rhsQ, c_resQ, c_Qtest);
     device.finish();
@@ -2029,8 +2077,20 @@ void test_RK(Mesh *mesh){
 		     c_rhsQ);
     device.finish();
     elapsed2 += occa::toc("",rk_update_BBWADG, 0.0,0.0);
+
+    occa::tic("");
+    rk_update_BBWADGq(mesh->K,
+		      c_ETri_vals, c_ETri_ids,
+		      c_quad_ids,
+		      c_Vab1D,
+		      c_Vc1D,		      
+		      c_c2qDuffy,
+		      c_Qtest);
+		      //c_rhsQ);
+    device.finish();
+    elapsed3 += occa::toc("",rk_update_BBWADGq, 0.0,0.0);    
   }
-  printf("elapsed1 = %g, elapsed2 = %g\n",elapsed1,elapsed2);
+  printf("elapsed1 = %g, elapsed2 = %g, elapsed3 = %g\n",elapsed1,elapsed2,elapsed3);
 
   return;
 
