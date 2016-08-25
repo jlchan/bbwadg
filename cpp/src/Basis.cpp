@@ -502,6 +502,18 @@ unsigned int nchoosek(int n,int k){
   return factorial(n) / (factorial(n-k) * factorial(k));
 }
 
+MatrixXd Bern1D(int N, VectorXd r){
+  VectorXd x = .5*(1.0+r.array());
+  int Np = (N+1);
+  MatrixXd V(r.rows(),Np); V.fill(0.0);
+  int sk = 0;
+  for (int i = 0; i < Np; ++i){
+    V.col(i) = nchoosek(N,i) * x.array().pow(i) * (1.0 - x.array()).array().pow(N-i);
+  }
+  return V;
+  
+}
+
 MatrixXd BernTri(int N, VectorXd r, VectorXd s){
   VectorXd L1 = -(r.array()+s.array())/2;
   VectorXd L2 = (1+r.array())/2;
@@ -716,6 +728,73 @@ MatrixXd sgeofacs3d(VectorXd x,VectorXd y,VectorXd z,
 
 
 // ===================== tabulated nodes ========================
+
+/*
+void tet_cubature_duffy(int N, VectorXd &a, VectorXd &wa,
+			VectorXd &b,  VectorXd &wb,
+			VectorXd &c,  VectorXd &wc){
+
+  int Np = (N+1);
+  a.resize(Np); wa.resize(Np);
+  b.resize(Np); wb.resize(Np);
+  c.resize(Np); wc.resize(Np);  
+
+#define loadnodes_duffy(M)						\
+  a(i) = p_r1D_N##M[i]; wa(i) = p_s_N##M[i]; t(i) = p_t_N##M[i];
+  
+}
+*/
+
+// requires alpha, beta = integers 
+void JacobiGQ(int N, int alpha_int, int beta_int, VectorXd &r, VectorXd &w){
+
+  double alpha = (double) alpha_int;
+  double beta = (double) beta_int;  
+  
+  int Np = (N+1);
+  r.resize(Np);
+  w.resize(Np);
+
+  if (N==0){
+    r(0) = -(alpha + beta)/(alpha + beta + 2.0);
+    w(0) = 2.0;
+  }
+  VectorXd h1(Np);
+  for (int i = 0; i < Np; ++i){
+    h1(i) = 2*i+alpha+beta;
+  }
+  MatrixXd J(Np,Np); J.fill(0.0);
+  for (int i = 0; i < Np; ++i){
+    J(i,i) = -.5*(alpha*alpha-beta*beta) / (h1(i)+2.0) / h1(i);
+    if (i < N){
+      J(i,i+1) = 2.0 / (h1(i)+2.0) *
+	sqrt((i+1.0)*(i+1.0 + alpha+beta)*
+	     (i+1.0 + alpha)* (i+1.0 + beta) /
+	     (h1(i)+1.0)/ (h1(i)+3.0));      
+    }
+  }
+  double tol = 1e-14;
+  if (alpha + beta < tol){
+    J(0,0) = 0.0;
+  }
+  MatrixXd Js = J + J.transpose();
+
+  SelfAdjointEigenSolver<MatrixXd> eig(Js);
+  MatrixXd V = eig.eigenvectors();
+  r = eig.eigenvalues();
+
+  double gamma_alpha = factorial(alpha-1);
+  double gamma_beta = factorial(alpha-1);
+
+  // assumes alpha,beta = int so gamma(x) = factorial(x-1)
+  w = V.row(0).array().square() * pow(2.0,alpha+beta+1.0) / (alpha+beta+1) *
+    factorial(alpha) * factorial(beta) / factorial(alpha+beta);
+
+  //  cout << "r = " << r << endl;
+  //  cout << "w = " << w << endl;
+}
+
+
 
 void Nodes3D(int N, VectorXd &r, VectorXd &s, VectorXd &t){
   int Np = (N+1)*(N+2)*(N+3)/6;

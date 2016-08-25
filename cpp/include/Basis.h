@@ -8,8 +8,10 @@ void test_solve();
 void test_basis();
 
 // 1D 
+void JacobiGQ(int N, int alpha_int, int beta_int, VectorXd &r, VectorXd &w);
 VectorXd JacobiP(VectorXd x, dfloat alpha, dfloat beta, int d);
 VectorXd GradJacobiP(VectorXd x, double alpha, double beta, int p);
+MatrixXd Bern1D(int N, VectorXd r);
 
 // 2D
 void rstoab(VectorXd r, VectorXd s, VectorXd &a,VectorXd &b);
@@ -50,6 +52,9 @@ MatrixXd sgeofacs3d(VectorXd x,VectorXd y,VectorXd z,
 void Nodes3D(int N, VectorXd &r, VectorXd &s, VectorXd &t);
 void tet_cubature(int N, VectorXd &rq, VectorXd &sq, VectorXd &tq, VectorXd &wq);
 void tri_cubature(int N, VectorXd &rq, VectorXd &sq, VectorXd &wq);
+//void tet_cubature_duffy(int N, VectorXd &a, VectorXd &wa,
+//			VectorXd &b,  VectorXd &wb,
+//			VectorXd &c,  VectorXd &wc);
 
 // helper routines not present in C++ std lib
 unsigned int factorial(int n);
