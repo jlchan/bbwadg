@@ -94,6 +94,7 @@ occa::kernel rk_update_BBWADG;
 // duffy vars
 occa::memory c_Vab1D, c_Vc1D;
 occa::memory c_ETri_vals, c_ETri_ids;
+occa::memory c_ETriTr_vals, c_ETriTr_ids;
 occa::memory c_c2qDuffy;
 occa::memory c_quad_ids;
 
@@ -622,9 +623,14 @@ void InitWADG_subelem(Mesh *mesh,double(*c2_ptr)(double,double,double)){
   ETri_vals4.fill(0.0);
   ETri_ids4.fill(0);
 
+  // transposed tri reductions
+  VectorXd ETriTr_vals4(p_N*NpTri*4); 
+  VectorXi ETriTr_ids4(p_N*NpTri*4);
+  ETriTr_vals4.fill(0.0);
+  ETriTr_ids4.fill(0);
+
   VectorXi quad_ids(NpTri);
-  int sk1 = 0;
-  int sk2 = 0;
+  int sk1 = 0;  int sk2 = 0;
   for (int j = 0; j <= p_N; ++j){
     for (int i = 0; i <= p_N; ++i){
       if (i <= p_N-j){
@@ -638,13 +644,13 @@ void InitWADG_subelem(Mesh *mesh,double(*c2_ptr)(double,double,double)){
   setOccaIntArray(quad_ids,c_quad_ids);
 
   VectorXd rqtri,sqtri,wqtri;
-  tri_cubature(2*p_N+1,rqtri,sqtri,wqtri);
+  tri_cubature(2*p_N+1,rqtri,sqtri,wqtri); // oversample
   for (int i = 0; i < p_N; ++i){
     MatrixXd V1 = BernTri(i+1,rqtri,sqtri);
     MatrixXd V2 = BernTri(i,rqtri,sqtri);
     MatrixXd EiTri = mldivide(V1,V2);
 
-    cout << "EiTri for i = " << i << endl << EiTri << endl;
+    //cout << "EiTri for i = " << i << endl << EiTri << endl;
     MatrixXi Ei_ids;
     MatrixXd Ei_vals;
     get_sparse_ids(EiTri,Ei_ids,Ei_vals);
@@ -659,6 +665,24 @@ void InitWADG_subelem(Mesh *mesh,double(*c2_ptr)(double,double,double)){
       // pack extra int into ids: offset into (N+1)^2 quad ids
       ETri_ids4(4*row + 3) = 0; 
     }
+
+    MatrixXi EiTr_ids;
+    MatrixXd EiTr_vals;
+    get_sparse_ids(EiTri.transpose(),EiTr_ids,EiTr_vals);
+    cout << "EiTri transpose = " << endl << EiTri.transpose() << endl;
+    // pack into float4
+    for (int ii = 0; ii < EiTr_ids.rows(); ++ii){
+      int row = ii + i*NpTri;
+      for (int jj = 0; jj < EiTr_ids.cols(); ++jj){
+	ETriTr_vals4(4*row + jj) = EiTr_vals(ii,jj);
+	ETriTr_ids4(4*row + jj) = EiTr_ids(ii,jj);
+      }
+      // pack extra int into ids: offset into (N+1)^2 quad ids
+      ETriTr_ids4(4*row + 3) = 0; 
+    }
+
+    cout << "EiTri vals = " << endl << EiTr_vals << endl;
+    cout << "EiTri ids = " << endl << EiTr_ids << endl;    
   }
 
   //printf("setting duffy vars\n");
@@ -669,6 +693,8 @@ void InitWADG_subelem(Mesh *mesh,double(*c2_ptr)(double,double,double)){
 
   setOccaArray(ETri_vals4,c_ETri_vals);
   setOccaIntArray(ETri_ids4,c_ETri_ids);
+  setOccaArray(ETriTr_vals4,c_ETriTr_vals);
+  setOccaIntArray(ETriTr_ids4,c_ETriTr_ids);
 
   VectorXd a1D,wa,c1D,wc;
   JacobiGQ(p_N,0,0,a1D,wa);
@@ -2043,14 +2069,15 @@ void test_RK(Mesh *mesh){
   setOccaArray(Qtest,c_Qtest);
 
   int Nq3 = (p_N+1)*(p_N+1)*(p_N+1);
-  MatrixXd c2Test(p_Nfields*Nq3,mesh->K);
+  MatrixXd c2Test(Nq3,mesh->K);
   for (int e = 0; e < mesh->K; ++e){
     for (int i = 0; i < Nq3; ++i){
       c2Test(i,e) = (dfloat) i+1;
     }
   }
   occa::memory c_c2Test;
-  setOccaArray(c2Test,c_c2Test);  
+  setOccaArray(c2Test,c_c2Test);
+  //cout << "c2 Test = " << endl << c2Test << endl;
 
   occa::initTimer(device);
 
@@ -2081,12 +2108,12 @@ void test_RK(Mesh *mesh){
     occa::tic("");
     rk_update_BBWADGq(mesh->K,
 		      c_ETri_vals, c_ETri_ids,
+		      c_ETriTr_vals, c_ETriTr_ids,		      
 		      c_quad_ids,
 		      c_Vab1D,
 		      c_Vc1D,		      
-		      c_c2qDuffy,
+		      c_c2Test,
 		      c_Qtest);
-		      //c_rhsQ);
     device.finish();
     elapsed3 += occa::toc("",rk_update_BBWADGq, 0.0,0.0);    
   }

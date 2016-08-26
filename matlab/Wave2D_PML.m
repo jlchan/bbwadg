@@ -7,7 +7,7 @@ Globals2D
 
 if nargin==0
     %     Nin = 4; K1D = 16;
-    Nin = 4; K1D = 16; c_flag = 0;
+    Nin = 3; K1D = 8; c_flag = 0;
     cfun = @(x,y) ones(size(x));
     % cfun = @(x,y) 1 + .5*sin(pi*x).*sin(pi*y); % smooth velocity
 %     cfun = @(x,y) (1 + .5*sin(2*pi*x).*sin(2*pi*y) + (y > 0)); % piecewise smooth velocity
@@ -50,7 +50,7 @@ u = zeros(Np, K); v = zeros(Np, K);
 
 %% pml terms
 
-showSol = 0;
+showSol = 1;
 delta = .5;
 smax = 100;
 

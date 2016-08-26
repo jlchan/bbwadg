@@ -10,7 +10,7 @@ Globals1D;
 N = 3;
 
 % Generate simple mesh
-K1D = 16;
+K1D = 32;
 [Nv, VX, K, EToV] = MeshGen1D(-1,1,K1D);
 
 % Initialize solver and construct grid and metric
@@ -21,7 +21,7 @@ vmapP(1) = vmapM(end); % make periodic
 % vmapP(end) = vmapM(1); % hack for periodic
 
 % Set initial conditions
-d = 50;
+d = 100;
 u = -1./(1 + exp(-d*(x-1/3))) + 1./(1 + exp(-d*(x+1/3)));%x > -1/3 & x < 1/3;%exp(-25*x.^2);
 % u = -sin(pi*x);
 
@@ -68,7 +68,7 @@ function [rhsu] = AdvecRHS1D(u,time, a)
 Globals1D;
 
 % form field differences at faces
-alpha = 0;
+alpha = 1;
 du = zeros(Nfp*Nfaces,K);
 du(:) = (u(vmapM)-u(vmapP)).*(a*nx(:)-(1-alpha)*abs(a*nx(:)))/2;
 % a = u; du(:) = (u(vmapM)-u(vmapP)).*(a(vmapM).*nx(:)-(1-alpha)*abs(a(vmapM).*nx(:)))/2;

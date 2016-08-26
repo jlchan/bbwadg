@@ -13,15 +13,15 @@ fprintf(fid, sprintf('#define NODEDATA 1\n\n'));
 for N = 1:21 % to 3*N for N = 7
     fprintf('on N = %d\n',N)
     
-    [r1D00 wq1D00] = JacobiGQ(0,0,N);
-    [r1D10 wq1D10] = JacobiGQ(1,0,N);
-    [r1D20 wq1D20] = JacobiGQ(2,0,N);
-    write_vector(fid,sprintf('r1D00_N%d',N),r1D00);
-    write_vector(fid,sprintf('r1D10_N%d',N),r1D10);
-    write_vector(fid,sprintf('r1D20_N%d',N),r1D20);    
-    write_vector(fid,sprintf('wq1D00_N%d',N),wq1D00);
-    write_vector(fid,sprintf('wq1D10_N%d',N),wq1D10);
-    write_vector(fid,sprintf('wq1D20_N%d',N),wq1D20);        
+%     [r1D00 wq1D00] = JacobiGQ(0,0,N);
+%     [r1D10 wq1D10] = JacobiGQ(1,0,N);
+%     [r1D20 wq1D20] = JacobiGQ(2,0,N);
+%     write_vector(fid,sprintf('r1D00_N%d',N),r1D00);
+%     write_vector(fid,sprintf('r1D10_N%d',N),r1D10);
+%     write_vector(fid,sprintf('r1D20_N%d',N),r1D20);    
+%     write_vector(fid,sprintf('wq1D00_N%d',N),wq1D00);
+%     write_vector(fid,sprintf('wq1D10_N%d',N),wq1D10);
+%     write_vector(fid,sprintf('wq1D20_N%d',N),wq1D20);        
     
     [r s t] = Nodes3D(N); [r s t] = xyztorst(r,s,t);
     write_vector(fid,sprintf('r_N%d',N),r);
