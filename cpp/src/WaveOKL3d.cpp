@@ -417,8 +417,25 @@ void InitWADG_subelem(Mesh *mesh,double(*c2_ptr)(double,double,double)){
 
   // ======= use reduced strength quadrature for WADG update
 
+  int Nq1D = p_N+1; // N+1 for GQ(1,0) in vert, N+1 for GQ(0,0)
+  int Nq2 = Nq1D*Nq1D;
+  int Nq3 = Nq2*Nq1D;
+
   VectorXd rq,sq,tq,wq;
-  tet_cubature(min(21,2*p_N+1),rq,sq,tq,wq); // 21 = max quadrature degree
+  if (2*p_N+1 < 15){
+    tet_cubature(min(21,2*p_N+1),rq,sq,tq,wq); // 21 = max quadrature degree
+  }else{
+    tet_cubature(min(21,2*p_N),rq,sq,tq,wq); // make TP = (N+1)^3 nodes
+    /*
+    VectorXd a1D,wa,c1D,wc;
+    JacobiGQ(p_N,0,0,a1D,wa);
+    JacobiGQ(p_N,2,0,c1D,wc);
+    rq.resize(Nq3);
+    sq.resize(Nq3);
+    tq.resize(Nq3);
+    wq.resize(Nq3);
+    */
+  }
   MatrixXd Vqtmp = Vandermonde3D(p_N,rq,sq,tq);
   MatrixXd Vq_reduced = mrdivide(Vqtmp,mesh->V);
 
@@ -611,9 +628,6 @@ void InitWADG_subelem(Mesh *mesh,double(*c2_ptr)(double,double,double)){
 
   // =============== quadrature-based duffy for BB ==================
 
-  int Nq1D = p_N+1; // N+1 for GQ(1,0) in vert, N+1 for GQ(0,0)
-  int Nq2 = Nq1D*Nq1D;
-  int Nq3 = Nq2*Nq1D;
   MatrixXd Qtmp(Nq3,mesh->K); // tmp storage
 
   // get TP nodes for cubature (interpolation)
@@ -624,7 +638,7 @@ void InitWADG_subelem(Mesh *mesh,double(*c2_ptr)(double,double,double)){
   ETri_ids4.fill(0);
 
   // transposed tri reductions
-  VectorXd ETriTr_vals4(p_N*NpTri*4); 
+  VectorXd ETriTr_vals4(p_N*NpTri*4);
   VectorXi ETriTr_ids4(p_N*NpTri*4);
   ETriTr_vals4.fill(0.0);
   ETriTr_ids4.fill(0);
@@ -663,13 +677,13 @@ void InitWADG_subelem(Mesh *mesh,double(*c2_ptr)(double,double,double)){
 	ETri_ids4(4*row + jj) = Ei_ids(ii,jj);
       }
       // pack extra int into ids: offset into (N+1)^2 quad ids
-      ETri_ids4(4*row + 3) = 0; 
+      ETri_ids4(4*row + 3) = 0;
     }
 
     MatrixXi EiTr_ids;
     MatrixXd EiTr_vals;
     get_sparse_ids(EiTri.transpose(),EiTr_ids,EiTr_vals);
-    cout << "EiTri transpose = " << endl << EiTri.transpose() << endl;
+    //cout << "EiTri transpose = " << endl << EiTri.transpose() << endl;
     // pack into float4
     for (int ii = 0; ii < EiTr_ids.rows(); ++ii){
       int row = ii + i*NpTri;
@@ -678,11 +692,11 @@ void InitWADG_subelem(Mesh *mesh,double(*c2_ptr)(double,double,double)){
 	ETriTr_ids4(4*row + jj) = EiTr_ids(ii,jj);
       }
       // pack extra int into ids: offset into (N+1)^2 quad ids
-      ETriTr_ids4(4*row + 3) = 0; 
+      ETriTr_ids4(4*row + 3) = 0;
     }
 
-    cout << "EiTri vals = " << endl << EiTr_vals << endl;
-    cout << "EiTri ids = " << endl << EiTr_ids << endl;    
+    //cout << "EiTri vals = " << endl << EiTr_vals << endl;
+    //cout << "EiTri ids = " << endl << EiTr_ids << endl;
   }
 
   //printf("setting duffy vars\n");
@@ -700,18 +714,18 @@ void InitWADG_subelem(Mesh *mesh,double(*c2_ptr)(double,double,double)){
   JacobiGQ(p_N,0,0,a1D,wa);
   JacobiGQ(p_N,2,0,c1D,wc);
   //cout << "c1D = " << c1D << endl;
-  //cout << "wc1D = " << wc << endl; 
- 
+  //cout << "wc1D = " << wc << endl;
+
   MatrixXd Vab1D = Bern1D(p_N,a1D);
-  MatrixXd Vc1D = Bern1D(p_N,c1D);  
-    
+  MatrixXd Vc1D = Bern1D(p_N,c1D);
+
   // todo: fix! add real Vq1D to eval at bernstein points.
   setOccaArray(Vab1D,c_Vab1D);
   setOccaArray(Vc1D,c_Vc1D);
   //  cout << "Vab1D = " << endl << Vab1D << endl;
-  //  cout << "Vc1D = " << endl << Vc1D << endl;  
+  //  cout << "Vc1D = " << endl << Vc1D << endl;
 
-  MatrixXd c2qDuffy(Nq3,mesh->K);  
+  MatrixXd c2qDuffy(Nq3,mesh->K);
   setOccaArray(c2qDuffy,c_c2qDuffy);
 
 #else
@@ -740,7 +754,7 @@ void InitWADG_subelem(Mesh *mesh,double(*c2_ptr)(double,double,double)){
 
   std::string srcBB = "okl/WaveKernelsBBWADG.okl";
   rk_update_BBWADG  = device.buildKernelFromSource(srcBB.c_str(), "rk_update_BBWADG", dgInfo);
-  rk_update_BBWADGq  = device.buildKernelFromSource(srcBB.c_str(), "rk_update_BBWADGq", dgInfo);  
+  rk_update_BBWADGq  = device.buildKernelFromSource(srcBB.c_str(), "rk_update_BBWADGq", dgInfo);
   mult_quad  = device.buildKernelFromSource(srcBB.c_str(), "mult_quad", dgInfo);
 
 }
@@ -2083,7 +2097,7 @@ void test_RK(Mesh *mesh){
 
   double elapsed1 = 0.0;
   double elapsed2 = 0.0;
-  double elapsed3 = 0.0;  
+  double elapsed3 = 0.0;
   for (int i = 0; i < 1; ++i){
     occa::tic("");
     mult_quad(mesh->K,
@@ -2108,14 +2122,14 @@ void test_RK(Mesh *mesh){
     occa::tic("");
     rk_update_BBWADGq(mesh->K,
 		      c_ETri_vals, c_ETri_ids,
-		      c_ETriTr_vals, c_ETriTr_ids,		      
+		      c_ETriTr_vals, c_ETriTr_ids,
 		      c_quad_ids,
 		      c_Vab1D,
-		      c_Vc1D,		      
+		      c_Vc1D,
 		      c_c2Test,
 		      c_Qtest);
     device.finish();
-    elapsed3 += occa::toc("",rk_update_BBWADGq, 0.0,0.0);    
+    elapsed3 += occa::toc("",rk_update_BBWADGq, 0.0,0.0);
   }
   printf("elapsed1 = %g, elapsed2 = %g, elapsed3 = %g\n",elapsed1,elapsed2,elapsed3);
 

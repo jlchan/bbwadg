@@ -49,4 +49,6 @@ clean:
 	rm -f main_planar;
 	rm -f main_subelem;
 	rm -rf main.dSYM/;
+
+.PHONY: main main_subelem clean
 #=================================================
