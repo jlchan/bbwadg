@@ -1,4 +1,4 @@
-function advec1D_JC
+function advec1D_SEM
 
 % function [u] = Advec1D(u, FinalTime)
 % Purpose  : Integrate 1D advection until FinalTime starting with
@@ -16,23 +16,40 @@ K1D = 8;
 % Initialize solver and construct grid and metric
 StartUp1D;
 
-vmapP(1) = vmapM(end); % make periodic
-vmapP(end) = vmapM(1);
-% vmapP(1) = vmapM(end); % hack for periodic
-% vmapP(end) = vmapM(1); % hack for periodic
+% make periodic
+vmapP(1) = vmapM(end); 
+vmapP(end) = vmapM(1); 
+
+pairs = sort([vmapM vmapP],2);
+[~,id] = unique(pairs(:,1));
+pairs = pairs(id,:);
+gmap = zeros(Np,K);
+for i = 1:size(pairs,1)
+    gmap(pairs(i,:)) = i;
+end
+offset = size(pairs,1);
+for e = 1:K
+    gmap(2:N,e) = (1:N-1) + offset;
+    offset = offset + N-1;
+end
+R=sparse(1:Np*K,gmap,1,Np*K,(K+1) + (N-1)*K);
+
+% filter
+a = .005;
+kc = N-1;
+s = ones(N+1,1); s(kc:N+1) = 1-a*(((kc:N+1) - kc)./(N-kc)).^2;
+% plot(s,'o--')
+% return
+F = V*diag(s)*inv(V);
+% u = rand(size(x));
+% u(:) = R*R'*u(:);
+% plot(x,u,'o-')
+
 
 % Set initial conditions
 d = 100;
 u = -1./(1 + exp(-d*(x-1/3))) + 1./(1 + exp(-d*(x+1/3)));%x > -1/3 & x < 1/3;%exp(-25*x.^2);
 % u = -sin(pi*x);
-
-rp = linspace(-1,1,25)';
-Vp = Vandermonde1D(N,rp)/V;
-xp=  Vp*x;
-
-re = linspace(-1,1,N+1)';
-VB = inv(bern_basis_1D(N,r));
-xe = Vandermonde1D(N,re)/V * x;
 
 % Solve Problem
 FinalTime = 2;
@@ -58,13 +75,11 @@ for tstep=1:Nsteps
         [rhsu] = AdvecRHS1D(u, timelocal, a);
         resu = rk4a(INTRK)*resu + dt*rhsu;
         u = u+rk4b(INTRK)*resu;
+        u = F*u;
+        u(:) = R*diag(1./sum(R,1))*R'*u(:);
     end;
     if mod(tstep,10)
-%         clf
-%         plot(xp,Vp*u,'-')
-         plot(x,u,'o-')
-%         hold on;
-%         plot(xe,VB*u,'o-')
+        plot(x,u,'o-')        
         axis([-1 1 -2 2])
         drawnow
     end
@@ -81,7 +96,7 @@ function [rhsu] = AdvecRHS1D(u,time, a)
 Globals1D;
 
 % form field differences at faces
-alpha = 0;
+alpha = 1;
 du = zeros(Nfp*Nfaces,K);
 du(:) = (u(vmapM)-u(vmapP)).*(a*nx(:)-(1-alpha)*abs(a*nx(:)))/2;
 % a = u; du(:) = (u(vmapM)-u(vmapP)).*(a(vmapM).*nx(:)-(1-alpha)*abs(a(vmapM).*nx(:)))/2;
