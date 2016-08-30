@@ -307,7 +307,6 @@ kernel void rk_update_BBWADGq(const int K,
     // quadrature interpolation matrices
     shared dfloat s_Vq[p_Nq1D][p_Nq1D];
     shared dfloat s_Vcq[p_Nq1D][p_Nq1D];
-    //shared dfloat s_E1D[p_nE1Dentries];
 
     // ids
     shared int s_tri_to_quad_ids[p_NpTri];
@@ -459,7 +458,8 @@ kernel void rk_update_BBWADGq(const int K,
 #endif
     barrier(localMemFence);
 
-#if 1 // load 1D elev ops - 1 sweep only
+#define DENSE_ELEV 1
+#if DENSE_ELEV // load 1D elev ops - 1 sweep only
 
     for(int jj = 1; jj <= p_N; ++jj){
       for(int k2 = 0; k2 < p_KblkU; ++k2; inner1){
@@ -731,7 +731,7 @@ kernel void rk_update_BBWADGq(const int K,
 
     // reduce hex to wedge
 
-#if 1
+#if DENSE_ELEV
 
     /*
     for(int k2 = 0; k2 < p_KblkU; ++k2; inner1){
