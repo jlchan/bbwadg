@@ -307,6 +307,7 @@ kernel void rk_update_BBWADGq(const int K,
     // quadrature interpolation matrices
     shared dfloat s_Vq[p_Nq1D][p_Nq1D];
     shared dfloat s_Vcq[p_Nq1D][p_Nq1D];
+    //shared dfloat s_E1D[p_nE1Dentries];
 
     // ids
     shared int s_tri_to_quad_ids[p_NpTri];
@@ -339,6 +340,15 @@ kernel void rk_update_BBWADGq(const int K,
 	  const int idj = i / p_Nq1D;
 	  s_Vq[idi][idj] = Vab1D[i];
 	  s_Vcq[idi][idj] = Vc1D[i];
+
+          /*
+          int ii = i;
+          while (ii < p_nE1Dentries){
+            s_E1D[ii] = E1D[ii];
+            ii += p_Nq2;
+          }
+          */
+
 	}
 
 	// init counter
@@ -465,6 +475,7 @@ kernel void rk_update_BBWADGq(const int K,
             dfloat val = 0.f;
             for (int j = 0; j < p_N-jj+1; ++j){
               const int jid = j + jj*p_Nq1D;
+              //val += s_E1D[id1D + j*p_Nq1D + jsk] * stmp[k2][idslice][jid];
               val += E1D[id1D + j*p_Nq1D + jsk] * stmp[k2][idslice][jid];
             }
             //rtmp[jj] = val;
@@ -722,6 +733,20 @@ kernel void rk_update_BBWADGq(const int K,
 
 #if 1
 
+    /*
+    for(int k2 = 0; k2 < p_KblkU; ++k2; inner1){
+      for(int i = 0; i < p_Nq2; ++i; inner0){
+        if (k2==0){
+          int ii = i;
+          while (ii < p_nE1Dentries){
+            s_E1D[ii] = E1DTr[ii];
+            ii += p_Nq2;
+          }
+        }
+      }
+    }
+    barrier(localMemFence)
+    */
     for(int jj = 1; jj <= p_N; ++jj){
       for(int k2 = 0; k2 < p_KblkU; ++k2; inner1){
         for(int i = 0; i < p_Nq2; ++i; inner0){
@@ -734,6 +759,7 @@ kernel void rk_update_BBWADGq(const int K,
             for (int j = 0; j < p_Nq1D; ++j){
               const int id = id1D + j*Nmjj + jsk;
               val += E1DTr[id] * stmp[k2][idslice][j + jj*p_Nq1D];
+              //val += s_E1D[id] * stmp[k2][idslice][j + jj*p_Nq1D];
             }
             stmp[k2][idslice][id1D + jj*p_Nq1D] = val;
 

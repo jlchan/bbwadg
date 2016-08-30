@@ -641,6 +641,7 @@ void InitWADG_subelem(Mesh *mesh,double(*c2_ptr)(double,double,double)){
   //cout << "E1D = " << endl << E1D << endl;
   setOccaArray(E1D,c_E1D);
   setOccaArray(E1DTr,c_E1DTr);
+  dgInfo.addDefine("p_nE1Dentries",nentries);
 
   VectorXd invC2Nscale = C2Nscale.array().inverse();
   setOccaArray(CNscale,c_CNscale);
