@@ -33,11 +33,11 @@ main: $(objects) $(headers) main.cpp
 	$(compiler) $(compilerFlags) -o main $(flags) $(objects) main.cpp $(paths) $(links)
 
 # planar elements with WADG for heterogeneous media
-subelem: $(objects) $(headers) main_subelem.cpp
+main_subelem: $(objects) $(headers) main_subelem.cpp
 	$(compiler) $(compilerFlags) -o main_subelem $(flags) $(objects) main_subelem.cpp $(paths) $(links)
 
 # planar elements for piecewise constant media - can use Bernstein-Bezier
-planar:	$(objects) $(headers) main_planar.cpp
+main_planar:	$(objects) $(headers) main_planar.cpp
 	$(compiler) $(compilerFlags) -o main_planar $(flags) $(objects) main_planar.cpp $(paths) $(links)
 
 $(oPath)/%.o:$(sPath)/%.cpp $(wildcard $(subst $(sPath)/,$(iPath)/,$(<:.cpp=.hpp))) $(wildcard $(subst $(sPath)/,$(iPath)/,$(<:.cpp=.tpp)))
@@ -50,5 +50,5 @@ clean:
 	rm -f main_subelem;
 	rm -rf main.dSYM/;
 
-.PHONY: main main_subelem clean
+.PHONY: main subelem planar clean
 #=================================================

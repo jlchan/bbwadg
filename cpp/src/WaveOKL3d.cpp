@@ -95,6 +95,7 @@ occa::kernel rk_update_BBWADG;
 occa::memory c_Vab1D, c_Vc1D;
 occa::memory c_ETri_vals, c_ETri_ids;
 occa::memory c_ETriTr_vals, c_ETriTr_ids;
+occa::memory c_E1D, c_E1DTr;
 occa::memory c_c2qDuffy;
 occa::memory c_quad_ids;
 
@@ -422,11 +423,13 @@ void InitWADG_subelem(Mesh *mesh,double(*c2_ptr)(double,double,double)){
   int Nq3 = Nq2*Nq1D;
 
   VectorXd rq,sq,tq,wq;
-  if (2*p_N+1 < 15){
+  if (0){//(2*p_N+1 < 15){
     tet_cubature(min(21,2*p_N+1),rq,sq,tq,wq); // 21 = max quadrature degree
   }else{
-    tet_cubature(min(21,2*p_N),rq,sq,tq,wq); // make TP = (N+1)^3 nodes
-    /*
+
+    // default to TP quadrature for now
+    //tet_cubature(min(21,2*p_N),rq,sq,tq,wq); // make TP = (N+1)^3 nodes
+
     VectorXd a1D,wa,c1D,wc;
     JacobiGQ(p_N,0,0,a1D,wa);
     JacobiGQ(p_N,2,0,c1D,wc);
@@ -434,7 +437,19 @@ void InitWADG_subelem(Mesh *mesh,double(*c2_ptr)(double,double,double)){
     sq.resize(Nq3);
     tq.resize(Nq3);
     wq.resize(Nq3);
-    */
+    int sk = 0;
+    for (int k = 0; k < Nq1D; ++k){
+      for (int i = 0; i < Nq1D; ++i){
+        for (int j = 0; j < Nq1D; ++j){
+          rq(sk) = a1D(i);
+          sq(sk) = a1D(j);
+          tq(sk) = c1D(k);
+          wq(sk) = wa(i)*wa(j)*wc(k);
+          //printf("point %d = %f, %f, %f\n",sk,a1D(i),a1D(j),c1D(k));
+          ++sk;
+        }
+      }
+    }
   }
   MatrixXd Vqtmp = Vandermonde3D(p_N,rq,sq,tq);
   MatrixXd Vq_reduced = mrdivide(Vqtmp,mesh->V);
@@ -593,6 +608,39 @@ void InitWADG_subelem(Mesh *mesh,double(*c2_ptr)(double,double,double)){
   setOccaArray(EiTr_vals4,c_EiTr_vals);
   setOccaIntArray(EiTr_ids4,c_EiTr_ids);
 
+
+  int nentries = 0;
+  for (int i = 0; i < p_N; ++i){
+    nentries += (p_N+1) * (i+1); // per degree elev op
+  }
+  VectorXd E1D(nentries);
+  VectorXd E1DTr(nentries);
+  VectorXd r1D, tmp;
+  JacobiGQ(p_N,0,0,r1D,tmp);
+  int off = 0;
+  for (int i = 1; i <= p_N; ++i){
+    MatrixXd V1 = Bern1D(p_N, r1D);
+    MatrixXd V2 = Bern1D(p_N-i, r1D);
+    MatrixXd Ei = mldivide(V1,V2);
+    //cout << "E" << i << " = " << Ei << endl;
+    for (int ii = 0; ii < Ei.rows(); ++ii){
+      for (int jj = 0; jj < Ei.cols(); ++jj){
+        int id = ii + jj*Ei.rows() + off;
+        E1D(id) = Ei(ii,jj);
+      }
+    }
+    MatrixXd EiTr = Ei.transpose();
+    for (int ii = 0; ii < EiTr.rows(); ++ii){
+      for (int jj = 0; jj < EiTr.cols(); ++jj){
+        int id = ii + jj*EiTr.rows() + off;
+        E1DTr(id) = EiTr(ii,jj);
+      }
+    }
+    off += Ei.rows()*Ei.cols();
+  }
+  //cout << "E1D = " << endl << E1D << endl;
+  setOccaArray(E1D,c_E1D);
+  setOccaArray(E1DTr,c_E1DTr);
 
   VectorXd invC2Nscale = C2Nscale.array().inverse();
   setOccaArray(CNscale,c_CNscale);
@@ -2123,6 +2171,7 @@ void test_RK(Mesh *mesh){
     rk_update_BBWADGq(mesh->K,
 		      c_ETri_vals, c_ETri_ids,
 		      c_ETriTr_vals, c_ETriTr_ids,
+                      c_E1D, c_E1DTr,
 		      c_quad_ids,
 		      c_Vab1D,
 		      c_Vc1D,

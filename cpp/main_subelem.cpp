@@ -11,7 +11,7 @@ double PulseInitialCondition(double x, double y, double z, double time){
 
 double WaveField(double x, double y, double z){
   //return 1.0 + .25*cos(2.0*M_PI*x);
-  //return 1.0 + x;   
+  //return 1.0 + x;
   return 1.0; // const for verification
 };
 
@@ -19,7 +19,7 @@ double WaveField(double x, double y, double z){
 int main(int argc, char **argv){
 
   printf("running heterogeneous subelem main\n");
-  
+
   Mesh *mesh;
   int k,n, sk=0;
 
@@ -43,7 +43,7 @@ int main(int argc, char **argv){
 
   printf("%d elements in mesh\n", mesh->K);
 
-  // initialize OCCA info 
+  // initialize OCCA info
   dfloat WaveInitOCCA3d(Mesh *mesh,int KblkV, int KblkS, int KblkU, int KblkQ, int KblkQf);
   dfloat dt = WaveInitOCCA3d(mesh,KblkV,KblkS,KblkU,KblkQ,KblkQf);
   printf("dt = %17.15f\n", dt);
@@ -57,11 +57,11 @@ int main(int argc, char **argv){
 
   dfloat *Q = (dfloat*) calloc(p_Nfields*mesh->K*p_Np, sizeof(dfloat));   // 4 fields
 
-  double (*uexptr)(double,double,double,double) = NULL; 
+  double (*uexptr)(double,double,double,double) = NULL;
   uexptr = &CavitySolution; // if domain = [-1,1]^3
-  //uexptr = &PulseInitialCondition; 
+  //uexptr = &PulseInitialCondition;
 
-  WaveSetU0(mesh,Q,0.0,uexptr); // interpolate 
+  WaveSetU0(mesh,Q,0.0,uexptr); // interpolate
   //WaveProjectU0(mesh,Q,0.0,uexptr); // L2 projection
 
   //writeVisToGMSH("p0.msh",mesh,Q,0,p_Nfields); return 0;
@@ -74,7 +74,7 @@ int main(int argc, char **argv){
 
   test_RK(mesh); return 0;
 
-  
+
   // =============  run solver  ================
 
   // load data onto GPU
@@ -101,4 +101,3 @@ int main(int argc, char **argv){
   /* end game */
   exit(0);
 }
-

@@ -511,7 +511,7 @@ MatrixXd Bern1D(int N, VectorXd r){
     V.col(i) = nchoosek(N,i) * x.array().pow(i) * (1.0 - x.array()).array().pow(N-i);
   }
   return V;
-  
+
 }
 
 MatrixXd BernTri(int N, VectorXd r, VectorXd s){
@@ -737,20 +737,20 @@ void tet_cubature_duffy(int N, VectorXd &a, VectorXd &wa,
   int Np = (N+1);
   a.resize(Np); wa.resize(Np);
   b.resize(Np); wb.resize(Np);
-  c.resize(Np); wc.resize(Np);  
+  c.resize(Np); wc.resize(Np);
 
 #define loadnodes_duffy(M)						\
   a(i) = p_r1D_N##M[i]; wa(i) = p_s_N##M[i]; t(i) = p_t_N##M[i];
-  
+
 }
 */
 
-// requires alpha, beta = integers 
+// requires alpha, beta = integers
 void JacobiGQ(int N, int alpha_int, int beta_int, VectorXd &r, VectorXd &w){
 
   double alpha = (double) alpha_int;
-  double beta = (double) beta_int;  
-  
+  double beta = (double) beta_int;
+
   int Np = (N+1);
   r.resize(Np);
   w.resize(Np);
@@ -770,7 +770,7 @@ void JacobiGQ(int N, int alpha_int, int beta_int, VectorXd &r, VectorXd &w){
       J(i,i+1) = 2.0 / (h1(i)+2.0) *
 	sqrt((i+1.0)*(i+1.0 + alpha+beta)*
 	     (i+1.0 + alpha)* (i+1.0 + beta) /
-	     (h1(i)+1.0)/ (h1(i)+3.0));      
+	     (h1(i)+1.0)/ (h1(i)+3.0));
     }
   }
   double tol = 1e-14;
