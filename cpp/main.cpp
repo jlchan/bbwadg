@@ -50,7 +50,7 @@ int main(int argc, char **argv){
     KblkQ = atoi(argv[6]);
     KblkQf = atoi(argv[7]);
   }
-  printf("Kblk (V,S,U,Q,Qf) = %d,%d,%d,%d,%d\n",KblkV,KblkS,KblkU,KblkQ,KblkQf);
+  printf("N = %d, K = %d, Kblk (V,S,U,Q,Qf) = %d,%d,%d,%d,%d\n",p_N,mesh->K,KblkV,KblkS,KblkU,KblkQ,KblkQf);
 
   // find element-element connectivity
   FacePair3d(mesh);

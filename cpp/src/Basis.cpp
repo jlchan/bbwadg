@@ -982,7 +982,7 @@ void get_sparse_ids(MatrixXd A, MatrixXi &cols, MatrixXd &vals){
   int ncols = A.cols();
 
   double maxVal = A.array().abs().maxCoeff();
-  double tol = 1e-6;
+  double tol = 1e-5;
   MatrixXi boolA = ((A.array().abs())>tol*maxVal).cast<int>();
   int max_col_vals = (boolA.rowwise().sum()).maxCoeff();
   //printf("max col vals = %d\n",max_col_vals);

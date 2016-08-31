@@ -41,18 +41,30 @@ kernel void rk_update_BBWADG(const int K,
       for(int i = 0; i < p_Np; ++i; inner0){
 
 	k = k1*p_KblkU + k2; // no need for klist here for heterogeneous WADG
+
 	if (k2==0 && i < (p_N+1)){
 	  s_cj[i] = cj[i];
 	}
 
-	if (k < K){
-	  const dfloat CN = CNscale[i];
+        // load to tmp, why not.
+        if (k2==0){
+          rtmp[0] = CNscale[i];
+        }
 
+	if (k < K){
+          const dfloat CN = rtmp[0];
+          //const dfloat CN = CNscale[i];
 	  // read in pressure rhs, scale by bb and CN
 	  sp[k2][i] = rhsQ[i + k*p_Np*p_Nfields]*CN;
 	  sc2[k2][i] = c2_bb[i + k*p_Np]*CN;
-
 	}
+#if 0
+        if (k==0){
+          dfloat val1 = sp[k2][i];
+          dfloat val2 = sc2[k2][i];
+          printf("sp[%d] = %f, sc2 = %f\n",i,val1,val2);
+        }
+#endif
 
         // initialize counter
         jsk = 0;
@@ -60,112 +72,165 @@ kernel void rk_update_BBWADG(const int K,
     }
     barrier(localMemFence);
 
-#if 1
     // ============= polynomial multiplication
+#if 0
 
-    //for (int j = 0; j < p_Np; ++j){
-    for (int kk = 0; kk <= p_N; ++kk){
-      for (int jj = 0; jj <= p_N-kk; ++jj){
-        for(int k2 = 0; k2 < p_KblkU; ++k2; inner1){
-          for(int i = 0; i < p_Np; ++i; inner0){
-
-            if (k < K){
-
-              // to optimize:
-              // - bitpack ints together
-              // - reduce loads: increment id when possible instead of reloading
-              int id = subtet_ids[i + jsk*p_Np];
-
-              for (int ii = 0; ii <=p_N-jj-kk; ++ii){
-                stmp[k2][id] += sc2[k2][jj]*sp[k2][i];
-                ++id;
-              }
-            }
-
-          }
-
-	}
-      }
-      barrier(localMemFence); // not sure if needed - can use smem atomics?
-
-    } // for (j < p_Np)
-
-    // rescale by 1/C2N
     for(int k2 = 0; k2 < p_KblkU; ++k2; inner1){
       for(int i = 0; i < p_Np; ++i; inner0){
-	int isk = i;
-	while (isk < p_N2p){
-	  const dfloat invC2N = invC2Nscale[isk];
-	  stmp[k2][isk] *= invC2N;
-	  isk += p_Np;
-	}
+
+        if (k < K){
+
+          for (int kk = 0; kk <= p_N; ++kk){
+            const int Nk = p_N-kk;
+            for (int jj = 0; jj <= Nk; ++jj){
+              // can also bitpack ints together
+              int id = subtet_ids[i + jsk*p_Np];
+              //int id = i;
+              const int Njk = p_N-jj-kk;
+              for (int ii = 0; ii <= Njk; ++ii){ // loop over sub-i index
+                stmp[k2][id] += sc2[k2][jsk]*sp[k2][i];
+                //stmp[k2][i] += sc2[k2][jsk]*sp[k2][i];
+                ++id; // to reduce loads, increment instead of loading when possible
+                ++jsk; // global counter - slower than expected!
+              }
+            }// jj loop
+          }// kk loop
+
+        } // k < K
       }
     }
     barrier(localMemFence);
 
-    // ===================== end polynomial multiplication step
+#else // try float4 loads and ilp
+
+    barrier(localMemFence);
 #endif
 
+
+    // rescale by 1/C2N
+    for(int k2 = 0; k2 < p_KblkU; ++k2; inner1){
+      for(int i = 0; i < p_Np; ++i; inner0){
+	if (k < K){
+          int isk = i;
+          while (isk < p_N2p){
+            const dfloat invC2N = invC2Nscale[isk];
+            //const dfloat invC2N = rtmp[isk/p_Np];
+            stmp[k2][isk] *= invC2N;
+            isk += p_Np;
+          }
+        }
+      }
+    }
+    barrier(localMemFence);
+
+    // printout
+#if 0
+    for(int k2 = 0; k2 < p_KblkU; ++k2; inner1){
+      for(int i = 0; i < p_Np; ++i; inner0){
+	if (k < K){
+          if (k==0){
+            int ii = i;
+            while (ii < p_N2p){
+              dfloat val = stmp[k2][ii];
+              printf("product[%d] = %f\n",ii,val);
+              ii += p_Np;
+            }
+          }
+        }
+      }
+    }
+#endif
+
+    // ===================== end polynomial multiplication step
+
     // =================== do degree reductions from 2N to N
+
 #if 1
+
     for (int jj = 0; jj < p_N; ++jj){
 
       for(int k2 = 0; k2 < p_KblkU; ++k2; inner1){
 	for(int i = 0; i < p_Np; ++i; inner0){
-	  const int Nj = 2*p_N-jj;
-	  int Np_reduce = (Nj+1)*(Nj+2)*(Nj+3)/6;
-	  int isk = i;
-	  while (isk < Np_reduce){
 
-	    // offset to use 2N degree reduc
-	    const int idE = isk + (Nj-1)*p_N2p;
-	    const int4 Ei_id = EiTr_ids[idE];
-	    const dfloat4 Ei_val = EiTr_vals[idE];
+	  if (k < K){
 
-	    rtmp[isk/p_Np] =
-	      //rtmp[i] =
-	      Ei_val.x*stmp[k2][Ei_id.x] +
-	      Ei_val.y*stmp[k2][Ei_id.y] +
-	      Ei_val.z*stmp[k2][Ei_id.z] +
-	      Ei_val.w*stmp[k2][Ei_id.w];
+            const int Nj = 2*p_N-jj-1; // target Np
+            int Np_reduce = (Nj+1)*(Nj+2)*(Nj+3)/6;
+            int isk = i;
+            while (isk < Np_reduce){
 
-	    isk += p_Np;
-	  }
-	}
+              // offset to use 2N degree reduc
+              const int idE = isk + Nj*p_N2p;
+              const int4 Ei_id = EiTr_ids[idE];
+              const dfloat4 Ei_val = EiTr_vals[idE];
+
+              //rtmp[isk/p_Np] = Ei_val.x*stmp[k2][Ei_id.x]; + Ei_val.y*stmp[k2][Ei_id.y] + Ei_val.z*stmp[k2][Ei_id.z];
+              /*
+              if (k==0 && jj == 0){
+                printf("Ei_vals[%d] = %f, %f, %f, %f. Ei_ids = %d, %d, %d, %d\n", isk,Ei_val.x,Ei_val.y,Ei_val.z, Ei_val.w, Ei_id.x,Ei_id.y,Ei_id.z,Ei_id.w);
+              }
+              */
+
+              rtmp[isk/p_Np] =
+                Ei_val.x*stmp[k2][Ei_id.x] +
+                Ei_val.y*stmp[k2][Ei_id.y] +
+                Ei_val.z*stmp[k2][Ei_id.z] +
+                Ei_val.w*stmp[k2][Ei_id.w];
+
+              isk += p_Np;
+            }
+          } // k < K
+        }
       }
       barrier(localMemFence);
 
       // reuse smem to store reduction
       for(int k2 = 0; k2 < p_KblkU; ++k2; inner1){
 	for(int i = 0; i < p_Np; ++i; inner0){
-	  const int Nj = 2*p_N-jj;
-	  const int Np_reduce = (Nj+1)*(Nj+2)*(Nj+3)/6;
-	  int isk = i;
-	  while (isk < Np_reduce){
-	    stmp[k2][isk] = rtmp[isk/p_Np];
-            //stmp[k2][isk] = rtmp[i];
-	    isk += p_Np;
-	  }
+	  if (k < K){
+            const int Nj = 2*p_N-jj-1;
+            const int Np_reduce = (Nj+1)*(Nj+2)*(Nj+3)/6;
+            int isk = i;
+            while (isk < Np_reduce){
+              stmp[k2][isk] = rtmp[isk/p_Np];
+              isk += p_Np;
+            }
+          }
 	}
       }
 
     } // =============  end loop over 2N->N degree reduction
 
     barrier(localMemFence); // ensure stmp has degree reduced results
+
 #endif
 
-    // ============ apply sum of E*E' operators in 2 sweeps
+#if 0
+    for(int k2 = 0; k2 < p_KblkU; ++k2; inner1){
+      for(int i = 0; i < p_Np; ++i; inner0){
+        if (k < K){
+          if (k==0){
+            dfloat val = stmp[k2][i];
+            printf("stmp[%d] = %f\n",i,val);
+          }
+        }
+      }
+    }
+#endif
 
-#if 1
+
+    // ============ projection: apply sum of E*E' operators in 2 sweeps
+
+#if 0
     // sweep #1 - degree reduce down from degree N to 0
     for (int jj = 0; jj <= p_N; ++jj){
 
-
       for(int k2 = 0; k2 < p_KblkU; ++k2; inner1){
 	for(int i = 0; i < p_Np; ++i; inner0){
-
+          if (k < K){
 	  if (jj==0){
 
+            // no need for reduction
 	    // save reduced result to register
 	    rtmp[jj] = stmp[k2][i];
 
@@ -180,10 +245,6 @@ kernel void rk_update_BBWADG(const int K,
 	      const int4 Ei_id = Ei_ids[idE];
 	      const dfloat4 Ei_val = Ei_vals[idE];
 
-	      //	      if (k==0){
-	      //		printf("Ei_id[%d] = %d, %d, %d, %d\n",idE,Ei_id.x,Ei_id.y,Ei_id.z,Ei_id.w);
-	      //	      }
-
 	      // save current reduced value to register
 	      rtmp[jj] =
 		Ei_val.x*stmp[k2][Ei_id.x] +
@@ -195,7 +256,7 @@ kernel void rk_update_BBWADG(const int K,
 
 
 	  } // end ifelse
-
+          }// k < K
 	}
       } // end inner loops
 
@@ -204,13 +265,15 @@ kernel void rk_update_BBWADG(const int K,
       // reuse smem
       for(int k2 = 0; k2 < p_KblkU; ++k2; inner1){
 	for(int i = 0; i < p_Np; ++i; inner0){
-	  const int Nj = p_N-jj;
-	  const int Np_reduce = (Nj+1)*(Nj+2)*(Nj+3)/6;
+	  if (k < K){
+            const int Nj = p_N-jj;
+            const int Np_reduce = (Nj+1)*(Nj+2)*(Nj+3)/6;
 
-	  if (i < Np_reduce){
-	    stmp[k2][i] = rtmp[jj];
-	    rtmp[jj] *= s_cj[jj]; // scale by coeff after writing to smem
-	  }
+            if (i < Np_reduce){
+              stmp[k2][i] = rtmp[jj];
+              rtmp[jj] *= s_cj[jj]; // scale by coeff after writing to smem
+            }
+          }
 
 	}
       }
@@ -219,39 +282,38 @@ kernel void rk_update_BBWADG(const int K,
 
     } // end loop over j - end degree reduction sweep
 
-#endif
-
-#if 1
     // sweep #2 - elevate up from degree 0 to N.
     for (int jj = 0; jj < p_N; ++jj){
 
       for(int k2 = 0; k2 < p_KblkU; ++k2; inner1){
 	for(int i = 0; i < p_Np; ++i; inner0){
 
-	  // elevate from degree j to j+1
-	  const int Nj = jj+1;
-	  const int Npj = (Nj+1)*(Nj+2)*(Nj+3)/6;
-	  if (i < Npj){
-	    // use jth degree elev op = from degree j to j+1
-	    const int idE = i + (Nj-1)*p_N2p;
-	    const int4 Ei_id = Ei_ids[idE];
-	    const dfloat4 Ei_val = Ei_vals[idE];
+	  if (k < K){
+            // elevate from degree j to j+1
+            const int Nj = jj+1;
+            const int Npj = (Nj+1)*(Nj+2)*(Nj+3)/6;
+            if (i < Npj){
+              // use jth degree elev op = from degree j to j+1
+              const int idE = i + (Nj-1)*p_N2p;
+              const int4 Ei_id = Ei_ids[idE];
+              const dfloat4 Ei_val = Ei_vals[idE];
 
-	    const dfloat val =
-	      Ei_val.x*stmp[k2][Ei_id.x] +
-	      Ei_val.y*stmp[k2][Ei_id.y] +
-	      Ei_val.z*stmp[k2][Ei_id.z] +
-	      Ei_val.w*stmp[k2][Ei_id.w];
+              const dfloat val =
+                Ei_val.x*stmp[k2][Ei_id.x] +
+                Ei_val.y*stmp[k2][Ei_id.y] +
+                Ei_val.z*stmp[k2][Ei_id.z] +
+                Ei_val.w*stmp[k2][Ei_id.w];
 
-	    // if j==0, don't accumulate. degree elev + scale by cj
-	    if (jj == 0){
-	      rtmp[p_N] = val*s_cj[p_N];
-	    }else{
-	      // rtmp = c_j*E_{N-j}^N applied to coeffs
-	      rtmp[p_N-jj] += val;
-	    }
-	  } // i < Npj
-	}
+              // if jj==0, don't accumulate. degree elev + scale by cj
+              if (jj == 0){
+                rtmp[p_N] = val*s_cj[p_N];
+              }else{
+                // rtmp = c_j*E_{N-j}^N applied to coeffs
+                rtmp[p_N-jj] += val;
+              }
+            } // i < Npj
+          }
+        }
       }
 
       barrier(localMemFence);
@@ -261,7 +323,7 @@ kernel void rk_update_BBWADG(const int K,
 	for(int i = 0; i < p_Np; ++i; inner0){
 	  const int Nj = jj+1;
 	  const int Npj = (Nj+1)*(Nj+2)*(Nj+3)/6;
-	  if (i < Npj){
+	  if (k < K  && i < Npj){
 	    stmp[k2][i] = rtmp[p_N-jj];
 	  }
 	}
@@ -276,7 +338,9 @@ kernel void rk_update_BBWADG(const int K,
     // add accumulated result to all Np coeffs and write to global mem
     for(int k2 = 0; k2 < p_KblkU; ++k2; inner1){
       for(int i = 0; i < p_Np; ++i; inner0){
-	rhsQ[i + k*p_Np*p_Nfields] = rtmp[0] + stmp[k2][i];
+        if (k < K){
+          rhsQ[i + k*p_Np*p_Nfields] = rtmp[0] + stmp[k2][i];
+        }
       }
     }
 #endif
@@ -458,9 +522,7 @@ kernel void rk_update_BBWADGq(const int K,
 #endif
     barrier(localMemFence);
 
-#define DENSE_ELEV 1
-#if DENSE_ELEV // load 1D elev ops - 1 sweep only
-
+    // load 1D elev ops - 1 sweep only
     for(int jj = 1; jj <= p_N; ++jj){
       for(int k2 = 0; k2 < p_KblkU; ++k2; inner1){
 	for(int i = 0; i < p_Nq2; ++i; inner0){
@@ -488,71 +550,6 @@ kernel void rk_update_BBWADGq(const int K,
       }
       barrier(localMemFence);
     } // hex jj loop
-
-#else // progressively elevate
-
-    // elevate wedge lines to hex
-    for(int jj = 0; jj < p_N; ++jj){
-      for(int k2 = 0; k2 < p_KblkU; ++k2; inner1){
-	for(int i = 0; i < p_Nq2; ++i; inner0){
-
-	  // start from furthest slice of the wedge
-	  // elevate from degree jj to jj+1
-	  if (k < K && i < (p_Nq1D)*(jj+2)){ // (jj+2) in receiving slice
-
-	    // j2 = reloop over previously elevated slices
-	    const int jjp2 = (jj+2);
-	    for (int j2 = p_N-jj; j2 <= p_N; ++j2){
-	      const int idslice = i / jjp2;
-	      const int id1D = i % jjp2;
-	      const int id = id1D + j2*(p_Nq1D); // id for quad
-
-	      int jp1 = jj+1;
-	      dfloat a,b;
-	      int ida, idb;
-	      // if endpoint
-	      if (id1D==0 || id1D==jjp2){
-		a = 1.f;
-		b = 0.f;
-		ida = (id1D==0) ? id : id-1;
-		idb = (id1D==0) ? id : id-1;
-	      }else{
-		a = (dfloat) id1D / ((dfloat) jp1);
-		b = (dfloat) (jp1-id1D) / ((dfloat) jp1);
-		ida = id-1;
-		idb = id;
-	      }
-
-	      // 1D degree elevation
-	      rtmp[j2] = a*stmp[k2][idslice][ida] + b*stmp[k2][idslice][idb];
-
-	    } // j2 loop
-	  } // if k < K
-
-	}
-      }
-      barrier(localMemFence);
-
-      // reuse smem
-      for(int k2 = 0; k2 < p_KblkU; ++k2; inner1){
-	for(int i = 0; i < p_Nq2; ++i; inner0){
-
-	  // write out all slices
-	  const int jjp2 = (jj+2);
-	  for (int j2 = p_N-jj; j2 <= p_N; ++j2){
-	    if (i < (p_Nq1D)*jjp2){
-	      const int idslice = i / jjp2;
-	      const int id1D = i % jjp2;
-	      const int id = id1D + j2*(p_Nq1D); // id for quad
-
-	      stmp[k2][idslice][id] = rtmp[j2];
-	    }
-	  }
-	}
-      }
-
-    } // hex jj loop
-#endif
 
 #if 1
     // loop over ab slices
@@ -718,7 +715,6 @@ kernel void rk_update_BBWADGq(const int K,
 	    for (int j = 0; j < (p_Nq1D); ++j){
 	      val += s_Vcq[j][jj]*rtmp[j];
 	    }
-
 	    stmp[k2][jj][i] = val;
 
 	  } // jj loop
@@ -730,23 +726,6 @@ kernel void rk_update_BBWADGq(const int K,
     }
 
     // reduce hex to wedge
-
-#if DENSE_ELEV
-
-    /*
-    for(int k2 = 0; k2 < p_KblkU; ++k2; inner1){
-      for(int i = 0; i < p_Nq2; ++i; inner0){
-        if (k2==0){
-          int ii = i;
-          while (ii < p_nE1Dentries){
-            s_E1D[ii] = E1DTr[ii];
-            ii += p_Nq2;
-          }
-        }
-      }
-    }
-    barrier(localMemFence)
-    */
     for(int jj = 1; jj <= p_N; ++jj){
       for(int k2 = 0; k2 < p_KblkU; ++k2; inner1){
         for(int i = 0; i < p_Nq2; ++i; inner0){
@@ -759,7 +738,6 @@ kernel void rk_update_BBWADGq(const int K,
             for (int j = 0; j < p_Nq1D; ++j){
               const int id = id1D + j*Nmjj + jsk;
               val += E1DTr[id] * stmp[k2][idslice][j + jj*p_Nq1D];
-              //val += s_E1D[id] * stmp[k2][idslice][j + jj*p_Nq1D];
             }
             stmp[k2][idslice][id1D + jj*p_Nq1D] = val;
 
@@ -771,64 +749,7 @@ kernel void rk_update_BBWADGq(const int K,
     }
     barrier(localMemFence);
 
-#else
-    for(int jj = 0; jj < p_N; ++jj){
-      for(int k2 = 0; k2 < p_KblkU; ++k2; inner1){
-	for(int i = 0; i < p_Nq2; ++i; inner0){
-
-          // start from furthest slice of the wedge
-	  // reduce from p_N-jj+1 nodes to (p_N-jj) nodes
-	  const int Nmjj = (p_N-jj);
-
-	  if (k < K && i < (p_Nq1D)*Nmjj){ // (p_N-jj) nodes in receiving line
-	    // j2 = reloop over previously elevated slices
-	    for (int j2 = jj+1; j2 <= p_N; ++j2){
-	      const int idslice = i / Nmjj;
-
-	      const int id1D = i % Nmjj;
-	      const int id = id1D + j2*(p_Nq1D); // id for quad
-
-
-	      int ida = id;
-	      int idb = id + 1;
-	      dfloat a = (dfloat) (p_N-id1D) / ((dfloat) Nmjj);
-	      dfloat b = (dfloat) (id1D+1) / ((dfloat) Nmjj);
-	      if (id1D==0 || id1D==(p_N-jj)){ // if endpoint
-		const dfloat endval = ((dfloat) id1D+1) / ((dfloat) Nmjj);
-		a = (id1D==0) ? 1.f : endval;
-		b = (id1D==0) ? endval : 1.f;
-	      }
-
-	      // 1D degree elevation
-	      rtmp[j2] = a*stmp[k2][idslice][ida] + b*stmp[k2][idslice][idb];
-	    } // j2 loop
-	  } // if k < K
-	}
-      }
-      barrier(localMemFence);
-
-      // reuse smem
-      for(int k2 = 0; k2 < p_KblkU; ++k2; inner1){
-	for(int i = 0; i < p_Nq2; ++i; inner0){
-
-	  // write out all slices
-	  for (int j2 = jj+1; j2 <= p_N; ++j2){
-	    const int Nmjj = (p_N-jj);
-	    if (i < (p_Nq1D)*Nmjj){
-	      const int idslice = i / Nmjj;
-
-	      const int id1D = i % Nmjj;
-	      const int id = id1D + j2*(p_Nq1D); // id for quad
-
-	      stmp[k2][idslice][id] = rtmp[j2];
-	    }
-	  }
-	}
-      }
-    } // hex jj loop
-#endif
-
-    // remap hex indices to wedge indices
+    // remap hex indices to wedge indices using tmp storage
     for(int k2 = 0; k2 < p_KblkU; ++k2; inner1){
       for(int i = 0; i < p_Nq2; ++i; inner0){
 	if (i < p_NpTri){
@@ -840,7 +761,6 @@ kernel void rk_update_BBWADGq(const int K,
       }
     }
     barrier(localMemFence);
-
     for(int k2 = 0; k2 < p_KblkU; ++k2; inner1){
       for(int i = 0; i < p_Nq2; ++i; inner0){
 	if (i < p_NpTri){
@@ -848,6 +768,9 @@ kernel void rk_update_BBWADGq(const int K,
 	    stmp[k2][jj][i] = rtmp[jj];
 	  }
 	}
+
+        // initialize counter
+        jsk = 0;
       }
     }
 
@@ -875,9 +798,7 @@ kernel void rk_update_BBWADGq(const int K,
 	  }
 	} //inner0
       }// inner1
-
-      // make sure reads from stmp are done
-      barrier(localMemFence);
+      barrier(localMemFence);       // make sure reads from stmp are done
 
       // write back stored values to hex slices
       for(int k2 = 0; k2 < p_KblkU; ++k2; inner1){
@@ -889,7 +810,6 @@ kernel void rk_update_BBWADGq(const int K,
 	    for (int j2 = jj+1; j2 <= p_N; ++j2){
 	      stmp[k2][j2][i] = rtmp[j2];
 	    }
-
 	  }
 	}
       }
@@ -898,44 +818,73 @@ kernel void rk_update_BBWADGq(const int K,
     barrier(localMemFence);
 #endif
 
-#if 0
-    // tet printout
+    // map back to tet
     for (int j = 0; j <= p_N; ++j){
       for(int k2 = 0; k2 < p_KblkU; ++k2; inner1){
 	for (int i = 0; i < p_Nq2; ++i; inner0){
-	  if (k==0 && i < p_NpTri){
-	    dfloat val = stmp[k2][j][i];
-	    printf("tet integrated wedge stmp[%d][%d] = %f\n",j,i,val);
+          const int Nj = p_N-j;
+          const int Np_slice = (Nj+1)*(Nj+2)/2;
+	  if (k<K && i < Np_slice){
+	    sp[k2][i + jsk] = stmp[k2][j][i];
+            jsk += Np_slice;
 	  }
 	}
       }
     }
+
+#if 0
+    // tet printout
+    for(int k2 = 0; k2 < p_KblkU; ++k2; inner1){
+      for (int i = 0; i < p_Nq2; ++i; inner0){
+        int ii = i;
+        while(k < K && ii < p_Np){
+          dfloat val = sp[k2][ii];
+          if (k==0){
+            printf("tet integrated wedge stmp[%d] = %f\n",i,val);
+          }
+          ii += p_Nq2;
+        }
+      }
+    }
 #endif
 
+    // need to invert mass matrix here
+
+#if 1
+    // add accumulated result to all Np coeffs and write to global mem
+    for(int k2 = 0; k2 < p_KblkU; ++k2; inner1){
+      for(int i = 0; i < p_Nq2; ++i; inner0){
+        int ii = i;
+	while (ii < p_Np){
+          rhsQ[ii + k*p_Np*p_Nfields] = sp[k2][ii];
+          ii += p_Nq2;
+        }
+      }
+    }
+#endif
   } // outer0
 }
 
 /*
 // Ainsworth Duffy
 kernel void mult_duffy(const int K,
-const dfloat * restrict Va,
-const dfloat * restrict Vb,
-const dfloat * restrict Vc,
-const dfloat * restrict wc2q,
-dfloat * restrict rhsQ){
+                       const dfloat * restrict Va,
+                       const dfloat * restrict Vb,
+                       const dfloat * restrict Vc,
+                       const dfloat * restrict wc2q,
+                       dfloat * restrict rhsQ){
 
-for(int k1=0; k1<(K+p_KblkU-1)/p_KblkU; ++k1; outer0){
+  for(int k1=0; k1<(K+p_KblkU-1)/p_KblkU; ++k1; outer0){
 
-shared dfloat sp[p_KblkU][p_Np];
+    shared dfloat sp[p_KblkU][p_Np];
 
-for(int k2 = 0; k2 < p_KblkU; ++k2; inner1){
-for (int i = 0; i < p_Np; ++i; inner0){
+    for(int k2 = 0; k2 < p_KblkU; ++k2; inner1){
+      for (int i = 0; i < p_Np; ++i; inner0){
 
-}
-}
+      }
+    }
 
-
-}// outer
+  }// outer
 }
 */
 
@@ -1001,11 +950,8 @@ kernel void mult_quad(const int K,
 
 	if (k < K){
 
-          // this is the problem line - why?
+          // scale by quadrature
           const dfloat c2 = c2q[n + k*p_Nq_reduced];
-          //          if (k==0){
-          //            printf("p_Nq_reduced = %d, p_Nq3 = %d, c2[%d,%d] = %f\n",p_Nq_reduced,p_Nq3,n,k,c2);
-          //          }
 	  sp[k2][n] = rpq * c2;
 
 	}
@@ -1024,38 +970,11 @@ kernel void mult_quad(const int K,
 	  for (int j = 0; j < p_Nq_reduced; ++j){
 
 	    const dfloat Pq_ij = Pq[n + j*p_Np];
-
-	    // accumulate into private vars
 	    rp += Pq_ij * sp[k2][j];
 	  }
 
 	  rhsQ[n + k*p_Np*p_Nfields] = rp;
 
-	  /*
-	    dfloat resx,resy,resz,resw;
-	    int id = n + k*p_Np*p_Nfields;
-	    resx = resQ[id]; id += p_Np;
-	    resy = resQ[id]; id += p_Np;
-	    resz = resQ[id]; id += p_Np;
-	    resw = resQ[id];
-
-	    resx = fa*resx + fdt*rp;
-	    resy = fa*resy + fdt*ru;
-	    resz = fa*resz + fdt*rv;
-	    resw = fa*resw + fdt*rw;
-
-	    id = n + k*p_Np*p_Nfields;
-	    resQ[id] = resx; id += p_Np;
-	    resQ[id] = resy; id += p_Np;
-	    resQ[id] = resz; id += p_Np;
-	    resQ[id] = resw;
-
-	    id = n + k * p_Np * p_Nfields;
-	    Q[id] += fb*resx; id += p_Np;
-	    Q[id] += fb*resy; id += p_Np;
-	    Q[id] += fb*resz; id += p_Np;
-	    Q[id] += fb*resw;
-	  */
 	}
 
       } // inner 0

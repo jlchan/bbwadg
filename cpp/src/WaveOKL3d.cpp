@@ -82,6 +82,7 @@ occa::memory c_Qf; // stores solution values at face quad points
 
 // poly mult vars
 occa::memory c_subtet_ids;
+occa::memory c_subtet_ids4;
 occa::memory c_CNscale, c_invC2Nscale;
 occa::memory c_c2_bb;
 occa::memory c_Ei_vals, c_Ei_ids;
@@ -484,8 +485,8 @@ void InitWADG_subelem(Mesh *mesh,double(*c2_ptr)(double,double,double)){
   int NN, kksk, jjsk, ksk, jsk;
 
   MatrixXi subtet_ids(p_Np,p_Np); subtet_ids.fill(0);
-  int idsubtet = 0;
 
+  int idsubtet = 0;
   kksk = 0;
   for (int kk = 0; kk <= p_N; ++kk){
     jjsk = 0;
@@ -518,6 +519,27 @@ void InitWADG_subelem(Mesh *mesh,double(*c2_ptr)(double,double,double)){
     kksk += (NN+1)*(NN+2)/2;
   }
   //cout << "subtet_ids = " << endl << subtet_ids << endl;
+
+  /*
+  // pack subtet ids into int4s
+  int Np2 = p_Np*p_Np;
+  int Np2div4 = (Np2+4-1)/4;
+  int NpDiv4 = (p_Np+4-1)/4; // np rounded to nearest mult of 4
+  VectorXi subtet_ids4(p_Np*NpDiv4*4);
+  subtet_ids4.fill(0);
+  for (int i = 0; i < p_Np; ++i){
+    int sk4 = 0;
+    for (int j = 0; j < NpDiv4; ++j){
+      for (int i4 = 0; i4 < 4; ++i4){
+        if (sk4 < p_Np){
+          int id = i + j*p_Np;
+          subtet_ids(4*id + i4) = subtet_ids(i,sk4);
+        }
+        ++sk4;
+      }
+    }
+  }
+  */
 
   VectorXd CNscale(p_Np);
   int sk = 0;
@@ -608,7 +630,6 @@ void InitWADG_subelem(Mesh *mesh,double(*c2_ptr)(double,double,double)){
   setOccaArray(EiTr_vals4,c_EiTr_vals);
   setOccaIntArray(EiTr_ids4,c_EiTr_ids);
 
-
   int nentries = 0;
   for (int i = 0; i < p_N; ++i){
     nentries += (p_N+1) * (i+1); // per degree elev op
@@ -648,7 +669,7 @@ void InitWADG_subelem(Mesh *mesh,double(*c2_ptr)(double,double,double)){
   setOccaArray(invC2Nscale,c_invC2Nscale);
   setOccaArray(c2_bb,c_c2_bb);
   setOccaIntArray(subtet_ids,c_subtet_ids);
-
+  //setOccaIntArray(subtet_ids4,c_subtet_ids4);
 
   // solve system for c_j coefficients
   int d = 3;
@@ -1396,7 +1417,7 @@ dfloat WaveInitOCCA3d(Mesh *mesh, int KblkVin, int KblkSin,
   c_EEL_ids = device.malloc(p_Np*mesh->EEL_nnz*sizeof(int),h_EEL_ids);
 #endif
 
-  cout << "cEL = " << endl << mesh->cEL << endl;
+  //cout << "cEL = " << endl << mesh->cEL << endl;
   setOccaArray(mesh->cEL,c_cEL); // for slice-by-slice kernel
 
   int *h_slice_ids = (int*) malloc(p_Np*4*sizeof(int));
@@ -2118,7 +2139,7 @@ void RK_step(Mesh *mesh, dfloat rka, dfloat rkb, dfloat fdt){
 }
 
 
-void test_RK(Mesh *mesh){
+void test_RK(Mesh *mesh, int KblkU){
 
   MatrixXd Qtest(p_Nfields*p_Np,mesh->K);
   Qtest.fill(0.0);
@@ -2140,6 +2161,17 @@ void test_RK(Mesh *mesh){
   }
   occa::memory c_c2Test;
   setOccaArray(c2Test,c_c2Test);
+
+  //int N2p = (2*p_N+1)*(2*p_N+2)*(2*p_N+3)/6;
+  MatrixXd c2bb(p_Np,mesh->K);
+  for (int e = 0; e < mesh->K; ++e){
+    for (int i = 0; i < p_Np; ++i){
+      c2bb(i,e) = (dfloat) i+1;
+    }
+  }
+  occa::memory c_c2_bb_local;
+  setOccaArray(c2bb,c_c2_bb_local);
+
   //cout << "c2 Test = " << endl << c2Test << endl;
 
   occa::initTimer(device);
@@ -2147,7 +2179,8 @@ void test_RK(Mesh *mesh){
   double elapsed1 = 0.0;
   double elapsed2 = 0.0;
   double elapsed3 = 0.0;
-  for (int i = 0; i < 1; ++i){
+  int nsteps = 1;
+  for (int i = 0; i < nsteps; ++i){
     occa::tic("");
     mult_quad(mesh->K,
 	      c_Vq_reduced, c_Pq_reduced, c_Jq_reduced,c_c2Test,
@@ -2163,8 +2196,8 @@ void test_RK(Mesh *mesh){
 		     c_Ei_vals, c_Ei_ids,
 		     c_EiTr_vals, c_EiTr_ids,
 		     c_cj,
-		     c_c2_bb,
-		     c_rhsQ);
+		     c_c2_bb_local,
+		     c_Qtest);
     device.finish();
     elapsed2 += occa::toc("",rk_update_BBWADG, 0.0,0.0);
 
@@ -2181,7 +2214,10 @@ void test_RK(Mesh *mesh){
     device.finish();
     elapsed3 += occa::toc("",rk_update_BBWADGq, 0.0,0.0);
   }
-  printf("elapsed1 = %g, elapsed2 = %g, elapsed3 = %g\n",elapsed1,elapsed2,elapsed3);
+  elapsed1 /= nsteps;
+  elapsed2 /= nsteps;
+  elapsed3 /= nsteps;
+  printf("elapsed123(%d,:) = [%g,%g,%g];\n",KblkU,elapsed1,elapsed2,elapsed3);
 
   return;
 

@@ -32,6 +32,10 @@ int main(int argc, char **argv){
     KblkS = atoi(argv[4]);
     KblkU = atoi(argv[5]);
   }
+  // hack for test_rk
+  if(argc > 2){
+    KblkU = atoi(argv[2]);
+  }
   printf("for N = %d, Kblk (V,S,U,Q,Qf) = %d,%d,%d,%d,%d\n",
 	 p_N,KblkV,KblkS,KblkU,KblkQ,KblkQf);
 
@@ -52,6 +56,7 @@ int main(int argc, char **argv){
 
   double (*c2_ptr)(double,double,double) = &WaveField;
   InitWADG_subelem(mesh,c2_ptr);
+  printf("initialized wadg subelem\n");
 
   //  =========== field storage (dfloat) ===========
 
@@ -72,7 +77,8 @@ int main(int argc, char **argv){
 
   // === test ===
 
-  test_RK(mesh); return 0;
+  test_RK(mesh,KblkU);
+  return 0;
 
 
   // =============  run solver  ================
