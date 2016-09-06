@@ -424,7 +424,8 @@ void InitWADG_subelem(Mesh *mesh,double(*c2_ptr)(double,double,double)){
   int Nq3 = Nq2*Nq1D;
 
   VectorXd rq,sq,tq,wq;
-  if (0){//(2*p_N+1 < 15){
+  //  if (0){
+  if (2*p_N+1 <= 15){
     tet_cubature(min(21,2*p_N+1),rq,sq,tq,wq); // 21 = max quadrature degree
   }else{
 
@@ -694,6 +695,7 @@ void InitWADG_subelem(Mesh *mesh,double(*c2_ptr)(double,double,double)){
   //cout << "for N = " << p_N << ", cj = " << endl << cj << endl;
   setOccaArray(cj,c_cj);
   dgInfo.addDefine("p_N2p",N2p);
+  //dgInfo.addDefine("p_N2pBank",N2p+1);
   dgInfo.addDefine("p_max8Np1D",max(8,p_N+1));
 
   // =============== quadrature-based duffy for BB ==================
@@ -2201,6 +2203,13 @@ void test_RK(Mesh *mesh, int KblkU){
     device.finish();
     elapsed2 += occa::toc("",rk_update_BBWADG, 0.0,0.0);
 
+    for (int e = 0; e < mesh->K; ++e){
+      for (int i = 0; i < p_Np; ++i){
+        //Qtest(i,e) = (dfloat) i + e;
+        Qtest(i,e) = (dfloat) i+1;
+      }
+    }
+    setOccaArray(Qtest,c_Qtest);
     occa::tic("");
     rk_update_BBWADGq(mesh->K,
 		      c_ETri_vals, c_ETri_ids,
@@ -2213,11 +2222,14 @@ void test_RK(Mesh *mesh, int KblkU){
 		      c_Qtest);
     device.finish();
     elapsed3 += occa::toc("",rk_update_BBWADGq, 0.0,0.0);
+
+
   }
   elapsed1 /= nsteps;
   elapsed2 /= nsteps;
   elapsed3 /= nsteps;
-  printf("elapsed123(%d,:) = [%g,%g,%g];\n",KblkU,elapsed1,elapsed2,elapsed3);
+  printf("%% time1 = multq, time 2 = bbmult, time 3 = duffy\n");
+  printf("times123(%d,:) = [%g,%g,%g];\n",KblkU,elapsed1,elapsed2,elapsed3);
 
   return;
 
