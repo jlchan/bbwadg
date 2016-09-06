@@ -73,25 +73,26 @@ kernel void rk_update_BBWADG(const int K,
     barrier(localMemFence);
 
     // ============= polynomial multiplication
-#if 0
+#if 1
 
     for(int k2 = 0; k2 < p_KblkU; ++k2; inner1){
       for(int i = 0; i < p_Np; ++i; inner0){
 
         if (k < K){
 
+          int jcount = 0;
           for (int kk = 0; kk <= p_N; ++kk){
             const int Nk = p_N-kk;
             for (int jj = 0; jj <= Nk; ++jj){
               // can also bitpack ints together
-              int id = subtet_ids[i + jsk*p_Np];
-              //int id = i;
+              int id = subtet_ids[i + jcount*p_Np];
               const int Njk = p_N-jj-kk;
               for (int ii = 0; ii <= Njk; ++ii){ // loop over sub-i index
-                stmp[k2][id] += sc2[k2][jsk]*sp[k2][i];
+                stmp[k2][id] += sc2[k2][jcount]*sp[k2][i];
                 //stmp[k2][i] += sc2[k2][jsk]*sp[k2][i];
                 ++id; // to reduce loads, increment instead of loading when possible
-                ++jsk; // global counter - slower than expected!
+                //++jsk; // global counter - slower than expected!
+                ++jcount;
               }
             }// jj loop
           }// kk loop
@@ -139,6 +140,7 @@ kernel void rk_update_BBWADG(const int K,
         }
       }
     }
+
 #endif
 
     // ===================== end polynomial multiplication step
@@ -205,6 +207,7 @@ kernel void rk_update_BBWADG(const int K,
 
 #endif
 
+    //printout
 #if 0
     for(int k2 = 0; k2 < p_KblkU; ++k2; inner1){
       for(int i = 0; i < p_Np; ++i; inner0){
@@ -403,15 +406,6 @@ kernel void rk_update_BBWADGq(const int K,
 	  const int idj = i / p_Nq1D;
 	  s_Vq[idi][idj] = Vab1D[i];
 	  s_Vcq[idi][idj] = Vc1D[i];
-
-          /*
-          int ii = i;
-          while (ii < p_nE1Dentries){
-            s_E1D[ii] = E1D[ii];
-            ii += p_Nq2;
-          }
-          */
-
 	}
 
 	// init counter
@@ -435,6 +429,22 @@ kernel void rk_update_BBWADGq(const int K,
 	}
       }
     }
+
+#if 0
+    for(int k2 = 0; k2 < p_KblkU; ++k2; inner1){
+      for(int i = 0; i < p_Nq2; ++i; inner0){
+        for (int j2 = 0; j2 <= p_N; ++j2){
+          if (k < K && i < p_Nq2){
+            if (k==0){
+              dfloat val = stmp[k2][j2][i];
+              printf("tet values: val[%d][%d] = %f\n",j2,i,val);
+            }
+          }
+        }
+      }
+    }
+    barrier(localMemFence);
+#endif
 
 
     // interpolate tet control pts to wedge
@@ -522,6 +532,26 @@ kernel void rk_update_BBWADGq(const int K,
 #endif
     barrier(localMemFence);
 
+
+#if 0
+    barrier(localMemFence);
+    // wedge BB printout
+    for(int k2 = 0; k2 < p_KblkU; ++k2; inner1){
+      for (int i = 0; i < p_Nq2; ++i; inner0){
+        if(k < K){
+          for (int j = 0; j <= p_N; ++j){
+            dfloat val = stmp[k2][j][i];
+            if (k==0){
+              printf("wedge stmp[%d][%d] = %f\n",j,i,val);
+            }
+          }
+        }
+      }
+    }
+    barrier(localMemFence);
+#endif
+
+
     // load 1D elev ops - 1 sweep only
     for(int jj = 1; jj <= p_N; ++jj){
       for(int k2 = 0; k2 < p_KblkU; ++k2; inner1){
@@ -568,11 +598,13 @@ kernel void rk_update_BBWADGq(const int K,
 	      val += s_Vq[idi][j] * stmp[k2][jj][j + idj*(p_Nq1D)];
 	    }
 	    rtmp[jj] = val;
-
+            //stmp[k2][jj][i] = val;
 	  }
 	}
       }
       barrier(localMemFence);
+
+      // this barrier doesn't seem to be needed - why??
       for(int k2 = 0; k2 < p_KblkU; ++k2; inner1){
 	for (int i = 0; i < p_Nq2; ++i; inner0){
 	  if (k < K ){
@@ -592,14 +624,15 @@ kernel void rk_update_BBWADGq(const int K,
 
 	    dfloat val = 0.f;
 	    for (int j = 0; j < (p_Nq1D); ++j){
-	      //val += s_Vq[idi][idj] * stmp[k2][jj][id];
 	      val += s_Vq[idi][j] * stmp[k2][jj][idj + j*(p_Nq1D)];
 	    }
 	    rtmp[jj] = val;
+            //stmp[k2][jj][i] = rtmp[jj];
 	  }
 	}
       }
       barrier(localMemFence);
+
       for(int k2 = 0; k2 < p_KblkU; ++k2; inner1){
 	for (int i = 0; i < p_Nq2; ++i; inner0){
 	  if (k < K){
@@ -612,6 +645,7 @@ kernel void rk_update_BBWADGq(const int K,
     } // jj loop over slices
 
     // apply vertical TP interp using stored register values
+    // scale by c2
     for(int k2 = 0; k2 < p_KblkU; ++k2; inner1){
       for(int i = 0; i < p_Nq2; ++i; inner0){
 
@@ -651,12 +685,10 @@ kernel void rk_update_BBWADGq(const int K,
 	      val += s_Vq[j][idi] * stmp[k2][jj][j + idj*(p_Nq1D)];
 	    }
 	    rtmp[jj] = val;
-
 	  }
 	}
       }
       barrier(localMemFence);
-
       for(int k2 = 0; k2 < p_KblkU; ++k2; inner1){
 	for (int i = 0; i < p_Nq2; ++i; inner0){
 	  if (k < K){
@@ -683,7 +715,6 @@ kernel void rk_update_BBWADGq(const int K,
 	}
       }
       barrier(localMemFence);
-
       for(int k2 = 0; k2 < p_KblkU; ++k2; inner1){
 	for (int i = 0; i < p_Nq2; ++i; inner0){
 	  if (k < K){
@@ -833,6 +864,7 @@ kernel void rk_update_BBWADGq(const int K,
     }
 
 #if 0
+    barrier(localMemFence);
     // tet printout
     for(int k2 = 0; k2 < p_KblkU; ++k2; inner1){
       for (int i = 0; i < p_Nq2; ++i; inner0){
@@ -846,6 +878,7 @@ kernel void rk_update_BBWADGq(const int K,
         }
       }
     }
+    barrier(localMemFence);
 #endif
 
     // need to invert mass matrix here
@@ -1326,12 +1359,14 @@ kernel void mult_quad(const int K,
 	if (k < K){
 
 	  // prefetch
+          const dfloat c2 = c2q[n + k*p_Nq_reduced];
 	  rpq = 0.f;
 	  for (int j = 0; j < p_Np; ++j){
 
 	    const dfloat Vq_ij = Vq[n + j*p_Nq_reduced];
 	    rpq += Vq_ij * sp[k2][j];
 	  }
+          rpq *= c2;
 	}
       }
     }
@@ -1345,8 +1380,7 @@ kernel void mult_quad(const int K,
 	if (k < K){
 
           // scale by quadrature
-          const dfloat c2 = c2q[n + k*p_Nq_reduced];
-	  sp[k2][n] = rpq * c2;
+	  sp[k2][n] = rpq;
 
 	}
       } // inner0

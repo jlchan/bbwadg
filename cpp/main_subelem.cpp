@@ -36,8 +36,8 @@ int main(int argc, char **argv){
   if(argc > 2){
     KblkU = atoi(argv[2]);
   }
-  printf("for N = %d, Kblk (V,S,U,Q,Qf) = %d,%d,%d,%d,%d\n",
-	 p_N,KblkV,KblkS,KblkU,KblkQ,KblkQf);
+  printf("for N = %d, Kblk (V,S,U) = %d,%d,%d\n",
+	 p_N,KblkV,KblkS,KblkU);
 
   // find element-element connectivity
   FacePair3d(mesh);
@@ -79,7 +79,6 @@ int main(int argc, char **argv){
 
   test_RK(mesh,KblkU);
   return 0;
-
 
   // =============  run solver  ================
 
