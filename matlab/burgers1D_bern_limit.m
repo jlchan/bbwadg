@@ -1,4 +1,4 @@
-function advec1D_bern_limit
+function burgers1D_bern_limit
 
 % function [u] = Advec1D(u, FinalTime)
 % Purpose  : Integrate 1D advection until FinalTime starting with
@@ -10,7 +10,7 @@ Globals1D;
 N = 8;
 
 % Generate simple mesh
-K1D = 16;
+K1D = 32;
 [Nv, VX, K, EToV] = MeshGen1D(-1,1,K1D);
 
 % Initialize solver and construct grid and metric
@@ -37,11 +37,12 @@ uex = @(x) -1./(1 + exp(-d*(x-1/3))) + 1./(1 + exp(-d*(x+1/3)));%x > -1/3 & x < 
 uex = @(x) (x > -3/4 & x < -1/4) + exp(-50*(x-1/2).^2);
 % uex = @(x) 1-cos(pi*x);
 % uex = @(x) -sin(pi*x);
+uex = @(x) (x<=-.5).*2 + (x>-.5)*1;
 u = limit(uex(x));
 % u = uex(x);
 
 % Solve Problem
-FinalTime = 1;
+FinalTime = .75;
 
 time = 0;
 
@@ -53,37 +54,31 @@ xmin = min(abs(x(1,:)-x(2,:)));
 
 dt   = .4*xmin;
 Nsteps = ceil(FinalTime/dt); dt = FinalTime/Nsteps;
-ssprk = [1 .25 2/3]; % ssp coeffs
+
 
 % outer time step loop
-for tstep=1:Nsteps
-    
-    % ssp-rk3      
+for tstep=1:Nsteps    
+
+    % ssp-rk3  
+    ssprk = [1 .25 2/3];
     utmp = u;
     for i = 1:3
-        [rhsu] = AdvecRHS1D(utmp);
-        plot(xp,Vp*u,'-')
+%         [rhsu] = AdvecRHS1D(utmp);
+        [rhsu] = BurgersRHS1D(utmp);
         utmp = (1-ssprk(i))*u + ssprk(i)*(utmp + dt*rhsu);
-        hold on
-        plot(xp,Vp*utmp,'--')
-        keyboard
         [utmp Klim alpha] = limit(utmp);
     end    
     u = utmp;
 
     
-    if mod(tstep,2)==0
+    if mod(tstep,5)==0
         
         plot(xp,Vp*u,'-')
-        %         plot(x,VB*uex(xe-time),'.-')
         hold on;
         plot(x,u,'o')
-%         plot(xe,VB\u,'o')
+        %         plot(xe,VB\u,'o')
         
-        plot(xp,uex(xp-time),'--');
-%         if (any(alpha>1e-8))
-%             plot(x(:,Klim),alpha,'x')
-%         end
+        plot(xp,uex(xp-1.5*time),'--');
         hold off
         axis([-1 1 -1 3])
         title(sprintf('Time = %f\n',time))
@@ -96,11 +91,12 @@ end;
 plot(xp,Vp*u,'-')
 hold on;
 plot(x,u,'o')
-plot(xp,uex(xp-time),'--');
+plot(xp,uex(xp-1.5*time),'--');
 
 % keyboard
 
-function [rhsu] = AdvecRHS1D(u)
+
+function [rhsu] = BurgersRHS1D(u)
 
 % function [rhsu] = AdvecRHS1D(u,time)
 % Purpose  : Evaluate RHS flux in 1D advection
@@ -110,17 +106,25 @@ Globals1D;
 % form field differences at faces
 alpha = 0;
 du = zeros(Nfp*Nfaces,K);
-du(:) = (u(vmapM)-u(vmapP)).*(nx(:)-(1-alpha)*abs(nx(:)))/2;
+
+uM = u(vmapM);
+uP = u(vmapP);
+uP(1) = 2;  % BCs 
+uP(end) = 1;
+
+aM = uM;
+du(:) = (uM-uP).*(aM.*nx(:)-(1-alpha)*abs(aM.*nx(:)))/2;
 
 % compute right hand sides of the semi-discrete PDE
-rhsu = -rx.*(Dr*u) + LIFT*(Fscale.*(du));
+rhsu = -u.*(rx.*(Dr*u)) + LIFT*(Fscale.*(du));
 return
-
 
 function [u Klim alpha] = limit(u)
 
 [u Klim alpha] = BBlimit(u);
 % [u Klim alpha] = p1limit(u);
+
+
 
 function [u Klim alpha] = BBlimit(u)
 
@@ -139,10 +143,12 @@ TV = TV./(N*max(abs(uB(:))));
 Klim = find(TV > .5*max(TV));
 uB = uB(:,Klim);
 
+% local conservation
 uavg = repmat(sum(uB,1)/(N+1),N+1,1);
 
-uBe = VBe*uB; % BB approx of uB
-err = max(abs(uB-uBe)); 
+uBe = VBe*uB; % BB approx
+% err = max(abs(uB - uBe))*diag(1./max(abs(DB*DB*uB)));
+err = max(abs(uB-uBe));
 
 alpha = zeros(size(err));
 if err > max(abs(uB))/sqrt(N) % bound variation?
@@ -151,10 +157,10 @@ end
 alpha = min(1,alpha);
 uB = uB*diag(1-alpha) + (VBe*uB)*diag(alpha);
 
-[u1 Klim alpha] = p1limit(u);
-% uB = uB - repmat(sum(uB,1)/(N+1),N+1,1) + uavg;
+% restore conservation 
+uB = uB - repmat(sum(uB,1)/(N+1),N+1,1) + uavg;
 
-u(:,Klim) = VB*uB;
+u(:,Klim) = VB*uB; % convert back
 
 
 function [ulimit ids alpha] = p1limit(u)
@@ -181,8 +187,8 @@ vk = v;
 vkm1 = [v(K),v(1:K-1)]; vkp1 = [v(2:K),v(1)]; % periodic
 
 % Apply reconstruction to find elements in need of limiting
-ve1 = vk - minmodB([(vk-ue1);vk-vkm1;vkp1-vk]);
-ve2 = vk + minmodB([(ue2-vk);vk-vkm1;vkp1-vk]);
+ve1 = vk - minmod([(vk-ue1);vk-vkm1;vkp1-vk]);
+ve2 = vk + minmod([(ue2-vk);vk-vkm1;vkp1-vk]);
 ids = find(abs(ve1-ue1)>eps0 | abs(ve2-ue2)>eps0);
 
 if 0
@@ -221,26 +227,26 @@ hN = ones(Np,1)*h;
 
 % Limit function
 ux = (2./hN).*(Dr*ul); 
-ulimit = ones(Np,1)*v0+(xl-x0).*(ones(Np,1)*minmodB([ux(1,:); (vp1-v0)./(h/2); (v0-vm1)./(h/2)]));
+ulimit = ones(Np,1)*v0+(xl-x0).*(ones(Np,1)*minmod([ux(1,:); (vp1-v0)./h; (v0-vm1)./h]));
 
-return
-
-
-function mfunc = minmodB(v)
-% function mfunc = minmodB(v,M,h)
-% Purpose: Implement the TVB modified midmod function. v is a vector
-
-Globals1D
-M = 40; h = VX(2)-VX(1);
-mfunc = v(1,:);
-ids = find(abs(mfunc) > M*h.^2);
-if(size(ids,2)>0)
-    mfunc(ids) = minmod(v(:,ids));
-end
 return
 
 
 function mfunc = minmod(v)
+% function mfunc = minmodB(v,M,h)
+% Purpose: Implement the TVB modified midmod function. v is a vector
+
+Globals1D
+M = 20; h = VX(2)-VX(1);
+mfunc = v(1,:);
+ids = find(abs(mfunc) > M*h.^2);
+if(size(ids,2)>0)
+    mfunc(ids) = minmod_orig(v(:,ids));
+end
+return
+
+
+function mfunc = minmod_orig(v)
 % function mfunc = minmod(v)
 % Purpose: Implement the midmod function v is a vector
 m = size(v,1); 

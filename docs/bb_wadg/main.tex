@@ -409,7 +409,8 @@ Quadrature-free strategy for nonlinear volume terms: polynomial multiplication +
 \end{enumerate}
 
 \subsection{Projection operator}
-Waldron showed that this projection operator has a form
+
+Waldron showed that the projection operator has the form
 \[
 \bm{M}_N^{-1} \bm{M}_{N,M} = \sum_{j=0}^N c_jE^N_{N-j} \LRp{E^M_{N-j}}^T.
 \]
@@ -417,7 +418,6 @@ The constants $c_j$ may be computed through the solution of an $(N+1)\times (N+1
 \[
 \frac{\lambda^{N-j}_i}{\lambda^M_i}, \qquad i = 0,\ldots,N.
 \]
-
 
 This may be factored into an application of $E^M_N$, then an application of 
 \begin{align*}
@@ -431,6 +431,8 @@ This may be applied in two sweeps of length $N$, using in-place updates to memor
 The cost of applying $\LRp{E^M_N}^T$ is the application of $(M-N)$ sparse degree elevation operations, each of which is $O(M^d)$ cost.  Assuming $M\approx N$ (it is reasonable to match the order of the data with the order of approximation), this gives $O(N^{d+1})$ cost.  
 
 When applying the projection operator, since each operation is $O(N^3)$ and we apply $O(N)$ total operations, we have an $O(N^{d+1})$ overall cost.  
+
+This can also be used to apply the inverse mass matrix since it is diagonal under the transformation $T$.  
 
 \end{document}
 

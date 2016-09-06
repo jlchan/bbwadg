@@ -134,12 +134,12 @@ TV = TV/(N*max(abs(u)));
 % spatial scaling
 %     b = .25*(1-re).*(1+re);
 b = 1;
-err = max(abs(uB - Ve*uB).*b) / max(abs(uB));  % pointwise diff
-alpha = (sqrt(N)*err)^(1); % if f smooth, err = O(1/N). if rougher, err = O(1/sqrt(N)).
+err = max(abs(uB - Ve*uB).*b);  % pointwise diff
+alpha = err/sqrt(N); % if f smooth, err = O(1/N). if rougher, err = O(1/sqrt(N)).
 alpha = TV;
 
 % mix interpolant/projection w/BB approximant
-u = (1-alpha)*(V\f(r)) + uB*alpha;
+u = (1-alpha).*(V\f(r)) + uB.*alpha;
 
 plot(rp,f(rp),'-')
 hold on
@@ -177,3 +177,29 @@ for N = 9;
     plot(rp,Vp*uB,'-')
 %     pause
 end
+
+%% 2D
+
+N = 15;
+
+[r s] = Nodes2D(N); [r s] = xytors(r,s);
+
+[rp sp] = EquiNodes2D(75); [rp sp] = xytors(rp,sp);
+[re se] = EquiNodes2D(N); [re se] = xytors(re,se);
+
+
+V = bern_basis_tri(N,r,s);
+Vp = bern_basis_tri(N,rp,sp);
+
+uex = @(x,y) x > -.25 + .5*y;
+u = uex(re,se);
+% u = V\uex(r,s);
+
+
+
+vv = Vp*u;
+h = color_line3(rp,sp,vv,vv,'.');
+set(h,'markersize',24)
+
+hold on
+plot3(re,se,u,'o');
