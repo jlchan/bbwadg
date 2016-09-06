@@ -3,7 +3,7 @@
 function [l2err]= Wave1D(smax,delta,p0sigma,p0approx)
 
 if nargin < 2
-    smax = 50;
+    smax = 100;
     delta = .125;
     p0sigma = 0;
     p0approx = 0;
@@ -16,7 +16,7 @@ Globals1D;
 N = 4;
 
 % Generate simple mesh
-K1D = 16;
+K1D = 32;
 [Nv, VX, K, EToV] = MeshGen1D(-1.0,1.0,K1D);
 
 % Initialize solver and construct grid and metric

@@ -1,6 +1,6 @@
 % tet to hex op = sparse, approx (2*N+1) nnz per row up to N=9
 % sum(c_i*Ei*Ei') * Etw'*Etq' * (quadrature on hex) * Eth
-% - load Eth as sparse (can slab and 
+% - load Eth as sparse (can slab if needed)
 % - do quadrature + project down
 % - how to apply Etq', Etw' ?  
 

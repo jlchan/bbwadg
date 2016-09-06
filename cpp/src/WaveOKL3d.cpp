@@ -87,7 +87,7 @@ occa::memory c_CNscale, c_invC2Nscale;
 occa::memory c_c2_bb;
 occa::memory c_Ei_vals, c_Ei_ids;
 occa::memory c_EiTr_vals, c_EiTr_ids;
-occa::memory c_cj;
+occa::memory c_cjproj,c_cjmass;
 
 occa::kernel mult_quad; // for comparison
 occa::kernel rk_update_BBWADG;
@@ -518,6 +518,7 @@ void InitWADG_subelem(Mesh *mesh,double(*c2_ptr)(double,double,double)){
     NN = 2*p_N - kk;
     kksk += (NN+1)*(NN+2)/2;
   }
+
   //cout << "subtet_ids = " << endl << subtet_ids << endl;
 
   /*
@@ -607,14 +608,9 @@ void InitWADG_subelem(Mesh *mesh,double(*c2_ptr)(double,double,double)){
       }
     }
 
-    // PROBLEM HERE - why so many damn columns
     MatrixXi EiTr_ids;
     MatrixXd EiTr_vals;
     get_sparse_ids(Ei.transpose(),EiTr_ids,EiTr_vals);
-    //printf("EiTr_ids # cols = %d\n",EiTr_ids.cols());
-    //    if (EiTr_ids.cols() > 4){
-    //      cout << "from N1 = " << N1 << " to N2 = " << N2 << ", EiTr = " << Ei.transpose() << endl;
-    //    }
     for (int ii = 0; ii < EiTr_ids.rows(); ++ii){
       for (int jj = 0; jj < EiTr_ids.cols(); ++jj){
 	int row = ii + i*N2p;
@@ -683,16 +679,25 @@ void InitWADG_subelem(Mesh *mesh,double(*c2_ptr)(double,double,double)){
       L(i,j) = (double) factorial_ratio(Nj,Nj-i) / factorial_ratio(Nj+i+d,Nj);
     }
   }
-  MatrixXd b(p_N+1,1);
+  cout << "L = " << endl << L << endl;
+
+  MatrixXd b1(p_N+1,1);
+  MatrixXd b2(p_N+1,1);
   for (int i = 0; i <= p_N; ++i){
     int Nj = 2*p_N;
-    b(i,0) = (double) factorial_ratio(Nj,Nj-i)/factorial_ratio(Nj+i+d,Nj);
+    b1(i,0) = (double) factorial_ratio(Nj,Nj-i)/factorial_ratio(Nj+i+d,Nj);
+    b2(i,0) = (double) 1.0;
   }
   //  cout << "L = " << L << endl;
   //  cout << "b = " << b << endl;
-  VectorXd cj = mldivide(L,b);
-  //cout << "for N = " << p_N << ", cj = " << endl << cj << endl;
-  setOccaArray(cj,c_cj);
+  VectorXd cj = mldivide(L,b1);
+  setOccaArray(cj,c_cjproj);
+ 
+  VectorXd cj_mass = mldivide(L,b2);
+  setOccaArray(cj_mass,c_cjmass);
+
+
+  
   dgInfo.addDefine("p_N2p",N2p);
   dgInfo.addDefine("p_max8Np1D",max(8,p_N+1));
 
@@ -2195,7 +2200,7 @@ void test_RK(Mesh *mesh, int KblkU){
 		     c_CNscale, c_invC2Nscale,
 		     c_Ei_vals, c_Ei_ids,
 		     c_EiTr_vals, c_EiTr_ids,
-		     c_cj,
+		     c_cjproj,
 		     c_c2_bb_local,
 		     c_Qtest);
     device.finish();

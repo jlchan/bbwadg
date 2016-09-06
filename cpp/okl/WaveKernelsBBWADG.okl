@@ -865,6 +865,400 @@ kernel void rk_update_BBWADGq(const int K,
   } // outer0
 }
 
+
+kernel void rk_update_BBWADGq_loads(const int K,
+				    const int * restrict Eth_ids,
+				    const dfloat * restrict Eth_vals,
+				    const dfloat4 * restrict ETri_vals,
+				    const int4 * restrict ETri_ids,
+				    const dfloat4 * restrict ETriTr_vals,
+				    const int4 * restrict ETriTr_ids,
+				    const dfloat * restrict E1D,
+				    const dfloat * restrict E1DTr,
+				    const int * restrict tri_to_quad_ids, // tri to quad
+				    const dfloat * restrict Vab1D,
+				    const dfloat * restrict Vc1D,
+				    const dfloat * restrict wc2q,
+				    dfloat * restrict rhsQ){
+  
+  for(int k1=0; k1<(K+p_KblkU-1)/p_KblkU; ++k1; outer0){
+
+    shared dfloat sp[p_KblkU][p_Np];
+    shared dfloat stmp[p_KblkU][p_Nq1D][p_Nq2];  // expensive TP storage
+
+    // quadrature interpolation matrices
+    shared dfloat s_Vq[p_Nq1D][p_Nq1D];
+    shared dfloat s_Vcq[p_Nq1D][p_Nq1D];
+
+    // ids
+    shared int s_tri_to_quad_ids[p_NpTri];
+
+    exclusive int k,jsk;
+    exclusive dfloat rtmp[p_Nq1D]; // tmp storage
+
+    for(int k2 = 0; k2 < p_KblkU; ++k2; inner1){
+      for(int i = 0; i < p_Nq3; ++i; inner0){
+
+	k = k1*p_KblkU + k2; // no need for klist here for heterogeneous WADG
+
+	if (k < K){
+          int ii = i;
+          if(ii < p_Np){
+            // read in pressure rhs (c2 readin later)
+            const dfloat val = rhsQ[ii + k*p_Np*p_Nfields];
+            sp[k2][ii] = val;
+            ii += p_Nq2;
+          }
+	}
+	
+	if (k2==0 && i < p_Nq2){
+	  const int idi = i % p_Nq1D;
+	  const int idj = i / p_Nq1D;
+	  s_Vq[idi][idj] = Vab1D[i];
+	  s_Vcq[idi][idj] = Vc1D[i];
+	}
+
+	// init counter
+	jsk = 0;
+      }
+    }
+    barrier(localMemFence);
+
+    // elevate tet to hex sparsely
+    for (int jj = 0; jj <= p_N; ++jj){
+      for(int k2 = 0; k2 < p_KblkU; ++k2; inner1){
+	for(int i = 0; i < p_Nq3; ++i; inner0){
+
+	  dfloat val = 0.f;
+	  for (int j = 0; j < p_nnz_Eth; ++j){ // should be around 2*N+1 nnz at N=9
+	    const int id = i + j*p_Nq3;
+	    const dfloat Eth_val = Eth_vals[id];
+	    const dfloat Eth_id = Eth_ids[id];
+	    val += sp[k2][Eth_id]*Eth_val;
+	  }
+	  const int id_slice = i / p_Nq2;
+	  const int id2 = i - p_Nq2 * id_slice; 
+	  stmp[k2][id_slice][id2] = val;
+	  
+	}
+      }
+    }
+
+    // loop over ab slices
+    for (int jj = 0; jj <= p_N; ++jj){
+
+      // apply first TP operator
+      for(int k2 = 0; k2 < p_KblkU; ++k2; inner1){
+	for (int i = 0; i < p_Nq2; ++i; inner0){
+	  if (k < K){
+
+	    const int idi = i % (p_Nq1D);
+	    const int idj = i / (p_Nq1D);
+
+	    dfloat val = 0.f;
+	    for (int j = 0; j < (p_Nq1D); ++j){
+	      val += s_Vq[idi][j] * stmp[k2][jj][j + idj*(p_Nq1D)];
+	    }
+	    rtmp[jj] = val;
+
+	  }
+	}
+      }
+      barrier(localMemFence);
+      for(int k2 = 0; k2 < p_KblkU; ++k2; inner1){
+	for (int i = 0; i < p_Nq2; ++i; inner0){
+	  if (k < K ){
+	    stmp[k2][jj][i] = rtmp[jj];
+	  }
+	}
+      }
+      barrier(localMemFence);
+
+      // apply second TP operator
+      for(int k2 = 0; k2 < p_KblkU; ++k2; inner1){
+	for (int i = 0; i < p_Nq2; ++i; inner0){
+	  if (k < K ){
+	    const int idi = i % (p_Nq1D);
+	    const int idj = i / (p_Nq1D);
+	    const int id = idj + idi * (p_Nq1D); // transpose slice
+
+	    dfloat val = 0.f;
+	    for (int j = 0; j < (p_Nq1D); ++j){
+	      //val += s_Vq[idi][idj] * stmp[k2][jj][id];
+	      val += s_Vq[idi][j] * stmp[k2][jj][idj + j*(p_Nq1D)];
+	    }
+	    rtmp[jj] = val;
+	  }
+	}
+      }
+      barrier(localMemFence);
+      for(int k2 = 0; k2 < p_KblkU; ++k2; inner1){
+	for (int i = 0; i < p_Nq2; ++i; inner0){
+	  if (k < K){
+	    stmp[k2][jj][i] = rtmp[jj];
+	  }
+	}
+      }
+      barrier(localMemFence);
+
+    } // jj loop over slices
+
+    // apply vertical TP interp using stored register values
+    for(int k2 = 0; k2 < p_KblkU; ++k2; inner1){
+      for(int i = 0; i < p_Nq2; ++i; inner0){
+
+	if (k < K){
+	  // loop thru slices
+	  for (int jj = 0; jj <= p_N; ++jj){
+
+	    const int idi = i % (p_Nq1D);
+	    const int idj = i / (p_Nq1D);
+
+	    const int id = i + jj*p_Nq2 + p_Nq3*k;
+	    const dfloat c2q = wc2q[id]; // load premultiplied c2 vals
+
+	    dfloat val = 0.f;
+	    for (int j = 0; j < (p_Nq1D); ++j){
+	      val += s_Vcq[jj][j]*rtmp[j];
+	    }
+	    stmp[k2][jj][i] = val * c2q;
+	  }
+	}
+      }
+    }
+
+    // multiply by Vq^T
+    for (int jj = 0; jj <= p_N; ++jj){ // over each slice
+
+      for(int k2 = 0; k2 < p_KblkU; ++k2; inner1){
+	for (int i = 0; i < p_Nq2; ++i; inner0){
+	  if (k < K ){
+
+	    const int idi = i % (p_Nq1D);
+	    const int idj = i / (p_Nq1D);
+
+	    dfloat val = 0.f;
+	    // transpose VqT
+	    for (int j = 0; j < (p_Nq1D); ++j){
+	      val += s_Vq[j][idi] * stmp[k2][jj][j + idj*(p_Nq1D)];
+	    }
+	    rtmp[jj] = val;
+
+	  }
+	}
+      }
+      barrier(localMemFence);
+      for(int k2 = 0; k2 < p_KblkU; ++k2; inner1){
+	for (int i = 0; i < p_Nq2; ++i; inner0){
+	  if (k < K){
+	    stmp[k2][jj][i] = rtmp[jj];
+	  }
+	}
+      }
+      barrier(localMemFence);
+
+      // apply second TP transposed operator
+      for(int k2 = 0; k2 < p_KblkU; ++k2; inner1){
+	for (int i = 0; i < p_Nq2; ++i; inner0){
+	  if (k < K ){
+	    const int idi = i % (p_Nq1D);
+	    const int idj = i / (p_Nq1D);
+	    const int id = idj + idi * (p_Nq1D); // transpose slice
+	    
+	    dfloat val = 0.f;
+	    for (int j = 0; j < (p_Nq1D); ++j){
+	      val += s_Vq[j][idi] * stmp[k2][jj][idj + j*(p_Nq1D)];
+	    }
+	    rtmp[jj] = val;
+	  }
+	}
+      }
+      barrier(localMemFence);
+
+      for(int k2 = 0; k2 < p_KblkU; ++k2; inner1){
+	for (int i = 0; i < p_Nq2; ++i; inner0){
+	  if (k < K){
+	    stmp[k2][jj][i] = rtmp[jj];
+	  }
+	}
+      }
+      barrier(localMemFence);
+
+    } // jj loop
+
+    // apply vertical TP interp using stored register values
+    for(int k2 = 0; k2 < p_KblkU; ++k2; inner1){
+      for(int i = 0; i < p_Nq2; ++i; inner0){
+
+	if (k < K){
+	  // loop thru slices
+	  for (int jj = 0; jj <= p_N; ++jj){
+
+	    const int idi = i % (p_Nq1D);
+	    const int idj = i / (p_Nq1D);
+
+	    const int id = i + jj*p_Nq2 + p_Nq3*k;
+
+            // prefetch material coeffs and multiply
+	    const dfloat c2q = wc2q[id];
+
+	    dfloat val = 0.f;
+	    for (int j = 0; j < (p_Nq1D); ++j){
+	      val += s_Vcq[j][jj]*rtmp[j];
+	    }
+	    stmp[k2][jj][i] = val;
+
+	  } // jj loop
+
+          // reinitialize counter
+          jsk = 0;
+	}
+      }
+    }
+
+
+#if 1
+    // reduce hex to wedge
+    for(int jj = 1; jj <= p_N; ++jj){
+      for(int k2 = 0; k2 < p_KblkU; ++k2; inner1){
+        for(int i = 0; i < p_Nq2; ++i; inner0){
+
+          const int Nmjj = (p_N-jj+1);
+          if (k < K && i < (p_Nq1D)*Nmjj){ // (p_N-jj) nodes in receiving line
+            const int idslice = i / Nmjj;
+            const int id1D = i % Nmjj;
+            dfloat val = 0.f;
+            for (int j = 0; j < p_Nq1D; ++j){
+              const int id = id1D + j*Nmjj + jsk;
+              val += E1DTr[id] * stmp[k2][idslice][j + jj*p_Nq1D];
+            }
+            stmp[k2][idslice][id1D + jj*p_Nq1D] = val;
+
+            jsk += Nmjj * p_Nq1D;
+          }
+
+        }
+      }
+    }
+    barrier(localMemFence);
+
+    // remap hex indices to wedge indices using tmp storage
+    for(int k2 = 0; k2 < p_KblkU; ++k2; inner1){
+      for(int i = 0; i < p_Nq2; ++i; inner0){
+	if (i < p_NpTri){
+	  const int tri_to_quad_id = s_tri_to_quad_ids[i];
+	  for(int jj = 0; jj <= p_N; ++jj){
+	    rtmp[jj] = stmp[k2][jj][tri_to_quad_id];
+	  }
+	}
+      }
+    }
+    barrier(localMemFence);
+    for(int k2 = 0; k2 < p_KblkU; ++k2; inner1){
+      for(int i = 0; i < p_Nq2; ++i; inner0){
+	if (i < p_NpTri){
+	  for(int jj = 0; jj <= p_N; ++jj){
+	    stmp[k2][jj][i] = rtmp[jj];
+	  }
+	}
+
+        // initialize counter
+        jsk = 0;
+      }
+    }
+
+    // loop backwards over tri slices, skip base tri slice (done already)
+    for(int jj = 0; jj < p_N; ++jj){
+
+      for(int k2 = 0; k2 < p_KblkU; ++k2; inner1){
+	for(int i = 0; i < p_Nq2; ++i; inner0){
+
+	  const int Nj = p_N - jj - 1; // reduce from degree N-jj to N-jj-1
+	  const int Np_slice = (Nj+1)*(Nj+2)/2;
+	  if (k < K && i < Np_slice){
+
+	    const int idE = i + Nj*p_NpTri;
+	    const int4 Ei_id = ETriTr_ids[idE]; // may not want to use float4s...
+	    const dfloat4 Ei_val = ETriTr_vals[idE];
+
+	    // apply successive degree reduction to previous slices
+	    for (int j2 = jj+1; j2 <= p_N; ++j2){
+	      rtmp[j2] =
+		Ei_val.x*stmp[k2][j2][Ei_id.x] +
+		Ei_val.y*stmp[k2][j2][Ei_id.y] +
+		Ei_val.z*stmp[k2][j2][Ei_id.z];
+	    }
+	  }
+	} //inner0
+      }// inner1
+      barrier(localMemFence);       // make sure reads from stmp are done
+
+      // write back stored values to hex slices
+      for(int k2 = 0; k2 < p_KblkU; ++k2; inner1){
+	for(int i = 0; i < p_Nq2; ++i; inner0){
+
+	  const int Nj = p_N-jj-1;
+	  const int Np_slice = (Nj+1)*(Nj+2)/2;
+	  if (i < Np_slice){
+	    for (int j2 = jj+1; j2 <= p_N; ++j2){
+	      stmp[k2][j2][i] = rtmp[j2];
+	    }
+	  }
+	}
+      }
+
+    } // loop over jj
+    barrier(localMemFence);
+
+    // map back to tet
+    for (int j = 0; j <= p_N; ++j){
+      for(int k2 = 0; k2 < p_KblkU; ++k2; inner1){
+	for (int i = 0; i < p_Nq2; ++i; inner0){
+          const int Nj = p_N-j;
+          const int Np_slice = (Nj+1)*(Nj+2)/2;
+	  if (k<K && i < Np_slice){
+	    sp[k2][i + jsk] = stmp[k2][j][i];
+            jsk += Np_slice;
+	  }
+	}
+      }
+    }
+
+#endif
+    
+#if 0
+    // tet printout
+    for(int k2 = 0; k2 < p_KblkU; ++k2; inner1){
+      for (int i = 0; i < p_Nq2; ++i; inner0){
+        int ii = i;
+        while(k < K && ii < p_Np){
+          dfloat val = sp[k2][ii];
+          if (k==0){
+            printf("tet integrated wedge stmp[%d] = %f\n",i,val);
+          }
+          ii += p_Nq2;
+        }
+      }
+    }
+#endif
+
+    // need to invert mass matrix here
+
+#if 1
+    // add accumulated result to all Np coeffs and write to global mem
+    for(int k2 = 0; k2 < p_KblkU; ++k2; inner1){
+      for(int i = 0; i < p_Nq2; ++i; inner0){
+        int ii = i;
+	while (ii < p_Np){
+          rhsQ[ii + k*p_Np*p_Nfields] = sp[k2][ii];
+          ii += p_Nq2;
+        }
+      }
+    }
+#endif
+  } // outer0
+}
+
 /*
 // Ainsworth Duffy
 kernel void mult_duffy(const int K,
