@@ -673,7 +673,7 @@ void InitWADG_subelem(Mesh *mesh,double(*c2_ptr)(double,double,double)){
   int d = 3;
   double sizeDhat = 4.0/3.0;
   MatrixXd L(p_N+1,p_N+1); L.fill(0.0);
-  MatrixXd Lm(p_N+1,p_N+1); Lm.fill(0.0);  
+  MatrixXd Lm(p_N+1,p_N+1); Lm.fill(0.0);
   for (int j = 0; j <= p_N; ++j){
     for (int i = 0; i <= p_N-j; ++i){
       int Nj = p_N - j;
@@ -695,13 +695,13 @@ void InitWADG_subelem(Mesh *mesh,double(*c2_ptr)(double,double,double)){
   //  cout << "b = " << b << endl;
   VectorXd cj = mldivide(L,b1);
   setOccaArray(cj,c_cjproj);
- 
+
   VectorXd cj_mass = mldivide(Lm,bm);
   setOccaArray(cj_mass,c_cjmass);
 
   // construct Etq,Etw -> Eth
-  int NpTri = (p_N+1)*(p_N+2)/2;  
-  
+  int NpTri = (p_N+1)*(p_N+2)/2;
+
   VectorXd rqtri,sqtri,wqtri;
   tri_cubature(2*p_N+1,rqtri,sqtri,wqtri); // oversample
 
@@ -721,7 +721,7 @@ void InitWADG_subelem(Mesh *mesh,double(*c2_ptr)(double,double,double)){
     }
     csk += Ei1D.cols();
   }
-  
+
   // make Etw, Eth
   MatrixXd Etw((p_N+1)*NpTri,p_Np);   // tet to wedge
   MatrixXd Eth(Nq3,p_Np);
@@ -732,7 +732,7 @@ void InitWADG_subelem(Mesh *mesh,double(*c2_ptr)(double,double,double)){
     MatrixXd V1tri = BernTri(p_N,rqtri,sqtri);
     MatrixXd V2tri = BernTri(p_N-i,rqtri,sqtri);
     MatrixXd EiTri = mldivide(V1tri,V2tri);
-    
+
     for (int r = 0; r < EiTri.rows();++r){
       for (int c = 0; c < EiTri.cols();++c){
 	int off = i * (p_N+1)*(p_N+2)/2;
@@ -750,32 +750,32 @@ void InitWADG_subelem(Mesh *mesh,double(*c2_ptr)(double,double,double)){
     }
     csk2 += tmp.cols();
   }
-  
+
   //  cout << "Etq = " << endl << Etq << endl;
   //  cout << "Etw = " << endl << Etw << endl;
   cout << "Eth = " << endl << Eth << endl;
   vector<MatrixXi> Eth_ids_list;
-  vector<MatrixXd> Eth_vals_list;  
+  vector<MatrixXd> Eth_vals_list;
   for (int i = 0; i <= p_N; ++i){
     int start = i*Nq2;
     MatrixXd tmp = Eth.middleRows(start,Nq2);
     MatrixXi Eth_slice_ids;
-    MatrixXd Eth_slice_vals;  
+    MatrixXd Eth_slice_vals;
     get_sparse_ids(tmp,Eth_slice_ids,Eth_slice_vals);
     //cout << "on i = " << i << ", tmp = " <<  endl << tmp << endl;
-    
+
     Eth_ids_list.push_back(Eth_slice_ids);
     Eth_vals_list.push_back(Eth_slice_vals);
     printf("Eth nnz for i = %d is %d\n",i,Eth_slice_ids.cols());
   }
 
   MatrixXi Eth_ids;
-  MatrixXd Eth_vals;  
+  MatrixXd Eth_vals;
   get_sparse_ids(Eth,Eth_ids,Eth_vals);
   dgInfo.addDefine("p_nnz_Eth",Eth_ids.cols());
   setOccaArray(Eth_vals,c_Eth_vals);
-  setOccaIntArray(Eth_ids,c_Eth_ids);  
-  
+  setOccaIntArray(Eth_ids,c_Eth_ids);
+
   dgInfo.addDefine("p_N2p",N2p);
   //dgInfo.addDefine("p_N2pBank",N2p+1);
   dgInfo.addDefine("p_max8Np1D",max(8,p_N+1));
@@ -907,7 +907,8 @@ void InitWADG_subelem(Mesh *mesh,double(*c2_ptr)(double,double,double)){
 
   std::string srcBB = "okl/WaveKernelsBBWADG.okl";
   rk_update_BBWADG  = device.buildKernelFromSource(srcBB.c_str(), "rk_update_BBWADG", dgInfo);
-  rk_update_BBWADGq  = device.buildKernelFromSource(srcBB.c_str(), "rk_update_BBWADGq_loads", dgInfo);
+  //  rk_update_BBWADGq  = device.buildKernelFromSource(srcBB.c_str(), "rk_update_BBWADGq_loads", dgInfo);
+  rk_update_BBWADGq  = device.buildKernelFromSource(srcBB.c_str(), "rk_update_BBWADGq_Nq3", dgInfo);
   mult_quad  = device.buildKernelFromSource(srcBB.c_str(), "mult_quad", dgInfo);
 
 }
