@@ -6,7 +6,7 @@
 
 % look at tri to quad operator
 clear
-N = 4;
+N = 2;
 Np = (N+1)*(N+2)/2;
 [r s w b a] = tri_tp_cubature(N);
 Vq = Vandermonde2D(N,r,s);
@@ -55,10 +55,7 @@ Etq(abs(Etq)<1e-8) = 0;
 VB = bern_basis_1D(N,a);
 M1D = VB'*diag(wa)*VB;
 
-
 % check  tet to wedge op
-% clear
-% N = 7;
 Np = (N+1)*(N+2)*(N+3)/6;
 
 [r s] = Nodes2D(N);
@@ -88,16 +85,31 @@ end
 
 Eth = kron(eye(N+1),Etq)*Etw;
 
+spy(Etq)
 % spy(Etq)
-% spy(Etw')
-spy(Eth')
-% imagesc(Eth)
+% spy(Eth)
+
+return
+
+
+[rq sq tq wq ] = tet_cubature(2*N+1);
+Vq = bern_basis_tet(N,rq,sq,tq);
+M = Vq'*diag(wq)*Vq;
+Mhex = kron(M1D,kron(M1D,M1D));
+Pth = M\(Eth'*Mhex);
+
+[r s w b a] = tri_tp_cubature(N);
+Vq = bern_basis_tri(N,r,s);
+Mtri = Vq'*diag(w)*Vq;
+Mwedge = kron(M1D,Mtri);
+Pth = M\(Etw'*Mwedge);
+imagesc(Pth)
 
 return
 
 %% plot nnz per row
 clear
-for N = 1:9
+for N = 1:12
     clear Etq Eth Etw
     Np = (N+1)*(N+2)/2;
     [r s w b a] = tri_tp_cubature(N);
@@ -179,13 +191,18 @@ for N = 1:9
     end
     
     Eth = kron(eye(N+1),Etq)*Etw;
-    plot(N,max(sum(abs(Eth)>0,2)),'o')
-    nnzEth(N) = max(sum(abs(Eth)>0,2));
-    hold on
+%     plot(N,max(sum(abs(Eth)>0,2)),'o')
+    nnzEth(N) = max(sum(abs(Etw)>0,2));
+%     hold on
 end
-N = 1:N;
+N = 1:length(nnzEth);
+
 Np = (N+1).*(N+2).*(N+3)/6;
-plot(N,nnzEth./Np,'x-')
+
+plot(N,nnzEth,'x-')
+hold on
+plot(N,.15*N.^2+.75*N,'o--')
+plot(N,2*N,'s--')
 % plot(N,.2*N.^2,'--')
 
 % spy(Eth)
