@@ -792,6 +792,7 @@ kernel void rk_update_BBWADGq(const int K,
       }
     }
     barrier(localMemFence);
+
     for(int k2 = 0; k2 < p_KblkU; ++k2; inner1){
       for(int i = 0; i < p_Nq2; ++i; inner0){
 	if (i < p_NpTri){
@@ -902,16 +903,14 @@ kernel void rk_update_BBWADGq(const int K,
 kernel void rk_update_BBWADGq_loads(const int K,
 				    const dfloat * restrict Eth_vals,
 				    const int * restrict Eth_ids,
-				    const dfloat4 * restrict Ei_vals, // mass inversion
-				    const int4 * restrict Ei_ids,
+                                    const dfloat * restrict EtqTr_vals, // quad-tri reduc
+                                    const int * restrict EtqTr_ids,
+				    const dfloat4 * restrict Ei_vals,
+				    const int4 * restrict Ei_ids, // inv(M)
 				    const dfloat4 * restrict EiTr_vals,
 				    const int4 * restrict EiTr_ids,
-				    const dfloat4 * restrict ETri_vals,
-				    const int4 * restrict ETri_ids,
 				    const dfloat4 * restrict ETriTr_vals,
 				    const int4 * restrict ETriTr_ids,
-				    const dfloat * restrict E1D,
-				    const dfloat * restrict E1DTr,
 				    const int * restrict tri_to_quad_ids, // tri to quad
 				    const dfloat * restrict Vab1D,
 				    const dfloat * restrict Vc1D,
@@ -929,8 +928,8 @@ kernel void rk_update_BBWADGq_loads(const int K,
     shared dfloat s_Vcq[p_Nq1D][p_Nq1D];
 
     exclusive int k,jsk;
-    //exclusive dfloat rtmp[p_Nq1D]; // tmp storage
-    exclusive dfloat rtmp[p_max8Np1D]; // tmp storage for transfer of smem and
+    exclusive dfloat rtmp[p_Nq1D]; // tmp storage
+    //exclusive dfloat rtmp[p_max8Np1D]; // tmp storage for transfer of smem and
 
     for(int k2 = 0; k2 < p_KblkU; ++k2; inner1){
       for(int i = 0; i < p_Nq2; ++i; inner0){
@@ -1132,40 +1131,105 @@ kernel void rk_update_BBWADGq_loads(const int K,
 #endif
 
 #if 1
-    // rezero sp
+    // reduce hex to wedge sparsely
     for(int k2 = 0; k2 < p_KblkU; ++k2; inner1){
       for(int i = 0; i < p_Nq2; ++i; inner0){
-	int ii = i;
-	while(ii < p_Np){
-	  sp[k2][ii] = 0.f;
-	  ii += p_Nq2;
-	}
+        if (k < K && i < p_NpTri){
+
+          for (int jj = 0; jj <= p_N; ++jj){
+            rtmp[jj] = 0.f;
+          }
+
+          for (int j = 0; j < p_Nq1D; ++j){ // max N+1 nnz per row
+            const int id = i + j*p_NpTri;
+            const dfloat Etq_val = EtqTr_vals[id];
+            const int Etq_id = EtqTr_ids[id];
+
+            // reuse for each layer of wedge
+            for(int jj = 0; jj <= p_N; ++jj){
+              rtmp[jj] += Etq_val * stmp[k2][jj][Etq_id];
+            }
+          }
+        } // i < NpTri
+
       }
     }
     barrier(localMemFence);
 
-    // reduce tet to hex sparsely
-    for(int jj = 0; jj <= p_N; ++jj){
-      for(int k2 = 0; k2 < p_KblkU; ++k2; inner1){
-	for(int i = 0; i < p_Nq2; ++i; inner0){
-
-	  const dfloat val = stmp[k2][jj][i];
-	  for (int j = 0; j < p_nnz_Eth; ++j){ // should be around 2*N+1 nnz at N=9
-
-	    const int id = (i + jj*p_Nq2) + j*p_Nq3;
-	    const dfloat Eth_val = Eth_vals[id];
-	    const int Eth_id = Eth_ids[id];
-
-            // this doesn't seem to work!
-	    sp[k2][Eth_id] += Eth_val * val;
-	  }
-	}
+    for(int k2 = 0; k2 < p_KblkU; ++k2; inner1){
+      for (int i = 0; i < p_Nq2; ++i; inner0){
+        if (k < K && i < p_NpTri){
+          for (int jj = 0; jj <= p_N; ++jj){
+            stmp[k2][jj][i] = rtmp[jj]; // copy back
+          }
+        }
       }
     }
     barrier(localMemFence);
 #endif
 
 #if 1
+    // reduce wedge to tet recursively
+    // loop backwards over tri slices, skip base tri slice (done already)
+    for(int jj = 0; jj < p_N; ++jj){
+
+      for(int k2 = 0; k2 < p_KblkU; ++k2; inner1){
+	for(int i = 0; i < p_Nq2; ++i; inner0){
+
+	  const int Nj = p_N - jj - 1; // reduce from degree N-jj to N-jj-1
+	  const int Np_slice = (Nj+1)*(Nj+2)/2;
+	  if (k < K && i < Np_slice){
+
+	    const int idE = i + Nj*p_NpTri;
+	    const int4 Ei_id = ETriTr_ids[idE]; // may not want to use float4s...
+	    const dfloat4 Ei_val = ETriTr_vals[idE];
+
+	    // apply successive degree reduction to previous slices
+	    for (int j2 = jj+1; j2 <= p_N; ++j2){
+	      rtmp[j2] =
+		Ei_val.x*stmp[k2][j2][Ei_id.x] +
+		Ei_val.y*stmp[k2][j2][Ei_id.y] +
+		Ei_val.z*stmp[k2][j2][Ei_id.z];
+	    }
+	  }
+	} //inner0
+      }// inner1
+      barrier(localMemFence);       // make sure reads from stmp are done
+
+      // write back stored values to hex slices
+      for(int k2 = 0; k2 < p_KblkU; ++k2; inner1){
+	for(int i = 0; i < p_Nq2; ++i; inner0){
+
+	  const int Nj = p_N-jj-1;
+	  const int Np_slice = (Nj+1)*(Nj+2)/2;
+	  if (i < Np_slice){
+	    for (int j2 = jj+1; j2 <= p_N; ++j2){
+	      stmp[k2][j2][i] = rtmp[j2];
+	    }
+	  }
+	}
+      }
+
+    } // loop over jj
+    barrier(localMemFence);
+
+    // map back to tet
+    for (int j = 0; j <= p_N; ++j){
+      for(int k2 = 0; k2 < p_KblkU; ++k2; inner1){
+	for (int i = 0; i < p_Nq2; ++i; inner0){
+          const int Nj = p_N-j;
+          const int Np_slice = (Nj+1)*(Nj+2)/2;
+	  if (k<K && i < Np_slice){
+	    sp[k2][i + jsk] = stmp[k2][j][i];
+            jsk += Np_slice;
+	  }
+	}
+      }
+    }
+
+#endif
+
+#if 0
     // tet printout
     for(int k2 = 0; k2 < p_KblkU; ++k2; inner1){
       for (int i = 0; i < p_Nq2; ++i; inner0){
@@ -1294,7 +1358,7 @@ kernel void rk_update_BBWADGq_loads(const int K,
 #endif
 
 
-#if 1
+#if 0
     // add accumulated result to all Np coeffs and write to global mem
     for(int k2 = 0; k2 < p_KblkU; ++k2; inner1){
       for(int i = 0; i < p_Nq2; ++i; inner0){
@@ -1340,7 +1404,8 @@ kernel void rk_update_BBWADGq_Nq3(const int K,
     shared dfloat s_Vcq[p_Nq1D][p_Nq1D];
 
     exclusive int k,jsk, idi,idj,idk;
-    exclusive dfloat rtmp[p_Nq1D]; // tmp storage
+    //exclusive dfloat rtmp[p_Nq1D]; // tmp storage
+    exclusive dfloat rtmp[1]; // tmp storage
     //exclusive dfloat rtmp[p_max8Np1D]; // tmp storage for transfer of smem and
 
 
@@ -1539,7 +1604,7 @@ kernel void rk_update_BBWADGq_Nq3(const int K,
 #endif
 
     // printout
-#if 1
+#if 0
     for(int k2 = 0; k2 < p_KblkU; ++k2; inner1){
       for(int i = 0; i < p_Nq3; ++i; inner0){
         dfloat val = stmp[k2][idi][idj][idk];
@@ -1551,7 +1616,8 @@ kernel void rk_update_BBWADGq_Nq3(const int K,
     barrier(localMemFence);
 #endif
 
-#if 1
+    //may need to swap this out with slice-by-slice reduction.
+#if 0
     // rezero sp
     for(int k2 = 0; k2 < p_KblkU; ++k2; inner1){
       for(int i = 0; i < p_Nq3; ++i; inner0){
@@ -1582,7 +1648,7 @@ kernel void rk_update_BBWADGq_Nq3(const int K,
     barrier(localMemFence);
 #endif
 
-#if 1
+#if 0
     // tet printout
     for(int k2 = 0; k2 < p_KblkU; ++k2; inner1){
       for (int i = 0; i < p_Nq3; ++i; inner0){

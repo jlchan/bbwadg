@@ -95,6 +95,7 @@ occa::kernel rk_update_BBWADG;
 // duffy vars
 occa::memory c_Vab1D, c_Vc1D;
 occa::memory c_Eth_vals, c_Eth_ids;
+occa::memory c_EtqTr_vals, c_EtqTr_ids;
 occa::memory c_ETri_vals, c_ETri_ids;
 occa::memory c_ETriTr_vals, c_ETriTr_ids;
 occa::memory c_E1D, c_E1DTr;
@@ -776,6 +777,13 @@ void InitWADG_subelem(Mesh *mesh,double(*c2_ptr)(double,double,double)){
   setOccaArray(Eth_vals,c_Eth_vals);
   setOccaIntArray(Eth_ids,c_Eth_ids);
 
+  MatrixXi EtqTr_ids;
+  MatrixXd EtqTr_vals;
+  get_sparse_ids(Etq.transpose(),EtqTr_ids,EtqTr_vals);
+  //printf("EtqTr nnz = %d\n",EtqTr_ids.cols());
+  setOccaArray(EtqTr_vals,c_EtqTr_vals);
+  setOccaIntArray(EtqTr_ids,c_EtqTr_ids);
+
   dgInfo.addDefine("p_N2p",N2p);
   //dgInfo.addDefine("p_N2pBank",N2p+1);
   dgInfo.addDefine("p_max8Np1D",max(8,p_N+1));
@@ -908,8 +916,8 @@ void InitWADG_subelem(Mesh *mesh,double(*c2_ptr)(double,double,double)){
 
   std::string srcBB = "okl/WaveKernelsBBWADG.okl";
   rk_update_BBWADG  = device.buildKernelFromSource(srcBB.c_str(), "rk_update_BBWADG", dgInfo);
-  //rk_update_BBWADGq  = device.buildKernelFromSource(srcBB.c_str(), "rk_update_BBWADGq_loads", dgInfo);
-  rk_update_BBWADGq  = device.buildKernelFromSource(srcBB.c_str(), "rk_update_BBWADGq_Nq3", dgInfo);
+  rk_update_BBWADGq  = device.buildKernelFromSource(srcBB.c_str(), "rk_update_BBWADGq_loads", dgInfo);
+  //rk_update_BBWADGq  = device.buildKernelFromSource(srcBB.c_str(), "rk_update_BBWADGq_Nq3", dgInfo);
 
   mult_quad  = device.buildKernelFromSource(srcBB.c_str(), "mult_quad", dgInfo);
 
@@ -2265,7 +2273,7 @@ void test_RK(Mesh *mesh, int KblkU){
   double elapsed1 = 0.0;
   double elapsed2 = 0.0;
   double elapsed3 = 0.0;
-  int nsteps = 1;
+  int nsteps = 5;
   for (int i = 0; i < nsteps; ++i){
     occa::tic("");
     mult_quad(mesh->K,
@@ -2297,11 +2305,10 @@ void test_RK(Mesh *mesh, int KblkU){
     occa::tic("");
     rk_update_BBWADGq(mesh->K,
 		      c_Eth_vals, c_Eth_ids,
+		      c_EtqTr_vals, c_EtqTr_ids,
 		      c_Ei_vals, c_Ei_ids,
 		      c_EiTr_vals, c_EiTr_ids,
-		      c_ETri_vals, c_ETri_ids,
 		      c_ETriTr_vals, c_ETriTr_ids,
-                      c_E1D, c_E1DTr,
 		      c_quad_ids,
 		      c_Vab1D,
 		      c_Vc1D,
