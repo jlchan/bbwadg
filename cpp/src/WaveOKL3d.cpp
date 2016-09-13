@@ -871,7 +871,7 @@ void InitWADG_subelem(Mesh *mesh,double(*c2_ptr)(double,double,double)){
   //cout << "wc1D = " << wc << endl;
 
   MatrixXd Vab1D = Bern1D(p_N,a1D);
-  MatrixXd Vc1D = Bern1D(p_N,c1D); 
+  MatrixXd Vc1D = Bern1D(p_N,c1D);
 
   // todo: fix! add real Vq1D to eval at bernstein points.
   setOccaArray(Vab1D,c_Vab1D);
@@ -908,8 +908,8 @@ void InitWADG_subelem(Mesh *mesh,double(*c2_ptr)(double,double,double)){
 
   std::string srcBB = "okl/WaveKernelsBBWADG.okl";
   rk_update_BBWADG  = device.buildKernelFromSource(srcBB.c_str(), "rk_update_BBWADG", dgInfo);
-  rk_update_BBWADGq  = device.buildKernelFromSource(srcBB.c_str(), "rk_update_BBWADGq_loads", dgInfo);
-  //  rk_update_BBWADGq  = device.buildKernelFromSource(srcBB.c_str(), "rk_update_BBWADGq_Nq3", dgInfo);
+  //rk_update_BBWADGq  = device.buildKernelFromSource(srcBB.c_str(), "rk_update_BBWADGq_loads", dgInfo);
+  rk_update_BBWADGq  = device.buildKernelFromSource(srcBB.c_str(), "rk_update_BBWADGq_Nq3", dgInfo);
 
   mult_quad  = device.buildKernelFromSource(srcBB.c_str(), "mult_quad", dgInfo);
 
