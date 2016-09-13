@@ -7,7 +7,7 @@ function advec1D_bern_limit
 Globals1D;
 
 % Order of polymomials used for approximation
-N = 8;
+N = 7;
 
 % Generate simple mesh
 K1D = 16;
@@ -19,11 +19,13 @@ StartUp1D;
 vmapP(1) = vmapM(end); % make periodic
 vmapP(end) = vmapM(1);
 
-rp = linspace(-1,1,100)';
+rp = linspace(-1,1,25)';
 Vp = Vandermonde1D(N,rp)/V;
 xp=  Vp*x;
 
-global VB DB VBe
+global VB DB VBe W
+W = get_BB_smoother(N);
+
 re = linspace(-1,1,N+1)';
 [VB VBr] = bern_basis_1D(N,r);
 DB = VB\VBr;
@@ -36,12 +38,12 @@ d = 100;
 uex = @(x) -1./(1 + exp(-d*(x-1/3))) + 1./(1 + exp(-d*(x+1/3)));%x > -1/3 & x < 1/3;%exp(-25*x.^2);
 uex = @(x) (x > -3/4 & x < -1/4) + exp(-50*(x-1/2).^2);
 % uex = @(x) 1-cos(pi*x);
-% uex = @(x) -sin(pi*x);
+% uex = @(x) sin(pi*x);
 u = limit(uex(x));
 % u = uex(x);
 
 % Solve Problem
-FinalTime = 1;
+FinalTime = 2;
 
 time = 0;
 
@@ -64,15 +66,14 @@ for tstep=1:Nsteps
         [rhsu] = AdvecRHS1D(utmp);
         plot(xp,Vp*u,'-')
         utmp = (1-ssprk(i))*u + ssprk(i)*(utmp + dt*rhsu);
-        hold on
-        plot(xp,Vp*utmp,'--')
-        keyboard
         [utmp Klim alpha] = limit(utmp);
     end    
     u = utmp;
 
+    % Increment time
+    time = time+dt;
     
-    if mod(tstep,2)==0
+    if mod(tstep,5)==0
         
         plot(xp,Vp*u,'-')
         %         plot(x,VB*uex(xe-time),'.-')
@@ -81,23 +82,22 @@ for tstep=1:Nsteps
 %         plot(xe,VB\u,'o')
         
         plot(xp,uex(xp-time),'--');
-%         if (any(alpha>1e-8))
-%             plot(x(:,Klim),alpha,'x')
-%         end
+        if (any(alpha>1e-8))
+            plot(x(:,Klim),alpha,'x')
+        end
         hold off
         axis([-1 1 -1 3])
         title(sprintf('Time = %f\n',time))
         drawnow
     end
-    % Increment time
-    time = time+dt;
+    
 end;
 
 plot(xp,Vp*u,'-')
 hold on;
 plot(x,u,'o')
 plot(xp,uex(xp-time),'--');
-
+axis([-1 1 -1 3])
 % keyboard
 
 function [rhsu] = AdvecRHS1D(u)
@@ -125,7 +125,7 @@ function [u Klim alpha] = limit(u)
 function [u Klim alpha] = BBlimit(u)
 
 Globals1D
-global VB DB VBe
+global VB DB VBe W
 
 % convert to bernstein
 uB = VB\u;
@@ -136,31 +136,53 @@ for i = 1:N
     TV = TV + abs(uB(i,:) - uB(i+1,:));
 end
 TV = TV./(N*max(abs(uB(:))));
-Klim = find(TV > .5*max(TV));
+Klim = find(TV > .75*max(TV));
 uB = uB(:,Klim);
 
-uavg = repmat(sum(uB,1)/(N+1),N+1,1);
+% % local conservation
+% uavg = repmat(sum(uB,1)/(N+1),N+1,1);
 
-uBe = VBe*uB; % BB approx of uB
-err = max(abs(uB-uBe)); 
-
-alpha = zeros(size(err));
-if err > max(abs(uB))/sqrt(N) % bound variation?
-    alpha = err/sqrt(N);
+if 1
+    [u1] = p1limit(u); u1 = u1(:,Klim);
+else
+    % limit P1 part
+    u1 = V\u(:,Klim); uavg = u1(1,:); u1(3:end,:) = 0; u1 = V*u1;
+    umax = 2; umin = 1; pmax = max(u1,[],1); pmin = min(u1,[],1);
+    theta = min(abs([(umax - uavg)./(pmax-uavg);(umin-uavg)./(pmin-uavg)]),[],1);
+    theta = min([theta;ones(size(theta))]);
+    uavg = repmat(uavg,N+1,1);
+    
+    % limited P1 sol
+    u1 = (u1 - uavg)*diag(theta) + uavg;
 end
-alpha = min(1,alpha);
-uB = uB*diag(1-alpha) + (VBe*uB)*diag(alpha);
 
-[u1 Klim alpha] = p1limit(u);
-% uB = uB - repmat(sum(uB,1)/(N+1),N+1,1) + uavg;
+% u1 = 0*u1;
 
-u(:,Klim) = VB*uB;
+% remove P1 part
+uB = uB - VB\u1;
+
+if 1
+%     uBe = VBe*uB; % BB approx
+    uBe = W*uB; % locally conservative BB
+    err = max(abs(uB-uBe));
+    
+    alpha = zeros(size(err));
+    if err > max(abs(uB))/sqrt(N) % bound variation?
+        alpha = err/sqrt(N);
+    end
+%     alpha(:) = 1;
+    alpha = min(1,alpha);
+    uB = uB*diag(1-alpha) + uBe*diag(alpha);
+else
+    uB = 0*uB;
+    alpha = zeros(K,1);
+end
+u(:,Klim) = u1 + VB*uB; % convert back
 
 
 function [ulimit ids alpha] = p1limit(u)
 
 Globals1D
-global VB
 
 % Compute cell averages
 uh = invV*u;
@@ -186,6 +208,8 @@ ve2 = vk + minmodB([(ue2-vk);vk-vkm1;vkp1-vk]);
 ids = find(abs(ve1-ue1)>eps0 | abs(ve2-ue2)>eps0);
 
 if 0
+    global VB
+    
     % convert to bernstein, find K with large TV
     uB = VB\u;
     TV = 0;
@@ -203,7 +227,7 @@ if(~isempty(ids))
     % apply slope limiter to selected elements
     ulimit(:,ids) = SlopeLimitLin(ul,x(:,ids),vkm1(ids),vk(ids),vkp1(ids));
 end
-alpha = 0*ids;
+alpha = ones(size(ids))*.5;
 
 return;
 
@@ -231,7 +255,7 @@ function mfunc = minmodB(v)
 % Purpose: Implement the TVB modified midmod function. v is a vector
 
 Globals1D
-M = 40; h = VX(2)-VX(1);
+M = 50; h = VX(2)-VX(1);
 mfunc = v(1,:);
 ids = find(abs(mfunc) > M*h.^2);
 if(size(ids,2)>0)

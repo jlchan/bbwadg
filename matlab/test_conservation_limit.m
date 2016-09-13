@@ -7,10 +7,10 @@
 Globals1D;
 
 % Order of polymomials used for approximation
-N = 9
+N = 7
 
 % Generate simple mesh
-K1D = 4;
+K1D = 8;
 [Nv, VX, K, EToV] = MeshGen1D(-1,1,K1D);
 
 % Initialize solver and construct grid and metric
@@ -40,16 +40,17 @@ TB = VB\Vandermonde1D(N,r);
 
 
 % Set initial conditions
-d = 25;
-a = 1/3;
+d = 5000;
+a = .1;
 uex = @(x) 1./(1 + exp(-d*(x-a)));%x > -1/3 & x < 1/3;%exp(-25*x.^2);
 %     uex = @(x) (x > -3/4 & x < -1/4) + 0*abs(x-.4).*(x > 0);
 %     uex = @(x) sin(pi*x);
 
-M = Vq'*diag(wq)*Vq;
-uB = M\(Vq'*diag(wq)*uex(xq));
+% M = Vq'*diag(wq)*Vq;
+% uB = M\(Vq'*diag(wq)*uex(xq));
+uB = VB\uex(x);
 uavg = repmat(sum(uB,1)/(N+1),N+1,1);
-usmooth = Ve*uB;
+usmooth = uex(xe);%Ve*uB;
 usmooth(usmooth<-1e-8) = 0;
 usmooth(usmooth>1+1e-8) = 1;
 
@@ -57,7 +58,7 @@ clf
 plot(xp,uex(xp),'-')
 hold on
 plot(xp,Vp*uB,'.-')
-usmooth = usmooth + uavg - repmat(sum(usmooth,1)/(N+1),N+1,1);
+% usmooth = usmooth + uavg - repmat(sum(usmooth,1)/(N+1),N+1,1);
 plot(xp,Vp*usmooth,'--')
 % plot(xe,uB,'o--')
 % plot(xe,usmooth,'o')

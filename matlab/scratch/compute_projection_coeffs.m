@@ -1,7 +1,7 @@
 % tests projection matrix
 clear
 
-N = 8;
+N = 4;
 N2 = 2*N;
 [r s] = Nodes2D(N2); [r s] = xytors(r,s); [a b] = rstoab(r,s);
 

@@ -7,10 +7,10 @@ function burgers1D_bern_limit
 Globals1D;
 
 % Order of polymomials used for approximation
-N = 8;
+N = 6;
 
 % Generate simple mesh
-K1D = 32;
+K1D = 16;
 [Nv, VX, K, EToV] = MeshGen1D(-1,1,K1D);
 
 % Initialize solver and construct grid and metric
@@ -23,7 +23,8 @@ rp = linspace(-1,1,100)';
 Vp = Vandermonde1D(N,rp)/V;
 xp=  Vp*x;
 
-global VB DB VBe
+global VB DB VBe W
+W = get_BB_smoother(N);
 re = linspace(-1,1,N+1)';
 [VB VBr] = bern_basis_1D(N,r);
 DB = VB\VBr;
@@ -32,6 +33,7 @@ VBe = bern_basis_1D(N,re);
 xe = Vandermonde1D(N,re)/V * x;
 
 % Set initial conditions
+global uex
 d = 100;
 uex = @(x) -1./(1 + exp(-d*(x-1/3))) + 1./(1 + exp(-d*(x+1/3)));%x > -1/3 & x < 1/3;%exp(-25*x.^2);
 uex = @(x) (x > -3/4 & x < -1/4) + exp(-50*(x-1/2).^2);
@@ -42,7 +44,7 @@ u = limit(uex(x));
 % u = uex(x);
 
 % Solve Problem
-FinalTime = .75;
+FinalTime = .5;
 
 time = 0;
 
@@ -102,6 +104,7 @@ function [rhsu] = BurgersRHS1D(u)
 % Purpose  : Evaluate RHS flux in 1D advection
 
 Globals1D;
+global uex
 
 % form field differences at faces
 alpha = 0;
@@ -109,8 +112,7 @@ du = zeros(Nfp*Nfaces,K);
 
 uM = u(vmapM);
 uP = u(vmapP);
-uP(1) = 2;  % BCs 
-uP(end) = 1;
+uP(1) = uex(-1);  uP(end) = uex(1); % BCs 
 
 aM = uM;
 du(:) = (uM-uP).*(aM.*nx(:)-(1-alpha)*abs(aM.*nx(:)))/2;
@@ -119,6 +121,8 @@ du(:) = (uM-uP).*(aM.*nx(:)-(1-alpha)*abs(aM.*nx(:)))/2;
 rhsu = -u.*(rx.*(Dr*u)) + LIFT*(Fscale.*(du));
 return
 
+
+
 function [u Klim alpha] = limit(u)
 
 [u Klim alpha] = BBlimit(u);
@@ -126,10 +130,11 @@ function [u Klim alpha] = limit(u)
 
 
 
+
 function [u Klim alpha] = BBlimit(u)
 
 Globals1D
-global VB DB VBe
+global VB DB VBe W
 
 % convert to bernstein
 uB = VB\u;
@@ -143,24 +148,45 @@ TV = TV./(N*max(abs(uB(:))));
 Klim = find(TV > .5*max(TV));
 uB = uB(:,Klim);
 
-% local conservation
-uavg = repmat(sum(uB,1)/(N+1),N+1,1);
+% % local conservation
+% uavg = repmat(sum(uB,1)/(N+1),N+1,1);
 
-uBe = VBe*uB; % BB approx
-% err = max(abs(uB - uBe))*diag(1./max(abs(DB*DB*uB)));
-err = max(abs(uB-uBe));
-
-alpha = zeros(size(err));
-if err > max(abs(uB))/sqrt(N) % bound variation?
-    alpha = err/sqrt(N);
+if 1
+    [u1] = p1limit(u); u1 = u1(:,Klim);
+else
+    % limit P1 part
+    u1 = V\u(:,Klim); uavg = u1(1,:); u1(3:end,:) = 0; u1 = V*u1;
+    umax = 2; umin = 1; pmax = max(u1,[],1); pmin = min(u1,[],1);
+    theta = min(abs([(umax - uavg)./(pmax-uavg);(umin-uavg)./(pmin-uavg)]),[],1);
+    theta = min([theta;ones(size(theta))]);
+    uavg = repmat(uavg,N+1,1);
+    
+    % limited P1 sol
+    u1 = (u1 - uavg)*diag(theta) + uavg;
 end
-alpha = min(1,alpha);
-uB = uB*diag(1-alpha) + (VBe*uB)*diag(alpha);
 
-% restore conservation 
-uB = uB - repmat(sum(uB,1)/(N+1),N+1,1) + uavg;
+% u1 = 0*u1;
 
-u(:,Klim) = VB*uB; % convert back
+% remove P1 part
+uB = uB - VB\u1;
+
+if 1
+    % uBe = VBe*uB; % BB approx
+    uBe = W*uB;
+    % err = max(abs(uB - uBe))*diag(1./max(abs(DB*DB*uB)));
+    err = max(abs(uB-uBe));
+    
+    alpha = zeros(size(err));
+    if err > max(abs(uB))/sqrt(N) % bound variation?
+        alpha = err/sqrt(N);
+    end
+    alpha = min(1,alpha);
+    uB = uB*diag(1-alpha) + uBe*diag(alpha);
+else
+    uB = 0*uB;
+    alpha = zeros(K,1);
+end
+u(:,Klim) = u1 + VB*uB; % convert back to nodal
 
 
 function [ulimit ids alpha] = p1limit(u)
@@ -237,7 +263,7 @@ function mfunc = minmod(v)
 % Purpose: Implement the TVB modified midmod function. v is a vector
 
 Globals1D
-M = 20; h = VX(2)-VX(1);
+M = 25; h = VX(2)-VX(1);
 mfunc = v(1,:);
 ids = find(abs(mfunc) > M*h.^2);
 if(size(ids,2)>0)

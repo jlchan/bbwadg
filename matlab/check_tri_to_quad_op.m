@@ -6,7 +6,7 @@
 
 % look at tri to quad operator
 clear
-N = 2;
+N = 6;
 Np = (N+1)*(N+2)/2;
 [r s w b a] = tri_tp_cubature(N);
 Vq = Vandermonde2D(N,r,s);
@@ -85,9 +85,17 @@ end
 
 Eth = kron(eye(N+1),Etq)*Etw;
 
-spy(Etq)
-% spy(Etq)
-% spy(Eth)
+
+
+[r s t] = Nodes3D(N); [r s t] = xyztorst(r,s,t);
+for i = 0:N
+    Etmp = bern_basis_tet(N,r,s,t)\bern_basis_tet(N-i,r,s,t);
+    Etmp(abs(Etmp)<1e-8) = 0;
+    E{i+1} = Etmp;
+end
+j = 1;
+hold on; 
+spy(Eth,'.')
 
 return
 

@@ -753,7 +753,7 @@ void InitWADG_subelem(Mesh *mesh,double(*c2_ptr)(double,double,double)){
   
   //  cout << "Etq = " << endl << Etq << endl;
   //  cout << "Etw = " << endl << Etw << endl;
-  cout << "Eth = " << endl << Eth << endl;
+  //  cout << "Eth = " << endl << Eth << endl;
   vector<MatrixXi> Eth_ids_list;
   vector<MatrixXd> Eth_vals_list;  
   for (int i = 0; i <= p_N; ++i){
@@ -853,6 +853,7 @@ void InitWADG_subelem(Mesh *mesh,double(*c2_ptr)(double,double,double)){
   }
 
   //printf("setting duffy vars\n");
+  dgInfo.addDefine("p_NpDivNq2",p_Np/Nq2); // for loop
   dgInfo.addDefine("p_Nq1D",Nq1D);
   dgInfo.addDefine("p_Nq2",Nq2);
   dgInfo.addDefine("p_Nq3",Nq3);
@@ -870,13 +871,13 @@ void InitWADG_subelem(Mesh *mesh,double(*c2_ptr)(double,double,double)){
   //cout << "wc1D = " << wc << endl;
 
   MatrixXd Vab1D = Bern1D(p_N,a1D);
-  MatrixXd Vc1D = Bern1D(p_N,c1D);
+  MatrixXd Vc1D = Bern1D(p_N,c1D); 
 
   // todo: fix! add real Vq1D to eval at bernstein points.
   setOccaArray(Vab1D,c_Vab1D);
   setOccaArray(Vc1D,c_Vc1D);
   //  cout << "Vab1D = " << endl << Vab1D << endl;
-  //  cout << "Vc1D = " << endl << Vc1D << endl;
+  // cout << "Vc1D = " << endl << Vc1D << endl;
 
   MatrixXd c2qDuffy(Nq3,mesh->K);
   setOccaArray(c2qDuffy,c_c2qDuffy);
@@ -908,6 +909,7 @@ void InitWADG_subelem(Mesh *mesh,double(*c2_ptr)(double,double,double)){
   std::string srcBB = "okl/WaveKernelsBBWADG.okl";
   rk_update_BBWADG  = device.buildKernelFromSource(srcBB.c_str(), "rk_update_BBWADG", dgInfo);
   rk_update_BBWADGq  = device.buildKernelFromSource(srcBB.c_str(), "rk_update_BBWADGq_loads", dgInfo);
+  //  rk_update_BBWADGq  = device.buildKernelFromSource(srcBB.c_str(), "rk_update_BBWADGq_Nq3", dgInfo);
   mult_quad  = device.buildKernelFromSource(srcBB.c_str(), "mult_quad", dgInfo);
 
 }
@@ -2294,6 +2296,8 @@ void test_RK(Mesh *mesh, int KblkU){
     occa::tic("");
     rk_update_BBWADGq(mesh->K,
 		      c_Eth_vals, c_Eth_ids,
+		      c_Ei_vals, c_Ei_ids,
+		      c_EiTr_vals, c_EiTr_ids,
 		      c_ETri_vals, c_ETri_ids,
 		      c_ETriTr_vals, c_ETriTr_ids,
                       c_E1D, c_E1DTr,
