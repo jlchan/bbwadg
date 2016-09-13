@@ -2273,7 +2273,7 @@ void test_RK(Mesh *mesh, int KblkU){
   double elapsed1 = 0.0;
   double elapsed2 = 0.0;
   double elapsed3 = 0.0;
-  int nsteps = 5;
+  int nsteps = 1;
   for (int i = 0; i < nsteps; ++i){
     occa::tic("");
     mult_quad(mesh->K,
@@ -2309,9 +2309,7 @@ void test_RK(Mesh *mesh, int KblkU){
 		      c_Ei_vals, c_Ei_ids,
 		      c_EiTr_vals, c_EiTr_ids,
 		      c_ETriTr_vals, c_ETriTr_ids,
-		      c_quad_ids,
-		      c_Vab1D,
-		      c_Vc1D,
+		      c_Vab1D, c_Vc1D,
 		      c_c2Test,
 		      c_Qtest);
     device.finish();
