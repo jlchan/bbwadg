@@ -353,7 +353,7 @@ kernel void rk_update_BBWADG(const int K,
 
 kernel void rk_update_BBWADGq(const int K,
 			      const dfloat * restrict Eth_vals,
-			      const int * restrict Eth_ids,  		      
+			      const int * restrict Eth_ids,
 			      const dfloat4 * restrict ETri_vals,
 			      const int4 * restrict ETri_ids,
 			      const dfloat4 * restrict ETriTr_vals,
@@ -902,7 +902,7 @@ kernel void rk_update_BBWADGq(const int K,
 kernel void rk_update_BBWADGq_loads(const int K,
 				    const dfloat * restrict Eth_vals,
 				    const int * restrict Eth_ids,
-				    const dfloat4 * restrict Ei_vals,
+				    const dfloat4 * restrict Ei_vals, // mass inversion
 				    const int4 * restrict Ei_ids,
 				    const dfloat4 * restrict EiTr_vals,
 				    const int4 * restrict EiTr_ids,	    
@@ -917,7 +917,7 @@ kernel void rk_update_BBWADGq_loads(const int K,
 				    const dfloat * restrict Vc1D,
 				    const dfloat * restrict wc2q,
 				    dfloat * restrict rhsQ){
-  
+
   for(int k1=0; k1<(K+p_KblkU-1)/p_KblkU; ++k1; outer0){
 
     shared dfloat sp[p_KblkU][p_Np];
@@ -946,7 +946,7 @@ kernel void rk_update_BBWADGq_loads(const int K,
             ii += p_Nq2;
           }
 	}
-	
+
 	if (k2==0 && i < p_Nq2){
 	  const int idi = i % p_Nq1D;
 	  const int idj = i / p_Nq1D;
@@ -965,7 +965,7 @@ kernel void rk_update_BBWADGq_loads(const int K,
     for(int jj = 0; jj <= p_N; ++jj){
       for(int k2 = 0; k2 < p_KblkU; ++k2; inner1){
 	for(int i = 0; i < p_Nq2; ++i; inner0){
-	  
+
 	  dfloat val = 0.f;
 	  for (int j = 0; j < p_nnz_Eth; ++j){ // should be around 2*N+1 nnz at N=9
 	    const int id = (i+jj*p_Nq2) + j*p_Nq3;
@@ -984,22 +984,21 @@ kernel void rk_update_BBWADGq_loads(const int K,
 #if 1
     // interp to quadrature: loop over ab slices
     for (int jj = 0; jj <= p_N; ++jj){
-      
+
       // apply first TP operator
       for(int k2 = 0; k2 < p_KblkU; ++k2; inner1){
 	for (int i = 0; i < p_Nq2; ++i; inner0){
 	  if (k < K){
-	    
+
 	    const int idi = i % (p_Nq1D);
 	    const int idj = i / (p_Nq1D);
-	    
+
 	    dfloat val = 0.f;
 	    for (int j = 0; j < (p_Nq1D); ++j){
 	      val += s_Vq[idi][j] * stmp[k2][jj][j + idj*(p_Nq1D)];
 	    }
 	    rtmp[jj] = val;
 	    stmp2[k2][i] = val; // store to tmp
-	    
 	  }
 	}
       }
@@ -1078,7 +1077,7 @@ kernel void rk_update_BBWADGq_loads(const int K,
 	    const int idi = i % (p_Nq1D);
 	    const int idj = i / (p_Nq1D);
 	    const int id = idj + idi * (p_Nq1D); // transpose slice
-	    
+
 	    dfloat val = 0.f;
 	    for (int j = 0; j < (p_Nq1D); ++j){
 	      //val += s_Vq[j][idi] * stmp[k2][jj][idj + j*(p_Nq1D)];
