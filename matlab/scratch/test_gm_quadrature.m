@@ -13,7 +13,7 @@ addpath('scratch/gm_quadrature')
 r = x(1,:); r = 2*r-1;
 s = x(2,:); s = 2*s-1;
 % [r s] = rstoxy(r,s);
-% plot(r,s,'o')
+plot(r,s,'o'); return
 % text(r+.05,s,num2str((1:length(r))'));
 % for i = 1:length(r)
 %     clf

@@ -1,7 +1,7 @@
 % tests projection matrix
 clear
 
-N = 4;
+N = 5;
 N2 = 2*N;
 [r s] = Nodes2D(N2); [r s] = xytors(r,s); [a b] = rstoab(r,s);
 
@@ -41,7 +41,10 @@ for j = 0:N
     P = P + c(j+1)*Ej{j+1};
 end
 
-norm(M1\M2-P,'fro') % difference between projection and
+norm(M1\M2-P,'fro') % difference between projections
+
+return
+
 u = (1:size(P,2))';
 
 % E1{1}'*u

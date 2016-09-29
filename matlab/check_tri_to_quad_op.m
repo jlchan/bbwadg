@@ -85,8 +85,6 @@ end
 
 Eth = kron(eye(N+1),Etq)*Etw;
 
-
-
 [r s t] = Nodes3D(N); [r s t] = xyztorst(r,s,t);
 for i = 0:N
     Etmp = bern_basis_tet(N,r,s,t)\bern_basis_tet(N-i,r,s,t);
@@ -95,7 +93,10 @@ for i = 0:N
 end
 j = 1;
 hold on; 
-spy(Eth,'.')
+
+% iEth = pinv(Eth);
+% iEth(abs(iEth)<1e-8) = 0;
+% spy(iEth)
 
 return
 

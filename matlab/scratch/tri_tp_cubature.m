@@ -19,3 +19,5 @@ w = w.*(1-b); % if using GQ all around
 r = r(:); 
 s = s(:);
 w = w(:);
+a = a(:);
+b = b(:);
