@@ -1,9 +1,30 @@
 % check bernstein mass matrix inversion
 
+%% 1D test
+clear
+
+f = @(x) 1;
+for N = 1:15
+    [rq wq] = JacobiGQ(0,0,N+2);    
+    Vq = bern_basis_1D(N,rq);
+    M = Vq'*diag(wq)*Vq;
+    fq = f(rq);
+    b = Vq'*(wq.*fq);
+    err1(N) = sqrt(wq'*(Vq*(M\b) - fq).^2);    
+    
+    VDM = Vandermonde1D(N,rq);
+    err = fq - VDM*(VDM'*(wq.*fq));
+    err2(N) = sqrt(sum(wq.*err(:).^2));
+end
+semilogy(err1,'o--')
+hold on
+semilogy(err2,'s--')
+
+
 %% 2D test
 clear
 
-for N = 1:15    
+for N = 1:15
     [rq sq wq] = Cubature2D(2*N+2);
     Vq = bern_basis_tri(N,rq,sq);
     M = Vq'*diag(wq)*Vq;
@@ -55,7 +76,7 @@ for N = 1:15
     f = @(r,s) exp((r+s)/3);
     VDM = Vandermonde2D(N,rq,sq);
     err = f(rq,sq) - VDM*(VDM'*(wq.*f(rq,sq)));
-    err1(N) = sqrt(sum(err(:).^2));
+    err1(N) = sqrt(sum(wq.*err(:).^2));
     
     b = Vq'*(wq.*f(rq,sq)); 
     Pb = 0; 
@@ -66,23 +87,39 @@ for N = 1:15
 %         bi{i+1} = E{i+1}'*b;
 %     end
     err = f(rq,sq) - Vq*(Pb);
-    err2(N) = sqrt(sum(err(:).^2));
+    err2(N) = sqrt(sum(wq.*err(:).^2));
     
     b = Vq'*(wq.*f(rq,sq));     
     err = f(rq,sq) - Vq*(M\b);
-    err3(N) = sqrt(sum(err(:).^2));
+    err3(N) = sqrt(sum(wq.*err(:).^2));
+    
+    % Legendre transform
+    [r s] = Nodes2D(N); [r s] = xytors(r,s);
+    V = Vandermonde2D(N,r,s);
+    T = bern_basis_tri(N,r,s)\V;
+    
+    % equilibrate
+    d = max(abs(T),[],1);
+    d2 = d(:).^2;
+    T2 = T*diag(1./d);
+
+    err = f(rq,sq)-Vq*(T*(T'*b));
+%     err = f(rq,sq)-Vq*(T2*(d2.*(T2'*b))); 
+    err4(N) = sqrt(sum(wq.*err(:).^2));
 end
 semilogy(err1,'o--')
 hold on
 semilogy(err2,'s--')
 semilogy(err3,'x--')
+semilogy(err4,'*--')
+legend('PKDO','Degree elev','Mass inv','Legendre')
 
 %% 3D test
 
-clear
-
+clear 
+figure
 for N = 1:9
-    [rq sq tq wq] = tet_cubature(2*N+2);
+    [rq sq tq wq] = tet_cubature(2*N+1);
     Vq = bern_basis_tet(N,rq,sq,tq);
     M = Vq'*diag(wq)*Vq;
     Np = size(M,2);
@@ -143,7 +180,7 @@ for N = 1:9
     f = @(r,s,t) exp((r+s+t)/3);
     VDM = Vandermonde3D(N,rq,sq,tq);
     err = f(rq,sq,tq) - VDM*(VDM'*(wq.*f(rq,sq,tq)));
-    err1(N) = sqrt(sum(err(:).^2));
+    err1(N) = sqrt(sum(wq.*err(:).^2));
     
     b = Vq'*(wq.*f(rq,sq,tq));
     
@@ -162,11 +199,24 @@ for N = 1:9
     Pb = c(1)*b + Ei{1}*bn;
     
     err = f(rq,sq,tq) - Vq*(Pb);
-    err2(N) = sqrt(sum(err(:).^2));
+    err2(N) = sqrt(sum(wq.*err(:).^2));
     
     b = Vq'*(wq.*f(rq,sq,tq));     
     err = f(rq,sq,tq) - Vq*(M\b);
-    err3(N) = sqrt(sum(err(:).^2));
+    err3(N) = sqrt(sum(wq.*err(:).^2));
+    
+    
+    [r s t] = Nodes3D(N); [r s t] = xyztorst(r,s,t);
+    V = Vandermonde3D(N,r,s,t);
+    T = bern_basis_tet(N,r,s,t)\V;    
+    
+%     % equilibrate
+%     d = max(abs(T),[],1);
+%     d2 = d(:).^2;
+%     T2 = T*diag(1./d);
+%     err = f(rq,sq,tq)-Vq*(T2*(d2.*(T2'*b))); 
+    err = f(rq,sq,tq)-Vq*(T*(T'*b));
+    err4(N) = sqrt(sum(wq.*err(:).^2));
 end
 % [err1(N),err2(N),err3(N)]
 % return
@@ -174,3 +224,5 @@ semilogy(err1,'o--')
 hold on
 semilogy(err2,'s--')
 semilogy(err3,'x--')
+semilogy(err4,'*--')
+legend('PKDO','Degree elev','Mass inv','Legendre')

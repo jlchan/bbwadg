@@ -1,45 +1,48 @@
 % 2d diagrams
 clear
-N = 2;
+N = 3;
 Np = (N+1)*(N+2)/2;
 u = (1:Np)';
 v = zeros(Np,1);
 v(1) = 1;
 % v = u;
 
-[r s] = Nodes2D(2*N); [r s] = xytors(r,s);
+N2 = 1;
+N2p = (N2+1)*(N2+2)/2;
+NM = N + N2;
+
+[r s] = Nodes2D(NM); [r s] = xytors(r,s);
 Np2 = length(r);
-[rq sq w] = Cubature2D(4*N);
 V = bern_basis_tri(N,r,s);
-
-V2N = bern_basis_tri(2*N,r,s);
-VM = V2N\(diag(V*v)*V);
-VM(abs(VM)<1e-8) = 0;
+V2 = bern_basis_tri(N2,r,s);
+V2N = bern_basis_tri(NM,r,s);
 % spy(VM)
-VM
+% VM
 
-[re se] = EquiNodes2D(2*N); [re se] = xytors(re,se);
+[re se] = EquiNodes2D(NM); [re se] = xytors(re,se);
 
 
-for i = 1:Np
-    v = zeros(Np,1);
+for i = 1:N2p
+    v = zeros(N2p,1);
     v(i) = 1;
-    VM = V2N\(diag(V*v)*V);
+    VM = V2N\(diag(V2*v)*V);
     VM(abs(VM)<1e-8) = 0;
+    VM
     
     [idr idc] = find(VM);
     row_ids{i} = idr;
     
+    entries = VM(abs(VM)>0);
     clf
     plot(re,se,'o');
     hold on
-    plot(re(idr),se(idr),'x');
+    plot3(re(idr),se(idr),entries,'x');
     pause
 end
 
 %% 3d diagrams
 clear
-N = 4;
+N = 3;
 Np = (N+1)*(N+2)*(N+3)/6;
 u = (1:Np)';
 v = zeros(Np,1);
@@ -76,7 +79,7 @@ end
 %% test 3d mult
 
 clear
-N = 2;
+N = 7;
 
 [re se te] = EquiNodes3D(N);
 Np = length(re);
@@ -112,7 +115,7 @@ V2N = bern_basis_tet(2*N,r,s,t);
 for i = 1:Np
     v = zeros(Np,1);
     v(i) = 1;
-    %VM = diag(C2)*(V2N\(diag(V*(v./C))*V*diag(1./C)));
+%     VM = diag(C2)*(V2N\(diag(V*(v./C))*V*diag(1./C)));
     VM = V2N\(diag(V*v)*V);
     VM(abs(VM)<1e-8) = 0;
     
@@ -122,11 +125,17 @@ for i = 1:Np
     row_ids{i} = idr;
 end
 
+% return
+
 % do mult
 u = (1:Np)';
-v = randn(Np,1);
+v = (0:Np-1)'; 
 VMex = V2N\(diag(V*v)*V);
 fg_ex = VMex*u;
+
+E = bern_basis_tet(2*N,r,s,t)\bern_basis_tet(N,r,s,t);
+E(abs(E)<1e-8) = 0;
+rfg_ex = E'*fg_ex;
 
 u = u.*C; v = v.*C;
 fg = zeros(size(re));
@@ -135,8 +144,20 @@ for j = 1:Np
     fg(ids) = fg(ids) + v(j)*u(:);
 end
 
-fg = fg ./ C2;
-norm(fg-fg_ex)
+norm(fg./C2 - fg_ex)/norm(fg_ex)
+
+% cheap but maybe unstable reduction
+C2avg = mean(C2);
+C2 = C2/C2avg;
+fg = fg./(C2.*C2);
+rfg = zeros(Np,1);
+for j = 1:Np
+    ids = row_ids{j};
+    rfg(j) = C(j)*C' * fg(ids);
+end
+rfg = rfg/C2avg^2;
+
+norm(rfg - rfg_ex)/norm(rfg_ex)
 
 
 %% 2D projection

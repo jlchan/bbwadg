@@ -1,6 +1,5 @@
 % test duffy expansion of BB
 clear
-% clc
 
 N = 2;
 Np = (N+1)*(N+2)/2;
@@ -158,14 +157,15 @@ VB = bern_basis_1D(N,a);
 [c wc] = JacobiGQ(2,0,Nq);
 VBc = bern_basis_1D(N,c);
 for k = 0:N
-    uTPtmp = reshape(uTP(:,k+1),N+1,N+1);
-    uqtmp = ((VB*uTPtmp)*VB')'; 
+    uTPtmp = reshape(uTP(:,k+1),N+1,N+1);    
+    uqtmp = (VB*(VB*uTPtmp)');     
+%     uqtmp = VB*uTPtmp;        
+%     uqtmp = VB*uqtmp;
     uq2(:,k+1) = uqtmp(:);
 end
-uq2 = (VBc*uq2')';
+uq2 = (VBc*uq2');
+uq2 = uq2';
 norm(uq-uq2(:),'fro')
-
-% uq2
 c2 = reshape((1:(N+1)^3),(N+1)^2,N+1);
 cuq = uq2.*c2;
 
@@ -179,9 +179,9 @@ uint = (VBc'*uint')';
 uint
 Eth = get_Eth(N);
 b = Eth'*uint(:);
-
+b(1:5)
 M = Vq'*diag(w)*Vq;
-Pu = M\b
+Pu = M\b;
 % b(1:end-1)
 
 % Vq'*cuq(:)

@@ -4,7 +4,7 @@ function maxeig = advec1D_cfl(Nin)
 % Purpose  : Integrate 1D advection until FinalTime starting with
 %            initial the condition, u
 if nargin==0
-    Nin = 7;
+    Nin = 4;
 end
 Globals1D;
 
@@ -12,7 +12,7 @@ Globals1D;
 N = Nin;
 
 % Generate simple mesh
-K1D = 4;
+K1D = 2;
 [Nv, VX, K, EToV] = MeshGen1D(-1,1,K1D);
 
 % Initialize solver and construct grid and metric
@@ -83,9 +83,9 @@ if 1 %nargout > 0
 %     pause
     
     %     Q = null(W(:,1:skip)'*kron(eye(K),M)); % basis which is L2 orthog to bad modes
-    %     Q = W;
-    Q = W(:,1:skip);
-    Q = eye(size(Q,1)) - Q*Q'; % directly project out high modes
+        Q = W;
+%     Q = W(:,1:skip);
+%     Q = eye(size(Q,1)) - Q*Q'; % directly project out high modes
     %     keyboard
     rb = [-1;1];
     Vbdr = Vandermonde1D(N,rb);

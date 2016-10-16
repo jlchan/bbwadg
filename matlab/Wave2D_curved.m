@@ -5,8 +5,8 @@ function  Wave2D_curved
 
 Globals2D;
 
-N = 7;
-nref = 2;
+N = 5;
+nref = 0;
 useJprojection = 1;
 
 Nq = 2*N+1;
@@ -48,7 +48,7 @@ cinfo = BuildCurvedOPS2D_opt(Nq,useJprojection);
 global Vq wq Vrq Vsq
 global Vfq wfq VfqFace
 global rxq sxq ryq syq Jq Jfq nxq nyq sJq
-global Pq Pfq
+global Pq Pfq Prq Psq
 
 
 [rp sp] = EquiNodes2D(25); [rp sp] = xytors(rp,sp);
@@ -80,6 +80,8 @@ VfqFace = blkdiag(VfqFace,VfqFace,VfqFace); % repeat for 3 faces
 
 % project down
 Pq = (V*V')*(Vq'*diag(wq));
+Prq = (V*V')*(Vrq'*diag(wq));
+Psq = (V*V')*(Vsq'*diag(wq));
 Pfq = (V*V')*(Vfq'*diag(wfq));
 
 Nc = length(wq);
@@ -107,11 +109,11 @@ end
 
 
 global tau;
-tau = 1;
+tau = 0;
 
 
 %%
-if 0 && nargin==0
+if 1 && nargin==0
     
     e = zeros(3*Np*K,1);
     A = zeros(3*Np*K);
@@ -121,13 +123,9 @@ if 0 && nargin==0
         p = reshape(e(ids),Np,K);
         u = reshape(e(ids + Np*K),Np,K);
         v = reshape(e(ids + 2*Np*K),Np,K);
-        if useJprojection==1
-            [rhsu, rhsv, rhsp] = acousticsRHS2D_JC( u,v,p);
-        elseif useJprojection==0
-            [rhsu, rhsv, rhsp] = acousticsCurvedRHS2D(cinfo, u,v,p);
-        else
-            [rhsu, rhsv, rhsp] = acousticsRHS2D(u,v,p);
-        end
+%         [rhsu, rhsv, rhsp] = acousticsRHS2D(u,v,p);
+        [rhsu, rhsv, rhsp] = acousticsRHS2D_skew(u,v,p);
+%         [rhsu, rhsv, rhsp] = acousticsRHS2D_JC(u,v,p);
         
         A(:,i) = [rhsp(:);rhsu(:);rhsv(:)];
         e(i) = 0;
@@ -188,16 +186,9 @@ while (time<FinalTime)
     if(time+dt>FinalTime), dt = FinalTime-time; end
     
     for INTRK = 1:5
-        % compute right hand side of TM-mode acoustics's equations
-        %
-        if (useJprojection==0)
-            [rhsu, rhsv, rhsp] = acousticsCurvedRHS2D(cinfo, u,v,p);
-        elseif (useJprojection==-1)
-            [rhsu, rhsv, rhsp] = acousticsRHS2D(u,v,p);
-        else
-            [rhsu, rhsv, rhsp] = acousticsRHS2D_JC(u,v,p);
-        end
-        %
+        % compute right hand side of TM-mode acoustics's equations        
+%         [rhsu, rhsv, rhsp] = acousticsRHS2D(u,v,p);
+        [rhsu, rhsv, rhsp] = acousticsRHS2D_JC(u,v,p);                
         
         % initiate and increment Runge-Kutta residuals
         resp = rk4a(INTRK)*resp + dt*rhsp;
@@ -242,62 +233,6 @@ href = max(1./Fscale(:));
 disp(sprintf('L2 error = %e\n',L2err))
 
 
-function [rhsu, rhsv, rhsp] = acousticsCurvedRHS2D(cinfo, u,v,p)
-
-% function [rhsu, rhsv, rhsp] = acousticsCurvedRHS2D(cinfo, u,v,p)
-% Purpose  : Evaluate RHS flux in 2D acoustics TM form
-
-Globals2D;
-
-%SubParametric for all non-curved
-[rhsu,rhsv,rhsp] = acousticsRHS2D(u, v, p);
-
-Ncinfo = length(cinfo);
-
-% correct residuals at each curved element
-for n=1:Ncinfo
-    
-    % for each curved element computed L2 derivatives via cubature
-    cur = cinfo(n); k1 = cur.elmt; cDx = cur.Dx; cDy = cur.Dy;
-    
-    rhsp(:,k1) =  -(cDx*u(:,k1) + cDy*v(:,k1)); % -div U
-    rhsu(:,k1) =  -cDx*p(:,k1);  % -grad p
-    rhsv(:,k1) =  -cDy*p(:,k1);
-    
-    % for each face of each curved element use Gauss quadrature based lifts
-    for f1=1:Nfaces
-        k2 = EToE(k1,f1);
-        gnx = cur.gnx(:,f1); gny = cur.gny(:,f1);
-        gVM = cur.gVM(:,:,f1); gVP = cur.gVP(:,:,f1);
-        glift = cur.glift(:,:,f1);
-        
-        gdp = gVP*p(:,k2) - gVM*p(:,k1); % [p] = p+ - p-
-        gdu = gVP*u(:,k2) - gVM*u(:,k1);
-        gdv = gVP*v(:,k2) - gVM*v(:,k1);
-        
-        % compute difference of solution traces at Gauss nodes
-        % correct jump at Gauss nodes on domain boundary faces
-        if(k1==k2)
-            gdu = 0*gdu; gdv = 0*gdv;
-            gdp = -2.0*gVM*p(:,k1); %p+ = -p-
-        end
-        
-        % perform upwinding
-        global tau
-        gndotdU = gnx.*gdu + gny.*gdv;
-        fluxp = tau*gdp - gndotdU;
-        fluxu = (tau*gndotdU - gdp).*gnx;
-        fluxv = (tau*gndotdU - gdp).*gny;
-        
-        % lift flux terms using Gauss based lift operator
-        rhsp(:,k1) = rhsp(:,k1) + glift*fluxp/2;
-        rhsu(:,k1) = rhsu(:,k1) + glift*fluxu/2;
-        rhsv(:,k1) = rhsv(:,k1) + glift*fluxv/2;
-    end
-end
-
-
-return;
 
 function [rhsu, rhsv, rhsp] = acousticsRHS2D(u,v,p)
 
@@ -382,11 +317,11 @@ dudx = ur.*rxq + us.*sxq;
 dvdy = vr.*ryq + vs.*syq;
 divU = dudx + dvdy;
 
-% % compute right hand sides of the PDE's
-% % Petrov-Galerkin DG
-% rhsp =  Pq*(-divU) + Pfq*(fluxp.*sJq./Jfq/2.0);
-% rhsu =  Pq*(-dpdx) + Pfq*(fluxu.*sJq./Jfq/2.0);
-% rhsv =  Pq*(-dpdy) + Pfq*(fluxv.*sJq./Jfq/2.0);
+% compute right hand sides of the PDE's
+% Petrov-Galerkin DG
+rhsp =  Pq*(-divU) + Pfq*(fluxp.*sJq./Jfq/2.0);
+rhsu =  Pq*(-dpdx) + Pfq*(fluxu.*sJq./Jfq/2.0);
+rhsv =  Pq*(-dpdy) + Pfq*(fluxv.*sJq./Jfq/2.0);
 
 % compute right hand sides of the PDE's
 rhsp =  Pq*(-divU.*Jq) + Pfq*(fluxp.*sJq/2.0);
@@ -400,6 +335,73 @@ rhsv = Pq*((Vq*rhsv)./Jq);
 
 return;
 
+
+function [rhsu, rhsv, rhsp] = acousticsRHS2D_skew(u,v,p)
+
+% function [rhsu, rhsv, rhsp] = acousticsRHS2D(u,v,p)
+% Purpose  : Evaluate RHS flux in 2D acoustics TM form
+
+global Vq Vrq Vsq VfqFace
+global rxq sxq ryq syq Jq Jfq nxq nyq sJq
+global Pq Pfq Prq Psq
+
+Globals2D;
+
+% Define field differences at faces
+dp = zeros(Nfp*Nfaces,K); dp(:) = p(vmapP)-p(vmapM);
+du = zeros(Nfp*Nfaces,K); du(:) = u(vmapP)-u(vmapM);
+dv = zeros(Nfp*Nfaces,K); dv(:) = v(vmapP)-v(vmapM);
+uavg = zeros(Nfp*Nfaces,K); uavg(:) = .5*(u(vmapP) + u(vmapM));
+vavg = zeros(Nfp*Nfaces,K); vavg(:) = .5*(v(vmapP) + v(vmapM));
+
+% Impose reflective boundary conditions (p+ = -p-)
+du(mapB) = 0; dv(mapB) = 0; dp(mapB) = -2*p(vmapB);
+
+% can interp numerical fluxes *after* since mult by sJ is higher order
+dp = VfqFace*dp;
+du = VfqFace*du;
+dv = VfqFace*dv;
+uavg = VfqFace*uavg;
+vavg = VfqFace*vavg;
+
+% evaluate upwind fluxes
+ndotdU = nxq.*du + nyq.*dv;
+ndotavgU = nxq.*uavg + nyq.*vavg;
+
+global tau
+% fluxp =  tau*dp - ndotdU;
+
+fluxp =  tau*dp - 2*ndotavgU;
+fluxu =  (tau*ndotdU - dp).*nxq;
+fluxv =  (tau*ndotdU - dp).*nyq;
+
+% local derivatives of fields
+pr = Vrq*p; ps = Vsq*p;
+ur = Vrq*u; us = Vsq*u;
+vr = Vrq*v; vs = Vsq*v;
+
+dpdx = pr.*rxq + ps.*sxq;
+dpdy = pr.*ryq + ps.*syq;
+dudx = ur.*rxq + us.*sxq;
+dvdy = vr.*ryq + vs.*syq;
+divU = dudx + dvdy;
+
+% compute right hand sides of the PDE's
+%rhsp =  Pq*(-divU.*Jq) + Pfq*(fluxp.*sJq/2.0);
+uq = Vq*u;
+vq = Vq*v;
+Ur = rxq.*uq + ryq.*vq;
+Us = sxq.*uq + syq.*vq;
+rhsp =  Prq*(Ur.*Jq) + Psq*(Us.*Jq) + Pfq*(fluxp.*sJq/2.0);
+rhsu =  Pq*(-dpdx.*Jq) + Pfq*(fluxu.*sJq/2.0);
+rhsv =  Pq*(-dpdy.*Jq) + Pfq*(fluxv.*sJq/2.0);
+
+% apply inverse mass matrix
+rhsp = Pq*((Vq*rhsp)./Jq);
+rhsu = Pq*((Vq*rhsu)./Jq);
+rhsv = Pq*((Vq*rhsv)./Jq);
+
+return;
 
 % copied in b/c matlab is funny
 function MakeCylinder2D(faces, ra,xo,yo)

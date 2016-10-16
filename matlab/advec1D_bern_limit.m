@@ -7,10 +7,10 @@ function advec1D_bern_limit
 Globals1D;
 
 % Order of polymomials used for approximation
-N = 7;
+N = 6;
 
 % Generate simple mesh
-K1D = 16;
+K1D = 32;
 [Nv, VX, K, EToV] = MeshGen1D(-1,1,K1D);
 
 % Initialize solver and construct grid and metric
@@ -40,6 +40,7 @@ uex = @(x) (x > -3/4 & x < -1/4) + exp(-50*(x-1/2).^2);
 % uex = @(x) 1-cos(pi*x);
 % uex = @(x) sin(pi*x);
 u = limit(uex(x));
+% u = uex(xe);
 % u = uex(x);
 
 % Solve Problem
@@ -66,7 +67,7 @@ for tstep=1:Nsteps
         [rhsu] = AdvecRHS1D(utmp);
         plot(xp,Vp*u,'-')
         utmp = (1-ssprk(i))*u + ssprk(i)*(utmp + dt*rhsu);
-        [utmp Klim alpha] = limit(utmp);
+%         [utmp Klim alpha] = limit(utmp);
     end    
     u = utmp;
 
@@ -81,10 +82,7 @@ for tstep=1:Nsteps
         plot(x,u,'o')
 %         plot(xe,VB\u,'o')
         
-        plot(xp,uex(xp-time),'--');
-        if (any(alpha>1e-8))
-            plot(x(:,Klim),alpha,'x')
-        end
+        plot(xp,uex(xp-time),'--');        
         hold off
         axis([-1 1 -1 3])
         title(sprintf('Time = %f\n',time))
@@ -99,6 +97,22 @@ plot(x,u,'o')
 plot(xp,uex(xp-time),'--');
 axis([-1 1 -1 3])
 % keyboard
+re = linspace(-1,1,N+1)';
+Ve = Vandermonde1D(N,re)/V; xe = Ve*x;
+VB = bern_basis_1D(N,r);
+uB = VB\u;
+TV = 0;
+for i = 1:N
+    TV = TV + abs(uB(i,:) - uB(i+1,:));        
+end
+ids = find(TV > 0*max(TV));
+
+plot(xe,uB,'o')
+hold on
+plot(xe(:,ids),uB(:,ids),'*')
+plot(xe,repmat(TV,N+1,1),'x')
+plot(xp,Vp*u,'-');
+
 
 function [rhsu] = AdvecRHS1D(u)
 
@@ -135,8 +149,7 @@ TV = 0;
 for i = 1:N
     TV = TV + abs(uB(i,:) - uB(i+1,:));
 end
-TV = TV./(N*max(abs(uB(:))));
-Klim = find(TV > .75*max(TV));
+Klim = find(TV > 2*(N+1));
 uB = uB(:,Klim);
 
 % % local conservation
@@ -170,13 +183,14 @@ if 1
     if err > max(abs(uB))/sqrt(N) % bound variation?
         alpha = err/sqrt(N);
     end
-%     alpha(:) = 1;
+    alpha(:) = 1;
     alpha = min(1,alpha);
     uB = uB*diag(1-alpha) + uBe*diag(alpha);
 else
     uB = 0*uB;
     alpha = zeros(K,1);
 end
+
 u(:,Klim) = u1 + VB*uB; % convert back
 
 
@@ -255,7 +269,7 @@ function mfunc = minmodB(v)
 % Purpose: Implement the TVB modified midmod function. v is a vector
 
 Globals1D
-M = 50; h = VX(2)-VX(1);
+M = 40; h = VX(2)-VX(1);
 mfunc = v(1,:);
 ids = find(abs(mfunc) > M*h.^2);
 if(size(ids,2)>0)

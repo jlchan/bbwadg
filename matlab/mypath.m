@@ -1,11 +1,11 @@
 
 pw = pwd;
 addpath([pw,'/Codes1D']);
-if useQuads
-    addpath([pw,'/Codes2DQuad']);
-else
+% if useQuads
+%     addpath([pw,'/Codes2DQuad']);
+% else
     addpath([pw,'/Codes2D']);
-end
+% end
 addpath([pw,'/Codes3D']);
 addpath([pw,'/Grid']);
 addpath([pw,'/ServiceRoutines']);
@@ -17,4 +17,5 @@ addpath([pw,'/ServiceRoutines']);
 % addpath([pw,'/hybrid']);
 addpath([pw,'/scratch']);
 addpath([pw,'/bern']);
+addpath([pw,'/bspline']);
 addpath([pw]);

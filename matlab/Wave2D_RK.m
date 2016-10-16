@@ -7,18 +7,19 @@ Globals2D
 
 if nargin==0
     %     Nin = 4; K1D = 16;
-    Nin = 3; K1D = 8; c_flag = 0;
-    cfun = @(x,y) ones(size(x));
-    % cfun = @(x,y) 1 + .5*sin(pi*x).*sin(pi*y); % smooth velocity
-%     cfun = @(x,y) (1 + .5*sin(2*pi*x).*sin(2*pi*y) + (y > 0)); % piecewise smooth velocity
+    Nin = 8; K1D = 8; c_flag = 0;
+    FinalTime = .5;
+%     cfun = @(x,y) ones(size(x));
+%     cfun = @(x,y) 1 + .5*sin(pi*x).*sin(pi*y); % smooth velocity
+    cfun = @(x,y) (1 + .5*sin(2*pi*x).*sin(2*pi*y) + (y > 0)); % piecewise smooth velocity
+%     cfun = @(x,y) 2 + sin(2*pi*sin(x));
 end
 N = Nin;
 
-% filename = 'Grid/Other/block2.neu';
+filename = 'Grid/Other/block2.neu';
 % filename = 'Grid/Maxwell2D/Maxwell05.neu';
 % [Nv, VX, VY, K, EToV] = MeshReaderGambit2D(filename);
 [Nv, VX, VY, K, EToV] = unif_tri_mesh(K1D);
-
 StartUp2D;
 
 % PlotMesh2D; return
@@ -28,8 +29,10 @@ Vp = Vandermonde2D(N,rp,sp)/V;
 xp = Vp*x; yp = Vp*y;
 
 Nq = 2*N+1;
-[rq sq w] = Cubature2D(Nq); % integrate u*v*c
+[rq sq wq] = Cubature2D(Nq); % integrate u*v*c
 Vq = Vandermonde2D(N,rq,sq)/V;
+Pq = V*V'*Vq'*diag(wq); % J's cancel out
+Mref = inv(V*V');
 xq = Vq*x; yq = Vq*y;
 Jq = Vq*J;
 
@@ -41,26 +44,42 @@ USE_C_MASS = c_flag;
 
 cq = cfun(xq,yq);
 
+
+[r1 s1] = Nodes2D(1); [r1 s1] = xytors(r1,s1);
+% V1 = Vandermonde2D(1,r,s)/Vandermonde2D(1,r1,s1);
+V1q = Vandermonde2D(1,rq,sq)/Vandermonde2D(1,r1,s1);
+c1 = (V1q'*diag(wq)*V1q)\(V1q'*diag(wq)*cq);
+% cq = V1q*c1;
+
+% figure;PlotMesh2D;hold on;color_line3(xq,yq,cq,cq,'.');return
+R = sparse(3*K,length(VX));
+for v = 1:length(VX)
+    [e j] = find(EToV==v);
+    R(j + (e-1)*3,v) = 1;
+end
+% keyboard
+c = R*cfun(VX(:),VY(:));
+% cq = Vq*V1*reshape(c,3,K);
+
 disp(sprintf('min continuous c value = %e\n',min(cq(:))))
 if min(cq(:))<1e-12
     disp('negative velocity')
     keyboard
 end
 
-Pq = V*V'*Vq'*diag(w); % J's cancel out
-Mref = inv(V*V');
 
 k = 1; % frequency of solution
 W = (2*k-1)/2*pi;
-p = cos(W*x).*cos(W*y);
-% p = exp(-100*(x.^2 + (y-.25).^2));
+% p = cos(W*x).*cos(W*y);
+x0 = 0; y0 = .25;
+p = exp(-200*((x-x0).^2 + (y-y0).^2));
 u = zeros(Np, K); v = zeros(Np, K);
 
 
 for e = 1:K
-    Minvc{e} = Vq'*diag(w.*1./cq(:,e))*Vq;
+    Minvc{e} = Vq'*diag(wq.*1./cq(:,e))*Vq;
     Pc{e} = Pq*diag(cq(:,e))*Vq;
-    MinvMcM{e} = inv(V*V')*((Vq'*diag(w.*cq(:,e))*Vq)\inv(V*V'));
+    MinvMcM{e} = inv(V*V')*((Vq'*diag(wq.*cq(:,e))*Vq)\inv(V*V'));
 end
 
 % test comparison between inverting M and doing a c-projection
@@ -96,12 +115,12 @@ if 0 && nargin==0
     hold on;
     plot(lam,'o')
     title(sprintf('Largest real part = %e',max(real(lam))))
-    %     keyboard            
+    
+    VB = bern_basis_tri(N,r,s);    
 end
 
 
 %%
-FinalTime = 5.0;
 
 time = 0;
 
@@ -115,7 +134,7 @@ dt = 1/(max(cq(:))*CN*max(Fscale(:)));
 
 % outer time step loop
 tstep = 0;
-% figure
+figure
 while (time<FinalTime)
     if(time+dt>FinalTime), dt = FinalTime-time; end
     
@@ -139,10 +158,12 @@ while (time<FinalTime)
     
     if 1 && nargin==0 && mod(tstep,10)==0
         clf
-        %         vv = Vp*p;
-        %         color_line3(x,y,p,p,'.');
+                vv = Vp*p;
+                pp = log(abs(vv));
+                color_line3(xp,yp,vv,vv,'.');
+                axis tight
         %         axis([-1 1 -1 1 -1.25 1.25]);
-        PlotField2D(N+1, x, y, p); view(2)
+%         PlotField2D(N+1, x, y, pp); view(2)
         
         drawnow
     end
@@ -151,6 +172,11 @@ while (time<FinalTime)
     time = time+dt; tstep = tstep+1;
 end
 
+axis off
+% print(gcf,'-dpng','pNWADG.png')
+print(gcf,'-dpng','p1WADG.png')
+% print(gcf,'-dpng','p1WADG.png')
+% print(gcf,'-dpng','p0WADG.png')
 % return
 
 %%
@@ -161,7 +187,7 @@ pex = pex(xq,yq,FinalTime);
 L2err2 = 0;
 for e = 1:K
     diff = Vq*p(:,e) - pex(:,e);
-    L2err2 = L2err2 + J(1,e)*sum(w.*diff.^2);
+    L2err2 = L2err2 + J(1,e)*sum(wq.*diff.^2);
 end
 
 L2err = sqrt(sum(L2err2));
@@ -215,9 +241,9 @@ if USE_C_MASS==1 % actual inversion of c2-weighted mass matrix
         rhsp(:,e) = Minvc{e}\(Mref*rhsp(:,e));
     end
 elseif USE_C_MASS==0  % projection
-    if abs(time)<1e-8
-        fprintf('low storage projection\n')
-    end
+%     if abs(time)<1e-8
+%         fprintf('low storage projection\n')
+%     end
     rhsp = Pq*(cq.*(Vq*rhsp));
     
 end

@@ -5,9 +5,12 @@ clear
 
 Globals2D;
 
-N = 7;
-nref = 1;
+N = 4;
+nref = 2;
 useJprojection = 1;
+
+FinalTime = 15;
+
 
 Nq = 2*N+1;
 
@@ -18,7 +21,6 @@ filename = 'Grid/CFD/pvortexA025.neu';
 [Nv, VX, VY, K, EToV, BCType] = MeshReaderGambitBC2D(filename);
 VX = VX/max(abs(VX));  VY = VY/max(abs(VY));
 VX = VX*5 + 5; VY = VY*5;
-
 % K1D = 2;
 % [Nv, VX, VY, K, EToV] = unif_tri_mesh(K1D);
 
@@ -77,7 +79,7 @@ Psq = (V*V')*(Vsq'*diag(wq));
 
 global Vcolloc Drc Dsc
 [rc sc wc] = QNodes2D(N); [rc sc] = xytors(rc,sc);
-[rc sc] = Nodes2D(N); [rc sc] = xytors(rc,sc);
+% [rc sc] = Nodes2D(N); [rc sc] = xytors(rc,sc);
 % rc = [-0.8968532316898645,0.3982993518653447,0.3978382631466154,-0.4980940100997226,-0.8998412094465894,0.7920309320167708,-0.9001058622488827,-0.05007732972494768,0.02289750084338348,-0.8979020577966027,-0.05161942712715207,-0.4975235348941438,-0.5110877092127721,-0.896172961623547,-0.5119017247820049]';
 % sc = [-0.0530686701240277,-0.4984580098292808,-0.9003147500848969,0.3982002632311986,-0.4984583976019817,-0.8941299128326118,0.3982009522673672,-0.05306872288989844,-0.5109958715674856,-0.8941298666552433,-0.8967623483705202,-0.9003148085904928,0.02217564219171834,0.7923450404031387,-0.5109965442976414]';
 % rc = [-0.577481890524152,-0.6979784209072049,-0.9261005378863045,0.1568879701435784,-0.9045760697551653,-0.9027097501052324,0.5920624018508198,-0.5047786755466918,-0.6238190954657445,-0.05811159673672549,0.8360908598546688,-0.2713883345507647,-0.6368305132454305,-0.9230064512583414,0.07720573184150727,0.5467234608560792,-0.2956492619400888,-0.9150781568290514,0.2359040658118374,-0.923864588768103,-0.3098475385273428]';
@@ -156,7 +158,7 @@ if 0
         m2 = rho.*v;
         E = p/(gamma-1) + .5*rho.*(u.^2 + v.^2);
         
-        vv = v;
+        vv = E;
         clf
         color_line3(xp,yp,vv,vv,'.')
         view(3)
@@ -177,8 +179,6 @@ m1 = rho.*u;
 m2 = rho.*v;
 E = p/(gamma-1) + .5*rho.*(u.^2 + v.^2);
 
-FinalTime = 4;
-
 % setup
 resrho = zeros(Np,K);resm1 = zeros(Np,K); resm2 = zeros(Np,K); resE = zeros(Np,K);
 
@@ -190,8 +190,10 @@ Ve = Vandermonde2D(N,re,se)/V;
 xe = Ve*x; ye = Ve*y;
 VB = bern_basis_tri(N,r,s);
 
+M = inv(V*V');
+
 % outer time step loop
-time = 0; tstep = 0;
+time = 0; tstep = 1;
 while (time<FinalTime)
     if(time+dt>FinalTime), dt = FinalTime-time; end
         
@@ -212,7 +214,11 @@ while (time<FinalTime)
         m1  = m1 + rk4b(INTRK)*resm1;
         m2  = m2 + rk4b(INTRK)*resm2;
         E   = E + rk4b(INTRK)*resE;        
+                
     end
+    
+    enorm = J.*(M*(rho.^2 + m1.^2 + m2.^2 + E.^2));    
+    energy(tstep) = sqrt(sum(sum(enorm)));
     
     if 1 && mod(tstep,10)==0
         clf
@@ -239,6 +245,8 @@ while (time<FinalTime)
     end
 end
 
+figure
+plot(energy)
 
 
 
@@ -384,7 +392,7 @@ for fld = 1:4
     rhs{fld} = -divF - Pfq*(dF.*sJq);
 end
 
-% curvilinear correction
+% curvilinear correction using collocation
 rhsrho = rhs{1}./J;
 rhsm1 = rhs{2}./J;
 rhsm2 = rhs{3}./J;
@@ -541,7 +549,8 @@ r = sqrt((x-x0-t).^2 + (y-y0).^2);
 
 u = 1 - beta*exp(1-r.^2).*(y-y0)/(2*pi);
 v = beta*exp(1-r.^2).*(x-x0-t)/(2*pi);
-rho = 1 - (gamma-1)/(16*gamma*pi^2)*beta^2*exp(2*(1-r.^2));
+%rho = 1 - (gamma-1)/(16*gamma*pi^2)*beta^2*exp(2*(1-r.^2));
+rho = 1 - (1/(8*gamma*pi^2))*(gamma-1)/2*(beta*exp(1-r.^2)).^2;
 rho = rho.^(1/(gamma-1));
 p = rho.^gamma;
 

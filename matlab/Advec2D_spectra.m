@@ -5,15 +5,15 @@ global bx by Vq Pq Vfq Pfq Vrq Vsq Prq Psq
 
 
 % Polynomial order used for approximation
-N = 7;
+N = 1;
 
 % Read in Mesh
-[Nv, VX, VY, K, EToV] = MeshReaderGambit2D('Grid/Other/squarereg.neu');
+% [Nv, VX, VY, K, EToV] = MeshReaderGambit2D('Grid/Other/squarereg.neu');
 % [Nv, VX, VY, K, EToV] = MeshReaderGambit2D('Grid/Other/squareireg.neu');
 % [Nv, VX, VY, K, EToV] = MeshReaderGambit2D('Grid/Other/block2.neu');
 
-% K1D = 2;
-% [Nv, VX, VY, K, EToV] = unif_tri_mesh(K1D);
+K1D = 8;
+[Nv, VX, VY, K, EToV] = unif_tri_mesh(K1D);
 
 % Initialize solver and construct grid and metric
 StartUp2D;
@@ -59,14 +59,18 @@ u = exp(-D*5^2).*(1-x.^2).*(1-y.^2);
 u = sin(pi*x).*sin(pi*y);
 
 bx = ones(size(x));
-by = ones(size(x));
-% by = sin(pi*x).*sin(pi*y); 
+by = .5*ones(size(x));
+% by = sin(pi*x).*sin(pi*y);
 
 % plot3(x,y,-pi*cos(pi*x).*sin(pi*y),'o');return
 
 % divB = rx.*(Dr*bx) + sx.*(Ds*bx) + ry.*(Dr*by) + sy.*(Ds*by);
 
 FinalTime = 2;
+%%
+
+R = getCGRestriction()';
+P = R*((R'*kron(diag(J(1,:)),M)*R)\(R'*kron(diag(J(1,:)),M)));
 
 %% eigs
 
@@ -76,66 +80,53 @@ dtscale = dtscale2D; dt = min(dtscale)*rmin*2/3
 if 1
     e = zeros(Np*K,1);
     A = zeros(Np*K);
-    for i = 1:Np*K
-        e(i) = 1;
-        ids = 1:Np*K;
-        u = reshape(e(ids),Np,K);
-        
-        % dudt + dudx= 0
-        rhsu = AdvecRHS(u);
-        A(:,i) = rhsu(:);
-        
-        e(i) = 0;
-        if mod(i,100)==0
-            disp(sprintf('on column %d out of %d\n',i,Np*K))
+    for tau = 0:50:100
+        for i = 1:Np*K
+            e(i) = 1;
+            ids = 1:Np*K;
+            u = reshape(e(ids),Np,K);
+            
+            % dudt + dudx= 0
+            rhsu = AdvecRHS(u,tau);
+            A(:,i) = rhsu(:);
+            
+            e(i) = 0;
+            if mod(i,100)==0
+                disp(sprintf('on column %d out of %d\n',i,Np*K))
+            end
         end
-    end
-    [W D] = eig(A); 
-    lam = diag(D);
-    
-%     ids = find(real(lam) > -5e-1);    
-%     lam = lam(ids); W = W(:,ids); 
-    
-    [~,p] = sort(abs(real(lam)),'descend');
-    W = W(:,p); lam = lam(p);
-    
-    ids = abs(lam) > 2*(N+1)*max(1./Fscale(:));
-    hold on
-    plot(real(lam),imag(lam),'o');
-    plot(real(lam(ids)),imag(lam(ids)),'x')
-    %     hold on; plot(pi*[1 1],[min(imag(lam)) max(imag(lam))],'--')    
-    %     return
-    
-    skip = nnz(ids);
-    
-    Q = W(:,skip+1:end);
-    W = eye(size(Q,1)) - Q*Q'; % directly project out high modes    
-    
-    keyboard
-    for i = 1:size(W,2)
-        w = real(W(:,i));
-        w = reshape(w,Np,K);
+        [W D] = eig(A);
+        d = diag(D);
         clf
+        plot(d,'o')
+        hold on;
+        [W2 D2] = eig(P*A);
+        d2 = diag(D2);
+        plot(d2,'x')
+%         axis([-100 1 -50 50])
+        %         hold on
+        title(sprintf('tau = %d\n',tau))
+        drawnow
+    end
+    return
+    ids = find(real(d) > -10);    
+    d = d(ids);
+    W = W(:,ids);
+    [~,p] = sort(abs(d),'ascend'); 
+    d = d(p); W = W(:,p);
+    for i = 1:length(ids); 
+        vv = Vp*reshape(real(W(:,i)),Np,K); 
+        clf;
         subplot(1,2,1)
-        
-        vv = Vp*w;
-        color_line3(xp,yp,vv,vv,'.')
-        view(3)
+        plot(real(d),imag(d),'o')
+        hold on
+        plot(real(d(i)),imag(d(i)),'x')
         
         subplot(1,2,2)
-        plot(lam,'o')
-        hold on
-        plot(real(lam(i)),imag(lam(i)),'rx')
-        hold off
-        
-        pause
+        color_line3(xp,yp,vv,vv,'.');
+        pause;
     end
-    
-    plot(real(lam),imag(lam),'o')
-    hold on
-    mu = eig(Q'*A*Q);
-    plot(real(mu),imag(mu),'.')
-    
+    keyboard
     return
 end
 
@@ -156,7 +147,7 @@ while (time<FinalTime)
     
     for INTRK = 1:5
         
-        rhsu = AdvecRHS(u);
+        rhsu = AdvecRHS(u,1);
         
         % initiate and increment Runge-Kutta residuals
         resu = rk4a(INTRK)*resu + dt*rhsu;
@@ -174,20 +165,20 @@ while (time<FinalTime)
 end
 return
 
-function rhsu = AdvecRHS(u)
+function rhsu = AdvecRHS(u,tau)
 
 Globals2D
 global bx by Vq Pq Vfq Pfq Vrq Vsq Prq Psq
 
-alpha = 1; du = zeros(Nfp*Nfaces,K);
+du = zeros(Nfp*Nfaces,K);
 bn = bx(vmapM).*nx(:) + by(vmapM).*ny(:);
-bnf = reshape((bn - alpha*abs(bn(:))),Nfp*Nfaces,K);
+bnf = reshape((bn - tau*abs(bn(:))),Nfp*Nfaces,K);
 ujump = reshape(u(vmapP)-u(vmapM),Nfp*Nfaces,K);
 
 du(:) = .5*Pfq*((Vfq*ujump).*(Vfq*bnf)); % project ujump/bnf
-uq = Vq*u; 
-fx = Pq*((Vq*bx).*uq); 
-fy = Pq*((Vq*by).*uq); 
+uq = Vq*u;
+fx = Pq*((Vq*bx).*uq);
+fy = Pq*((Vq*by).*uq);
 
 % fx = bx.*u; fy = by.*u;
 % du(:) = 0.5*(ujump).*bnf;

@@ -5,18 +5,22 @@ global bx by Vq Pq Vfq Pfq Vrq Vsq Prq Psq
 
 
 % Polynomial order used for approximation
-N = 7;
+N = 9;
 
 % Read in Mesh
-[Nv, VX, VY, K, EToV] = MeshReaderGambit2D('Grid/Other/squarereg.neu');
+% [Nv, VX, VY, K, EToV] = MeshReaderGambit2D('Grid/Other/squarereg.neu');
 % [Nv, VX, VY, K, EToV] = MeshReaderGambit2D('Grid/Other/squareireg.neu');
-% [Nv, VX, VY, K, EToV] = MeshReaderGambit2D('Grid/Other/block2.neu');
+[Nv, VX, VY, K, EToV] = MeshReaderGambit2D('Grid/Other/block2.neu');
 
-% K1D = 2;
+% K1D = 8;
 % [Nv, VX, VY, K, EToV] = unif_tri_mesh(K1D);
 
 % Initialize solver and construct grid and metric
 StartUp2D;
+
+% Hrefine2D(1:K);
+% StartUp2D
+
 
 % rebuild maps for periodic
 BuildPeriodicMaps2D(2,2);
@@ -52,11 +56,25 @@ Vfq3 = Vandermonde1D(N,r1D)/Vandermonde1D(N,s(Fmask(:,3)));
 Vfq = blkdiag(Vfq1,Vfq2,Vfq3);
 Pfq = (Vfq'*diag(wfq)*Vfq)\(Vfq'*diag(wfq));
 
+[re se] = EquiNodes2D(N); [re se] = xytors(re,se);
+VBe = bern_basis_tri(N,re,se);
+VB = bern_basis_tri(N,r,s);
+
+
 % % Set initial conditions
 cx = .1; cy = .1;
 D = (x-cx).^2 + (y-cy).^2;
 u = exp(-D*5^2).*(1-x.^2).*(1-y.^2);
 u = sin(pi*x).*sin(pi*y);
+rad = @(x,y) sqrt(x.^2 + y.^2);
+u = rad(x,y) < sin(pi*x);
+
+TV = TV2D(VB\u);
+ids = TV > Np/2; 
+vp = Vp*u;
+% vp = Vp*repmat(TV,Np,1);
+color_line3(xp,yp,vp,vp,'.')
+return
 
 bx = ones(size(x));
 by = ones(size(x));
@@ -66,14 +84,11 @@ by = ones(size(x));
 
 % divB = rx.*(Dr*bx) + sx.*(Ds*bx) + ry.*(Dr*by) + sy.*(Ds*by);
 
-FinalTime = 2;
+FinalTime = .1;
 
 %% eigs
 
-rLGL = JacobiGQ(0,0,N); rmin = abs(rLGL(1)-rLGL(2));
-dtscale = dtscale2D; dt = min(dtscale)*rmin*2/3
-
-if 1
+if 0
     e = zeros(Np*K,1);
     A = zeros(Np*K);
     for i = 1:Np*K
@@ -147,7 +162,8 @@ resu = zeros(Np,K);
 
 % compute time step size
 rLGL = JacobiGQ(0,0,N); rmin = abs(rLGL(1)-rLGL(2));
-dtscale = dtscale2D; dt = min(dtscale)*rmin*2/3
+% dtscale = dtscale2D; dt = min(dtscale)*rmin*2/3
+dt = .75*rmin./max(Fscale(:));
 
 % outer time step loop
 while (time<FinalTime)
@@ -172,6 +188,24 @@ while (time<FinalTime)
     % Increment time
     time = time+dt;
 end
+
+figure
+
+uB = VB\u;
+TV = TV2D(uB);
+ids = TV > 2*(N+1); 
+TVp = repmat(TV,length(rp),1);
+color_line3(xp,yp,TVp,TVp,'.')
+
+figure
+TVp(:,ids) = nan;
+color_line3(xp,yp,TVp,TVp,'.')
+
+figure
+u(:,ids) = VB*VBe*(uB(:,ids));
+% u = VB*VBe*VBe*(VB\u);
+up = Vp*u;
+color_line3(xp,yp,up,up,'.');
 return
 
 function rhsu = AdvecRHS(u)

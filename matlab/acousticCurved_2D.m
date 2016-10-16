@@ -6,8 +6,8 @@ function [L2err href] = acousticCurved_2D(Nin,nref,useJprojection)
 Globals2D;
 
 if nargin==0
-    N = 3;
-    nref = 1;
+    N = 7;
+    nref = 2;
     useJprojection = 1;
 else
     N = Nin;
@@ -31,7 +31,6 @@ end
 
 BuildBCMaps2D;
 
-
 for ref = 1:nref
     Refine2D(ones(size(EToV)));
     StartUp2D;
@@ -54,6 +53,12 @@ global Vq wq Vrq Vsq
 global Vfq wfq VfqFace
 global rxq sxq ryq syq Jq Jfq nxq nyq sJq
 global Pq Pfq
+
+
+[rp sp] = EquiNodes2D(25); [rp sp] = xytors(rp,sp);
+Vp = Vandermonde2D(N,rp,sp)/V;
+xp = Vp*x; yp = Vp*y;
+
 [rq sq wq] = Cubature2D(Nq);
 Vq = Vandermonde2D(N,rq,sq)/V;
 [Vrq Vsq] = GradVandermonde2D(N,rq,sq);
@@ -166,9 +171,13 @@ alpha = [2.40482555769577, 5.52007811028631, 8.65372791291101, 11.7915, 14.9309]
 alpha0 = alpha(2); rad = sqrt(x.^2+y.^2);
 
 p = besselj(0, alpha0*rad);
+
+d = 25; x0 = -1/3; y0 = 1/3;
+p = exp(-d*sqrt((x-x0).^2 + (y-y0).^2)) + exp(-10*sqrt((x+x0).^2 + (y+y0).^2));
+
 u = zeros(Np, K); v = zeros(Np, K);
 
-FinalTime = 1;
+FinalTime = 2;
 
 % setup
 resu = zeros(Np,K); resv = zeros(Np,K); resp = zeros(Np,K);
@@ -207,9 +216,10 @@ while (time<FinalTime)
     
     if 1 && mod(tstep,10)==0
         clf
-        color_line3(x,y,p,p,'.');
-        view(3)
-        axis([-1 1 -1 1 -1.25 1.25])
+        pp = Vp*p;
+        color_line3(xp,yp,pp,pp,'.');
+        view(2)
+%         axis([-1 1 -1 1 -.5 .5])
         title(sprintf('time = %f',time));
         drawnow
     end
