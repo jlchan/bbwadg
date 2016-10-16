@@ -493,8 +493,8 @@ implying that the penalty fluxes (with $\bm{W} = \tau\bm{I}$) are
 \[
 \avg{\bm{A}_n \bm{U}} - \bm{A}_n^T \jump{\bm{A}_n\bm{U}} = \left(\begin{array}{c}
 \avg{\bm{u}_n}\\
-\avg{p \bm{n}_x}\\
-\avg{p \bm{n}_y}
+\avg{p }\bm{n}_x\\
+\avg{p }\bm{n}_y
 \end{array}
 \right) - 
 \tau\left(\begin{array}{c}
@@ -508,24 +508,24 @@ For $\tau = 1$, these fluxes coincide with the upwind fluxes.
 
 \section{Dependence of spectra on the penalty parameter}
 
-
-\subsection{Eigenmodes}
-
 \note{Reproduce Gershgorin proof here.}
-
-
-\subsection{Eigenvalues}
-
-Let $\bm{A} = \bm{B} + \bm{C}$ be the DG discretization matrix, which is assumed to be the sum of a skew-symmetric matrix $\bm{B}$ and symmetric, negative-definite matrix $\bm{C}$.  
-
-Let $\lambda, \bm{u}$ be an eigenpair of $\bm{A}$. Let $\lambda = \alpha + i\beta$ and $\bm{u} = \bm{v} + i\bm{w}$, where $\alpha,\beta$ and $\bm{v},\bm{w}$ are the real and imaginary parts of $\lambda$ and $\bm{u}$, respectively.  Then, expanding and grouping terms in
+We split the DG approximation space into conforming and non-conforming parts, which induces a block matrix
 \[
-\bm{A}(\bm{v} + i\bm{w}) = (\alpha + i\beta) (\bm{v} + i\bm{w})
+\bm{K} = \left(\begin{array}{cc}
+\bm{A} & \bm{B}\\
+-\bm{B}^T & \bm{C} + \tau \bm{S}
+\end{array}\right).
+\]
+We will adapt the proof presented in \cite{Warburton20063205} to show that the spectra of $\bm{K}$ splits into two sets as $\tau\rightarrow \infty$, the first of which approaches the eigenvalues of $\bm{A}$, and the second of which moves left of the imaginary axis at a rate of $O(\tau)$.  
+
+We first consider the spectra of $\bm{C} + \tau\bm{S}$.  By the construction of the DG formulation $\bm{C}$ is skew-symmetric, while $\bm{S}$ is symmetric and negative-definite.  Let $\lambda, \bm{u}$ be an eigenpair of $\bm{C} + \tau{\bm{S}}$ corresponding to the largest $N^D$ eigenvalues. Let $\lambda = \alpha + i\beta$ and $\bm{u} = \bm{v} + i\bm{w}$, where $\alpha,\beta$ and $\bm{v},\bm{w}$ are the real and imaginary parts of $\lambda$ and $\bm{u}$, respectively.  Then, expanding and grouping terms in
+\[
+(\bm{C}+\tau\bm{S})(\bm{v} + i\bm{w}) = (\alpha + i\beta) (\bm{v} + i\bm{w})
 \]
 we have that
 \begin{align*}
-\bm{A}\bm{v} &= \alpha\bm{v}-\beta\bm{w}\\
-\bm{A}\bm{w} &= \beta\bm{v}+\alpha\bm{w}.
+(\bm{C}+\tau\bm{S})\bm{v} &= \alpha\bm{v}-\beta\bm{w}\\
+(\bm{C}+\tau\bm{S})\bm{w} &= \beta\bm{v}+\alpha\bm{w}.
 \end{align*}
 Assuming that $\bm{u}^*\bm{u} = \nor{\bm{v}}^2 + \nor{\bm{w}}^2 = 1$, multiplying both sides by $\bm{v}^T,\bm{w}^T$ and straightforward manipulations %yield
 %\begin{align*}
@@ -536,19 +536,73 @@ Assuming that $\bm{u}^*\bm{u} = \nor{\bm{v}}^2 + \nor{\bm{w}}^2 = 1$, multiplyin
 %\bm{v}^T\bm{A}\bm{v} + \bm{w}^T\bm{A}\bm{w} &= \alpha\\
 %\bm{v}^T\bm{A}\bm{w} - \bm{w}^T\bm{A}\bm{w} &= \beta.
 %\end{align*}
-using the skew-symmetry of $\bm{B}$ and symmetry of $\bm{C}$ yields
+using the skew-symmetry of $\bm{C}$ and symmetry of $\bm{S}$ yields
 \begin{align*}
-\tau\LRp{\bm{v}^T\bm{C}\bm{v} + \bm{w}^T\bm{C}\bm{w}} &= \alpha\\
-\bm{v}^T\bm{B}\bm{w} - \bm{w}^T\bm{B}\bm{w} &= \beta.
+\bm{v}^T\bm{C}\bm{w} - \bm{w}^T\bm{C}\bm{w} &= \beta\\
+\tau\LRp{\bm{v}^T\bm{S}\bm{v} + \bm{w}^T\bm{S}\bm{w}} &= \alpha.
 \end{align*}
-Since $\bm{C}$ is symmetric, negative-definite, and independent of $\tau$, the quantity
+Since $\bm{v}^T\bm{C}\bm{w} - \bm{w}^T\bm{C}\bm{w}= 2\bm{w}^T\bm{C}\bm{v} = \beta$ is independent of $\tau$ and $\bm{v},\bm{w}$ are normalized, $\beta$ remains bounded as $\tau\rightarrow \infty$.  Similarly, since $\bm{S}$ is symmetric, negative-definite, and independent of $\tau$, the quantity
 \[
-\LRb{\bm{v}^T\bm{C}\bm{v} + \bm{w}^T\bm{C}\bm{w}} \leq \nor{\bm{C}}.
+\LRb{\bm{v}^T\bm{S}\bm{v} + \bm{w}^T\bm{S}\bm{w}} = \LRb{\frac{\alpha}{\tau}}
 \]
-Since this is bounded independently of $\tau$, we conclude that $\LRb{\alpha} = O(\tau)$.  
+is bounded independently of $\tau$, and we conclude that $\LRb{\alpha} = O(\tau)$.  Thus, as $\tau$ increases, the eigenvalues of $\bm{C} + \tau\bm{S}$ are shifted further and further left of the imaginary axis.  
 
-\note{Use Gershgorin result to show that $\alpha$ diverges for eigenmodes the non-conforming subspace.}
+\subsection{Bifurcation of eigenvalue sets}
 
+Following \cite{Warburton20063205}, let $\bm{U}$ and $\bm{Q}$ be unitary matrices whose columns contain the eigenvectors of $\bm{A}$ and $\bm{C} + \tau \bm{S}$, respectively.  Then, applying a block diagonal similarity transform yields
+\[
+\left(\begin{array}{cc}
+\bm{U}^* & \\
+& \bm{Q}^*
+\end{array}\right)
+\left(\begin{array}{cc}
+\bm{A} & \bm{B}\\
+-\bm{B}^T & \bm{C} + \tau \bm{S}
+\end{array}\right)
+\left(\begin{array}{cc}
+\bm{U} & \\
+& \bm{Q}
+\end{array}\right)
+ = \left(\begin{array}{cc}
+\bm{\Lambda}_C & \bm{U}^T\bm{B}\bm{Q}\\
+-\bm{Q}^T\bm{B}^T\bm{U} & \bm{\Lambda}_D
+\end{array}\right),
+\]
+where $\bm{\Lambda}_C,\bm{\Lambda}_D$ are diagonal matrices whose entries consist of eigenvalues of $\bm{A},\bm{C} + \tau\bm{S}$, respectively.  Since $\bm{B}$ is independent of $\tau$, $\nor{\bm{U}^T\bm{B}\bm{Q}}$ can be bounded independently of $\tau$, assuming that $\bm{U}$ and $\bm{Q}$ are normalized.  Gerschgorin's theorem applied to $\bm{\Lambda}_C,\bm{\Lambda}_D$ then implies that the eigenvalues of $\bm{K}$ are contained in two sets of discs with radii independent of $\tau$.  The first set of discs are centered around $\lambda^C_i$ for $i = 1,\ldots,N^C$, while the second set of discs are centered around $\lambda^D_i$ for $i = 1,\ldots,N^D$, where ${\rm Re}(\lambda^D_i) = O(\tau)$. 
+
+Consider now the $N^C$ eigenvalues with the smallest magnitude.  By the Gerschgorin argument, these must remain bounded as $\tau \rightarrow \infty$.  Let $\bm{W} = (\bm{W}_C,\bm{W}_D)$ and $\Lambda_C$ be the matrix of eigenvectors and eigenvalues corresponding to these $N^C$ smallest eigenvalues, such that
+\[
+\left(\begin{array}{cc}
+\bm{A} & \bm{B}\\
+-\bm{B}^T & \bm{C} + \tau \bm{S}
+\end{array}\right)
+\left(\begin{array}{c}
+\bm{W}_C
+\\
+\bm{W}_D
+\end{array}\right) = 
+\left(\begin{array}{c}
+\bm{A}\bm{W}_C + \bm{B}\bm{W}_D\\
+-\bm{B}^T\bm{W}_C + \bm{C}\bm{W}_D + \tau \bm{S}\bm{W}_D
+\end{array}\right)
+= 
+\bm{\Lambda}_C
+\left(\begin{array}{c}
+\bm{W}_C
+\\
+\bm{W}_D
+\end{array}\right) 
+\]
+This implies 
+\[
+\tau \nor{\bm{S}\bm{W}_D} = \nor{\bm{\Lambda}_C \bm{W}_D + \bm{B}^T\bm{W}_C  - \bm{C}\bm{W}_D}.
+\]
+Since $\Lambda_C$ remains bounded as $\tau\rightarrow \infty$, the right hand side is bounded independently of $\tau$ under normalization of $\bm{W}_C,\bm{W}_D$, and we conclude that the non-conforming 
+\[
+\nor{\bm{S}\bm{W}_D} = O(1/\tau).
+\]
+As a consequence, as $\tau\rightarrow \infty$, the smallest $N^C$ eigenvalues of $\bm{K}$ converge to the purely imaginary eigenvalues of $\bm{A}$.  These correspond to a discretization using a conforming approximation space.  
+ 
 \section{Numerical experiments}
 
 
