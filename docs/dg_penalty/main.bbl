@@ -1,0 +1,40 @@
+\begin{thebibliography}{1}
+
+\bibitem{kopriva2014energy}
+David~A Kopriva and Gregor~J Gassner.
+\newblock {An energy stable discontinuous Galerkin spectral element
+  discretization for variable coefficient advection problems}.
+\newblock {\em SIAM Journal on Scientific Computing}, 36(4):A2076--A2099, 2014.
+
+\bibitem{chan2016weight1}
+Jesse Chan, Russell~J Hewett, and T~Warburton.
+\newblock {Weight-adjusted discontinuous Galerkin methods: wave propagation in
+  heterogeneous media}.
+\newblock {\em arXiv preprint arXiv:1608.01944}, 2016.
+
+\bibitem{chan2016weight2}
+Jesse Chan, Russell~J Hewett, and T~Warburton.
+\newblock {Weight-adjusted discontinuous Galerkin methods: curvilinear meshes}.
+\newblock {\em arXiv preprint arXiv:1608.03836}, 2016.
+
+\bibitem{Warburton20063205}
+T.~Warburton and Mark Embree.
+\newblock {The role of the penalty in the local discontinuous Galerkin method
+  for Maxwell's eigenvalue problem}.
+\newblock {\em Computer Methods in Applied Mechanics and Engineering},
+  195(25-28):3205 -- 3223, 2006.
+
+\bibitem{ainsworth2014dispersive}
+Mark Ainsworth.
+\newblock Dispersive behaviour of high order finite element schemes for the
+  one-way wave equation.
+\newblock {\em Journal of Computational Physics}, 259:1--10, 2014.
+
+\bibitem{hughes2014finite}
+Thomas~JR Hughes, John~A Evans, and Alessandro Reali.
+\newblock {Finite element and NURBS approximations of eigenvalue,
+  boundary-value, and initial-value problems}.
+\newblock {\em Computer Methods in Applied Mechanics and Engineering},
+  272:290--320, 2014.
+
+\end{thebibliography}

@@ -18,11 +18,55 @@
 \providecommand\HyField@AuxAddToCoFields[2]{}
 \@writefile{toc}{\contentsline {section}{\numberline {1}Introduction}{1}{section.1}}
 \@writefile{toc}{\contentsline {section}{\numberline {2}DG numerical fluxes}{1}{section.2}}
-\newlabel{eq:flux}{{1}{1}{DG numerical fluxes}{equation.2.1}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {2.1}Example: acoustic wave equation}{2}{subsection.2.1}}
+\newlabel{eq:flux}{{1}{2}{DG numerical fluxes}{equation.2.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.1}Examples: acoustic wave equation}{2}{subsection.2.1}}
+\citation{kopriva2014energy}
+\citation{chan2016weight1}
+\citation{chan2016weight2}
+\citation{Warburton20063205}
+\@writefile{toc}{\contentsline {section}{\numberline {3}Dependence of spectra on the penalty parameter}{3}{section.3}}
+\newlabel{eq:conf}{{2}{3}{Dependence of spectra on the penalty parameter}{equation.3.2}{}}
+\citation{Warburton20063205}
+\@writefile{toc}{\contentsline {section}{\numberline {4}Numerical experiments}{4}{section.4}}
+\citation{ainsworth2014dispersive}
+\citation{hughes2014finite}
 \bibstyle{unsrt}
 \bibdata{dgpenalty}
-\@writefile{toc}{\contentsline {section}{\numberline {3}Dependence of spectra on the penalty parameter}{3}{section.3}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.1}Eigenmodes}{3}{subsection.3.1}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.2}Eigenvalues}{3}{subsection.3.2}}
-\@writefile{toc}{\contentsline {section}{\numberline {4}Numerical experiments}{3}{section.4}}
+\bibcite{kopriva2014energy}{1}
+\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces Eigenvalue paths for DG advection with $\tau \in [0,4]$ on a mesh of 8 elements of degree $N=3$. Eigenvalues are overlaid on these paths for $\tau = 0$, $\tau = 1$, and $\tau = 4$. The zoomed in view near the imaginary axis shows the return of spurious modes to the imaginary axis for $\tau $ sufficiently large. \relax }}{5}{figure.caption.2}}
+\providecommand*\caption@xref[2]{\@setref\relax\@undefined{#1}}
+\newlabel{fig:track1D}{{1}{5}{Eigenvalue paths for DG advection with $\tau \in [0,4]$ on a mesh of 8 elements of degree $N=3$. Eigenvalues are overlaid on these paths for $\tau = 0$, $\tau = 1$, and $\tau = 4$. The zoomed in view near the imaginary axis shows the return of spurious modes to the imaginary axis for $\tau $ sufficiently large. \relax }{figure.caption.2}{}}
+\@writefile{lof}{\contentsline {subfigure}{\numberline{(a)}{\ignorespaces {Paths of eigenvalues as $\tau $ increases}}}{5}{subfigure.1.1}}
+\@writefile{lof}{\contentsline {subfigure}{\numberline{(b)}{\ignorespaces {Zoom of eigenvalues near imaginary axis}}}{5}{subfigure.1.2}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.1}1D experiments}{5}{subsection.4.1}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.2}2D experiments}{5}{subsection.4.2}}
+\bibcite{chan2016weight1}{2}
+\bibcite{chan2016weight2}{3}
+\bibcite{Warburton20063205}{4}
+\bibcite{ainsworth2014dispersive}{5}
+\bibcite{hughes2014finite}{6}
+\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces Behavior of divergent eigenvalues for advection as $\tau $ increases. The order of approximation is $N=3$ on a mesh of 4 elements.\relax }}{6}{figure.caption.3}}
+\newlabel{fig:trackmodes1D}{{2}{6}{Behavior of divergent eigenvalues for advection as $\tau $ increases. The order of approximation is $N=3$ on a mesh of 4 elements.\relax }{figure.caption.3}{}}
+\@writefile{lof}{\contentsline {subfigure}{\numberline{(d)}{\ignorespaces {$\tau = 0$}}}{6}{subfigure.2.4}}
+\@writefile{lof}{\contentsline {subfigure}{\numberline{(e)}{\ignorespaces {$\tau = 1$}}}{6}{subfigure.2.5}}
+\@writefile{lof}{\contentsline {subfigure}{\numberline{(f)}{\ignorespaces {$\tau = 10$}}}{6}{subfigure.2.6}}
+\@writefile{toc}{\contentsline {section}{\numberline {5}Conclusions}{6}{section.5}}
+\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces Return behavior of DG advection eigenvalues for sufficiently large $\tau $. For $\tau = 1$ certain eigenvalues have negative real part, and the corresponding eigenmodes are damped. For $\tau \gg 1$, certain eigenvalues return to the imaginary axis as spurious modes in conforming discretizations. \relax }}{7}{figure.caption.4}}
+\newlabel{fig:spurious}{{3}{7}{Return behavior of DG advection eigenvalues for sufficiently large $\tau $. For $\tau = 1$ certain eigenvalues have negative real part, and the corresponding eigenmodes are damped. For $\tau \gg 1$, certain eigenvalues return to the imaginary axis as spurious modes in conforming discretizations. \relax }{figure.caption.4}{}}
+\@writefile{lof}{\contentsline {subfigure}{\numberline{(d)}{\ignorespaces {$\tau = 0$}}}{7}{subfigure.3.4}}
+\@writefile{lof}{\contentsline {subfigure}{\numberline{(e)}{\ignorespaces {$\tau = 1$}}}{7}{subfigure.3.5}}
+\@writefile{lof}{\contentsline {subfigure}{\numberline{(f)}{\ignorespaces {$\tau = 10$}}}{7}{subfigure.3.6}}
+\@writefile{lof}{\contentsline {figure}{\numberline {4}{\ignorespaces Behavior of eigenvalues for the acoustic wave equation in two dimensions. Note the changing scale of the real axis.\relax }}{7}{figure.caption.5}}
+\newlabel{fig:waveeigs}{{4}{7}{Behavior of eigenvalues for the acoustic wave equation in two dimensions. Note the changing scale of the real axis.\relax }{figure.caption.5}{}}
+\@writefile{lof}{\contentsline {subfigure}{\numberline{(a)}{\ignorespaces {$\tau = 1$}}}{7}{subfigure.4.1}}
+\@writefile{lof}{\contentsline {subfigure}{\numberline{(b)}{\ignorespaces {$\tau = 10$}}}{7}{subfigure.4.2}}
+\@writefile{lof}{\contentsline {subfigure}{\numberline{(c)}{\ignorespaces {$\tau = 100$}}}{7}{subfigure.4.3}}
+\@writefile{lof}{\contentsline {figure}{\numberline {5}{\ignorespaces Behavior of eigenvalues for the acoustic wave equation in two dimensions. Divergent eigenvalues in the far left half plane are not shown. \relax }}{8}{figure.caption.6}}
+\newlabel{fig:trackEigsWave}{{5}{8}{Behavior of eigenvalues for the acoustic wave equation in two dimensions. Divergent eigenvalues in the far left half plane are not shown. \relax }{figure.caption.6}{}}
+\@writefile{lof}{\contentsline {subfigure}{\numberline{(a)}{\ignorespaces {$\tau = 0,1, 50$, zoomed in view}}}{8}{subfigure.5.1}}
+\@writefile{lof}{\contentsline {subfigure}{\numberline{(b)}{\ignorespaces {$\tau = 0,1,50$, returning eigenvalue paths}}}{8}{subfigure.5.2}}
+\@writefile{lof}{\contentsline {figure}{\numberline {6}{\ignorespaces Behavior of spurious returning modes for the acoustic wave equation in two dimensions. \relax }}{8}{figure.caption.7}}
+\newlabel{fig:trackModesWave}{{6}{8}{Behavior of spurious returning modes for the acoustic wave equation in two dimensions. \relax }{figure.caption.7}{}}
+\@writefile{lof}{\contentsline {subfigure}{\numberline{(a)}{\ignorespaces {$\tau = .1$, $\lambda = -0.2379 + 8.7528i$}}}{8}{subfigure.6.1}}
+\@writefile{lof}{\contentsline {subfigure}{\numberline{(b)}{\ignorespaces {$\tau = 1$, $\lambda = -1.0145 + 8.9270i$}}}{8}{subfigure.6.2}}
+\@writefile{lof}{\contentsline {subfigure}{\numberline{(c)}{\ignorespaces {$\tau = 50$, $\lambda = -0.0437 + 7.6167i$}}}{8}{subfigure.6.3}}

@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.17 (TeX Live 2016) (preloaded format=pdflatex 2016.5.22)  15 OCT 2016 19:45
+This is pdfTeX, Version 3.14159265-2.6-1.40.17 (TeX Live 2016) (preloaded format=pdflatex 2016.5.22)  20 OCT 2016 00:04
 entering extended mode
  \write18 enabled.
  file:line:error style messages enabled.
@@ -1186,37 +1186,42 @@ Package: pgfplotstable 2016/01/06 v1.13 Table typesetting and Pretty-printing (
 (/usr/local/texlive/2016/texmf-dist/tex/generic/pgf/frontendlayer/tikz/librarie
 s/tikzlibrarycalc.code.tex
 File: tikzlibrarycalc.code.tex 2013/07/15 v3.0.1a (rcs-revision 1.9)
-) (./main.aux)
+)
+(/usr/local/texlive/2016/texmf-dist/tex/latex/stmaryrd/stmaryrd.sty
+Package: stmaryrd 1994/03/03 St Mary's Road symbol package
+\symstmry=\mathgroup10
+LaTeX Font Info:    Overwriting symbol font `stmry' in version `bold'
+(Font)                  U/stmry/m/n --> U/stmry/b/n on input line 89.
+)
+(./main.aux)
 \openout1 = `main.aux'.
 
-LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 391.
-LaTeX Font Info:    ... okay on input line 391.
-LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 391.
-LaTeX Font Info:    ... okay on input line 391.
-LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 391.
-LaTeX Font Info:    ... okay on input line 391.
-LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 391.
-LaTeX Font Info:    ... okay on input line 391.
-LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 391.
-LaTeX Font Info:    ... okay on input line 391.
-LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 391.
-LaTeX Font Info:    ... okay on input line 391.
-LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 391.
-LaTeX Font Info:    ... okay on input line 391.
+LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 213.
+LaTeX Font Info:    ... okay on input line 213.
+LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 213.
+LaTeX Font Info:    ... okay on input line 213.
+LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 213.
+LaTeX Font Info:    ... okay on input line 213.
+LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 213.
+LaTeX Font Info:    ... okay on input line 213.
+LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 213.
+LaTeX Font Info:    ... okay on input line 213.
+LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 213.
+LaTeX Font Info:    ... okay on input line 213.
+LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 213.
+LaTeX Font Info:    ... okay on input line 213.
 \AtBeginShipoutBox=\box49
-Package hyperref Info: Link coloring OFF on input line 391.
-
-(/usr/local/texlive/2016/texmf-dist/tex/latex/hyperref/nameref.sty
+Package hyperref Info: Link coloring OFF on input line 213.
+ (/usr/local/texlive/2016/texmf-dist/tex/latex/hyperref/nameref.sty
 Package: nameref 2012/10/27 v2.43 Cross-referencing by name of section
-
 (/usr/local/texlive/2016/texmf-dist/tex/generic/oberdiek/gettitlestring.sty
 Package: gettitlestring 2016/05/16 v1.5 Cleanup title references (HO)
 )
 \c@section@level=\count173
 )
-LaTeX Info: Redefining \ref on input line 391.
-LaTeX Info: Redefining \pageref on input line 391.
-LaTeX Info: Redefining \nameref on input line 391.
+LaTeX Info: Redefining \ref on input line 213.
+LaTeX Info: Redefining \pageref on input line 213.
+LaTeX Info: Redefining \nameref on input line 213.
 
 (./main.out) (./main.out)
 \@outlinefile=\write4
@@ -1268,20 +1273,24 @@ Package caption Info: End \AtBeginDocument code.
 Package pgfplots notification 'compat/show suggested version=true': you might b
 enefit from \pgfplotsset{compat=1.13} (current compat level: 1.9).
 
-LaTeX Font Info:    Try loading font information for U+msa on input line 394.
+LaTeX Font Info:    Try loading font information for U+msa on input line 216.
 (/usr/local/texlive/2016/texmf-dist/tex/latex/amsfonts/umsa.fd
 File: umsa.fd 2013/01/14 v3.01 AMS symbols A
 )
-LaTeX Font Info:    Try loading font information for U+msb on input line 394.
+LaTeX Font Info:    Try loading font information for U+msb on input line 216.
 
 (/usr/local/texlive/2016/texmf-dist/tex/latex/amsfonts/umsb.fd
 File: umsb.fd 2013/01/14 v3.01 AMS symbols B
 )
-LaTeX Font Info:    Try loading font information for U+rsfs on input line 394.
+LaTeX Font Info:    Try loading font information for U+rsfs on input line 216.
 
 (/usr/local/texlive/2016/texmf-dist/tex/latex/jknapltx/ursfs.fd
 File: ursfs.fd 1998/03/24 rsfs font definition file (jk)
-) (./main.toc)
+)
+LaTeX Font Info:    Try loading font information for U+stmry on input line 216.
+
+
+(/usr/local/texlive/2016/texmf-dist/tex/latex/stmaryrd/Ustmry.fd) (./main.toc)
 \tf@toc=\write5
 \openout5 = `main.toc'.
 
@@ -1289,26 +1298,176 @@ File: ursfs.fd 1998/03/24 rsfs font definition file (jk)
 [1
 
 {/usr/local/texlive/2016/texmf-var/fonts/map/pdftex/updmap/pdftex.map}]
-[2]
-No file main.bbl.
-[3]
-Package atveryend Info: Empty hook `BeforeClearDocument' on input line 562.
-Package atveryend Info: Empty hook `AfterLastShipout' on input line 562.
- (./main.aux)
-Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 562.
-Package atveryend Info: Executing hook `AtEndAfterFileList' on input line 562.
+[2] [3] <figs/trackedEigs.png, id=93, 489.5088pt x 370.986pt>
+File: figs/trackedEigs.png Graphic file (type png)
+
+<use figs/trackedEigs.png>
+Package pdftex.def Info: figs/trackedEigs.png used on input line 466.
+(pdftex.def)             Requested size: 216.09045pt x 163.76645pt.
+
+<figs/trackedEigsZoom.png, id=94, 471.6822pt x 377.7312pt>
+File: figs/trackedEigsZoom.png Graphic file (type png)
+
+<use figs/trackedEigsZoom.png>
+Package pdftex.def Info: figs/trackedEigsZoom.png used on input line 468.
+(pdftex.def)             Requested size: 206.69334pt x 165.52211pt.
+ [4]
+<figs/tauEigsDiverge1.png, id=99, 483.2454pt x 370.986pt>
+File: figs/tauEigsDiverge1.png Graphic file (type png)
+
+<use figs/tauEigsDiverge1.png>
+Package pdftex.def Info: figs/tauEigsDiverge1.png used on input line 475.
+(pdftex.def)             Requested size: 150.32504pt x 115.40637pt.
+
+<figs/tauEigsDiverge2.png, id=100, 483.2454pt x 370.986pt>
+File: figs/tauEigsDiverge2.png Graphic file (type png)
+
+<use figs/tauEigsDiverge2.png>
+Package pdftex.def Info: figs/tauEigsDiverge2.png used on input line 477.
+(pdftex.def)             Requested size: 150.32504pt x 115.40637pt.
+
+<figs/tauEigsDiverge3.png, id=101, 483.2454pt x 370.986pt>
+File: figs/tauEigsDiverge3.png Graphic file (type png)
+
+<use figs/tauEigsDiverge3.png>
+Package pdftex.def Info: figs/tauEigsDiverge3.png used on input line 479.
+(pdftex.def)             Requested size: 150.32504pt x 115.40637pt.
+
+<figs/tauModesDiverge1.png, id=102, 479.391pt x 377.7312pt>
+File: figs/tauModesDiverge1.png Graphic file (type png)
+
+<use figs/tauModesDiverge1.png>
+Package pdftex.def Info: figs/tauModesDiverge1.png used on input line 480.
+(pdftex.def)             Requested size: 150.32504pt x 118.44992pt.
+
+<figs/tauModesDiverge2.png, id=103, 479.391pt x 377.7312pt>
+File: figs/tauModesDiverge2.png Graphic file (type png)
+
+<use figs/tauModesDiverge2.png>
+Package pdftex.def Info: figs/tauModesDiverge2.png used on input line 482.
+(pdftex.def)             Requested size: 150.32504pt x 118.44992pt.
+
+<figs/tauModesDiverge3.png, id=104, 479.391pt x 377.7312pt>
+File: figs/tauModesDiverge3.png Graphic file (type png)
+
+<use figs/tauModesDiverge3.png>
+Package pdftex.def Info: figs/tauModesDiverge3.png used on input line 484.
+(pdftex.def)             Requested size: 150.32504pt x 118.44992pt.
+
+<figs/tauEigs1.png, id=108, 431.6928pt x 370.986pt>
+File: figs/tauEigs1.png Graphic file (type png)
+ <use figs/tauEigs1.png>
+Package pdftex.def Info: figs/tauEigs1.png used on input line 493.
+(pdftex.def)             Requested size: 150.32504pt x 129.18472pt.
+
+<figs/tauEigs2.png, id=109, 431.6928pt x 370.986pt>
+File: figs/tauEigs2.png Graphic file (type png)
+ <use figs/tauEigs2.png>
+Package pdftex.def Info: figs/tauEigs2.png used on input line 495.
+(pdftex.def)             Requested size: 150.32504pt x 129.18472pt.
+
+<figs/tauEigs3.png, id=110, 431.6928pt x 370.986pt>
+File: figs/tauEigs3.png Graphic file (type png)
+ <use figs/tauEigs3.png>
+Package pdftex.def Info: figs/tauEigs3.png used on input line 497.
+(pdftex.def)             Requested size: 150.32504pt x 129.18472pt.
+
+<figs/tauModes1.png, id=111, 479.391pt x 377.7312pt>
+File: figs/tauModes1.png Graphic file (type png)
+ <use figs/tauModes1.png>
+Package pdftex.def Info: figs/tauModes1.png used on input line 498.
+(pdftex.def)             Requested size: 150.32504pt x 118.44992pt.
+
+<figs/tauModes2.png, id=112, 479.391pt x 377.7312pt>
+File: figs/tauModes2.png Graphic file (type png)
+ <use figs/tauModes2.png>
+Package pdftex.def Info: figs/tauModes2.png used on input line 500.
+(pdftex.def)             Requested size: 150.32504pt x 118.44992pt.
+
+<figs/tauModes3.png, id=113, 479.391pt x 377.7312pt>
+File: figs/tauModes3.png Graphic file (type png)
+ <use figs/tauModes3.png>
+Package pdftex.def Info: figs/tauModes3.png used on input line 502.
+(pdftex.def)             Requested size: 150.32504pt x 118.44992pt.
+
+<figs/waveEigs1.png, id=115, 477.4638pt x 377.7312pt>
+File: figs/waveEigs1.png Graphic file (type png)
+ <use figs/waveEigs1.png>
+Package pdftex.def Info: figs/waveEigs1.png used on input line 536.
+(pdftex.def)             Requested size: 140.92793pt x 111.48737pt.
+
+<figs/waveEigs2.png, id=116, 481.8pt x 377.7312pt>
+File: figs/waveEigs2.png Graphic file (type png)
+ <use figs/waveEigs2.png>
+Package pdftex.def Info: figs/waveEigs2.png used on input line 538.
+(pdftex.def)             Requested size: 140.92793pt x 110.48448pt.
+
+<figs/waveEigs3.png, id=117, 474.573pt x 377.7312pt>
+File: figs/waveEigs3.png Graphic file (type png)
+ <use figs/waveEigs3.png>
+Package pdftex.def Info: figs/waveEigs3.png used on input line 540.
+(pdftex.def)             Requested size: 140.92793pt x 112.16748pt.
+
+<figs/waveEigs2Dbox.png, id=118, 328.5876pt x 377.7312pt>
+File: figs/waveEigs2Dbox.png Graphic file (type png)
+
+<use figs/waveEigs2Dbox.png>
+Package pdftex.def Info: figs/waveEigs2Dbox.png used on input line 548.
+(pdftex.def)             Requested size: 161.91682pt x 186.13089pt.
+
+<figs/trackedWaveEigs2D.png, id=119, 407.121pt x 377.7312pt>
+File: figs/trackedWaveEigs2D.png Graphic file (type png)
+
+<use figs/trackedWaveEigs2D.png>
+Package pdftex.def Info: figs/trackedWaveEigs2D.png used on input line 550.
+(pdftex.def)             Requested size: 200.61543pt x 186.13089pt.
+
+<figs/waveEig2D_p1.png, id=120, 351.2322pt x 256.3176pt>
+File: figs/waveEig2D_p1.png Graphic file (type png)
+
+<use figs/waveEig2D_p1.png>
+Package pdftex.def Info: figs/waveEig2D_p1.png used on input line 558.
+(pdftex.def)             Requested size: 140.92793pt x 102.84593pt.
+
+<figs/waveEig2D_p2.png, id=121, 382.5492pt x 214.401pt>
+File: figs/waveEig2D_p2.png Graphic file (type png)
+
+<use figs/waveEig2D_p2.png>
+Package pdftex.def Info: figs/waveEig2D_p2.png used on input line 560.
+(pdftex.def)             Requested size: 140.92793pt x 78.98361pt.
+
+<figs/waveEig2D_p3.png, id=122, 390.258pt x 219.7008pt>
+File: figs/waveEig2D_p3.png Graphic file (type png)
+
+<use figs/waveEig2D_p3.png>
+Package pdftex.def Info: figs/waveEig2D_p3.png used on input line 562.
+(pdftex.def)             Requested size: 140.92793pt x 79.33694pt.
+ (./main.bbl [5 <./figs/trackedEigs.png> <./figs/trackedEigsZoom.png>]) [6 <./f
+igs/tauEigsDiverge1.png> <./figs/tauEigsDiverge2.png> <./figs/tauEigsDiverge3.p
+ng> <./figs/tauModesDiverge1.png> <./figs/tauModesDiverge2.png> <./figs/tauMode
+sDiverge3.png>] [7 <./figs/tauEigs1.png> <./figs/tauEigs2.png> <./figs/tauEigs3
+.png> <./figs/tauModes1.png> <./figs/tauModes2.png> <./figs/tauModes3.png> <./f
+igs/waveEigs1.png> <./figs/waveEigs2.png> <./figs/waveEigs3.png>]
+Package atveryend Info: Empty hook `BeforeClearDocument' on input line 575.
+ [8 <./figs/waveEigs2Dbox.png> <./figs/trackedWaveEigs2D.png> <./figs/waveEig2D
+_p1.png> <./figs/waveEig2D_p2.png> <./figs/waveEig2D_p3.png>]
+Package atveryend Info: Empty hook `AfterLastShipout' on input line 575.
+
+(./main.aux)
+Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 575.
+Package atveryend Info: Executing hook `AtEndAfterFileList' on input line 575.
 Package rerunfilecheck Info: File `main.out' has not changed.
-(rerunfilecheck)             Checksum: FFA620108459448752B610CB5B49DC40;437.
-Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 562.
+(rerunfilecheck)             Checksum: 68E2ED1596648FF9E6D2A6449414ACB5;491.
+Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 575.
  ) 
 Here is how much of TeX's memory you used:
- 31107 strings out of 493014
- 714493 string characters out of 6133351
- 918588 words of memory out of 5000000
- 34085 multiletter control sequences out of 15000+600000
- 17509 words of font info for 68 fonts, out of 8000000 for 9000
+ 31427 strings out of 493014
+ 719864 string characters out of 6133351
+ 923585 words of memory out of 5000000
+ 34323 multiletter control sequences out of 15000+600000
+ 19079 words of font info for 75 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 62i,9n,96p,726b,609s stack positions out of 5000i,500n,10000p,200000b,80000s
+ 62i,10n,96p,726b,609s stack positions out of 5000i,500n,10000p,200000b,80000s
 </usr/local/texlive/2016/texmf-dist/fonts/type1/public/amsfonts/cmextra/cmbsy
 7.pfb></usr/local/texlive/2016/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx10
 .pfb></usr/local/texlive/2016/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx12.
@@ -1316,19 +1475,24 @@ pfb></usr/local/texlive/2016/texmf-dist/fonts/type1/public/amsfonts/cm/cmex10.p
 fb></usr/local/texlive/2016/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi10.pf
 b></usr/local/texlive/2016/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi5.pfb>
 </usr/local/texlive/2016/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi7.pfb></
-usr/local/texlive/2016/texmf-dist/fonts/type1/public/amsfonts/cm/cmmib10.pfb></
-usr/local/texlive/2016/texmf-dist/fonts/type1/public/amsfonts/cmextra/cmmib7.pf
-b></usr/local/texlive/2016/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb>
-</usr/local/texlive/2016/texmf-dist/fonts/type1/public/amsfonts/cm/cmr12.pfb></
-usr/local/texlive/2016/texmf-dist/fonts/type1/public/amsfonts/cm/cmr17.pfb></us
-r/local/texlive/2016/texmf-dist/fonts/type1/public/amsfonts/cm/cmr5.pfb></usr/l
-ocal/texlive/2016/texmf-dist/fonts/type1/public/amsfonts/cm/cmr7.pfb></usr/loca
-l/texlive/2016/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb></usr/local
-/texlive/2016/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy7.pfb>
-Output written on main.pdf (3 pages, 166782 bytes).
+usr/local/texlive/2016/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi8.pfb></us
+r/local/texlive/2016/texmf-dist/fonts/type1/public/amsfonts/cm/cmmib10.pfb></us
+r/local/texlive/2016/texmf-dist/fonts/type1/public/amsfonts/cmextra/cmmib7.pfb>
+</usr/local/texlive/2016/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb></
+usr/local/texlive/2016/texmf-dist/fonts/type1/public/amsfonts/cm/cmr12.pfb></us
+r/local/texlive/2016/texmf-dist/fonts/type1/public/amsfonts/cm/cmr17.pfb></usr/
+local/texlive/2016/texmf-dist/fonts/type1/public/amsfonts/cm/cmr5.pfb></usr/loc
+al/texlive/2016/texmf-dist/fonts/type1/public/amsfonts/cm/cmr7.pfb></usr/local/
+texlive/2016/texmf-dist/fonts/type1/public/amsfonts/cm/cmr8.pfb></usr/local/tex
+live/2016/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb></usr/local/texl
+ive/2016/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy7.pfb></usr/local/texliv
+e/2016/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy8.pfb></usr/local/texlive/
+2016/texmf-dist/fonts/type1/public/amsfonts/cm/cmti10.pfb></usr/local/texlive/2
+016/texmf-dist/fonts/type1/public/stmaryrd/stmary10.pfb>
+Output written on main.pdf (8 pages, 889115 bytes).
 PDF statistics:
- 131 PDF objects out of 1000 (max. 8388607)
- 108 compressed objects within 2 object streams
- 13 named destinations out of 1000 (max. 500000)
- 69 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 262 PDF objects out of 1000 (max. 8388607)
+ 202 compressed objects within 3 object streams
+ 55 named destinations out of 1000 (max. 500000)
+ 187 words of extra memory for PDF output out of 10000 (max. 10000000)
 

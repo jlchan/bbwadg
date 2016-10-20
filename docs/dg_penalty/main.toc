@@ -1,7 +1,8 @@
 \contentsline {section}{\numberline {1}Introduction}{1}{section.1}
 \contentsline {section}{\numberline {2}DG numerical fluxes}{1}{section.2}
-\contentsline {subsection}{\numberline {2.1}Example: acoustic wave equation}{2}{subsection.2.1}
+\contentsline {subsection}{\numberline {2.1}Examples: acoustic wave equation}{2}{subsection.2.1}
 \contentsline {section}{\numberline {3}Dependence of spectra on the penalty parameter}{3}{section.3}
-\contentsline {subsection}{\numberline {3.1}Eigenmodes}{3}{subsection.3.1}
-\contentsline {subsection}{\numberline {3.2}Eigenvalues}{3}{subsection.3.2}
-\contentsline {section}{\numberline {4}Numerical experiments}{3}{section.4}
+\contentsline {section}{\numberline {4}Numerical experiments}{4}{section.4}
+\contentsline {subsection}{\numberline {4.1}1D experiments}{5}{subsection.4.1}
+\contentsline {subsection}{\numberline {4.2}2D experiments}{5}{subsection.4.2}
+\contentsline {section}{\numberline {5}Conclusions}{6}{section.5}
