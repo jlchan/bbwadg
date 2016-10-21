@@ -1,10 +1,10 @@
-\begin{thebibliography}{1}
+\begin{thebibliography}{10}
 
-\bibitem{kopriva2014energy}
-David~A Kopriva and Gregor~J Gassner.
-\newblock {An energy stable discontinuous Galerkin spectral element
-  discretization for variable coefficient advection problems}.
-\newblock {\em SIAM Journal on Scientific Computing}, 36(4):A2076--A2099, 2014.
+\bibitem{mercerat2015nodal}
+E~Diego Mercerat and Nathalie Glinsky.
+\newblock A nodal high-order discontinuous {Galerkin} method for elastic wave
+  propagation in arbitrary heterogeneous media.
+\newblock {\em Geophysical Journal International}, 201(2):1101--1118, 2015.
 
 \bibitem{chan2016weight1}
 Jesse Chan, Russell~J Hewett, and T~Warburton.
@@ -12,10 +12,54 @@ Jesse Chan, Russell~J Hewett, and T~Warburton.
   heterogeneous media}.
 \newblock {\em arXiv preprint arXiv:1608.01944}, 2016.
 
-\bibitem{chan2016weight2}
-Jesse Chan, Russell~J Hewett, and T~Warburton.
-\newblock {Weight-adjusted discontinuous Galerkin methods: curvilinear meshes}.
-\newblock {\em arXiv preprint arXiv:1608.03836}, 2016.
+\bibitem{warburton2013low}
+T.~Warburton.
+\newblock A low-storage curvilinear discontinuous {G}alerkin method for wave
+  problems.
+\newblock {\em SIAM Journal on Scientific Computing}, 35(4):A1987--A2012, 2013.
+
+\bibitem{ye2016discontinuous}
+Ruichao Ye, Maarten~V de~Hoop, Christopher~L Petrovitch, Laura~J Pyrak-Nolte,
+  and Lucas~C Wilcox.
+\newblock {A discontinuous Galerkin method with a modified penalty flux for the
+  propagation and scattering of acousto-elastic waves}.
+\newblock {\em Geophysical Journal International}, 205(2):1267--1289, 2016.
+
+\bibitem{hesthaven2007nodal}
+Jan~S Hesthaven and Tim Warburton.
+\newblock {\em Nodal discontinuous Galerkin methods: algorithms, analysis, and
+  applications}, volume~54.
+\newblock Springer, 2007.
+
+\bibitem{brezzi1985two}
+Franco Brezzi, Jim Douglas~Jr, and L~Donatella Marini.
+\newblock Two families of mixed finite elements for second order elliptic
+  problems.
+\newblock {\em Numerische Mathematik}, 47(2):217--235, 1985.
+
+\bibitem{boffi2013mixed}
+Daniele Boffi, Franco Brezzi, Michel Fortin, et~al.
+\newblock {\em Mixed finite element methods and applications}, volume~44.
+\newblock Springer, 2013.
+
+\bibitem{kirby2004algorithm}
+Robert~C Kirby.
+\newblock {Algorithm 839: FIAT, a new paradigm for computing finite element
+  basis functions}.
+\newblock {\em ACM Transactions on Mathematical Software (TOMS)},
+  30(4):502--516, 2004.
+
+\bibitem{kopriva2014energy}
+David~A Kopriva and Gregor~J Gassner.
+\newblock {An energy stable discontinuous Galerkin spectral element
+  discretization for variable coefficient advection problems}.
+\newblock {\em SIAM Journal on Scientific Computing}, 36(4):A2076--A2099, 2014.
+
+\bibitem{wilcox2010high}
+Lucas~C Wilcox, Georg Stadler, Carsten Burstedde, and Omar Ghattas.
+\newblock A high-order discontinuous {Galerkin} method for wave propagation
+  through coupled elastic--acoustic media.
+\newblock {\em Journal of Computational Physics}, 229(24):9373--9396, 2010.
 
 \bibitem{Warburton20063205}
 T.~Warburton and Mark Embree.
@@ -23,6 +67,12 @@ T.~Warburton and Mark Embree.
   for Maxwell's eigenvalue problem}.
 \newblock {\em Computer Methods in Applied Mechanics and Engineering},
   195(25-28):3205 -- 3223, 2006.
+
+\bibitem{simpletracker}
+A simple multiple particle tracker with gap closing.
+\newblock
+  \url{https://www.mathworks.com/matlabcentral/fileexchange/34040-simple-tracker}.
+\newblock Accessed 10/1/2016.
 
 \bibitem{ainsworth2014dispersive}
 Mark Ainsworth.

@@ -3,44 +3,44 @@ Capacity: max_strings=35307, hash_size=35307, hash_prime=30011
 The top-level auxiliary file: main.aux
 The style file: unsrt.bst
 Database file #1: dgpenalty.bib
-You've used 6 entries,
+You've used 14 entries,
             1791 wiz_defined-function locations,
-            484 strings with 4659 characters,
-and the built_in function-call counts, 1320 in all, are:
-= -- 121
-> -- 53
-< -- 0
-+ -- 20
-- -- 14
-* -- 93
-:= -- 221
-add.period$ -- 18
-call.type$ -- 6
-change.case$ -- 6
+            536 strings with 6171 characters,
+and the built_in function-call counts, 3218 in all, are:
+= -- 299
+> -- 123
+< -- 2
++ -- 47
+- -- 33
+* -- 240
+:= -- 508
+add.period$ -- 42
+call.type$ -- 14
+change.case$ -- 12
 chr.to.int$ -- 0
-cite$ -- 6
-duplicate$ -- 52
-empty$ -- 128
-format.name$ -- 14
-if$ -- 283
+cite$ -- 14
+duplicate$ -- 123
+empty$ -- 324
+format.name$ -- 33
+if$ -- 700
 int.to.chr$ -- 0
-int.to.str$ -- 6
-missing$ -- 6
-newline$ -- 33
-num.names$ -- 6
-pop$ -- 10
+int.to.str$ -- 14
+missing$ -- 15
+newline$ -- 73
+num.names$ -- 13
+pop$ -- 33
 preamble$ -- 1
 purify$ -- 0
 quote$ -- 0
-skip$ -- 20
+skip$ -- 45
 stack$ -- 0
-substring$ -- 111
-swap$ -- 6
-text.length$ -- 0
+substring$ -- 291
+swap$ -- 16
+text.length$ -- 2
 text.prefix$ -- 0
 top$ -- 0
 type$ -- 0
 warning$ -- 0
-while$ -- 13
-width$ -- 7
-write$ -- 66
+while$ -- 32
+width$ -- 16
+write$ -- 153

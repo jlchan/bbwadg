@@ -213,13 +213,15 @@ legend style={font=\small}
 \begin{document}
 
 \maketitle
-\tableofcontents
+%\tableofcontents
 
-%\begin{abstract}
-%
-%\end{abstract}
+\begin{abstract}
+Abstract goes here.  Mention assumptions: continuously varying material data, skew-symmetric formulations.  
+\end{abstract}
 
 \section{Introduction}
+
+\note{Intro}
 
 \section{DG numerical  fluxes}
 
@@ -237,6 +239,8 @@ where $\bm{A}_{i}$ are symmetric matrices.  The semi-discrete DG formulation for
 \]
 where $\bm{n}$ is the outward normal on a face $f$ of $D^k$, and $\bm{F^*}_n$ is a numerical flux depending defined on shared faces between two elements.  
 
+\note{Define $\Oh, \Gh$, derive global formulation.}  
+
 %For convergence, $\bm{F^*}_n = \bm{F^*}_n(\bm{U})$ must be consistent such that, for exact solutions $\bm{U}$, 
 %\[
 %\bm{F^*}_n = \bm{F}(\bm{U})\cdot \bm{n}.
@@ -246,58 +250,93 @@ Let $f$ be a shared face between two elements $D^{k,+}$ and $D^{k,-}$, and let $
 \[
 \avg{\bm{F}} = \frac{\bm{F}^+ + \bm{F}^-}{2}, \qquad \jump{\bm{F}} = \bm{F}^+ - \bm{F}^-.
 \]
-Typical numerical fluxes are defined as the sum of the average of $\bm{F}^+$ and $\bm{F}^-$ and a penalization term
+Typical numerical fluxes are defined as the sum of the average of $\bm{F}^+$ and $\bm{F}^-$ and a penalization term $\bm{G(\bm{U}^+,\bm{U}^-)}$
 \begin{equation}
-\bm{F^*}_n = \avg{\bm{F}(\bm{U})}\cdot \bm{n} - \bm{G}\LRp{\jump{\bm{U}}},
+\bm{F^*}_n = \avg{\bm{F}(\bm{U})}\cdot \bm{n} - \bm{G(\bm{U}^+,\bm{U}^-)}.
 \label{eq:flux}
 \end{equation}
-where $\bm{G}$ is some convex function.  
 
-The upwind numerical flux is a well-known flux of the form (\ref{eq:flux}).  For some normal vector $\bm{n}$, let ${\bm{A}}_n = \sum_{i=1}^d {\bm{A}_i\bm{n}_i}$.  By \note{add citation}, ${\bm{A}}_n$ contains real eigenvalues, and admits an eigenvalue decomposition
+The upwind numerical flux is a well-known flux of the form (\ref{eq:flux}).  For an outward normal vector $\bm{n}$, let ${\bm{A}}_n = \sum_{i=1}^d {\bm{A}_i\bm{n}_i}$.  By \note{add citation}, ${\bm{A}}_n$ contains real eigenvalues, and admits an eigenvalue decomposition
 \[
-\bm{A}_n = \bm{V}{\bm{\Lambda}}\bm{V}^{-1}, \qquad \bm{\Lambda} = 
+\bm{A}_n = \bm{V}{\bm{\Lambda}}\bm{V}^T, \qquad \bm{\Lambda} = 
 \left(\begin{array}{ccc}
 \lambda_1 & & \\
 & \ddots & \\
 & & \lambda_d
 \end{array}\right).
 \]
-For problems with continuous coefficients, the upwind numerical flux can be defined as
+For problems with continuous coefficients, the upwind numerical flux over a face $f \in \Gh$ can be defined  as
 \[
 \bm{F^*}_n = \bm{A}_n^+\bm{U}^- + \bm{A_n}^- \bm{U}^+,
 \]
 where the matrices $\bm{A_n}^+,\bm{A_n}^-$ are constructed from the positive and negative eigenvalues 
 \begin{align*}
-\bm{A}_n^+ &= \frac{1}{2}\bm{V} \LRp{\bm{\Lambda} + \LRb{\bm{\Lambda}}} \bm{V}^{-1}\\
-\bm{A}_n^- &= \frac{1}{2}\bm{V} \LRp{\bm{\Lambda} - \LRb{\bm{\Lambda}}} \bm{V}^{-1},
+\bm{A}_n^+ &= \frac{1}{2}\bm{V} \LRp{\bm{\Lambda} + \LRb{\bm{\Lambda}}} \bm{V}^T\\
+\bm{A}_n^- &= \frac{1}{2}\bm{V} \LRp{\bm{\Lambda} - \LRb{\bm{\Lambda}}} \bm{V}^T,
 \end{align*}
 and $\LRb{\bm{\Lambda}}$ is the diagonal matrix whose entries consist of the absolute values of the eigenvalues $\LRb{\lambda_i}$.  This can be rewritten as the sum of the central flux and a penalization
 \[
-\bm{F^*}_n = \avg{\bm{A}_n\bm{U}} - \tau\bm{V}\LRb{\bm{\Lambda}}\bm{V}^{-1} \jump{\bm{U}}.  
+\bm{F^*}_n = \avg{\bm{A}_n\bm{U}} - \bm{V}\LRb{\bm{\Lambda}}\bm{V}^T \jump{\bm{U}}.  
 \]
 For problems with discontinuous coefficients, this may be generalized by solving a Riemann problem to yield
 \[
-\bm{F^*}_n = \avg{\bm{A}_n\bm{U}} - \tau \jump{{\bm{V}\LRb{\bm{\Lambda}}\bm{V}^{-1}\bm{U}}}.  
+\bm{F^*}_n = \avg{\bm{A}_n\bm{U}} - \jump{{\bm{V}\LRb{\bm{\Lambda}}\bm{V}^T\bm{U}}}.  
 \]
-
-
 An alternative to upwind fluxes are penalty fluxes, which penalize appropriately defined jumps of the solution.  One such penalty flux is 
 \[
-\bm{F^*}_n = \avg{\bm{A}_n\bm{U}} - \bm{A}_n^T \bm{W} \jump{\bm{A}_n\bm{U}}.  
+\bm{F^*}_n = \avg{\bm{A}_n\bm{U}} - \tau \bm{A}_n^T \jump{\bm{A}_n\bm{U}}.  
 \]
-where $\bm{W}$ is a diagonal weighting matrix with positive entries.  We take $\bm{W} = \tau \bm{I}$ in the following sections; however, the entries can be made to vary.  For example, taking $\bm{W} = \LRb{\bm{\Lambda}}^{-1}$ recovers the upwind fluxes \note{prove this}.
-%\[
-%\bm{F^*}_n = \avg{\bm{A}_n\bm{U}} - \bm{A}_n^T \LRb{\bm{Lambda}}^{-1} \jump{\bm{A}_n\bm{U}}.  
-%\]
+where $\tau$ is proportional to $\lambda_{\max}^{-1}$.  This choice of $\tau$ ensures that the penalty term is of the same order of magnitude as the upwind penalization, and that the CFL restriction for both methods is identical.  
 
-\subsection{Examples: acoustic wave equation}
+\note{Skew-symmetric discretization for constant coefficient problems \cite{kopriva2014energy}.  Extendable to Maxwells \cite{warburton2013low} and elasticity \cite{wilcox2010high,ye2016discontinuous}.}
 
-Consider the isotropic acoustic wave equation in pressure-velocity form
+\subsection{Conforming and non-conforming spaces}
+
+
+Let $V$ denote the piecewise polynomial approximation space 
+\[
+V = \LRc{ \bm{U} \in\LRp{ L^2(\Oh)}^d : \left.\bm{U}\right|_{D^k} \in \LRp{P^N(D^k)}^d}.  
+\]
+We define a decomposition of $V$ into a conforming part $V^C$ and a non-conforming part $V^{NC}$ based on the penalization term $\bm{G}(\bm{U}^+,\bm{U}^-)$.  The conforming part is defined as the null space of $\bm{G}(\bm{U}^+,\bm{U}^-)$
+\begin{equation}
+V^{C} = \LRc{ \bm{U}(\bm{x}) \in V: \quad  \bm{G}(\bm{U}^+,\bm{U}^-) = 0, \quad \forall f \in \Gh},
+\label{eq:conf}
+\end{equation}
+while the non-conforming approximation space $V^{NC}$ is defined as $L^2$ orthogonal complement of $V^{C}$ in $V$
+\[
+V^{NC} = \LRc{ \bm{U}(\bm{x}) \in V: \LRp{\bm{u},\bm{v}}_{L^2(\Oh)} = 0, \quad \forall \bm{v}\in V^C}.
+\]
+\note{For problems where $\bm{A}_i$ are spatially continuous, $\bm{V}\LRb{\bm{\Lambda}}\bm{V}^T \jump{\bm{U}} = 0$ if and only if $\bm{A}_n^T \bm{A}_n\jump{\bm{U}} = 0$.  Both conditions enforce that 
+\[
+\bm{v}_i^T \jump{\bm{U}} = 0, \qquad \lambda_i \neq 0.
+\]
+}
+As a result, the conforming and non-conforming spaces induced by upwind and penalty fluxes are identical.  
+
+For problems with discontinuous material data, it is less straightforward to show equivalence between the conforming spaces $V^C$ resulting from upwind and penalty fluxes.  However, for many practical wave propagation settings, spatially varying coefficients are incorporated into the matrix $\bm{A_0}$, resulting in constant $\bm{A}_i$.  For both smoothly varying and discontinuous $\bm{A}_0$, it is possible to formulate energy stable DG methods with penalty fluxes \cite{mercerat2015nodal, chan2016weight1}.  Additionally, DG methods using penalty fluxes are observed to perform similarly to DG methods with upwind fluxes for  wave propagation problems with discontinuous coefficients \cite{warburton2013low, chan2016weight1, ye2016discontinuous}.  
+
+\subsection{Scalar advection and acoustic wave propagation}
+\label{sec:confexamples}
+We illustrate the conforming spaces induced by penalty fluxes using the scalar advection equation and acoustic wave equation as concrete examples.  The scalar advection equation is given as
+\[
+\pd{u}{t} + \div\LRp{\bm{\beta}u} = 0.
+\]
+where $\bm{\beta}$ is the direction of advection.  For continuous advection vectors such that $\bm{\beta}(\bm{x}) \neq 0$, the penalty flux is equivalent to a parametrized upwind flux \cite{hesthaven2007nodal}
+\[
+\bm{F}^*_n = \avg{\bm{\beta}_n u} - \tau\LRb{\bm{\beta}_n}\jump{u}.
+\]
+The conforming space $V^C$ induced by this flux is then
+\[
+V^C = \LRc{ u \in L^2\LRp{\Oh} : \quad \left.u\right|_{D^k} \in P^N(D^k), \quad \LRb{\bm{\beta}_n}\jump{u} = 0}.
+\]
+In one dimension, this simply implies that $u$ is $C^0$ continuous across element boundaries.  In higher dimensions, this implies that $u$ is continuous along streamlines or directions $\bm{d}(\bm{x})$ where $\bm{\beta}\cdot \bm{d} \neq 0$.  
+
+Next, we consider the acoustic wave equation in pressure-velocity form
 \begin{align*}
-\pd{p}{t} &= \Div \bm{u}\\
-\pd{\bm{u}}{t} &= \Grad p.
+\frac{1}{c^2}\pd{p}{t} &= \Div \bm{u}\\
+\pd{\bm{u}}{t} &= \Grad p,
 \end{align*}
-Let $\bm{U}$ denote the group variable $\bm{U} = (p,u,v)$, where $u$ and $v$ are the $x$ and $y$ components of velocity.  Then, in two dimensions, the isotropic wave equation is given as
+where $c^2(\bm{x})$ is the wavespeed.  Let $\bm{U}$ denote the group variable $\bm{U} = (p,u,v)$, where $u$ and $v$ are the $x$ and $y$ components of velocity.  Then, in two dimensions, the isotropic wave equation is given as
 \[
 \pd{\bm{U}}{t} + \pd{\bm{A}_x\bm{U}}{x} + \pd{\bm{A}_y\bm{U}}{y} = 0, \qquad \bm{A}_x = 
 \left(\begin{array}{ccc}
@@ -339,9 +378,25 @@ implying that the penalty fluxes (with $\bm{W} = \tau\bm{I}$) are
 \end{array}
 \right)
 \]
-For $\tau = 1$, these fluxes coincide with the upwind fluxes for isotropic media.  We note that the penalty flux affects only the normal component of the velocity; this is in contrast to Lax-Friedrichs-type fluxes, which penalize component-wise discontinuities in the velocity.  
+For $\tau = 1$, these fluxes coincide with the upwind fluxes for continuously varying media.  In this case, the conforming subspace $V^{C}$ induced by the penalty flux consists of a scalar (pressure) component $V^C_p$ and a vector (velocity) component $V^C_{\bm{u}}$.  The pressure component $p$ satisfies $\jump{p} = 0$ over all faces $f\in \Gh$.  For polynomial approximation spaces, this implies that $p$ is continuous across faces, edges, and vertices, and $V^C_p$ is the standard $C^0$ continuous piecewise polynomial finite element space.  For the velocity component of $V^C$, the penalty fluxes enforce normal continuity, such that $\jump{\bm{u}}\cdot \bm{n} = 0$ over all faces $f \in \Gh$.  Since each component of $\bm{u}$ is approximated from $P^N(D^k)$, this implies that $V^C_{\bm{u}}$ is the $H({\rm div})$-conforming Brezzi-Douglas-Marini finite element space \cite{brezzi1985two,boffi2013mixed}.\footnote{It is possible to recover $V^C_{\bm{u}}$ as the Raviart-Thomas finite element space by approximating each component of $\bm{u}$ from a smaller polynomial space \cite{kirby2004algorithm}.}  
 
-\note{Skew-symmetric discretization for constant coefficient problems \cite{kopriva2014energy}.  For wave propagation, can wrap variable coefficients into $A_0$ \cite{chan2016weight1,chan2016weight2}}.  
+Penalty fluxes can also be interpreted as Lax-Friedrichs fluxes applied to scalar and vector variables separately.  In contrast, for a component-wise Lax-Friedrichs flux 
+\[
+\avg{\bm{A}_n \bm{U}} - \tau\bm{A}_n^T \jump{\bm{A}_n\bm{U}} = \left(\begin{array}{c}
+\avg{\bm{u}_n}\\
+\avg{p }\bm{n}_x\\
+\avg{p }\bm{n}_y
+\end{array}
+\right) - 
+\tau\left(\begin{array}{c}
+\jump{p}\\
+\jump{\bm{u}_x}\\
+\jump{\bm{u}_y}
+\end{array}
+\right),
+\]
+the conforming space $V^C_{\bm{u}}$ becomes the space of vector piecewise polynomial functions which are $C^0$ continuous in both components, resulting in overly-constrained continuity conditions for $\bm{u}$.  
+
 
 \section{Dependence of spectra on the penalty parameter}
 
@@ -349,20 +404,7 @@ For $\tau = 1$, these fluxes coincide with the upwind fluxes for isotropic media
 
 We adapt the proof presented in \cite{Warburton20063205} to show that the spectra of $\bm{K}$ splits into two sets as $\tau\rightarrow \infty$, the first of which approaches the eigenvalues of $\bm{A}$, and the second of which moves left of the imaginary axis at a rate of $O(\tau)$.  
 
-We begin by splitting the DG approximation space into a conforming part $V^C$ and a non-conforming part $V^{NC}$.  Let $V$ be the DG approximation space
-\[
-V = \LRc{ u \in L^2(\Oh) : \left.u\right|_{D^k} \in P^N(D^k)}.  
-\]
-The conforming space $V^{C}$ is then defined as
-\begin{equation}
-V^{C} = \LRc{ u(\bm{x}) \in V: }
-\label{eq:conf}
-\end{equation}
-We can similarly define the non-conforming approximation space $V^{NC}$ as the orthogonal complement of $V^{C}$, such that the full approximation space $V$ is 
-\[
-V = V^C \oplus V^{NC}.  
-\]
-
+\note{finish}
 This induces a block decomposition
 \[
 \bm{K} = \left(\begin{array}{cc}
@@ -379,7 +421,7 @@ we have that
 (\bm{C}+\tau\bm{S})\bm{v} &= \alpha\bm{v}-\beta\bm{w}\\
 (\bm{C}+\tau\bm{S})\bm{w} &= \beta\bm{v}+\alpha\bm{w}.
 \end{align*}
-Assuming that $\bm{u}^*\bm{u} = \nor{\bm{v}}^2 + \nor{\bm{w}}^2 = 1$, multiplying both sides by $\bm{v}^T,\bm{w}^T$ and straightforward manipulations %yield
+Assuming that $\nor{\bm{u}}^2 = \nor{\bm{v}}^2 + \nor{\bm{w}}^2 = 1$, multiplying both sides by $\bm{v}^T,\bm{w}^T$ and straightforward manipulations %yield
 %\begin{align*}
 %\bm{v}^T\bm{A}\bm{v} &= \alpha\nor{\bm{v}}^2-\beta\bm{v}^T\bm{w}\\
 %\bm{w}^T\bm{A}\bm{w} &= \beta\bm{w}^T{\bm{v}}+\alpha\nor{\bm{w}}^2.  
@@ -459,7 +501,7 @@ The above analysis illustrates the behavior of the spectra of the DG discretizat
 
 \subsection{1D experiments}
 
-We consider first the scalar advection equation in 1D with periodic boundary conditions.  For $\tau = 0$, the eigenvalues of the DG discretization matrix are purely imaginary.  Figure~\ref{fig:track1D} shows the paths taken by these eigenvalues as $\tau$ increases from zero to $\tau = 4$.  As predicted, a subset of eigenvalues diverges towards the left half plane, which we refer to as \emph{divergent}.  The corresponding eigenmodes are shown in Figure~\ref{fig:trackmodes1D}, with inter-element jumps of these eigenfunctions increasing as $\tau$ increases.  
+We consider first the scalar advection equation in 1D with periodic boundary conditions.  For $\tau = 0$, the eigenvalues of the DG discretization matrix are purely imaginary.  Paths taken by eigenvalues as $\tau$ increases are determined by sampling spectra over a sufficiently fine set of $\tau$ and using a particle tracking method \cite{simpletracker}.  Figure~\ref{fig:track1D} shows the paths taken by these eigenvalues as $\tau$ increases from zero to $\tau = 4$.  As predicted, a subset of \emph{divergent} eigenvalues move further left of the imaginary axis as $\tau$ increases.  The corresponding eigenmodes are shown in Figure~\ref{fig:trackmodes1D}, with inter-element jumps of these eigenfunctions increasing as $\tau$ increases.  
 
 \begin{figure}
 \centering
@@ -486,7 +528,7 @@ We consider first the scalar advection equation in 1D with periodic boundary con
 \label{fig:trackmodes1D}
 \end{figure}
 
-However, for sufficiently large $\tau$, a subset of eigenvalues return to the imaginary axis.  Figure~\ref{fig:spurious} illustrates that, as $\tau$ increases, the magnitude of the inter-element jumps present in these modes decreases, and the mode approaches a continuous function.  These eigenvalues which return to the imaginary axis correspond to a second set of \emph{spurious} modes, consisting of higher frequency components with sharp peaks, which have previously been observed in high order $C^0$ finite element methods \cite{ainsworth2014dispersive,hughes2014finite}.  
+However, for sufficiently large $\tau$, a subset of eigenvalues return to the imaginary axis.  Figure~\ref{fig:spurious} illustrates that, as $\tau$ increases, the magnitude of the inter-element jumps present in these modes decreases, and the mode approaches a $C^0$ continuous function.  These eigenvalues which move right to return to the imaginary axis correspond to a second set of \emph{spurious} modes.  These spurious modes, corresponding to under-resolved modes of the exact underlying operator, consist of higher frequency components with sharp peaks and have previously been observed in high order $C^0$ finite element methods \cite{ainsworth2014dispersive,hughes2014finite}.  
 
 \begin{figure}
 \centering
@@ -517,18 +559,10 @@ We repeat the above experiment for the acoustic wave equation in 1D with reflect
 
 \subsection{2D experiments}
 
-In two space dimensions, taking $\tau\rightarrow \infty$ again results in spurious modes which return to the imaginary axis.  The corresponding eigenvalues converge to conforming functions.  For the acoustic wave equation, $p$ is continuous across faces, edges, and vertices, implying that $p\in H^1(\Oh)$, while only the normal component of $\bm{u}$ is continuous across faces, implying that $\bm{u} \in H({\rm div}; \Oh)$.  
+In two space dimensions, taking $\tau\rightarrow \infty$ again results in spurious modes which return to the imaginary axis, with the corresponding eigenmodes approaching conforming functions.  
+We illustrate this through numerical experiments for the acoustic wave equation and advection in two space dimensions.  In all numerical experiments, we use $N=3$ and a uniform triangular mesh resulting from bisecting each element of a $2\times 2$ uniform quadrilateral mesh.  
 
-Uniform triangular mesh resulting from bisecting each element of a $2\times 2$ uniform quadrilateral mesh.  
-%For the advection equation, 
-%\begin{figure}
-%\centering
-%\subfloat{\includegraphics[width=.475\textwidth]{figs/trackedAdvecEigs.png}}
-%\hspace{.5em}
-%\subfloat{\includegraphics[width=.465\textwidth]{figs/trackedAdvecEigsZoom1.png}}
-%\caption{Behavior of eigenvalues for advection }
-%\label{fig:trackModesAdvec}
-%\end{figure}
+Figure~\ref{fig:waveeigs} shows the spectra of the DG discretization matrix for the acoustic wave equation for $\tau = 1, 10, 50$.  Like the one-dimensional case, a subset of eigenvalues diverge towards the left half plane as $\tau$ increases.  However, unlike the one-dimensional case, these eigenvalues collapse towards the real line as $\tau$ increases.  
 
 
 \begin{figure}
@@ -542,16 +576,18 @@ Uniform triangular mesh resulting from bisecting each element of a $2\times 2$ u
 \label{fig:waveeigs}
 \end{figure}
 
+Similarly, as predicted, a subset of eigenvalues returns towards the imaginary axis as $\tau \rightarrow \infty$.  These are shown in Figure~\ref{fig:trackEigsWave}, along with traced paths taken by each eigenvalue as $\tau$ increases.  
 
 \begin{figure}
 \centering
-\subfloat[$\tau = 0,1, 50$, zoomed in view]{\includegraphics[height=.3\textheight]{figs/waveEigs2Dbox.png}}
+\subfloat[$\tau = 0,1, 50$, zoomed in view]{\includegraphics[height=.3\textheight]{figs/waveEigs2Dbox.png}\label{subfig:big}}
 \hspace{2em}
-\subfloat[$\tau= 0,1,50$, returning eigenvalue paths]{\includegraphics[height=.3\textheight]{figs/trackedWaveEigs2D.png}}
-\caption{Behavior of eigenvalues for the acoustic wave equation in two dimensions.  Divergent eigenvalues in the far left half plane are not shown.  }
+\subfloat[$\tau= 0,1,50$, returning eigenvalue paths]{\includegraphics[height=.3\textheight]{figs/trackedWaveEigs2D.png}\label{subfig:box}}
+\caption{Behavior of eigenvalues for the acoustic wave equation in two dimensions.  Figure~\ref{subfig:box} shows a zoom of the boxed region in Figure~\ref{subfig:big}, with overlaid eigenvalue paths as $\tau$ increases.  Divergent eigenvalues in the far left half plane are not shown.  }
 \label{fig:trackEigsWave}
 \end{figure}
 
+The pressure and velocity components of the corresponding acoustic eigenmodes converge to conforming approximations.  As noted in Section~\ref{sec:confexamples}, this implies that pressure components lie in $H^1(\Oh)$ and are continuous across faces, edges, and vertices.  Figure~\ref{fig:trackModesWave} shows the behavior of the pressure component of an eigenmode corresponding to a spurious returning eigenvalue for $\tau = .1, 1, 100$.  As $\tau$ increases and the eigenvalue approaches the imaginary axis, the eigenmode approaches a $C^0$ continuous function with a high frequencies and sharp peak, similar to the spurious eigenmodes observed for the one-dimensional case in Figure~\ref{fig:spurious}.
 
 \begin{figure}
 \centering
@@ -559,14 +595,52 @@ Uniform triangular mesh resulting from bisecting each element of a $2\times 2$ u
 \hspace{.5em}
 \subfloat[$\tau = 1$, $\lambda = -1.0145 + 8.9270i$]{\includegraphics[width=.3\textwidth]{figs/waveEig2D_p2.png}}
 \hspace{.5em}
-\subfloat[$\tau = 50$, $\lambda = -0.0437 + 7.6167i$]{\includegraphics[width=.3\textwidth]{figs/waveEig2D_p3.png}}
-\caption{Behavior of spurious returning modes for the acoustic wave equation in two dimensions.  }
+\subfloat[$\tau = 100$, $\lambda = -0.0437 + 7.6167i$]{\includegraphics[width=.3\textwidth]{figs/waveEig2D_p3.png}}
+\caption{Behavior of the real part of the pressure component of spurious eigenmodes for the acoustic wave equation in two dimensions.  }
 \label{fig:trackModesWave}
 \end{figure}
 
+The non-zero velocity components of spurious eigenmodes converge to approximations in $H({\rm div}; \Oh)$, such that only the normal component of velocity is continuous across faces.  Figure~\ref{fig:trackModesWaveU} shows visualizations of these eigenmodes.  For large $\tau$, normal jumps of the velocity component vanish.  % approach an $H({\rm div};\Oh)$-conforming approximation.  
 
+\begin{figure}
+\centering
+\subfloat[$\tau = .1$, $\lambda = -0.6009 +11.3209i$]{\includegraphics[width=.3\textwidth]{figs/waveEig2D_u1.png}}
+\hspace{.5em}
+\subfloat[$\tau = 1$, $\lambda =  -1.9601 + 9.5629i$]{\includegraphics[width=.3\textwidth]{figs/waveEig2D_u2.png}}
+\hspace{.5em}
+\subfloat[$\tau = 100$, $\lambda = -0.0634 + 7.7670i$]{\includegraphics[width=.3\textwidth]{figs/waveEig2D_u3.png}}
+\caption{Behavior of the real part of the velocity component of spurious eigenmodes for the acoustic wave equation in two dimensions.  }
+\label{fig:trackModesWaveU}
+\end{figure}
+
+
+For the advection equation with periodic boundary conditions, the spectra of the DG discretization behaves similarly.  In all following experiments, we use advection vector $\beta = (1,0)$.  For $\tau=0$, all eigenvalues lie on the imaginary axis, and as $\tau$ increases, the spectra splits into eigenvalues which diverge towards the left half plane and eigenvalues which return to the imaginary axis.  Figure~\ref{fig:trackModesAdvec} shows the spectra of the DG matrix for $\tau = 0,1,50$, with eigenvalue paths for increasing values of $\tau$ overlaid.  
+
+\begin{figure}
+\centering
+\subfloat{\includegraphics[width=.475\textwidth]{figs/trackedAdvecEigs.png}}
+\hspace{.5em}
+\subfloat{\includegraphics[width=.465\textwidth]{figs/trackedAdvecEigsZoom1.png}}
+\caption{Eigenvalue paths for the DG discretization of advection as $\tau$ increases.  Divergent eigenvalues in the far left half plane are not shown.  }
+\label{fig:trackModesAdvec}
+\end{figure}
+
+Unlike spurious conforming modes present for the acoustic wave equation, spurious conforming modes for the advection equation satisfy $\jump{\beta_n u} = 0$, and allow discontinuities along faces which are tangential to flow directions.  \note{Find cite on regularity of advection solutions.} 
+
+\begin{figure}
+\centering
+\subfloat[$\tau = 0$, $\lambda = 0 + 7.9246i$]{\includegraphics[width=.3\textwidth]{figs/advecEig2D_u1.png}}
+\hspace{.5em}
+\subfloat[$\tau = 1$, $\lambda =  -0.8278 + 6.7831i$]{\includegraphics[width=.3\textwidth]{figs/advecEig2D_u2.png}}
+\hspace{.5em}
+\subfloat[$\tau = 100$, $\lambda = -0.0239 + 5.9282i$]{\includegraphics[width=.3\textwidth]{figs/advecEig2D_u3.png}}
+\caption{Behavior of the real part of spurious eigenmodes for the advection equation with $\beta = (1,0)$. }
+\label{fig:trackModesAdvecU}
+\end{figure}
 
 \section{Conclusions}
+
+\note{Penalized DG methods as sweet spot treatments of spurious modes, somewhere between central DG and conforming discretizations.}
 
 \bibliographystyle{unsrt}
 \bibliography{dgpenalty}
