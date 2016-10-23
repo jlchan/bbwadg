@@ -16,94 +16,113 @@
 \gdef\HyperFirstAtBeginDocument#1{#1}
 \providecommand\HyField@AuxAddToFields[1]{}
 \providecommand\HyField@AuxAddToCoFields[2]{}
-\@writefile{toc}{\contentsline {section}{\numberline {1}Introduction}{1}{section.1}}
-\@writefile{toc}{\contentsline {section}{\numberline {2}DG numerical fluxes}{1}{section.2}}
-\newlabel{eq:flux}{{1}{1}{DG numerical fluxes}{equation.2.1}{}}
-\citation{kopriva2014energy}
-\citation{warburton2013low}
+\citation{chan2016weight1}
+\citation{de2008interior}
 \citation{wilcox2010high}
 \citation{ye2016discontinuous}
+\citation{hesthaven2002nodal}
+\citation{grote2007interior}
+\citation{warburton2013low}
+\@writefile{toc}{\contentsline {section}{\numberline {1}Introduction}{1}{section.1}}
+\@writefile{toc}{\contentsline {section}{\numberline {2}Semi-discrete discontinuous Galerkin formulation}{1}{section.2}}
+\newlabel{eq:cons}{{1}{1}{Semi-discrete discontinuous Galerkin formulation}{equation.2.1}{}}
+\newlabel{eq:formulation}{{2}{1}{Semi-discrete discontinuous Galerkin formulation}{equation.2.2}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.1}Penalization terms in numerical fluxes}{1}{subsection.2.1}}
+\citation{ye2016discontinuous}
+\newlabel{eq:flux}{{3}{2}{Penalization terms in numerical fluxes}{equation.2.3}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {3}Dependence of spectra on the penalty parameter}{2}{section.3}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.1}Conforming and non-conforming spaces}{2}{subsection.3.1}}
+\newlabel{eq:conf}{{4}{2}{Conforming and non-conforming spaces}{equation.3.4}{}}
 \citation{mercerat2015nodal}
 \citation{chan2016weight1}
 \citation{warburton2013low}
 \citation{chan2016weight1}
 \citation{ye2016discontinuous}
-\@writefile{toc}{\contentsline {subsection}{\numberline {2.1}Conforming and non-conforming spaces}{2}{subsection.2.1}}
-\newlabel{eq:conf}{{2}{2}{Conforming and non-conforming spaces}{equation.2.2}{}}
 \citation{hesthaven2007nodal}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.2}Scalar advection and acoustic wave propagation}{3}{subsection.3.2}}
+\newlabel{sec:confexamples}{{3.2}{3}{Scalar advection and acoustic wave propagation}{subsection.3.2}{}}
 \citation{brezzi1985two}
 \citation{boffi2013mixed}
 \citation{kirby2004algorithm}
-\@writefile{toc}{\contentsline {subsection}{\numberline {2.2}Scalar advection and acoustic wave propagation}{3}{subsection.2.2}}
-\newlabel{sec:confexamples}{{2.2}{3}{Scalar advection and acoustic wave propagation}{subsection.2.2}{}}
 \citation{Warburton20063205}
+\citation{warburton2013low}
+\citation{chan2015gpu}
+\citation{kopriva2014energy}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.3}Behavior as $\tau \rightarrow \infty $}{4}{subsection.3.3}}
+\newlabel{eq:block}{{5}{4}{Behavior as $\tau \rightarrow \infty $}{equation.3.5}{}}
 \citation{Warburton20063205}
-\@writefile{toc}{\contentsline {section}{\numberline {3}Dependence of spectra on the penalty parameter}{4}{section.3}}
+\citation{horn2012matrix}
+\newlabel{lemma:eig}{{3.1}{5}{Behavior as $\tau \rightarrow \infty $}{theorem.3.1}{}}
 \citation{simpletracker}
 \citation{ainsworth2014dispersive}
 \citation{hughes2014finite}
-\@writefile{toc}{\contentsline {section}{\numberline {4}Numerical experiments}{5}{section.4}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.1}1D experiments}{5}{subsection.4.1}}
 \@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces Eigenvalue paths for DG advection with $\tau \in [0,4]$ on a mesh of 8 elements of degree $N=3$. Eigenvalues are overlaid on these paths for $\tau = 0$, $\tau = 1$, and $\tau = 4$. The zoomed in view near the imaginary axis shows the return of spurious modes to the imaginary axis for $\tau $ sufficiently large. \relax }}{6}{figure.caption.1}}
 \providecommand*\caption@xref[2]{\@setref\relax\@undefined{#1}}
 \newlabel{fig:track1D}{{1}{6}{Eigenvalue paths for DG advection with $\tau \in [0,4]$ on a mesh of 8 elements of degree $N=3$. Eigenvalues are overlaid on these paths for $\tau = 0$, $\tau = 1$, and $\tau = 4$. The zoomed in view near the imaginary axis shows the return of spurious modes to the imaginary axis for $\tau $ sufficiently large. \relax }{figure.caption.1}{}}
 \@writefile{lof}{\contentsline {subfigure}{\numberline{(a)}{\ignorespaces {Paths of eigenvalues as $\tau $ increases}}}{6}{subfigure.1.1}}
 \@writefile{lof}{\contentsline {subfigure}{\numberline{(b)}{\ignorespaces {Zoom of eigenvalues near imaginary axis}}}{6}{subfigure.1.2}}
-\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces Behavior of divergent eigenvalues for advection as $\tau $ increases. The order of approximation is $N=3$ on a mesh of 4 elements.\relax }}{6}{figure.caption.2}}
-\newlabel{fig:trackmodes1D}{{2}{6}{Behavior of divergent eigenvalues for advection as $\tau $ increases. The order of approximation is $N=3$ on a mesh of 4 elements.\relax }{figure.caption.2}{}}
-\@writefile{lof}{\contentsline {subfigure}{\numberline{(d)}{\ignorespaces {$\tau = 0$}}}{6}{subfigure.2.4}}
-\@writefile{lof}{\contentsline {subfigure}{\numberline{(e)}{\ignorespaces {$\tau = 1$}}}{6}{subfigure.2.5}}
-\@writefile{lof}{\contentsline {subfigure}{\numberline{(f)}{\ignorespaces {$\tau = 10$}}}{6}{subfigure.2.6}}
-\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces Return behavior of DG advection eigenvalues for sufficiently large $\tau $. For $\tau = 1$ certain eigenvalues have negative real part, and the corresponding eigenmodes are damped. For $\tau \gg 1$, certain eigenvalues return to the imaginary axis as spurious modes in conforming discretizations. \relax }}{7}{figure.caption.3}}
-\newlabel{fig:spurious}{{3}{7}{Return behavior of DG advection eigenvalues for sufficiently large $\tau $. For $\tau = 1$ certain eigenvalues have negative real part, and the corresponding eigenmodes are damped. For $\tau \gg 1$, certain eigenvalues return to the imaginary axis as spurious modes in conforming discretizations. \relax }{figure.caption.3}{}}
-\@writefile{lof}{\contentsline {subfigure}{\numberline{(d)}{\ignorespaces {$\tau = 0$}}}{7}{subfigure.3.4}}
-\@writefile{lof}{\contentsline {subfigure}{\numberline{(e)}{\ignorespaces {$\tau = 1$}}}{7}{subfigure.3.5}}
-\@writefile{lof}{\contentsline {subfigure}{\numberline{(f)}{\ignorespaces {$\tau = 10$}}}{7}{subfigure.3.6}}
+\@writefile{toc}{\contentsline {section}{\numberline {4}Numerical experiments}{6}{section.4}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.1}1D experiments}{6}{subsection.4.1}}
+\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces Behavior of divergent eigenvalues for advection as $\tau $ increases. The order of approximation is $N=3$ on a mesh of 4 elements.\relax }}{7}{figure.caption.2}}
+\newlabel{fig:trackmodes1D}{{2}{7}{Behavior of divergent eigenvalues for advection as $\tau $ increases. The order of approximation is $N=3$ on a mesh of 4 elements.\relax }{figure.caption.2}{}}
+\@writefile{lof}{\contentsline {subfigure}{\numberline{(d)}{\ignorespaces {$\tau = 0$}}}{7}{subfigure.2.4}}
+\@writefile{lof}{\contentsline {subfigure}{\numberline{(e)}{\ignorespaces {$\tau = 1$}}}{7}{subfigure.2.5}}
+\@writefile{lof}{\contentsline {subfigure}{\numberline{(f)}{\ignorespaces {$\tau = 10$}}}{7}{subfigure.2.6}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {4.2}2D experiments}{7}{subsection.4.2}}
+\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces Return behavior of DG advection eigenvalues for sufficiently large $\tau $. For $\tau = 1$ certain eigenvalues have negative real part, and the corresponding eigenmodes are damped. For $\tau \gg 1$, certain eigenvalues return to the imaginary axis as spurious modes in conforming discretizations. \relax }}{8}{figure.caption.3}}
+\newlabel{fig:spurious}{{3}{8}{Return behavior of DG advection eigenvalues for sufficiently large $\tau $. For $\tau = 1$ certain eigenvalues have negative real part, and the corresponding eigenmodes are damped. For $\tau \gg 1$, certain eigenvalues return to the imaginary axis as spurious modes in conforming discretizations. \relax }{figure.caption.3}{}}
+\@writefile{lof}{\contentsline {subfigure}{\numberline{(d)}{\ignorespaces {$\tau = 0$}}}{8}{subfigure.3.4}}
+\@writefile{lof}{\contentsline {subfigure}{\numberline{(e)}{\ignorespaces {$\tau = 1$}}}{8}{subfigure.3.5}}
+\@writefile{lof}{\contentsline {subfigure}{\numberline{(f)}{\ignorespaces {$\tau = 10$}}}{8}{subfigure.3.6}}
 \@writefile{lof}{\contentsline {figure}{\numberline {4}{\ignorespaces Behavior of eigenvalues for the acoustic wave equation in two dimensions. Note the changing scale of the real axis.\relax }}{8}{figure.caption.4}}
 \newlabel{fig:waveeigs}{{4}{8}{Behavior of eigenvalues for the acoustic wave equation in two dimensions. Note the changing scale of the real axis.\relax }{figure.caption.4}{}}
 \@writefile{lof}{\contentsline {subfigure}{\numberline{(a)}{\ignorespaces {$\tau = 1$}}}{8}{subfigure.4.1}}
 \@writefile{lof}{\contentsline {subfigure}{\numberline{(b)}{\ignorespaces {$\tau = 10$}}}{8}{subfigure.4.2}}
 \@writefile{lof}{\contentsline {subfigure}{\numberline{(c)}{\ignorespaces {$\tau = 100$}}}{8}{subfigure.4.3}}
-\newlabel{subfig:big}{{5a}{8}{Subfigure 5a}{subfigure.5.1}{}}
+\newlabel{subfig:big}{{5a}{9}{Subfigure 5a}{subfigure.5.1}{}}
 \newlabel{sub@subfig:big}{{(a)}{a}{Subfigure 5a\relax }{subfigure.5.1}{}}
-\newlabel{subfig:box}{{5b}{8}{Subfigure 5b}{subfigure.5.2}{}}
+\newlabel{subfig:box}{{5b}{9}{Subfigure 5b}{subfigure.5.2}{}}
 \newlabel{sub@subfig:box}{{(b)}{b}{Subfigure 5b\relax }{subfigure.5.2}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {5}{\ignorespaces Behavior of eigenvalues for the acoustic wave equation in two dimensions. Figure\nobreakspace  {}\ref  {subfig:box} shows a zoom of the boxed region in Figure\nobreakspace  {}\ref  {subfig:big}, with overlaid eigenvalue paths as $\tau $ increases. Divergent eigenvalues in the far left half plane are not shown. \relax }}{8}{figure.caption.5}}
-\newlabel{fig:trackEigsWave}{{5}{8}{Behavior of eigenvalues for the acoustic wave equation in two dimensions. Figure~\ref {subfig:box} shows a zoom of the boxed region in Figure~\ref {subfig:big}, with overlaid eigenvalue paths as $\tau $ increases. Divergent eigenvalues in the far left half plane are not shown. \relax }{figure.caption.5}{}}
-\@writefile{lof}{\contentsline {subfigure}{\numberline{(a)}{\ignorespaces {$\tau = 0,1, 50$, zoomed in view}}}{8}{subfigure.5.1}}
-\@writefile{lof}{\contentsline {subfigure}{\numberline{(b)}{\ignorespaces {$\tau = 0,1,50$, returning eigenvalue paths}}}{8}{subfigure.5.2}}
-\@writefile{lof}{\contentsline {figure}{\numberline {6}{\ignorespaces Behavior of the real part of the pressure component of spurious eigenmodes for the acoustic wave equation in two dimensions. \relax }}{8}{figure.caption.6}}
-\newlabel{fig:trackModesWave}{{6}{8}{Behavior of the real part of the pressure component of spurious eigenmodes for the acoustic wave equation in two dimensions. \relax }{figure.caption.6}{}}
-\@writefile{lof}{\contentsline {subfigure}{\numberline{(a)}{\ignorespaces {$\tau = .1$, $\lambda = -0.2379 + 8.7528i$}}}{8}{subfigure.6.1}}
-\@writefile{lof}{\contentsline {subfigure}{\numberline{(b)}{\ignorespaces {$\tau = 1$, $\lambda = -1.0145 + 8.9270i$}}}{8}{subfigure.6.2}}
-\@writefile{lof}{\contentsline {subfigure}{\numberline{(c)}{\ignorespaces {$\tau = 100$, $\lambda = -0.0437 + 7.6167i$}}}{8}{subfigure.6.3}}
-\bibstyle{unsrt}
-\bibdata{dgpenalty}
-\bibcite{mercerat2015nodal}{1}
+\@writefile{lof}{\contentsline {figure}{\numberline {5}{\ignorespaces Behavior of eigenvalues for the acoustic wave equation in two dimensions. Figure\nobreakspace  {}\ref  {subfig:box} shows a zoom of the boxed region in Figure\nobreakspace  {}\ref  {subfig:big}, with overlaid eigenvalue paths as $\tau $ increases. Divergent eigenvalues in the far left half plane are not shown. \relax }}{9}{figure.caption.5}}
+\newlabel{fig:trackEigsWave}{{5}{9}{Behavior of eigenvalues for the acoustic wave equation in two dimensions. Figure~\ref {subfig:box} shows a zoom of the boxed region in Figure~\ref {subfig:big}, with overlaid eigenvalue paths as $\tau $ increases. Divergent eigenvalues in the far left half plane are not shown. \relax }{figure.caption.5}{}}
+\@writefile{lof}{\contentsline {subfigure}{\numberline{(a)}{\ignorespaces {$\tau = 0,1, 50$, zoomed in view}}}{9}{subfigure.5.1}}
+\@writefile{lof}{\contentsline {subfigure}{\numberline{(b)}{\ignorespaces {$\tau = 0,1,50$, returning eigenvalue paths}}}{9}{subfigure.5.2}}
+\@writefile{lof}{\contentsline {figure}{\numberline {6}{\ignorespaces Behavior of the real part of the pressure component of spurious eigenmodes for the acoustic wave equation in two dimensions. \relax }}{9}{figure.caption.6}}
+\newlabel{fig:trackModesWave}{{6}{9}{Behavior of the real part of the pressure component of spurious eigenmodes for the acoustic wave equation in two dimensions. \relax }{figure.caption.6}{}}
+\@writefile{lof}{\contentsline {subfigure}{\numberline{(a)}{\ignorespaces {$\tau = .1$, $\lambda = -0.2379 + 8.7528i$}}}{9}{subfigure.6.1}}
+\@writefile{lof}{\contentsline {subfigure}{\numberline{(b)}{\ignorespaces {$\tau = 1$, $\lambda = -1.0145 + 8.9270i$}}}{9}{subfigure.6.2}}
+\@writefile{lof}{\contentsline {subfigure}{\numberline{(c)}{\ignorespaces {$\tau = 100$, $\lambda = -0.0437 + 7.6167i$}}}{9}{subfigure.6.3}}
 \@writefile{lof}{\contentsline {figure}{\numberline {7}{\ignorespaces Behavior of the real part of the velocity component of spurious eigenmodes for the acoustic wave equation in two dimensions. \relax }}{9}{figure.caption.7}}
 \newlabel{fig:trackModesWaveU}{{7}{9}{Behavior of the real part of the velocity component of spurious eigenmodes for the acoustic wave equation in two dimensions. \relax }{figure.caption.7}{}}
 \@writefile{lof}{\contentsline {subfigure}{\numberline{(a)}{\ignorespaces {$\tau = .1$, $\lambda = -0.6009 +11.3209i$}}}{9}{subfigure.7.1}}
 \@writefile{lof}{\contentsline {subfigure}{\numberline{(b)}{\ignorespaces {$\tau = 1$, $\lambda = -1.9601 + 9.5629i$}}}{9}{subfigure.7.2}}
 \@writefile{lof}{\contentsline {subfigure}{\numberline{(c)}{\ignorespaces {$\tau = 100$, $\lambda = -0.0634 + 7.7670i$}}}{9}{subfigure.7.3}}
-\@writefile{lof}{\contentsline {figure}{\numberline {8}{\ignorespaces Eigenvalue paths for the DG discretization of advection as $\tau $ increases. Divergent eigenvalues in the far left half plane are not shown. \relax }}{9}{figure.caption.8}}
-\newlabel{fig:trackModesAdvec}{{8}{9}{Eigenvalue paths for the DG discretization of advection as $\tau $ increases. Divergent eigenvalues in the far left half plane are not shown. \relax }{figure.caption.8}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {5}Conclusions}{9}{section.5}}
-\bibcite{chan2016weight1}{2}
-\bibcite{warburton2013low}{3}
-\bibcite{ye2016discontinuous}{4}
-\bibcite{hesthaven2007nodal}{5}
-\bibcite{brezzi1985two}{6}
-\bibcite{boffi2013mixed}{7}
-\bibcite{kirby2004algorithm}{8}
-\bibcite{kopriva2014energy}{9}
-\bibcite{wilcox2010high}{10}
-\bibcite{Warburton20063205}{11}
-\bibcite{simpletracker}{12}
+\@writefile{lof}{\contentsline {figure}{\numberline {8}{\ignorespaces Eigenvalue paths for the DG discretization of advection as $\tau $ increases. Divergent eigenvalues in the far left half plane are not shown. \relax }}{10}{figure.caption.8}}
+\newlabel{fig:trackModesAdvec}{{8}{10}{Eigenvalue paths for the DG discretization of advection as $\tau $ increases. Divergent eigenvalues in the far left half plane are not shown. \relax }{figure.caption.8}{}}
 \@writefile{lof}{\contentsline {figure}{\numberline {9}{\ignorespaces Behavior of the real part of spurious eigenmodes for the advection equation with $\beta = (1,0)$. \relax }}{10}{figure.caption.9}}
 \newlabel{fig:trackModesAdvecU}{{9}{10}{Behavior of the real part of spurious eigenmodes for the advection equation with $\beta = (1,0)$. \relax }{figure.caption.9}{}}
 \@writefile{lof}{\contentsline {subfigure}{\numberline{(a)}{\ignorespaces {$\tau = 0$, $\lambda = 0 + 7.9246i$}}}{10}{subfigure.9.1}}
 \@writefile{lof}{\contentsline {subfigure}{\numberline{(b)}{\ignorespaces {$\tau = 1$, $\lambda = -0.8278 + 6.7831i$}}}{10}{subfigure.9.2}}
 \@writefile{lof}{\contentsline {subfigure}{\numberline{(c)}{\ignorespaces {$\tau = 100$, $\lambda = -0.0239 + 5.9282i$}}}{10}{subfigure.9.3}}
-\bibcite{ainsworth2014dispersive}{13}
-\bibcite{hughes2014finite}{14}
+\@writefile{toc}{\contentsline {section}{\numberline {5}Conclusions}{10}{section.5}}
+\bibstyle{unsrt}
+\bibdata{dgpenalty}
+\bibcite{chan2016weight1}{1}
+\bibcite{de2008interior}{2}
+\bibcite{wilcox2010high}{3}
+\bibcite{ye2016discontinuous}{4}
+\bibcite{hesthaven2002nodal}{5}
+\bibcite{grote2007interior}{6}
+\bibcite{warburton2013low}{7}
+\bibcite{mercerat2015nodal}{8}
+\bibcite{hesthaven2007nodal}{9}
+\bibcite{brezzi1985two}{10}
+\bibcite{boffi2013mixed}{11}
+\bibcite{kirby2004algorithm}{12}
+\bibcite{Warburton20063205}{13}
+\bibcite{chan2015gpu}{14}
+\bibcite{kopriva2014energy}{15}
+\bibcite{horn2012matrix}{16}
+\bibcite{simpletracker}{17}
+\bibcite{ainsworth2014dispersive}{18}
+\bibcite{hughes2014finite}{19}
