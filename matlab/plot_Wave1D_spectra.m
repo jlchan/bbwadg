@@ -6,7 +6,7 @@ function plot_Wave1D_spectra
 Globals1D;
 
 % Order of polymomials used for approximation
-N = 4;
+N = 3;
 
 % Generate simple mesh
 K1D = 4;
@@ -23,10 +23,16 @@ Vp = Vandermonde1D(N,rp)/V;
 xp = Vp*x;
 
 %%
+
+M = kron(diag(J(1,:)),inv(V*V'));
+M = blkdiag(M,M);
 dhist = [];
+
 dtau = 1e-1;
-tauvec = 0:dtau:100;
-tauvec = 100*exp(tauvec)/exp(100);
+tmax = 100;
+tauvec = 0:dtau:tmax;
+% tauvec = tmax*tauvec.^2/(tmax)^2;
+% tauvec = [0 1000 ];
 for ii = 1:length(tauvec)
     tau = tauvec(ii);
     
@@ -39,18 +45,45 @@ for ii = 1:length(tauvec)
         [rhsp rhsu] = WaveRHS1D(p,u,tau);
         Q(i) = 0;
         A(:,i) = [rhsp(:); rhsu(:)];
-    end
-    [W D] = eig(A); 
-    d = diag(D);
+    end    
+    
+    [W D] = eig(M*A,M); 
+    d = diag(D);    
+    [~,p] = sort(imag(d),'descend');
+    d = d(p); W = W(:,p);
+        
+%     figure
+%     for j = 1:size(W,2)
+%         vv = Vp*reshape(W(1:Np*K,j),N+1,K);
+%         subplot(1,2,1)
+%         plot(xp,real(vv),'r')
+%         hold on
+%         plot(xp,imag(vv),'b')        
+%         hold off
+%         
+%         vv = Vp*reshape(W((1:Np*K) + Np*K,j),N+1,K);
+%         subplot(1,2,2)
+%         plot(xp,real(vv),'r')
+%         hold on
+%         plot(xp,imag(vv),'b')        
+%         hold off
+%         
+%         title(sprintf('Eig = %f',abs(d(j))))               
+%         pause
+%     end
+%     title(sprintf('\\tau = %f',tau))
+%     keyboard
     
     points{ii} = [real(d) imag(d)];
+    modes{ii} = W;
     
     if mod(ii,50) == 0
         disp(sprintf('on eig %d out of %d\n',ii,length(tauvec)))
     end
 end
 
-max_linking_distance = 3;
+%%
+max_linking_distance = 10;
 max_gap_closing = Inf;
 debug = true;
 disp('running simple tracker')
@@ -60,15 +93,15 @@ disp('running simple tracker')
     'Debug', debug);
 
 
-plot(points{1}(:,1),points{1}(:,2),'o','markersize',9,'DisplayName','\tau = 0')
+plot(points{1}(:,1),points{1}(:,2),'o','markersize',10,'DisplayName','\tau = 0')
 hold on
 [~,id] = min(abs(tauvec-1));
-plot(points{id}(:,1),points{id}(:,2),'^','markersize',9,'DisplayName','\tau = 1')
-plot(points{end}(:,1),points{end}(:,2),'x','markersize',9,'DisplayName',sprintf('\\tau = %1.1f',tauvec(end)))
+plot(points{id}(:,1),points{id}(:,2),'^','markersize',10,'DisplayName','\tau = 1.0')
+plot(points{end}(:,1),points{end}(:,2),'s','markersize',10,'DisplayName',sprintf('\\tau = %1.1f',tauvec(end)))
 
 % exact eigs
 lam_ex = pi/2*(1:Np*K); lam_ex = [lam_ex -lam_ex]; 
-plot(zeros(size(lam_ex)),lam_ex,'s','markersize',11,'DisplayName','Exact eigenvalues')
+plot(zeros(size(lam_ex)),lam_ex,'.','markersize',24,'DisplayName','Exact eigenvalues')
 
 legend show
 n_tracks = numel(tracks);
@@ -82,12 +115,49 @@ for i_track = 1 : n_tracks
     track = adjacency_tracks{i_track};
     track_points = all_points(track, :);
     
-    plot(track_points(:,1), track_points(:, 2), 'Color', colors(i_track, :),'linewidth',2)    
+    plot(track_points(:,1), track_points(:, 2), 'k','linewidth',2)    
 end
 axis equal
 set(gca,'fontsize',15)
-print(gcf,'-dpng','trackedEigs.png')
+grid on
+% print(gcf,'-dpng','trackedEigsWave.png')
 keyboard
+
+%%
+field = 0;
+eignum = 3; 
+% eignum = 2*Np*K;
+
+for i = 1:10:length(adjacency_tracks{eignum})
+    ii = adjacency_tracks{eignum}(i);
+    mod_id = floor(ii/(2*Np*K))+1;
+    eig_id = ii - (mod_id-1)*2*Np*K;
+    w = modes{mod_id}((1:Np*K) + field*(Np*K),eig_id); % take p mode
+%     w = real(w);
+    vv = Vp*reshape(w,Np,K);
+    [a,idv] = max(abs(vv));
+    a = a.*sign(vv(idv));
+    vv = vv*diag(1./a);       
+        
+    subplot(1,2,1)
+    plot(xp,real(vv),'b');
+    hold on
+    plot(xp,imag(vv),'r');        
+%     plot(xp,real(vv2),'b--');    
+%     plot(xp,imag(vv2),'r--');        
+    hold off
+    axis([-1 1 -2 2])
+    subplot(1,2,2)
+    hold on;
+    plot(points{end}(:,1),points{end}(:,2),'x','markersize',10)
+    plot(points{id}(:,1),points{id}(:,2),'s')
+    plot(points{1}(:,1),points{1}(:,2),'o')
+    plot(all_points(ii,1),all_points(ii,2),'r*')                
+        
+    title(sprintf('\\tau = %f',tauvec(i)))
+    pause(.01)
+end
+%%
 return
 
 
