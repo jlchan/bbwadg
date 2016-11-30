@@ -1,0 +1,1495 @@
+\pdfoutput=1
+
+%\documentclass[preprint,10pt]{elsarticle}
+%\documentclass[10pt]{article}
+%\documentclass[review]{siamart0216}
+\documentclass{siamart0216}
+
+\usepackage{fullpage}
+\usepackage{hyperref}
+%\let\proof\relax
+%\let\endproof\relax
+\usepackage{amsmath,amssymb,amsfonts,mathrsfs}%,amsthm}
+\usepackage[titletoc,toc,title]{appendix}
+
+%\usepackage{lineno}
+\usepackage{array} 
+\usepackage[utf8]{inputenc}
+\usepackage{listings}
+\usepackage{mathtools}
+\usepackage{pdfpages}
+\usepackage[textsize=footnotesize,color=green]{todonotes}
+\usepackage{bm}
+%\usepackage{tikz}
+\usepackage[normalem]{ulem}
+\usepackage{hhline}
+
+%% ====================================== alg package
+\usepackage{algorithm}
+\usepackage[noend]{algpseudocode}
+\usepackage{algorithmicx}
+\algblock{ParFor}{EndParFor}
+% customising the new block
+\algnewcommand\algorithmicparfor{\textbf{parfor}}
+\algnewcommand\algorithmicpardo{\textbf{do}}
+\algnewcommand\algorithmicendparfor{\textbf{end\ parfor}}
+\algrenewtext{ParFor}[1]{\algorithmicparfor\ #1\ \algorithmicpardo}
+\algrenewtext{EndParFor}{\algorithmicendparfor}
+%% ====================================== end alg package
+
+\usepackage{graphicx}
+\usepackage{subfig}
+\usepackage{color}
+
+%% ====================================== graphics
+
+\usepackage{pgfplots}
+\usepackage{pgfplotstable}
+\definecolor{markercolor}{RGB}{124.9, 255, 160.65}
+\pgfplotsset{width=10cm,compat=1.9}
+\pgfplotsset{
+tick label style={font=\small},
+label style={font=\small},
+legend style={font=\small}
+}
+
+\usetikzlibrary{calc}
+
+\usetikzlibrary{calc}
+
+%%% START MACRO FOR ANNOTATION OF TRIANGLE WITH SLOPE %%%.
+\newcommand{\logLogSlopeTriangle}[5]
+{
+    % #1. Relative offset in x direction.
+    % #2. Width in x direction, so xA-xB.
+    % #3. Relative offset in y direction.
+    % #4. Slope d(y)/d(log10(x)).
+    % #5. Plot options.
+
+    \pgfplotsextra
+    {
+        \pgfkeysgetvalue{/pgfplots/xmin}{\xmin}
+        \pgfkeysgetvalue{/pgfplots/xmax}{\xmax}
+        \pgfkeysgetvalue{/pgfplots/ymin}{\ymin}
+        \pgfkeysgetvalue{/pgfplots/ymax}{\ymax}
+
+        % Calculate auxilliary quantities, in relative sense.
+        \pgfmathsetmacro{\xArel}{#1}
+        \pgfmathsetmacro{\yArel}{#3}
+        \pgfmathsetmacro{\xBrel}{#1-#2}
+        \pgfmathsetmacro{\yBrel}{\yArel}
+        \pgfmathsetmacro{\xCrel}{\xArel}
+
+        \pgfmathsetmacro{\lnxB}{\xmin*(1-(#1-#2))+\xmax*(#1-#2)} % in [xmin,xmax].
+        \pgfmathsetmacro{\lnxA}{\xmin*(1-#1)+\xmax*#1} % in [xmin,xmax].
+        \pgfmathsetmacro{\lnyA}{\ymin*(1-#3)+\ymax*#3} % in [ymin,ymax].
+        \pgfmathsetmacro{\lnyC}{\lnyA+#4*(\lnxA-\lnxB)}
+        \pgfmathsetmacro{\yCrel}{\lnyC-\ymin)/(\ymax-\ymin)} % THE IMPROVED EXPRESSION WITHOUT 'DIMENSION TOO LARGE' ERROR.
+
+        % Define coordinates for \draw. MIND THE 'rel axis cs' as opposed to the 'axis cs'.
+        \coordinate (A) at (rel axis cs:\xArel,\yArel);
+        \coordinate (B) at (rel axis cs:\xBrel,\yBrel);
+        \coordinate (C) at (rel axis cs:\xCrel,\yCrel);
+
+        % Draw slope triangle.
+        \draw[#5]   (A)-- node[pos=0.5,anchor=north] {1}
+                    (B)-- 
+                    (C)-- node[pos=0.5,anchor=west] {#4}
+                    cycle;
+    }
+}
+%%% END MACRO FOR ANNOTATION OF TRIANGLE WITH SLOPE %%%.
+
+\newcommand{\logLogSlopeTriangleNeg}[5]
+{
+    % #1. Relative offset in x direction.
+    % #2. Width in x direction, so xA-xB.
+    % #3. Relative offset in y direction.
+    % #4. Slope d(y)/d(log10(x)).
+    % #5. Plot options.
+
+    \pgfplotsextra
+    {
+        \pgfkeysgetvalue{/pgfplots/xmin}{\xmin}
+        \pgfkeysgetvalue{/pgfplots/xmax}{\xmax}
+        \pgfkeysgetvalue{/pgfplots/ymin}{\ymin}
+        \pgfkeysgetvalue{/pgfplots/ymax}{\ymax}
+
+        % Calculate auxilliary quantities, in relative sense.
+        \pgfmathsetmacro{\xArel}{#1}
+        \pgfmathsetmacro{\yArel}{#3}
+        \pgfmathsetmacro{\xBrel}{#1-#2}
+        \pgfmathsetmacro{\yBrel}{\yArel}
+        \pgfmathsetmacro{\xCrel}{\xArel}
+
+        \pgfmathsetmacro{\lnxB}{\xmin*(1-(#1-#2))+\xmax*(#1-#2)} % in [xmin,xmax].
+        \pgfmathsetmacro{\lnxA}{\xmin*(1-#1)+\xmax*#1} % in [xmin,xmax].
+        \pgfmathsetmacro{\lnyA}{\ymin*(1-#3)+\ymax*#3} % in [ymin,ymax].
+        \pgfmathsetmacro{\lnyC}{\lnyA+#4*(\lnxA-\lnxB)}
+        \pgfmathsetmacro{\yCrel}{\lnyC-\ymin)/(\ymax-\ymin)} % THE IMPROVED EXPRESSION WITHOUT 'DIMENSION TOO LARGE' ERROR.
+
+        % Define coordinates for \draw. MIND THE 'rel axis cs' as opposed to the 'axis cs'.
+        \coordinate (A) at (rel axis cs:\xArel,\yArel);
+        \coordinate (B) at (rel axis cs:\xBrel,\yBrel);
+        \coordinate (C) at (rel axis cs:\xCrel,\yCrel);
+
+        % Draw slope triangle.
+        \draw[#5]   (A)-- node[pos=.5,anchor=south] {1}
+                    (B)-- 
+                    (C)-- node[pos=0.5,anchor=west] {#4}
+                    cycle;
+    }
+}
+%%% END MACRO FOR ANNOTATION OF TRIANGLE WITH SLOPE %%%.
+
+%%% START MACRO FOR ANNOTATION OF TRIANGLE WITH SLOPE %%%.
+\newcommand{\logLogSlopeTriangleFlipNeg}[5]
+{
+    % #1. Relative offset in x direction.
+    % #2. Width in x direction, so xA-xB.
+    % #3. Relative offset in y direction.
+    % #4. Slope d(y)/d(log10(x)).
+    % #5. Plot options.
+
+    \pgfplotsextra
+    {
+        \pgfkeysgetvalue{/pgfplots/xmin}{\xmin}
+        \pgfkeysgetvalue{/pgfplots/xmax}{\xmax}
+        \pgfkeysgetvalue{/pgfplots/ymin}{\ymin}
+        \pgfkeysgetvalue{/pgfplots/ymax}{\ymax}
+
+        % Calculate auxilliary quantities, in relative sense.
+        %\pgfmathsetmacro{\xArel}{#1}
+        %\pgfmathsetmacro{\yArel}{#3}
+        \pgfmathsetmacro{\xBrel}{#1-#2}
+        \pgfmathsetmacro{\yBrel}{#3}
+        \pgfmathsetmacro{\xCrel}{#1}
+
+        \pgfmathsetmacro{\lnxB}{\xmin*(1-(#1-#2))+\xmax*(#1-#2)} % in [xmin,xmax].
+        \pgfmathsetmacro{\lnxA}{\xmin*(1-#1)+\xmax*#1} % in [xmin,xmax].
+        \pgfmathsetmacro{\lnyA}{\ymin*(1-#3)+\ymax*#3} % in [ymin,ymax].
+        \pgfmathsetmacro{\lnyC}{\lnyA+#4*(\lnxA-\lnxB)}
+        \pgfmathsetmacro{\yCrel}{\lnyC-\ymin)/(\ymax-\ymin)} % THE IMPROVED EXPRESSION WITHOUT 'DIMENSION TOO LARGE' ERROR.
+
+	\pgfmathsetmacro{\xArel}{\xBrel}
+        \pgfmathsetmacro{\yArel}{\yCrel}
+
+        % Define coordinates for \draw. MIND THE 'rel axis cs' as opposed to the 'axis cs'.
+        \coordinate (A) at (rel axis cs:\xArel,\yArel);
+        \coordinate (B) at (rel axis cs:\xBrel,\yBrel);
+        \coordinate (C) at (rel axis cs:\xCrel,\yCrel);
+
+        % Draw slope triangle.
+        \draw[#5]   (A)-- node[pos=0.5,anchor=east] {#4}
+                    (B)-- 
+                    (C)-- node[pos=0.5,anchor=north] {1}
+                    cycle;
+    }
+}
+%%% END MACRO FOR ANNOTATION OF TRIANGLE WITH SLOPE %%%.
+
+
+%%% START MACRO FOR ANNOTATION OF TRIANGLE WITH SLOPE %%%.
+\newcommand{\logLogSlopeTriangleFlip}[5]
+{
+    % #1. Relative offset in x direction.
+    % #2. Width in x direction, so xA-xB.
+    % #3. Relative offset in y direction.
+    % #4. Slope d(y)/d(log10(x)).
+    % #5. Plot options.
+
+    \pgfplotsextra
+    {
+        \pgfkeysgetvalue{/pgfplots/xmin}{\xmin}
+        \pgfkeysgetvalue{/pgfplots/xmax}{\xmax}
+        \pgfkeysgetvalue{/pgfplots/ymin}{\ymin}
+        \pgfkeysgetvalue{/pgfplots/ymax}{\ymax}
+
+        % Calculate auxilliary quantities, in relative sense.
+        %\pgfmathsetmacro{\xArel}{#1}
+        %\pgfmathsetmacro{\yArel}{#3}
+        \pgfmathsetmacro{\xBrel}{#1-#2}
+        \pgfmathsetmacro{\yBrel}{#3}
+        \pgfmathsetmacro{\xCrel}{#1}
+
+        \pgfmathsetmacro{\lnxB}{\xmin*(1-(#1-#2))+\xmax*(#1-#2)} % in [xmin,xmax].
+        \pgfmathsetmacro{\lnxA}{\xmin*(1-#1)+\xmax*#1} % in [xmin,xmax].
+        \pgfmathsetmacro{\lnyA}{\ymin*(1-#3)+\ymax*#3} % in [ymin,ymax].
+        \pgfmathsetmacro{\lnyC}{\lnyA+#4*(\lnxA-\lnxB)}
+        \pgfmathsetmacro{\yCrel}{\lnyC-\ymin)/(\ymax-\ymin)} % THE IMPROVED EXPRESSION WITHOUT 'DIMENSION TOO LARGE' ERROR.
+
+	\pgfmathsetmacro{\xArel}{\xBrel}
+        \pgfmathsetmacro{\yArel}{\yCrel}
+
+        % Define coordinates for \draw. MIND THE 'rel axis cs' as opposed to the 'axis cs'.
+        \coordinate (A) at (rel axis cs:\xArel,\yArel);
+        \coordinate (B) at (rel axis cs:\xBrel,\yBrel);
+        \coordinate (C) at (rel axis cs:\xCrel,\yCrel);
+
+        % Draw slope triangle.
+        \draw[#5]   (A)-- node[pos=0.5,anchor=east] {#4}
+                    (B)-- 
+                    (C)-- node[pos=0.5,anchor=south] {1}
+                    cycle;
+    }
+}
+%%% END MACRO FOR ANNOTATION OF TRIANGLE WITH SLOPE %%%.
+
+
+
+\usepackage{stmaryrd}
+
+
+\renewcommand{\topfraction}{0.85}
+\renewcommand{\textfraction}{0.1}
+\renewcommand{\floatpagefraction}{0.75}
+
+\newcommand{\vect}[1]{\ensuremath\boldsymbol{#1}}
+\newcommand{\tensor}[1]{\underline{\bm{#1}}}
+\newcommand{\del}{\triangle}
+\newcommand{\curl}{\grad \times}
+\renewcommand{\div}{\grad \cdot}
+\newcommand{\td}[2]{\frac{{\rm d}#1}{{\rm d}{\rm #2}}}
+\newcommand{\pd}[2]{\frac{\partial#1}{\partial#2}}
+\newcommand{\pdd}[2]{\frac{\partial^2#1}{\partial#2^2}}
+
+\newcommand{\bs}[1]{\boldsymbol{#1}}
+
+\newcommand{\equaldef}{\stackrel{\mathrm{def}}{=}}
+
+
+
+\newcommand{\mi}{\mathrm{i}} %% roman "i"
+\newcommand{\mb}[1]{\mathbf{#1}}
+\newcommand{\mbb}[1]{\mathbb{#1}}
+\newcommand{\mc}[1]{\mathcal{#1}}
+\newcommand{\nor}[1]{\left\| #1 \right\|}
+\newcommand{\LRp}[1]{\left( #1 \right)}
+\newcommand{\LRs}[1]{\left[ #1 \right]}
+\newcommand{\LRa}[1]{\left\langle #1 \right\rangle}
+\newcommand{\LRb}[1]{\left| #1 \right|}
+\newcommand{\LRc}[1]{\left\{ #1 \right\}}
+\newcommand{\LRceil}[1]{\left\lceil #1 \right\rceil}
+\newcommand{\LRl}[1]{\left. #1 \right|}
+
+%\newcommand{\cond}[1]{\kappa\LRp{#1}}
+\newcommand{\cond}[2]{\nor{#1}_{#2}\nor{{#1}^{-1}}_{#2}}
+
+
+\newcommand{\Grad} {\ensuremath{\nabla}}
+\newcommand{\Div} {\ensuremath{\nabla\cdot}}
+\newcommand{\jump}[1] {\ensuremath{\llbracket#1\rrbracket}}
+\newcommand{\avg}[1] {\ensuremath{\LRc{\!\{#1\}\!}}}
+
+\renewcommand{\Oh}{{\Omega_h}}
+\renewcommand{\L}{L^2\LRp{\Omega}}
+\newcommand{\Lk}{L^2\LRp{D^k}}
+\newcommand{\Ldk}{L^2\LRp{\partial D^k}}
+\newcommand{\Dhat}{\widehat{D}}
+\newcommand{\Lhat}{L^2\LRp{\Dhat}}
+
+%\newtheorem{theorem}{Theorem}[section]
+%\newtheorem{lemma}[theorem]{Lemma}
+%\newtheorem{proposition}[theorem]{Proposition}
+%\newtheorem{corollary}[theorem]{Corollary}
+
+%\newenvironment{definition}[1][Definition]{\begin{trivlist}
+%\item[\hskip \labelsep {\bfseries #1}]}{\end{trivlist}}
+%\newenvironment{example}[1][Example]{\begin{trivlist}
+%\item[\hskip \labelsep {\bfseries #1}]}{\end{trivlist}}
+
+\newcommand{\eval}[2][\right]{\relax
+  \ifx#1\right\relax \left.\fi#2#1\rvert}
+
+\def\etal{{\it et al.~}}
+
+
+\newcommand{\note}[1]{{\color{blue}#1}}
+\newcommand{\remark}[1]{\textbf{\color{red}#1}}
+
+
+\newcommand{\LinfDk}{L^{\infty}\LRp{D^k}}
+
+\newcommand{\diag}[1]{{\rm diag}\LRp{#1}}
+
+\newcommand{\half}{1/2}
+
+\newcolumntype{C}[1]{>{\centering\let\newline\\\arraybackslash\hspace{0pt}}m{#1}}
+
+%% d in integrand
+\newcommand*\diff[1]{\mathop{}\!{\mathrm{d}#1}}
+
+\makeatletter
+\renewcommand\d[1]{\mspace{6mu}\mathrm{d}#1\@ifnextchar\d{\mspace{-3mu}}{}}
+\makeatother
+
+\date{}
+\author{Jesse Chan}
+\title{Weight-adjusted discontinuous Galerkin methods: matrix-valued weights with application to elastic wave propagation}
+
+\begin{document}
+
+\maketitle
+%\tableofcontents
+
+\begin{abstract}
+Weight-adjusted inner products \cite{chan2016weight1,chan2016weight2} replace weighted $L^2$ inner products with easily invertible weight-adjusted approximations.  When paired with discontinuous Galerkin (DG) methods, the result is a low storage, energy stable, and (for sufficiently regular weights) high order accurate method for wave propagation in the presence of general heterogeneous media and curvilinear meshes.  In this work, we extend weight-adjusted DG (WADG) methods to weighted inner products with matrix-valued weights, focusing on the linear elastic wave equation as an application.  We present a new DG formulation based on the discretization of the symmetric form of the linear elasticity wave equation, with upwind-like dissipation incorporated through simple penalty terms in the numerical fluxes.  This results in provably stable formulations for arbitrary anisotropic stiffness tensors and curvilinear meshes.  A convergence analysis is given, and numerical results confirm the stability and high order accuracy of WADG for several problems in elastic wave propagation.  
+\end{abstract}
+
+
+\section{Introduction}
+
+There exist many high order energy stable discontinuous Galerkin formulations for the elastic wave equations in first order form.  Wilcox et al.\ introduced a discontinuous Galerkin spectral element method on hexahedral meshes 
+
+SEM \cite{komatitsch2010high,wilcox2010high} 
+
+High order DG \cite{kaser2006arbitrary, dumbser2006arbitrary, de2007arbitrary,ye2016discontinuous}
+
+Interior penalty formulations.  Analysis: Riviere et al.\ \cite{riviere2003discontinuous,riviere2007discontinuous} and Delcourte et al.\ \cite{delcourte2009high,delcourte2015analysis}, dispersion analysis \cite{de2008interior,antonietti2016high}.  
+
+GPU-accelerated DG methods \cite{klockner2009nodal,godel2010gpu,godel2010scalability}.  Also elastic wave propagation and seismic wave applications \cite{modave2015nodal,modave2016gpu}
+
+High order approximations of material data \cite{castro2010seismic,mercerat2015nodal}, but not low storage or not energy stable.  
+
+Extending mass lumping without dispersive effects \cite{christon1999influence,guermond2013correction}.  Reduces to exact mass matrix inversion for constant weights.  
+
+
+A simpler extension of WADG \cite{chan2016weight1,chan2016weight2} to elasticity and weight-adjusted inner products for vector-valued functions.  
+
+
+Outline: present elasticity and an energy stable DG method, motivate need for alternative to inverting large dense coupled mass matrix, introduce weight-adjusted inner products.  
+
+\section{Symmetric form of the elastic wave equation }
+
+We begin with the linear elastic wave equation under small deformations in a domain $\Omega$.  These equations can be written a first order velocity-stress  system 
+\begin{align*}
+\rho \pd{\bm{v}}{t} &= \Div{\bm{S}}\\
+\pd{\bm{S}}{t} &= \frac{1}{2} \bar{\bm{C}}\LRp{\Grad\bm{v} + \Grad\bm{v}^T},
+\end{align*}
+where $\bm{v}$ is the velocity, $\bm{S}$ is the stress tensor, $\rho$ is density, and $\bar{\bm{C}}$ is the symmetric constitutive stiffness tensor relating stress and strain.  These equations can also be rewritten as a symmetric hyperbolic system of PDEs \cite{hughes1978classical}  
+\begin{align}
+\rho \pd{\bm{v}}{t} &= \sum_{i=1}^d \bm{A}_i^T \pd{\bm{\sigma}}{\bm{x}_i}\nonumber \\
+\bm{C}^{-1} \pd{\bm{\sigma}}{t} &= \sum_{i=1}^d \bm{A}_i \pd{\bm{v}}{\bm{x}_i}.
+\label{eq:symelas}
+\end{align}
+where $\bm{C}$ is the symmetric matrix form of the constitutive tensor $\bar{\bm{C}}$ and $\sigma$ is a vector of length $N_d = \frac{d(d+1)}{2}$, the number of unique entries of the stress tensor $\bm{S}$.  We note that the matrices $\bm{A}_i$ are constant, while $\rho$ and $\bm{C}$ can vary spatially.  Furthermore, we will assume that $\rho$ and $\bm{C}$ are positive-definite and bounded such that 
+\begin{align*}
+\rho_{\min} &\leq \rho(\bm{x}) \leq \rho_{\max} \\
+0 < c_{\min} \leq \bm{x}^T\bm{C}\bm{x} &\leq c_{\max} < \infty, \qquad \bm{x} \in \mathbb{R}^{N_d},
+\end{align*}
+which also implies that $\bm{C}^{-1}$ is positive-definite and bounded.
+
+In two dimensions, $\bm{v} = (\bm{v}_1, \bm{v}_2)^T$ and $\bm{\sigma}= (\sigma_{xx},\sigma_{yy},\sigma_{xy})^T$ 
+\[
+\bm{S} = \LRp{\begin{array}{cc}
+\sigma_{xx} & \sigma_{xy}\\
+\sigma_{xy} & \sigma_{yy}
+\end{array}}.
+\]
+The matrices $\bm{A}_i$ are given as
+\[
+\bm{A}_1 = \left(\begin{array}{cc}
+1 & 0\\
+0 & 0\\
+0 & 1
+\end{array}\right), \qquad 
+\bm{A}_2 = \left(\begin{array}{cc}
+0 & 0\\
+0 & 1\\
+1 & 0
+\end{array}\right).
+\]
+
+In three dimensions, the velocity is $\bm{v} = (\bm{v}_1,\bm{v}_2,\bm{v}_3)^T$, while $\bm{\sigma}= (\sigma_{xx},\sigma_{yy},\sigma_{zz},\sigma_{yz},\sigma_{xy},\sigma_{xz})^T$ denotes the unique entries of the stress tensor $\bm{S}$
+\[
+\bm{S} = \LRp{\begin{array}{ccc}
+\sigma_{xx} & \sigma_{xy} & \sigma_{xz}\\
+\sigma_{xy} & \sigma_{yy}& \sigma_{yz}\\
+\sigma_{xz} & \sigma_{yz}& \sigma_{zz}
+\end{array}}.
+\]
+The matrices $\bm{A}_i$ are then
+\[
+\bm{A}_1 = \left(\begin{array}{ccc}
+1 & 0 & 0\\
+0 & 0& 0\\
+0 & 0& 0\\
+0 & 0& 0\\
+0 & 0 & 1\\
+0 & 1 & 0
+\end{array}\right), \qquad 
+\bm{A}_2 = \left(\begin{array}{ccc}
+0 & 0 & 0\\
+0 & 1 & 0\\
+0 & 0 & 0\\
+0 & 0 & 1\\
+0 & 0 & 0\\
+1 & 0 & 0
+\end{array}\right), \qquad
+\bm{A}_3 = \left(\begin{array}{ccc}
+0 & 0 & 0\\
+0 & 0 & 0\\
+0 & 0 & 1\\
+0 & 1 & 0\\
+1 & 0 & 0\\
+0 & 0 & 0
+\end{array}\right)
+\]
+
+In general anisotropic media, $\bm{C}$ is symmetric and positive-definite.  For two-dimensional isotropic media, $\bm{C}$ is given as
+\[
+\bm{C}= \LRp{
+\begin{array}{ccc}
+2\mu+\lambda  &  \lambda  &     0\\
+\lambda &       2\mu+\lambda &      0\\
+          0 &      0           &     {\mu}
+\end{array}}, 
+\]
+where $\lambda,\mu$ are Lame parameters.  For three-dimensional isotropic media, $\bm{C}$ is given instead by
+\[
+\bm{C}= \LRp{
+\begin{array}{cccccc}
+2\mu+\lambda  &  \lambda  &     \lambda  & & & \\
+\lambda &   2\mu+\lambda & \lambda   & & & \\
+\lambda & \lambda &   2\mu+\lambda &    & &\\
+ &   &    & {\mu} & &\\
+&  &   &    & {\mu} &\\
+& &  &   &    & {\mu} \\
+\end{array}}.  
+\]
+We will consider both spatially varying isotropic and anisotropic media in this work.  
+
+\section{An energy stable discontinuous Galerkin variational formulation}
+
+The advantage of the symmetric first order formulation of the elastic wave equations (\ref{eq:symelas}) is that it is straightforward to derive an energy stable discontinuous Galerkin formulation.  We assume that the domain $\Omega$ is Lipschitz and exactly triangulated by a mesh $\Omega_h$, which consists of elements $D^k$.  We further assume that each element $D^k$ is the image of a reference element $\widehat{D}$ under the local elemental mapping 
+\[
+\bm{x}^k = \bm{\Phi}^k \widehat{\bm{x}},
+\]
+where $\bm{x}^k = \LRc{x^k,y^k,z^k}$ denote physical coordinates on $D^k$ and $\widehat{\bm{x}} = \LRc{\widehat{x},\widehat{y},\widehat{z}}$ denote coordinates on the reference element.  We denote the determinant of the Jacobian of $\bm{\Phi}^k$ as $J^k$.  
+
+We will approximate components over each element $D^k$ from an approximation space $V_h\LRp{D^k}$, which we defined as
+\[
+V_h\LRp{D^k} = \bm{\Phi}^k \circ V_h\LRp{\widehat{D}}.
+\]
+where $V_h\LRp{\widehat{D}}$ is an approximation space defined on the reference element.  For the remainder of this work, we will take $V_h\LRp{\widehat{D}} = P^N\LRp{\widehat{D}}$, where $P^N(\LRp{\widehat{D}})$ is the polynomial space of total degree $N$ on the reference simplex.  In two dimensions, 
+\[
+P^N\LRp{\widehat{D}} = \LRc{ \widehat{x}^i \widehat{y}^j, \quad 0 \leq i + j \leq N},
+\] 
+while in three dimensions, 
+\[
+P^N\LRp{\widehat{D}} = \LRc{ \widehat{x}^i \widehat{y}^j \widehat{z}^k, \quad 0 \leq i + j +k \leq N}.  
+\]
+
+We denote the $L^2$ inner product and norm over $D^k$ by $\LRp{\cdot,\cdot}_{L^2\LRp{D^k}}$, such that
+\[
+\LRp{\bm{f},\bm{g}}_{\Lk} = \int_{D^k} \bm{f}\cdot\bm{g} \diff x = \int_{\widehat{D}} \bm{f}\cdot\bm{g} J^k, \qquad \nor{\bm{f}}_{\Lk}^2 = \LRp{\bm{f},\bm{f}}_{\Lk},
+\]
+where $\bm{f},\bm{g}$ are vector-valued functions.  Global $L^2$ inner products and norms are using local $L^2$ inner products and norms
+\[
+\LRp{\bm{f},\bm{g}}_{\Oh} = \sum_{D^k\in \Oh} \int_{D^k} \LRp{\bm{f},\bm{g}}_{\Lk}, \qquad \nor{\bm{f}}_{\Oh}^2 = \sum_{D^k\in \Oh} \nor{\bm{f}}^2_{\Lk}.
+\]
+
+Let $f$ be a face of an element $D^{k}$ with neighboring element $D^{k,+}$ and unit outward normal $\bm{n}$.  We define $u^-$ and $u^+$ denote interior and exterior values of a discontinuous function $u$ such that
+\[
+{u}^- = \LRl{u}_{f \cap D^k}, \qquad {u}^+ = \LRl{u}_{f \cap  \partial D^{k,+}}.  
+\]
+The jump and average of a scalar function $u\in V_h\LRp{\Omega_h}$ over $f$ are then defined as
+\[
+\jump{u} = u^+ - u^-, \qquad \avg{u} = \frac{u^+ + u^-}{2}.
+\]
+Jumps and averages of a vector-valued functions $\bm{u}\in \mathbb{R}^m$ and $\bm{S}\in \mathbb{R}^{m\times n}$ are then defined component-wise 
+\[
+\LRp{\jump{\bm{u}}}_i = \jump{\bm{u}_i}, \qquad 1\leq i \leq m, \qquad \LRp{\jump{\bm{S}}}_{ij} = \jump{\bm{S}_i}, \qquad 1\leq i \leq m, \quad 1\leq j \leq n.
+\]
+
+We can now specify a DG formulation for the linear elastic wave equation (\ref{eq:symelas}).  Symmetric hyperbolic systems readily admit a DG formulation based on penalty fluxes, as detailed in \cite{chan2016short}.  For the linear elastic wave equation in symmetric first order form, this formulation is given as
+\begin{align}
+\sum_{D^k\in \Oh}\LRp{\rho \pd{\bm{v}}{t},\bm{w}}_{\Lk} &= \sum_{D^k\in \Oh}\LRp{\LRp{ \sum_{i=1}^d \bm{A}_i^T\pd{\bm{\sigma}}{\bm{x}_i},\bm{w}}_{\Lk}  + \LRa{\frac{1}{2}\bm{A}_n^T\jump{\bm{\sigma}} + \frac{\tau_v}{2}\bm{A}_n^T\bm{A}_n\jump{\bm{v}},\bm{w}}_{\Ldk}} \nonumber\\
+\sum_{D^k\in \Oh}\LRp{\bm{C}^{-1} \pd{\bm{\sigma}}{t},\bm{q}}_{\Lk} &= \sum_{D^k\in \Oh}\LRp{\LRp{\sum_{i=1}^d \bm{A}_i \pd{\bm{v}}{\bm{x}_i},\bm{q}}_{\Lk} + \LRa{\frac{1}{2}\bm{A}_n\jump{\bm{v}} + \frac{\tau_{\sigma}}{2}\bm{A}_n\bm{A}_n^T\jump{\bm{\sigma}},\bm{q}}_{\Ldk}},
+\label{eq:dgform}
+\end{align}
+where $\tau_v,\tau_\sigma \geq 0$ are penalty parameters and $\bm{A}_n$ is the normal matrix defined on a face $f$ as $\bm{A}_n = \sum_{i=1}^d \bm{n}_i \bm{A}_i$.  In two dimensions, $\bm{A}_n$ is 
+\[
+\bm{A}_n =  \LRp{\begin{array}{cc}
+{n}_x & 0\\
+ 0 & {n}_y\\
+{n}_y & {n}_x
+\end{array}}.
+\]
+while in three dimensions, $\bm{A}_n$ is
+\[
+\bm{A}_n =  \LRp{\begin{array}{ccc}
+{n}_x & 0 & 0\\
+ 0 & {n}_y & 0\\
+0&  0 & {n}_z \\
+0 &{n}_z & {n}_y\\
+{n}_z & 0 & {n}_x\\
+{n}_y & {n}_z & 0\\
+\end{array}}.  
+\]
+
+\subsection{Boundary conditions}
+
+In this work, we assume boundary conditions on velocity and traction of the form
+\[
+\bm{v} = \bm{v}_{\rm bc}, \qquad \bm{S}\bm{n} = \bm{t}_{\rm bc}
+\]
+where $\bm{v}_{\rm bc}$ and $\bm{t}_{\rm bc}$ are given values.  Traction boundary conditions where $\bm{t}_{\rm bc} = 0$ are referred to as free-surface boundary conditions.  We follow \cite{leveque2002finite,wilcox2010high} and impose boundary conditions on the DG formulation through exterior values and jumps of the solution.  Boundary conditions on the normal component of the stress can be imposed by noting that the numerical flux contains the term $\jump{\bm{A}_n^T\bm{\sigma}} = \bm{S}\bm{n}$.  
+
+For a face which lies on a boundary, velocity boundary conditions are imposed by setting 
+\begin{align*}
+\jump{\bm{v}} &= 2\LRp{\bm{v}_{\rm bc} - \bm{v}^- }, \qquad \jump{\bm{A}_n^T\bm{\sigma}}=\jump{\bm{S}\bm{n}} = 0, 
+\end{align*}
+while traction boundary conditions are imposed by
+\begin{align*}
+\jump{\bm{A}_n^T\bm{\sigma}} = \jump{\bm{S}\bm{n}} = 2\LRp{\bm{t}_{\rm bc} - \bm{S}^-\bm{n} }= 2\LRp{\bm{t}_{\rm bc} - \bm{A}_n^T\bm{\sigma}^- }, \qquad \jump{\bm{v}} = 0.
+\end{align*}
+The numerical fluxes are then computed using these modified jumps.  
+
+For problems which involve the truncation of infinite or large domains, absorbing boundary conditions are required.  For such cases, we impose simple non-reflective boundary conditions \cite{leveque2002finite} through jumps 
+\begin{align*}
+\jump{\bm{A}_n^T\bm{\sigma}} = \jump{\bm{S}\bm{n}} = - \bm{S}^-\bm{n} = -\bm{A}_n^T\bm{\sigma}^- , \qquad \jump{\bm{v}} = - \bm{v}^-. 
+\end{align*}
+We note that more accurate absorbing conditions can be imposed using, for example, perfectly matched layers \cite{berenger1994perfectly} or high order absorbing boundary conditions \cite{hagstrom2004new,modave2016high}.  
+
+%Easiest way to impose BCs: set $U^+$ values, compute central fluxes and then compute penalty fluxes via $\bm{A}_n^T\bm{A}_n \jump{U} = \bm{A}_n \jump{F}$.  
+
+
+\subsection{Energy stability}
+
+It is straightforward to show that the formulation (\ref{eq:dgform}) is energy stable for zero velocity and traction boundary conditions, as well as non-reflective boundary conditions.  Integrating by parts the velocity equations yields
+\begin{align}
+\LRp{\rho \pd{\bm{v}}{t},\bm{w}}_{\Lk} &= -\LRp{ \sum_{i=1}^d \bm{\sigma},\bm{A}_i \pd{\bm{w}}{\bm{x}_i}}_{\Lk}  + \LRa{\bm{A}_n^T\avg{\bm{\sigma}} + \frac{\tau_v}{2}\bm{A}_n^T\bm{A}_n\jump{\bm{v}},\bm{w}} \nonumber\\
+\LRp{\bm{C}^{-1} \pd{\bm{\sigma}}{t},\bm{q}}_{\Lk} &= \LRp{\sum_{i=1}^d \bm{A}_i \pd{\bm{v}}{\bm{x}_i},\bm{q}}_{\Lk} + \LRa{\frac{1}{2}\bm{A}_n\jump{\bm{v}} + \frac{\tau_{\sigma}}{2}\bm{A}_n\bm{A}_n^T\jump{\bm{\sigma}},\bm{q}} \label{eq:dgform}
+\end{align}
+Taking $(\bm{w},\bm{q}) = (\bm{v},\bm{\sigma})$ and adding both equations together yields
+\begin{align*}
+\sum_{D^k\in \Oh}\frac{1}{2}\pd{}{t}&\LRp{\LRp{\rho \bm{v},\bm{v}}_{\Lk} + \LRp{\bm{C}^{-1} \bm{\sigma},\bm{\sigma}}_{\Lk}} =  \\
+&\sum_{D^k\in \Omega_h}\LRa{\bm{A}_n^T\avg{\bm{\sigma}} + \frac{\tau_v}{2}\bm{A}_n^T\bm{A}_n\jump{\bm{v}},\bm{v}}_{\partial D^k}+ \LRa{\frac{1}{2}\bm{A}_n\jump{\bm{v}} + \frac{\tau_\sigma}{2}\bm{A}_n\bm{A}_n^T\jump{\bm{\sigma}},\bm{\sigma}}_{\partial D^k}  \\
+&\sum_{D^k\in \Omega_h}\sum_{f\in \partial D^k}\int_{f}{\bm{A}_n^T\avg{\bm{\sigma}}\bm{v} + \frac{\tau_v}{2}\bm{A}_n^T\bm{A}_n\jump{\bm{v}}\bm{v}} + {\frac{1}{2}\bm{A}_n\jump{\bm{v}}\bm{\sigma} + \frac{\tau_\sigma}{2}\bm{A}_n\bm{A}_n^T\jump{\bm{\sigma}}\bm{\sigma}}.
+\end{align*}
+Let $\Gamma_h$ denote the set of unique faces in $\Oh$, and let $\Gamma_v,\Gamma_\sigma,\Gamma_{\rm abc}$ denote the parts of the boundary where velocity, traction, and non-reflective boundary conditions are imposed, respectively.  We separate surface terms into contributions from interior shared faces and from boundary faces.  On interior shared faces, 
+\begin{align*}
+&\sum_{f\in \Gamma_h \setminus \partial \Omega} \int_{f}{\bm{A}_n^T\avg{\bm{\sigma}}\bm{v} + \frac{\tau_v}{2}\bm{A}_n^T\bm{A}_n\jump{\bm{v}}\bm{v}} + {\frac{1}{2}\bm{A}_n\jump{\bm{v}}\bm{\sigma} + \frac{\tau_\sigma}{2}\bm{A}_n\bm{A}_n^T\jump{\bm{\sigma}}\bm{\sigma}}\\
+&\leq - \sum_{f \in\Gamma_h \setminus \partial \Omega} \int_{f} \frac{\tau_v}{2}\LRb{\bm{A}_n\jump{\bm{v}}}^2 + \frac{\tau_\sigma}{2}\LRb{\bm{A}_n^T\jump{\bm{\sigma}}}^2.  
+%\label{eq:stability}
+\end{align*}
+For faces which lie on the boundary $\Gamma_v$ where velocity boundary conditions are imposed, $\jump{\bm{v}} = -2\bm{v}^-$, $\jump{\bm{A}_n^T\bm{\sigma}} = 0$, and $\bm{A}_n^T\avg{\bm{\sigma}} = \bm{Sn}^-$, implying that 
+\begin{align*}
+&\sum_{f\in \Gamma_v} \int_f \bm{A}_n^T\avg{\bm{\sigma}}\bm{v} + \frac{\tau_v}{2}\bm{A}_n^T\bm{A}_n\jump{\bm{v}}\bm{v} + \frac{1}{2}\bm{A}_n\jump{\bm{v}}\bm{\sigma} + \frac{\tau_\sigma}{2}\bm{A}_n\bm{A}_n^T\jump{\bm{\sigma}}\bm{\sigma}\\
+&= \sum_{f\in \Gamma_v} \int_f \bm{A}_n^T \bm{\sigma}^-\bm{v}^- - \bm{A}_n \bm{v}^- \bm{\sigma}^- - \tau_v \bm{A}_n^T\bm{A}_n \LRb{\bm{v}^-}^2 = - \sum_{f\in \Gamma_v} \int_f \tau_v \bm{A}_n^T\bm{A}_n \LRb{\bm{v}^-}^2 .
+\end{align*}
+For faces which lie on $\Gamma_\sigma$, $\bm{A}_n^T\jump{\bm{\sigma}} = -2\bm{A}_n^T\bm{\sigma}^-$, $\bm{A}_n^T\avg{\bm{\sigma}} = 0$, and $\jump{\bm{v}} = 0$, yielding a similar contribution
+\[
+\sum_{f\in \Gamma_\sigma} \int_f \bm{A}_n^T\avg{\bm{\sigma}}\bm{v} + \frac{\tau_v}{2}\bm{A}_n^T\bm{A}_n\jump{\bm{v}}\bm{v} + \frac{1}{2}\bm{A}_n\jump{\bm{v}}\bm{\sigma} + \frac{\tau_\sigma}{2}\bm{A}_n\bm{A}_n^T\jump{\bm{\sigma}}\bm{\sigma} = - \sum_{f\in \Gamma_\sigma} \int_f \tau_\sigma \bm{A}_n\bm{A}_n^T \LRb{\bm{\sigma}^-}^2.
+\]
+Finally, for faces in $\Gamma_{\rm abc}$ we have $\bm{A}_n^T\avg{\bm{\sigma}} =\frac{1}{2} \bm{A}_n^T\bm{\sigma}^- $, $\bm{A}_n^T\jump{\bm{\sigma}} = -\bm{A}_n^T\bm{\sigma}^-$, and $\jump{\bm{v}} = -\bm{v}^-$, yielding
+\begin{align*}
+\sum_{f\in \Gamma_{\rm abc}} &\int_f \bm{A}_n^T\avg{\bm{\sigma}}\bm{v} + \frac{\tau_v}{2}\bm{A}_n^T\bm{A}_n\jump{\bm{v}}\bm{v} + \frac{1}{2}\bm{A}_n\jump{\bm{v}}\bm{\sigma} + \frac{\tau_\sigma}{2}\bm{A}_n\bm{A}_n^T\jump{\bm{\sigma}}\bm{\sigma} =\\
+& - \sum_{f\in \Gamma_{\rm abc}} \int_f \frac{\tau_v}{2} \bm{A}_n^T\bm{A}_n \LRb{\bm{v}^-}^2 + \frac{\tau_\sigma}{2} \bm{A}_n\bm{A}_n^T \LRb{\bm{\sigma}^-}^2.  
+\end{align*}
+Combining these face contributions yields
+\begin{align}
+&\sum_{D^k\in \Oh} \frac{1}{2}\pd{}{t}\LRp{\LRp{\rho \bm{v},\bm{v}}_{\Lk} + \LRp{\bm{C}^{-1} \bm{\sigma},\bm{\sigma}}_{\Lk}} \leq - \sum_{f \in\Gamma_h \setminus \partial \Omega} \int_{f} \frac{\tau_v}{2}\LRb{\bm{A}_n\jump{\bm{v}}}^2 + \frac{\tau_\sigma}{2}\LRb{\bm{A}_n^T\jump{\bm{\sigma}}}^2\nonumber\\
+& - \sum_{f\in \Gamma_v} \int_f \tau_v  \LRb{\bm{A}_n\bm{v}^-}^2  - \sum_{f\in \Gamma_\sigma} \int_f \tau_\sigma  \LRb{\bm{A}_n^T\bm{\sigma}^-}^2- \sum_{f\in \Gamma_{\rm abc}} \int_f \frac{\tau_v}{2} \LRb{\bm{A}_n\bm{v}^-}^2 + \frac{\tau_\sigma}{2} \LRb{\bm{A}_n^T\bm{\sigma}^-}^2 \leq 0.  
+\label{eq:stability}
+\end{align}
+
+Since $\rho$ and $\bm{C}^{-1}$ are positive definite, the left hand side of (\ref{eq:stability}) is an $L^2$-equivalent norm on $(\bm{u},\bm{\sigma})$ 
+\[
+C_1 \nor{(\bm{u},\bm{\sigma})}_{\L}^2 \leq \sum_{D^k\in \Oh}\frac{1}{2}\pd{}{t}&\LRp{\LRp{\rho \bm{v},\bm{v}}_{\Lk} + \LRp{\bm{C}^{-1} \bm{\sigma},\bm{\sigma}}_{\Lk}} \leq C_2 \nor{(\bm{u},\bm{\sigma})}_{\L}^2
+\]
+for $\nor{(\bm{u},\bm{\sigma})}_{\L}^2 = \nor{\bm{u}}^2_{\L} + \nor{\bm{\sigma}}^2_{\L}$.  
+% $\nor{(\bm{u},\bm{\sigma})}_{\L}$ is 
+%\[
+%\nor{(\bm{u},\bm{\sigma})}_{\L}^2 =\nor{(\bm{u},\bm{\sigma})}_{\L}^2 = \nor{\bm{u}}^2_{\L} + \nor{\bm{\sigma}}^2_{\L}.
+%\]
+This implies that the DG formulation is energy stable and that the magnitude of the DG solution $(\bm{u},\bm{\sigma})$ is non-increasing in time.  This also shows that dissipation present for positive penalization constants $\tau_v,\tau_{\sigma}$ acts on non-conforming components with non-zero jumps $\bm{A}_n^T\jump{\bm{v}}$ and $\bm{A}_n\jump{\bm{\sigma}}$.  In fact, it was shown in \cite{chan2016short} that, in the limit as $\tau_v,\tau_\sigma \rightarrow\infty$, the eigenspaces of DG discretizations split into a conforming part consisting of $\bm{u},\bm{\sigma}$ which satisfy
+\[
+\bm{A}_n\jump{\bm{u}} = 0, \qquad \bm{A}_n^T\jump{\bm{\sigma}} = 0
+\]
+and an non-conforming part (defined through the $L^2$ orthogonal complement) corresponding to eigenvalues contain real parts which approach $-\infty$.  For the linear elastic wave equations, these conditions are equivalent to the requirement of $C^0$ continuity for $\bm{u}$ and normal continuity of the stress tensor $\jump{\bm{S}}\bm{n} = 0$.
+%\begin{align*}
+%\jump{\bm{S} \bm{n}} = 0.
+%\jump{\bm{\sigma}_{xx} \bm{n}_x + \bm{\sigma}_{xy} \bm{n}_y + \bm{\sigma}_{xz} \bm{n}_z} &= 0\\
+%\jump{\bm{\sigma}_{xy} \bm{n}_x + \bm{\sigma}_{yy} \bm{n}_y + \bm{\sigma}_{yz} \bm{n}_z} &= 0\\
+%\jump{\bm{\sigma}_{xz} \bm{n}_x + \bm{\sigma}_{yz} \bm{n}_y + \bm{\sigma}_{zz} \bm{n}_z} &= 0.
+%\end{align*}
+
+While this DG formulation is energy stable, 
+%Symmetric hyperbolic system
+%\[
+%\bm{A}_0\pd{\bm{v}}{t} = \sum_{i=1}^d \bm{A}_i\pd{\bm{v}}{\bm{x}_i}.
+%\]
+%The matrix $\bm{A}_0$ is given as
+%\[
+%\bm{A}_0 = \LRp{
+%\begin{array}{cc}
+%\rho\bm{I} &\\
+%& \bm{C}^{-1}
+%\end{array}
+%}.
+%\]
+
+
+
+%The matrices $\bm{A}_1,\bm{A}_2$ are defined as
+%\[
+%\bm{A}_1 = \LRp{\begin{array}{cc}
+%& \bm{A}_x^T\\
+%\bm{A}_x
+%\end{array}}, \qquad
+%\bm{A}_2 = \LRp{\begin{array}{cc}
+%& \bm{A}_y^T\\
+%\bm{A}_y
+%\end{array}},
+%\qquad
+%\bm{A}_x = \left(\begin{array}{cc}
+%1 & 0\\
+%0 & 0\\
+%0 & 1
+%\end{array}\right), \qquad 
+%\bm{A}_y = \left(\begin{array}{cc}
+%0 & 0\\
+%0 & 1\\
+%1 & 0
+%\end{array}\right)
+%\]
+%This implies that the RHS terms are 
+%\[
+%\bm{A}_1 \pd{\bm{v}}{x} + \bm{A}_2 \pd{\bm{v}}{y}  = \LRp{\begin{array}{c}
+%\Div \bm{\sigma}_x \\
+%\Div \bm{\sigma}_y \\
+%\pd{u_1}{x} \\
+%\pd{u_2}{y} \\
+%\pd{u_2}{x} + \pd{u_1}{y}
+%\end{array}}
+%\]
+%
+%The normal matrix $\bm{A}_n$ is
+%\[
+%\bm{A}_x {n}_x + \bm{A}_y{n}_y = 
+%\LRp{\begin{array}{cc}
+%& \bm{A}_n^T\\
+%\bm{A}_n
+%\end{array}}, \qquad
+%\bm{A}_n = \LRp{\begin{array}{cc}
+%{n}_x & 0\\
+% 0 & {n}_y\\
+%{n}_y & {n}_x
+%\end{array}}
+%\]
+%We use penalty fluxes defined by 
+%\[
+%%\LRp{\bm{A}_n\bm{v}}^* = \bm{A}_0^{-1}\bm{A}_n\avg{\bm{v}} - \tau \bm{A}_0^{-1}\bm{A}_n^T\bm{A}_n\jump{\bm{v}}
+%\LRp{\bm{A}_n\bm{v}}^* =\bm{A}_n\avg{\bm{v}} - \bm{\tau} \bm{A}_n^T\bm{A}_n\jump{\bm{v}}.
+%\]
+%The central flux terms for elasticity are then given as
+%\[
+%\bm{A}_n\avg{\bm{v}} = \LRp{\begin{array}{c}
+%\avg{\bm{\sigma}_x} \cdot \bm{n}\\
+%\avg{\bm{\sigma}_y} \cdot \bm{n}\\
+%\avg{u_1}{n}_x\\
+%\avg{u_2}{n}_y\\
+%\avg{u_2}{n}_x + \avg{u_1}{n}_y
+%\end{array}}
+%\]
+%while the penalty flux term is
+%\[
+%\bm{A}_n^T\bm{A}_n\jump{\bm{v}} = 
+%\LRp{\begin{array}{ccccc}
+%1 & n_xn_y & & &\\
+%n_xn_y & 1 & & &\\
+% & & n_x^2 & 0 & n_xn_y \\
+%  & & 0 & n_y^2 & n_xn_y \\
+%   & & n_xn_y & n_xn_y & 1 
+%\end{array}}
+%\LRp{\begin{array}{c}
+%\jump{u_1}\\
+%\jump{u_2}\\
+%\jump{\sigma_{xx}}\\
+%\jump{\sigma_{yy}}\\
+%\jump{\sigma_{xy}}
+%\end{array}}
+%=
+%\LRp{\begin{array}{c}
+%\jump{u_1} + \jump{u_2}n_xn_y\\
+%n_xn_y\jump{u_1} + \jump{u_2}\\
+%\LRp{\jump{\bm{\sigma}_x}\cdot\bm{n}}n_x\\
+%\LRp{\jump{\bm{\sigma}_y}\cdot\bm{n}}n_y\\
+%\jump{\sigma_{xy}} + n_x n_y \LRp{\jump{\sigma_{xx}} + \jump{\sigma_{yy}}}
+%\end{array}}.
+%\]
+%We note that $\bm{A}_n^T\bm{A}_n$ has eigenvalues $1 \pm n_x n_y$ and thus has norm less than $3/2$.  
+%We choose the penalty parameter $\bm{\tau}$ as a diagonal matrix such that $\bm{A}_0^{-1}\bm{\tau}\bm{A}_n^T\bm{A}_n = O(1)$.  In this case, $\tau_v = O\LRp{\frac{1}{\rho}}$, while $\tau_{\sigma} = O\LRp{\frac{1}{2\mu + \lambda}}$. 
+
+%\subsection{3D formulation}
+%\[
+%\bm{A}_0\pd{\bm{v}}{t} = \bm{A}_1\pd{\bm{v}}{x} + \bm{A}_2\pd{\bm{v}}{x} + \bm{A}_3\pd{\bm{v}}{x}
+%\]
+%where $\bm{v} = (u_1,u_2,u_3,{\sigma}_{xx},{\sigma}_{yy},{\sigma}_{zz},\sigma_{yz},\sigma_{xz},\sigma_{xy})$.  We will also denote
+%\[
+%\bm{\sigma} = \LRp{\bm{\sigma}_x \quad \bm{\sigma}_y} \quad \bm{\sigma}_z
+%= 
+%\LRp{\begin{array}{ccc}
+%\sigma_{xx} & \sigma_{xy} & \sigma_{xz}\\
+%\sigma_{xy} & \sigma_{yy} & \sigma_{yz}\\
+%\sigma_{xz} & \sigma_{yz} & \sigma_{zz}
+%\end{array}}.
+%\]
+%
+%In general anisotropic media, $\bm{C}$ is symmetric and positive-definite.  For three-dimensional isotropic media, $\bm{C}$ is given as
+%\[
+%\bm{C}= \LRp{
+%\begin{array}{cccccc}
+%2\mu+\lambda  &  \lambda  &     \lambda  & & & &\\
+%\lambda &   2\mu+\lambda & \lambda   & & & &\\
+%\lambda & \lambda &   2\mu+\lambda &    & & &\\
+% &   &    & \frac{\mu}{2} & &\\
+%&  &   &    & \frac{\mu}{2} &\\
+%& &  &   &    & \frac{\mu}{2} \\
+%\end{array}}, 
+%\]
+%where $\lambda,\mu$ are Lame parameters.  
+%
+%The matrices $\bm{A}_1,\bm{A}_2,\bm{A}_3$ are defined as
+%\[
+%\bm{A}_1 = \LRp{\begin{array}{cc}
+%& \bm{A}_x^T\\
+%\bm{A}_x
+%\end{array}}, \qquad
+%\bm{A}_2 = \LRp{\begin{array}{cc}
+%& \bm{A}_y^T\\
+%\bm{A}_y
+%\end{array}},
+%\bm{A}_3 = \LRp{\begin{array}{cc}
+%& \bm{A}_z^T\\
+%\bm{A}_z
+%\end{array}},
+%\]
+%with $\bm{A}_x,\bm{A}_y,\bm{A}_z$
+%\[
+%\bm{A}_x = \left(\begin{array}{ccc}
+%1 & 0 & 0\\
+%0 & 0& 0\\
+%0 & 0& 0\\
+%0 & 0& 0\\
+%0 & 0 & 1\\
+%0 & 1 & 0
+%\end{array}\right), \qquad 
+%\bm{A}_y = \left(\begin{array}{ccc}
+%0 & 0 & 0\\
+%0 & 1 & 0\\
+%0 & 0 & 0\\
+%0 & 0 & 1\\
+%0 & 0 & 0\\
+%1 & 0 & 0
+%\end{array}\right), \qquad
+%\bm{A}_z = \left(\begin{array}{ccc}
+%0 & 0 & 0\\
+%0 & 0 & 0\\
+%0 & 0 & 1\\
+%0 & 1 & 0\\
+%1 & 0 & 0\\
+%0 & 0 & 0
+%\end{array}\right)
+%\]
+%This implies that the RHS terms are 
+%\[
+%\bm{A}_1 \pd{\bm{v}}{x} + \bm{A}_2 \pd{\bm{v}}{y} +\bm{A}_3 \pd{\bm{v}}{z}  = \LRp{\begin{array}{c}
+%\Div \bm{\sigma}_x \\
+%\Div \bm{\sigma}_y \\
+%\Div \bm{\sigma}_z \\
+%\pd{u_1}{x} \\
+%\pd{u_2}{y} \\
+%\pd{u_3}{z} \\
+%\pd{u_3}{y} + \pd{u_2}{z}\\
+%\pd{u_3}{x} + \pd{u_1}{z}\\
+%\pd{u_2}{x} + \pd{u_1}{y}
+%\end{array}}.
+%\]
+%
+%The normal matrix $\bm{A}_n$ is
+%\[
+%\bm{A}_x {n}_x + \bm{A}_y{n}_y = 
+%\LRp{\begin{array}{cc}
+%& \bm{A}_n^T\\
+%\bm{A}_n
+%\end{array}}, \qquad
+%\bm{A}_n = \LRp{\begin{array}{ccc}
+%{n}_x & 0 & 0\\
+% 0 & {n}_y & 0\\
+%0&  0 & {n}_z \\
+%0 &{n}_z & {n}_y\\
+%{n}_z & 0 & {n}_x\\
+%{n}_y & {n}_z & 0\\
+%\end{array}}
+%\]
+%We use penalty fluxes defined by 
+%\[
+%%\LRp{\bm{A}_n\bm{v}}^* = \bm{A}_0^{-1}\bm{A}_n\avg{\bm{v}} - \tau \bm{A}_0^{-1}\bm{A}_n^T\bm{A}_n\jump{\bm{v}}
+%\LRp{\bm{A}_n\bm{v}}^* =\bm{A}_n\avg{\bm{v}} - \bm{\tau} \bm{A}_n^T\bm{A}_n\jump{\bm{v}}.
+%\]
+%The central flux terms for elasticity are then given as
+%\[
+%\bm{A}_n\avg{\bm{v}} = \LRp{\begin{array}{c}
+%\avg{\bm{\sigma}_x} \cdot \bm{n}\\
+%\avg{\bm{\sigma}_y} \cdot \bm{n}\\
+%\avg{\bm{\sigma}_z} \cdot \bm{n}\\
+%\avg{u_1}{n}_x\\
+%\avg{u_2}{n}_y\\
+%\avg{u_3}{n}_z\\
+%\avg{u_3}{n}_y + \avg{u_2}{n}_z\\
+%\avg{u_3}{n}_x + \avg{u_1}{n}_z\\
+%\avg{u_2}{n}_x + \avg{u_1}{n}_y
+%\end{array}}
+%\]
+%The penalty flux term is evaluated simply by re-applying $\bm{A}_n = \bm{A}_n^T$.  Expanded out, it yields
+%\begin{align*}
+%\bm{A}_n^T\bm{A}_n\jump{\bm{v}} &= 
+%\LRp{\begin{array}{ccc|ccc|ccc}
+%1 & n_xn_y & n_xn_z   &&&&&&\\
+%n_xn_y & 1 & n_yn_z   &&&&&&\\
+%n_xn_z & n_yn_z & 1   &&&&&&\\
+%\hline\\
+%&&&  n_x^2&&&&n_xn_z&n_xn_y\\
+%&&&  &n_y^2&&n_xn_z&&n_xn_y\\
+%&&&  &&n_z^2&n_xn_z&n_xn_y&\\
+%\hline\\
+%&&&  &n_xn_z& n_xn_y& n_y^2+n_z^2&n_xn_y&n_xn_z\\
+%&&&  n_xn_z && n_xn_y& n_xn_y& n_x^2+n_z^2&n_yn_z\\
+%&&&  n_xn_z &n_xn_y && n_xn_z& n_yn_z& n_x^2+n_y^2\\
+%\end{array}}
+%\LRp{\begin{array}{c}
+%\jump{u_1}\\
+%\jump{u_2}\\
+%\jump{u_3}\\
+%\jump{\sigma_{xx}}\\
+%\jump{\sigma_{yy}}\\
+%\jump{\sigma_{zz}}\\
+%\jump{\sigma_{yz}}\\
+%\jump{\sigma_{xz}}\\
+%\jump{\sigma_{xy}}
+%\end{array}}\\
+%&=
+%\LRp{\begin{array}{c}
+%\jump{u_1} + \jump{u_2}n_xn_y + \jump{u_3}n_xn_z\\
+%n_xn_y\jump{u_1} + \jump{u_2} + n_yn_z\jump{u_3}\\
+%n_xn_z\jump{u_1} + n_yn_z\jump{u_2} + \jump{u_3}\\
+%\LRp{\jump{\bm{\sigma}_x}\cdot\bm{n}}n_x\\
+%\LRp{\jump{\bm{\sigma}_y}\cdot\bm{n}}n_y\\
+%\LRp{\jump{\bm{\sigma}_z}\cdot\bm{n}}n_z\\
+%\jump{\sigma_{yz}}(n_y^2+n_z^2) + \LRp{\jump{\sigma_{xz}}n_y + \jump{\sigma_{xy}}n_z}n_x + \LRp{\jump{\sigma_{yy}}n_y + \jump{\sigma_{zz}}n_y}n_z\\
+%\jump{\sigma_{xz}}(n_x^2+n_z^2) + \LRp{\jump{\sigma_{xx}}n_z + \jump{\sigma_{yz}}n_y}n_x + \LRp{\jump{\sigma_{xy}}n_y + \jump{\sigma_{zz}}n_x}n_z\\
+%\jump{\sigma_{xy}}(n_x^2+n_y^2) + \LRp{\jump{\sigma_{xx}}n_y + \jump{\sigma_{yy}}n_y}n_x + \LRp{\jump{\sigma_{xz}}n_y + \jump{\sigma_{yz}}n_x}n_z\\
+%\end{array}}.
+%\end{align*}
+%
+%We choose the penalty parameter $\bm{\tau}$ as a diagonal matrix such that $\bm{A}_0^{-1}\bm{\tau}\bm{A}_n^T\bm{A}_n = O(1)$.  In this case, $\tau_v = O\LRp{\frac{1}{\rho}}$, while $\tau_{\sigma} = O\LRp{\frac{1}{2\mu + \lambda}}$. 
+
+
+
+\section{Weight-adjusted approximation of vector-valued inner products}
+
+We also introduce the standard Lebesgue $L^p$ norms over a general domain $\Omega$
+\begin{align*}
+\nor{u}_{L^p\LRp{\Omega}} &= \LRp{\int_{\Omega} u^p}^{1/p} \qquad 1 \leq p < \infty \\
+\nor{u}_{L^{\infty}\LRp{\Omega}} &= \inf\LRc{C \geq 0: \LRb{u\LRp{\bm{x}}} \leq C \quad \forall \bm{x}\in \Omega},
+\end{align*}
+and the associated $L^p$ spaces
+\begin{align*}
+L^p\LRp{\Omega} &= \LRc{u: \Omega\rightarrow \mathbb{R}, \quad \nor{u}_{L^p\LRp{\Omega}} < \infty} \qquad 1\leq p < \infty \\
+L^{\infty}\LRp{\Omega} &= \LRc{u: \Omega\rightarrow \mathbb{R}, \quad \nor{u}_{L^{\infty}\LRp{\Omega}} < \infty}.
+\end{align*}
+The $L^p$ Sobolev seminorms and norms of degree $s$ are then defined 
+\begin{align*}
+\LRb{u}_{W^{s,p}\LRp{\Omega}} &= \LRp{\sum_{\LRb{\alpha}= s} \nor{ D^{\alpha} u}_{L^p\LRp{\Omega}}^p}^{1/p}, \qquad \LRb{u}_{W^{s,\infty}\LRp{\Omega}} = \max_{\LRb{\alpha}= s} \nor{D^{\alpha}u}_{L^{\infty}\LRp{\Omega}}\\
+\nor{u}_{W^{s,p}\LRp{\Omega}} &= \LRp{\sum_{\LRb{\alpha}\leq s} \nor{ D^{\alpha} u}_{L^p\LRp{\Omega}}^p}^{1/p}, \qquad \nor{u}_{W^{s,\infty}\LRp{\Omega}} = \max_{\LRb{\alpha}\leq s} \nor{D^{\alpha}u}_{L^{\infty}\LRp{\Omega}}.
+\end{align*}
+where $\alpha = \LRc{\alpha_1,\alpha_2,\alpha_3}$ is a multi-index such that
+\[
+D^{\alpha}u = \pd{^{\alpha_1}}{x^{\alpha_1}}\pd{^{\alpha_2}}{y^{\alpha_2}}\pd{^{\alpha_3}}{z^{\alpha_3}} u,
+\]
+
+
+We define $D^{\bm{\alpha}}\bm{v}$  as the component-wise derivative of $\bm{v}$ with respect to a $d$-dimensional multi-index $\bm{\alpha}$
+\[
+\LRp{D^{\bm{\alpha}}\bm{v}}_i = \frac{\partial^{\alpha_1}}{\partial x^{\alpha_1}}\frac{\partial^{\alpha_2}}{\partial x^{\alpha_2}}\frac{\partial^{\alpha_3}}{\partial x^{\alpha_3}}\bm{v}_i.
+\]
+
+We generalize the weight-adjusted scalar inner products introduced in \cite{chan2016weight1,chan2016weight2} to vector-valued inner products with matrix weights.  
+
+Vector Sobolev norms for $\bm{v}(\bm{x}) \in \mathbb{R}^m$ can be defined as 
+\begin{align*}
+\nor{\bm{v}}_{W^{k,p}}^p &= {\sum_{i=1}^m \nor{\bm{v}_i}_{W^{k,2}}^p} = \sum_{\LRb{\alpha} \leq k} \nor{D^{\alpha}\bm{v}}^p_{L^p}, \qquad 1 \leq p < \infty,\\
+\nor{\bm{v}}_{W^{k,\infty}} &= \max_i \nor{\bm{v}_i}_{W^{k,\infty}}.
+\end{align*}
+
+Let $\bm{W}$ be a symmetric positive-definite matrix such that
+\[
+0 < w_{\min} \leq  \nor{\bm{W}(\bm{x})}_2 \leq w_{\max} < \infty, \qquad 0 < \tilde{w}_{\min} \leq  \nor{\bm{W}^{-1}(\bm{x})}_2 \leq \tilde{w}_{\max} < \infty, \qquad \forall \bm{x} \in \Omega.
+\]
+We define a $k$th order Sobolev norm for matrix-valued weight function $\bm{W}(\bm{x})$ in terms of the induced $p$-norm
+\begin{align*}
+\nor{\bm{W}(\bm{x})}_{k,p}^p &= \sum_{\LRb{\bm{\alpha}} \leq k} \sup_{\bm{x}} \nor{D^{\bm{\alpha}}\bm{W}(\bm{x})}^p_p
+\end{align*}
+
+While this norm is not sub-multiplicative, the following bound holds
+\begin{align*}
+\nor{\bm{W}{\bm{v}}}_{W^{k,p}}^p &= \sum_{\LRb{\alpha}\leq k} \nor{D^{\alpha}\LRp{\bm{W}\bm{v}}}_{L^p}^p 
+%\leq C_N \sum_{\LRb{\alpha}\leq k} \nor{\sum_{\LRb{\beta}\leq \alpha} \LRp{D^{\beta}\bm{W}}\LRp{D^{\alpha-\beta}\bm{v}} }_{L^p}^p\\
+\leq C_N \int  \sum_{\LRb{\alpha}\leq k} \sum_{\LRb{\beta}\leq \LRb{\alpha}} \nor{\LRp{D^{\beta}\bm{W}}\LRp{D^{\alpha-\beta}\bm{v}} }_{p}^p \\
+&\leq C_N\int \LRp{\sum_{\LRb{\alpha}\leq k} \nor{\LRp{D^{\alpha}\bm{W}}}}^p \LRp{\sum_{\LRb{\alpha}\leq k} \nor{D^{\alpha}\bm{v}}_{p} }^p\\
+&\leq C_N \nor{\bm{W}}_{k,p}^p \nor{\bm{v}}_{k,p}^p,
+\end{align*}
+where we have used Leibniz's rule, Cauchy-Schwarz, and the arithmetic-geometric mean inequality.  
+
+To show that weight-adjusted DG methods are high order accurate, we make use of a weighted interpolation estimate.  The scalar version of this estimate is derived in \cite{warburton2013low,chan2016weight1}.  
+
+\begin{theorem}[Theorem 3.1 in \cite{chan2016weight1}]
+Let $D^k$ be a quasi-regular element with representative size $h = {\rm diam}\LRp{D^k}$. For $N \geq 0$, $w\in W^{N+1,\infty}$, and $u\in W^{N+1,2}$, 
+\[
+\nor{u - \frac{1}{w}\Pi_N(wu)}_{L^2\LRp{D^k}} \leq C_N h^{N+1} \nor{{\sqrt{J}}}_{\LinfDk}\nor{\frac{1}{\sqrt{J}}}_{\LinfDk}\nor{\frac{1}{w}}_{L^\infty}\nor{w}_{W^{N+1,\infty}}\nor{u}_{W^{N+1,2}}.
+\]
+\label{thm:wproj}
+\end{theorem}
+
+For $w = 1$, this reduces to the standard interpolation estimate
+\[
+\nor{u-\Pi_N u}_{L^2\LRp{D^k}} \leq Ch^{N+1}\nor{u}_{W^{N+1,2}}.
+\]  
+Theorem~\ref{thm:Wproj} extends Theorem~\ref{thm:wproj} to matrix weights by computing weighted interpolation estimates for the quantity $\bm{W}^{-1}\Pi_N\LRp{\bm{W}\bm{v}}$.  
+
+\begin{theorem}
+Let $D^k$ be a quasi-regular element with representative size $h = {\rm diam}\LRp{D^k}$. For $N \geq 0$, $\bm{W} \in \LRp{W^{N+1,\infty}}^{d\times d}$, and $\bm{v}\in \LRp{W^{N+1,2}}^d$, 
+\[
+\nor{\bm{v} - \bm{W}^{-1}\Pi_N\LRp{\bm{W}\bm{v}}}_{L^2} \leq Ch^{N+1} \nor{{\sqrt{J}}}_{\LinfDk}\nor{\frac{1}{\sqrt{J}}}_{\LinfDk}\tilde{w}_{\max}\nor{\bm{W}}_{N+1} \nor{\bm{v}}_{W^{N+1,2}}
+\]
+\label{thm:Wproj}
+\end{theorem}
+\begin{proof}
+The proof is the similar to the scalar case.  Using vector-valued versions of Bramble-Hilbert and a scaling argument for quasi-regular elements yields
+\begin{align*}
+\nor{\bm{v} - \bm{W}^{-1}\Pi_N\LRp{\bm{W}\bm{v}}}_{L^2} &\leq C_1 \nor{\sqrt{J}}_{\LinfDk} \sup_{\bm{x}}\nor{\bm{W}^{-1}}_{2} \nor{\bm{W}\bm{v} - \Pi_N\LRp{\bm{W}\bm{v}}}_{L^2}\\
+&\leq C_1 \nor{{\sqrt{J}}}_{\LinfDk} \sup_{\bm{x}}\nor{\bm{W}^{-1}}_{2} \LRb{\bm{W}\bm{v}}_{W^{N+1,2}\LRp{\Dhat}}\\
+&\leq C_2 h^{N+1}\nor{{\sqrt{J}}}_{\LinfDk}\nor{\frac{1}{\sqrt{J}}}_{\LinfDk} \sup_{\bm{x}}\nor{\bm{W}^{-1}}_{2} \nor{\bm{W}\bm{v}}_{W^{N+1,2}\LRp{D^k}}\\
+&\leq C_3 h^{N+1}\nor{{\sqrt{J}}}_{\LinfDk}\nor{\frac{1}{\sqrt{J}}}_{\LinfDk} \tilde{w}_{\max} \nor{\bm{W}}_{W^{N+1,2}}\nor{\bm{v}}_{W^{N+1,2}\LRp{D^k}}.
+\end{align*}
+\end{proof}
+
+
+\subsection{Properties of weight-adjusted vector-valued inner products}
+
+Let $\Pi_N$ be the $L^2$ projection applied to each component of a vector.  Define the operator $T_{\bm{W}}$
+\[
+T_{\bm{W}}\bm{v} = \Pi_N\LRp{\bm{W}\bm{v}} 
+\]
+The inverse operator $T^{-1}_{\bm{W}}$ is defined implicitly via
+\[
+\LRp{\bm{W}T^{-1}_{\bm{W}}\bm{v},\bm{w}} = \LRp{\bm{v},\bm{w}} .
+\]
+These definitions generalize $T_{\bm{W}}$ to matrix-valued $\bm{W}$.  Conveniently, all properties of $T_{\bm{W}}$ for scalar $\bm{W}$ carry over from \cite{chan2016weight1}.
+\begin{lemma}
+Let $\Pi_N$ denote the component-wise $L^2$ projection, and let $\bm{W} \in \LRp{L^{\infty}}^m$.  Then, $T_{\bm{W}}$ satisfies the following properties:
+\begin{enumerate}
+\vspace{.5em}
+\item $T_{\bm{W}}^{-1}T_{\bm{W}} = \Pi_N$ \label{p1}
+\vspace{.5em}
+\item $\Pi_N T_{\bm{W}}^{-1} = T_{\bm{W}}^{-1}\Pi_N  =  T_{\bm{W}}^{-1}$ \label{p2}
+\vspace{.5em}
+\item $\nor{T^{-1}_{\bm{W}}}_{L^2\LRp{D^k}} \leq \tilde{w}_{\max}$. \label{p4}
+\vspace{.5em}
+\item $\LRp{T^{-1}_{\bm{W}} \bm{v},\bm{w}}$ forms an inner product on $\LRp{P^N}^m \times \LRp{P^N}^m$, which is equivalent to the $L^2$ inner product with equivalence constants $C_1 = \tilde{w}_{\min}, C_2 = \tilde{w}_{\max}$. \label{p3}
+\vspace{.5em}
+\end{enumerate}
+\label{lemma:props}
+\end{lemma}
+\begin{proof}
+The proofs of properties~\ref{p1} and \ref{p2} are consequences of the definition of $T_{\bm{W}}$, and are identical to proofs for the scalar case.  Property~\ref{p4} is a straightforward extension from the scalar case.  Let $\bm{v}\in \LRp{P^N}^m$.  Then, 
+\[
+\LRp{T^{-1}_{\bm{W}} \bm{v},\bm{v}} = \LRp{\bm{W}^{-1}\bm{W}T^{-1}_{\bm{W}} \bm{v},\bm{v}} \leq \sup_{\bm{x}}\nor{\bm{W}^{-1}(\bm{x})}\LRp{\bm{W}T^{-1}_{\bm{W}} \bm{v},\bm{v}} = \tilde{w}_{\max} \nor{\bm{v}}_{L^2}^2.
+\]
+Property~\ref{p3} then simply requires the lower bound
+\[
+\LRp{T^{-1}_{\bm{W}} \bm{v},\bm{v}} = \LRp{\bm{W}^{-1}\bm{W}T^{-1}_{\bm{W}} \bm{v},\bm{v}} \geq \inf_{\bm{x}}\nor{\bm{W}^{-1}(\bm{x})}\nor{\bm{v}}_{L^2}^2 = \tilde{w}_{\min}\nor{\bm{v}}_{L^2}^2 .  
+\]
+\end{proof}
+
+
+Using Theorem~\ref{thm:Wproj}, we may also show that the matrix-valued weight-adjusted inner product is also high order accurate for sufficiently regular $\bm{W}$.
+\begin{theorem}
+Let $D^k$ be a quasi-regular element with representative size $h = {\rm diam}\LRp{D^k}$. For $N > 0$
+\[
+\nor{ \bm{W}\bm{v} - {T}^{-1}_{\bm{W}^{-1}}\bm{v} }_{L^2\LRp{D^k} } \leq C_{\bm{W}} h^{N+1} \nor{\bm{v}}_{W^{N+1,2}\LRp{D^k}}
+\]
+with constant $C_{\bm{W}}$ depending on $\bm{W}$ and $N$
+\[
+%C_{\bm{W}} = C_N \cond{\bm{W}}{2,\infty} \nor{\bm{W}}_{W^{N+1,2}\LRp{D^k}}.  
+C_{\bm{W}} = C_N \nor{\sqrt{J}}_{\LinfDk}\nor{\frac{1}{\sqrt{J}}}_{\LinfDk} \tilde{w}_{\max}{w}_{\max} \nor{\bm{W}}_{W^{N+1,2}\LRp{D^k}}.  
+\]
+\end{theorem}
+\begin{proof}
+The proof is again similar to the scalar case.  The triangle inequality gives
+\[
+\nor{ \bm{W}\bm{v} - {T}^{-1}_{\bm{W}^{-1}}\bm{v} }_{L^2\LRp{D^k} } \leq \nor{ \bm{W}\bm{v} - \Pi_N(\bm{W}\bm{v})}_{L^2\LRp{D^k}} + \nor{\Pi_N(\bm{W}\bm{v}) - T^{-1}_{\bm{W}^{-1}}\bm{v} }_{L^2\LRp{D^k} }.  
+\]
+The former term is bounded by interpolation estimates and by arguments used in the proof of Theorem~\ref{thm:Wproj}.  The latter term is bounded 
+\begin{align*}
+\nor{\Pi_N(\bm{W}\bm{v})- T^{-1}_{\bm{W}^{-1}}\bm{v} }_{L^2\LRp{D^k}} &= \nor{T^{-1}_{\bm{W}^{-1}} T_{\bm{W}^{-1}}\Pi_N(\bm{W}\bm{v})- T^{-1}_{\bm{W}^{-1}}\Pi_N\bm{v} }_{L^2\LRp{D^k} } \\
+&= \nor{T^{-1}_{\bm{W}^{-1}} \Pi_N \LRp{T_{\bm{W}^{-1}}\Pi_N(\bm{W}\bm{v})}- T^{-1}_{\bm{W}^{-1}}\Pi_N\bm{v} }_{L^2\LRp{D^k} } \\
+&\leq C_N \nor{T^{-1}_{\bm{W}^{-1}}} \nor{ T_{\bm{W}^{-1}}\Pi_N(\bm{W}\bm{v})-\Pi_N\bm{v} }_{L^2\LRp{D^k} }\\
+&\leq C_N \nor{T^{-1}_{\bm{W}^{-1}}} \nor{ \Pi_N\LRp{\bm{W}^{-1}\Pi_N(\bm{W}\bm{v})} - \Pi_N\bm{v} }_{L^2\LRp{D^k} }\\
+&\leq C_N {w}_{\max} \nor{ \bm{W}^{-1}\Pi_N(\bm{W}\bm{v}) - \bm{v} }_{L^2\LRp{D^k} }.
+\end{align*}
+where we have used $\nor{T_{\bm{W}^{-1}}^{-1}} \leq {w}_{\max}$ (Lemma~\ref{lemma:props}) and $\nor{\Pi_N}_{L^2\LRp{D^k}} = 1$.  
+An application of Theorem~\ref{thm:Wproj} to bound $\nor{ \bm{W}^{-1}\Pi_N(\bm{W}\bm{v}) - \bm{v} }_{L^2\LRp{D^k} }$ completes the proof.
+\end{proof}
+
+%We note that the local conservation property of DG is lost when using weight-adjusted inner products.  However, 
+
+\section{A weight-adjusted discontinuous Galerkin method for elastic wave propagation}
+
+Recall the energy stable formulation for DG 
+\begin{align*}
+\LRp{\rho \pd{\bm{v}}{t},\bm{w}}_{\Lk} &= \LRp{ \sum_{i=1}^d \bm{A}_i^T\pd{\bm{\sigma}}{\bm{x}_i},\bm{w}}_{\Lk}  + \LRa{\frac{1}{2}\bm{A}_n^T\jump{\bm{\sigma}} + \frac{\tau_v}{2}\bm{A}_n\bm{A}_n^T\jump{\bm{v}},\bm{w}}\\
+\LRp{\bm{C}^{-1} \pd{\bm{\sigma}}{t},\bm{q}}_{\Lk} &= \LRp{\sum_{i=1}^d \bm{A}_i \pd{\bm{v}}{\bm{x}_i},\bm{q}}_{\Lk} + \LRa{\frac{1}{2}\bm{A}_n\jump{\bm{v}} + \frac{\tau_{\sigma}}{2}\bm{A}_n^T\bm{A}_n\jump{\bm{\sigma}},\bm{q}}.
+\end{align*}
+The weight-adjusted DG method simply replaces the weighted $L^2$ inner products appearing in the left hand side of this formulation with weight-adjusted approximations
+\begin{align*}
+\LRp{T^{-1}_{1/\rho} \pd{\bm{v}}{t},\bm{w}}_{\Lk} &= \LRp{ \sum_{i=1}^d \bm{A}_i^T\pd{\bm{\sigma}}{\bm{x}_i},\bm{w}}_{\Lk}  + \LRa{\frac{1}{2}\bm{A}_n^T\jump{\bm{\sigma}} + \frac{\tau_v}{2}\bm{A}_n\bm{A}_n^T\jump{\bm{v}},\bm{w}}\\
+\LRp{T^{-1}_{\bm{C}} \pd{\bm{\sigma}}{t},\bm{q}}_{\Lk} &= \LRp{\sum_{i=1}^d \bm{A}_i \pd{\bm{v}}{\bm{x}_i},\bm{q}}_{\Lk} + \LRa{\frac{1}{2}\bm{A}_n\jump{\bm{v}} + \frac{\tau_{\sigma}}{2}\bm{A}_n^T\bm{A}_n\jump{\bm{\sigma}},\bm{q}}.
+\end{align*}
+We note that, since the right hand side of the WADG formulation is identical to the right hand side of the DG formulation (\ref{eq:dgform}), WADG preserves a variant of the energy stability (\ref{eq:stability}).  
+\begin{align*}
+\frac{1}{2}\pd{}{t}\LRp{\LRp{T^{-1}_{1/\rho} \bm{v},\bm{v}}_{\Omega_h} + \LRp{T_{\bm{C}}^{-1} \bm{\sigma},\bm{\sigma}}_{\Omega_h}} \leq - \sum_{f \in \Gamma_h} \int_{f} \frac{\tau_v}{2}\LRb{\bm{B_n}\jump{\bm{v}}}^2 + \frac{\tau_\sigma}{2}\LRb{\bm{B_n}^T\jump{\bm{\sigma}}}^2.  
+\end{align*}
+
+We note that, for isotropic media, another way to address sub-element variations in material parameters is to diagonalize the matrix $\bm{C}$ through a change of variables \cite{etienne2010hp}.  This results in uncoupled weighted mass matrices, which can be treated using weight-adjusted approximations for scalar weights.  However, this approach is more difficult to apply when $\bm{C}$ is anisotropic.  
+
+The matrix form of DG 
+\begin{align*}
+\bm{M}_{\rho}\bm{v}_i &= \bm{A}_{{v}_i} \bm{v}_i, \qquad i = 1,\ldots,d\\
+\bm{M}_{\bm{C}}\bm{\sigma} &= \bm{A}_{{\sigma}} \bm{\sigma}.
+\end{align*}
+where the matrices $\bm{A}_{\bm{v}_i}$ and $\bm{A}_{\sigma}$ are induced by the discretization of the right hand side.  
+
+In $d$ dimensions, the \emph{coupled} mass matrix is given as 
+\[
+\LRp{\bm{M}_{\bm{C}^{-1}}}_{i_1,\ldots,i_{N_d},j_1,\ldots,j_{N_d}} = \int_{D^k} \LRp{\begin{array}{c}\phi_{i_1} \\ \vdots \\ \phi_{i_{N_d}}\end{array}}^T\bm{C}^{-1} \LRp{\begin{array}{c}\phi_{j_1}\\ \vdots \\ \phi_{j_{N_d}}\end{array}}.
+\]
+The storage and inversion of such matrices is expensive, 
+
+Weight-adjusted approximation 
+\begin{equation}
+\bm{M}_{\bm{C}^{-1}} \approx \LRp{\bm{I} \otimes \bm{M}} \bm{M}_{\bm{C}}^{-1} \LRp{\bm{I} \otimes \bm{M}}.
+\label{eq:wadgmc}
+\end{equation}
+
+
+We note that, when $\lambda$ and $\mu$ are piecewise constant, the weight-adjusted inner product coincides with exact inversion of the coupled mass matrix.  In this case, $\bm{M}_{\bm{C}}$ reduces to the Kronecker product of the inverse stiffness tensor and the local mass matrix 
+\[
+\bm{M}_{\bm{C}^{-1}} = \bm{C}^{-1}\otimes \bm{M},
+\]
+which can be explicitly inverted as
+\[
+\bm{M}^{-1}_{\bm{C}^{-1}} = \bm{C}\otimes \bm{M}^{-1}.  
+\]
+Substituting $\bm{M}_{\bm{C}^{-1}}^{-1} = \bm{C}\otimes \bm{M}^{-1}$ into the weight adjusted approximation (\ref{eq:wadgmc}) recovers this expression.% for $\bm{M}_C^{-1}$.   
+
+
+\subsection{Energy stability on curvilinear meshes}
+
+On affine elements, the skew-symmetric formulation is equivalent to the ``strong'' DG formulation 
+This formulation yields an efficient quadrature-free evaluation in terms of derivative and lift matrices, which can be further accelerated by exploiting structure under certain bases \cite{chan2015gpu}.  
+
+Need to directly discretize skew-symmetric formulation for energy stability on curvilinear meshes.  
+
+We note that this formulation is \emph{a-priori} stable, in the sense that a discrete version of energy stability still holds if the $L^2$ inner products are replaced with discrete inner products computed through inexact quadrature rules.  \note{useful for curvilinear meshes}.
+
+\subsection{Convergence analysis}
+
+
+%Nodal collocation does not work for arbitrary wavespeeds.  Example: wave equation, $c^2 = 1 + .9\sin(8\pi x)\sin(8\pi y)$.
+
+\section{Numerical experiments}
+
+\subsection{Accuracy of weight-adjusted inner products}
+
+Show matrix WADG approximation of $T^{-1}_{\bm{W}}\bm{u}$ is close to $\bm{W}^{-1}\bm{u}$.
+
+\subsection{Verification of stability}
+
+Eigenvalue plots with $\tau = 0$ and $\tau = O(1)$ for both square and curvilinear grids with random coefficients close to zero and 1.  
+
+\subsection{Analytic solutions} 
+
+We begin by studying the accuracy and convergence of weight-adjusted DG method for several analytical solutions in linear elasticity.  In all cases, the solution in expressed terms of the displacement vector $\bm{v}(\bm{x},t)$.  Initial conditions for velocity and stress are computed through 
+\[
+\bm{w}(\bm{x},t) = \pd{\bm{v}}{t}, \qquad \bm{\sigma} = \bm{C}\bm{E} = \bm{C}\frac{1}{2}\LRp{\Grad\bm{v} + \Grad\bm{v}^T}.  
+\]
+Unless otherwise stated, we report relative $L^2$ errors for all components of the solution 
+\[
+\frac{\nor{\bm{v}-\bm{v}_h}_{L^2\LRp{\Omega}}}{\nor{\bm{v}}_{L^2\LRp{\Omega}}} = \frac{\LRp{\sum_{i=1}^m \nor{\bm{v}_i-\bm{v}^2_{i,h}}_{L^2\LRp{\Omega}}}^{1/2}}{\LRp{\sum_{i=1}^m\nor{\bm{v}_i}^2_{L^2\LRp{\Omega}}}^{1/2}}.
+\]
+
+\subsubsection{Harmonic oscillation of a square} 
+
+We first examine convergence  on a unit square domain with  $\lambda = \mu = \rho = 1$.   The displacement is given by
+\begin{align*}
+u_1(x,y,t) &= \cos(\omega\pi t)\cos(\pi x)\sin(\pi y)\\
+u_2(x,y,t) &= -\cos(\omega\pi t)\sin(\pi x)\cos(\pi y),
+\end{align*}
+where $\omega = \sqrt{2\mu}$.  Figure~\ref{fig:harmonic_osc} shows $L^2$ errors computed at time $T = 1$, using uniform triangular meshes constructed by bisecting a uniform mesh of quadrilaterals along the diagonal.  For $N = 1,\ldots, 5$, optimal $O(h^{N+1})$ rates of convergence are observed.  
+
+\begin{figure}
+\centering
+\begin{tikzpicture}
+\begin{loglogaxis}[
+	legend cell align=left,
+	width=.49\textwidth,
+    xlabel={Mesh size $h$},
+       ylabel={$L^2$ errors}, 
+    xmin=.04, xmax=1,
+    ymin=1e-12, ymax=1,
+    legend pos=south east,
+    xmajorgrids=true,
+    ymajorgrids=true,
+    grid style=dashed,
+] 
+
+\addplot[color=blue,mark=*,semithick, mark options={fill=markercolor}]
+coordinates{(0.5,0.1732)(0.25,0.0439)(0.125,0.0110)(0.0625,0.0027)};
+%\node at (axis cs:.04,.0027) {$N = 1$};
+
+\logLogSlopeTriangleFlip{0.32}{0.125}{0.815}{2}{blue}
+
+\addplot[color=red,mark=square*,semithick, mark options={fill=markercolor}]
+coordinates{(0.5,0.0150)(0.25,0.0020)(0.125,2.4911e-04)(0.0625,3.1277e-05)};
+%\node at (axis cs:.04,3e-5) {$N = 2$};
+
+\logLogSlopeTriangleFlip{0.32}{0.125}{0.66}{3}{red}
+
+\addplot[color=black,mark=triangle*,semithick, mark options={fill=markercolor}]
+coordinates{(0.5, 0.0013)(0.25,8.3910e-05)(0.125,5.3840e-06)(0.0625,3.2015e-07)};
+%\node at (axis cs:.04,3e-7) {$N = 3$};
+
+\logLogSlopeTriangleFlip{0.32}{0.125}{0.505}{4}{black}
+
+\addplot[color=magenta,mark=diamond*,semithick, mark options={fill=markercolor}]
+coordinates{(0.5,1.0687e-04)(0.25,3.3041e-06)(0.125,9.7715e-08)(0.0625, 2.8750e-09)};
+%\node at (axis cs:.03,1.5e-13) {$a = 10^{-4}$};
+\logLogSlopeTriangleFlip{0.32}{0.125}{0.34}{5}{magenta}
+
+\addplot[color=violet,mark=pentagon*,semithick, mark options={fill=markercolor}]
+coordinates{(0.5,5.9754e-06)(0.25,9.3644e-08)(0.125,1.3980e-09)(0.0625,2.0686e-11)};
+
+\logLogSlopeTriangleFlip{0.32}{0.125}{0.17}{6}{violet}
+
+%\node at (axis cs:.03,6.8e-10) {$u$ discontinuous};
+\legend{$N=1$,$N=2$,$N=3$,$N=4$,$N=5$}
+\end{loglogaxis}
+\end{tikzpicture}
+\caption{Convergence of $L^2$ errors for harmonic oscillation.}
+\label{fig:harmonic_osc}
+\end{figure}
+
+\subsubsection{Rayleigh and Lamb waves}  
+
+Next, we examine the convergence of WADG for Rayleigh and Lamb waves, both of which test the imposition of traction-free boundary conditions.  
+
+Rayleigh waves are elastic surface waves which decay exponentially away from the surface.  These waves are given by the displacement vector
+\begin{align*}
+\bm{v}\LRp{x,y,t} &= e^{-\omega x \sqrt{1-\xi^2}}
+\LRp{
+\begin{array}{c}
+\cos(\omega(y+c_r t)) \\
+\sqrt{1-\xi^2}\sin(\omega(y+c_r t))
+\end{array}
+}\\
+&+ \LRp{\frac{\xi^2}{2}-1}e^{-\omega x\sqrt{1-\frac{\xi^2\mu}{2\mu + \lambda}}}
+\LRp{
+\begin{array}{c}
+\cos(\omega(y + c_r t))\\
+{\sin(\omega(y+c_r t))}/{\sqrt{1-\frac{\xi^2\mu}{2\mu + \lambda}}}
+\end{array}
+},
+\end{align*}
+where $\omega$ is the wavespeed, $c_r$ is the Rayleigh phase velocity $c_r = \xi \sqrt{\mu}$, and $\xi$ satisfies
+\[
+\sqrt{1-\xi^2}\sqrt{1 - \frac{\xi^2\mu}{2\mu+\lambda}} - \LRp{\frac{\xi^2}{2}-1}^2 = 0.
+\]
+In our computations, we use $\rho = \mu = \lambda = 1$, $\xi = 0.949554083888034$, and $\omega = 2\pi$.  We solve on the domain $[0,2]\times[0,1]$ using a sequence of uniform triangular meshes, and enforce traction-free boundary conditions at $x=0$ and exact Dirichlet boundary conditions at $x=2$.  Periodic boundary conditions are applied at $y = 0$ and $y = 1$.  
+
+Lamb waves are supported by elastic waveguides with traction-free (free surface) boundary conditions at the top and bottom of the domain.  The displacement of these waves 
+\begin{align*}
+\bm{v}_1\LRp{x,y,t} &= \LRp{-kB_1 \cos(p y)- qB_2 \cos(q y)} \sin(k x - \omega t)\\
+\bm{v}_2\LRp{x,y,t} &= \LRp{-pB_1 \sin(py) + kB_2 \sin(qy)} \cos(kx - \omega t)
+\end{align*}
+where $k$ is the wavenumber and $\omega$ is the frequency, and the constants $p$ and $q$ are defined as
+\[
+p^2 = \frac{\omega^2}{2\mu + \lambda} - k^2, \qquad q^2 = \frac{\omega^2}{\mu} - k^2.
+\]
+The wavenumber $k$ and frequency $\omega$ are related through a dispersion relation.  The ratio of the amplitudes $B_1/ B_2$ can be determined using other parameters, implying that $B_1, B_2$ are unique up to a scaling constant.  In our experiments, we use $\rho = \mu = 1$, $\lambda = 2$, $k = 2\pi$.  For these values, $\omega = 13.137063197233$, $B_1 = 126.1992721468$ and $B_2 = 53.88807700007$.  We solve on the domain $[-1,1]\times[-1/2,1/2]$, with traction-free boundary conditions at $y = \pm 1/2$ and periodic boundary conditions at $x = \pm 1$.  
+
+Figure~\ref{fig:rayleigh} shows $L^2$ errors for both waves at time $T = 1$.  Observed convergence rates fall between the optimal rate of $O(h^{N+1})$ and theoretical rate of $O(h^{N+1/2})$ \cite{johnson1986analysis,richter1988optimal}.  
+
+\begin{figure}
+\centering
+\subfloat[Rayleigh wave]{
+\begin{tikzpicture}
+\begin{loglogaxis}[
+    legend cell align=left,
+    width=.475\textwidth,
+    xlabel={Mesh size $h$},
+    ylabel={$L^2$ errors}, 
+    xmin=.04, xmax=1,
+    ymin=1e-8, ymax=1.5,
+    legend pos=south east,
+    xmajorgrids=true,
+    ymajorgrids=true,
+    grid style=dashed,
+] 
+
+\addplot[color=blue,mark=*,semithick, mark options={fill=markercolor}]
+coordinates{(0.5,0.9569)(0.25,0.4509)(0.125,0.1234)(0.0625,0.0292)};%\node at (axis cs:.04,.0027) {$N = 1$};
+\logLogSlopeTriangleFlip{0.32}{0.125}{0.83}{2}{blue}
+
+\addplot[color=red,mark=square*,semithick, mark options={fill=markercolor}]
+coordinates{(0.5,0.3483)(0.25,0.0521)(0.125,0.0072)(0.0625,9.3104e-04)};
+\logLogSlopeTriangleFlip{0.32}{0.125}{0.66}{3}{red}
+
+\addplot[color=black,mark=triangle*,semithick, mark options={fill=markercolor}]
+coordinates{(0.5,0.0759)(0.25,  0.0072)(0.125,5.3457e-04)(0.0625,3.6842e-05)};
+\logLogSlopeTriangleFlip{0.32}{0.125}{0.49}{4}{black}
+
+\addplot[color=magenta,mark=diamond*,semithick, mark options={fill=markercolor}]
+coordinates{(0.5,0.0169)(0.25,  7.7478e-04)(0.125,2.6817e-05)(0.0625,8.6998e-07)};
+\logLogSlopeTriangleFlip{0.32}{0.125}{0.31}{5}{magenta}
+
+\addplot[color=violet,mark=pentagon*,semithick, mark options={fill=markercolor}]
+coordinates{(0.5,0.0031)(0.25,6.7730e-05)(0.125,1.235333472480438e-06)(0.0625,2.023726469227763e-08)};
+
+\logLogSlopeTriangleFlip{0.32}{0.125}{0.12}{6}{violet}
+
+%\node at (axis cs:.03,6.8e-10) {$u$ discontinuous};
+\legend{$N=1$,$N=2$,$N=3$,$N=4$,$N=5$}
+\end{loglogaxis}
+\end{tikzpicture}
+}
+\subfloat[Lamb wave]{
+\begin{tikzpicture}
+\begin{loglogaxis}[
+	legend cell align=left,
+	width=.475\textwidth,
+    xlabel={Mesh size $h$},
+%       ylabel={$L^2$ errors}, 
+    xmin=.04, xmax=1,
+    ymin=2e-7, ymax=1.5,
+    legend pos=south east,
+    xmajorgrids=true,
+    ymajorgrids=true,
+    grid style=dashed,
+] 
+
+\addplot[color=blue,mark=*,semithick, mark options={fill=markercolor}]
+coordinates{(0.5,0.9924)(0.25,0.6613)(0.125,0.2713)(0.0625,0.0737)};%\node at (axis cs:.04,.0027) {$N = 1$};
+\logLogSlopeTriangleFlip{0.32}{0.125}{0.85}{2}{blue}
+
+\addplot[color=red,mark=square*,semithick, mark options={fill=markercolor}]
+coordinates{(0.5,0.6614)(0.25,0.2338)(0.125,0.0205)(0.0625,0.0021)};
+\logLogSlopeTriangleFlip{0.32}{0.125}{0.65}{3}{red}
+
+\addplot[color=black,mark=triangle*,semithick, mark options={fill=markercolor}]
+coordinates{(0.5,0.4237)(0.25, 0.0280)(0.125, 0.0018)(0.0625,1.3754e-04)};
+\logLogSlopeTriangleFlip{0.32}{0.125}{0.475}{4}{black}
+
+\addplot[color=magenta,mark=diamond*,semithick, mark options={fill=markercolor}]
+coordinates{(0.5, 0.1700 )(0.25,0.0054 )(0.125,1.9613e-04)(0.0625,6.7755e-06)};
+\logLogSlopeTriangleFlip{0.32}{0.125}{0.295}{5}{magenta}
+
+\addplot[color=violet,mark=pentagon*,semithick, mark options={fill=markercolor}]
+coordinates{(0.5, 0.0393)(0.25,9.0649e-04)(0.125, 1.7466e-05)(0.0625,3.1730e-07)};
+\logLogSlopeTriangleFlip{0.32}{0.125}{0.1075}{6}{violet}
+
+%\node at (axis cs:.03,6.8e-10) {$u$ discontinuous};
+\legend{$N=1$,$N=2$,$N=3$,$N=4$,$N=5$}
+\end{loglogaxis}
+\end{tikzpicture}
+\label{fig:rayleigh}
+}
+\caption{Convergence of $L^2$ errors for Rayleigh and Lamb wave solutions.}
+\end{figure}
+
+%We also examine the convergence of WADG for Rayleigh waves for near-incompressible materials with $\mu / \lambda \ll 1$.  We compute $L^2$ errors at final time $T = 1/(10\sqrt{\mu})$.  
+
+\subsubsection{Stoneley waves} 
+
+A Stoneley wave is supported along the interface between two solids \cite{stoneley1924elastic}.  Like Rayleigh waves, Stoneley waves decay exponentially away from the interface, and test the effectiveness of numerical fluxes across interfaces.  We follow \cite{wilcox2010high,appelo2015energy} and use discontinuous media defined by
+\[
+(\rho,\lambda,\mu) = \begin{cases}
+(10 ,3,3) & y > 0\\
+(1,1,1) & y < 0.
+\end{cases}.
+\]
+The displacement vector for a Stoneley wave is then given by
+\begin{align*}
+\bm{v}_1(x,y,t) &= \begin{cases}
+{\rm Re}\LRp{\LRp{ikB_1e^{-kb_{1p}y} + kb_{1s}B_2 e^{-kb_{1s}y}}e^{i(ky-\omega t)}}, & y > 0\\
+{\rm Re}\LRp{\LRp{-k b_{1p}B_1e^{-k b_{1p} y} + i kB_2e^{-kb_{1s}y}}e^{i(kx-\omega t)}}, & y < 0
+\end{cases}\\
+\bm{v}_2(x,y,t) &= \begin{cases}
+{\rm Re}\LRp{\LRp{ikB_3 e^{k b_{2p} y} - kb_{2s}B_4 e^{k b_{2s}y }} e^{i(kx-\omega t)}}, & y > 0\\
+{\rm Re}\LRp{\LRp{k b_{2p} B_3 e^{k b_{2p}y} + ikB_4 e^{k b_{2s}y}}e^{i(kx-\omega t)}}, & y < 0
+\end{cases},
+\end{align*}
+where $c_{st}$ is the Stoneley wave speed, and 
+\[
+k = \omega/ c_{st}, \qquad b_{jp} = \sqrt{1 - \frac{c_{st}^2}{(2\mu_j + \lambda_j)/\rho_j}}, \qquad  b_{js} = \sqrt{1 - \frac{c_{st}^2}{(\mu_j)/\rho_j}}, \qquad j = 1,2.
+\]
+The Stoneley wave speed $c_{st}$ can be determined based material parameters and interface conditions, and the amplitudes $B_1,B_2,B_3,B_4$ are determined from $c_{st}$ up to scaling by a constant.  For the parameters used in this study, we take $c_{st} = 0.546981324213884$, $B_1 = i0.2952173626624, B_2 = -0.6798795208473, B_3 = i0.5220044931212$, and $B_4 = -0.9339639688697$.  We assume $k =1$, which gives $\omega=c_{st}$.  
+
+We solve on the domain $[-1,1]\times [-5,5]$, and enforce Dirichlet boundary conditions at all boundaries using the exact solution.  Figure~\ref{fig:stoneley} shows $L^2$ errors for two uniform meshes of triangles constructed by bisecting a quadrilateral mesh of $K_{\rm 1D} \times 5K_{\rm 1D}$ elements. Figure~\ref{subfig:stoneley1} shows errors when $K_{\rm 1D}$ is even and the mesh is fitted to the interface at $y = 0$, while Figure~\ref{subfig:stoneley2} shows errors when $K_{\rm 1D}$ is odd and the interface cuts through element interiors.  When the mesh is fitted to the interface, we observe optimal $O(h^{N+1})$ rates of convergence for $N > 1$.  
+
+When the mesh is not fitted to the interface exactly, we compute the application of the weight-adjusted mass matrix inverse using a quadrature rule from Xiao and Gimbutas \cite{xiao2010quadrature} which is exact for degree $2N+1$ polynomials.  Since the values of $\rho,\mu$, and $\lambda$ are positive at all quadrature points, the method is energy stable.  However, since the exact solution is discontinuous, we expect an $O(1)$ error in elements cut by the interface, resulting in $L^2$ errors which converge at rate $O(h^{1/2})$.  We note that, when using piecewise constant approximations of $\mu$ and $\lambda$, we observe the same $O(h^{1/2})$ convergence rate, though errors are roughly twice as large in magnitude.  \note{Discuss need to extend WADG to low regularity weights.}  
+
+\begin{figure}
+\centering
+\subfloat[Fitted interface]{
+\begin{tikzpicture}
+\begin{loglogaxis}[
+    legend cell align=left,
+    legend style={legend pos=south east, font=\tiny},
+    width=.475\textwidth,
+    xlabel={Mesh size $h$},
+    ylabel={$L^2$ errors}, 
+    xmin=.04, xmax=1,
+    ymin=2.5e-10, ymax=.15,
+    xmajorgrids=true,
+    ymajorgrids=true,
+    grid style=dashed,
+] 
+
+\addplot[color=blue,mark=*,semithick, mark options={fill=markercolor}]
+coordinates{(0.5,0.0961)(0.25,0.0321)(0.125,0.0108)(0.0625,0.0034)}; 
+\logLogSlopeTriangleFlip{0.32}{0.125}{0.84}{2}{blue}
+
+\addplot[color=red,mark=square*,semithick, mark options={fill=markercolor}]
+coordinates{(0.5,0.0088)(0.25,0.0013)(0.125,1.9177e-04)(0.0625, 2.8444e-05)};
+\logLogSlopeTriangleFlip{0.32}{0.125}{0.62}{3}{red}
+
+\addplot[color=black,mark=triangle*,semithick, mark options={fill=markercolor}]
+coordinates{(0.5, 8.9050e-04)(0.25,7.5838e-05)(0.125,4.9595e-06)(0.0625,3.4440e-07)};
+\logLogSlopeTriangleFlip{0.32}{0.125}{0.41}{4}{black}
+
+\addplot[color=magenta,mark=diamond*,semithick, mark options={fill=markercolor}]
+coordinates{(0.5,4.2348e-05)(0.25, 1.4232e-06)(0.125, 4.8606e-08)(0.0625,1.7358e-09)};
+\logLogSlopeTriangleFlip{0.32}{0.125}{0.16}{5}{magenta}
+
+\addplot[color=violet,mark=pentagon*,semithick, mark options={fill=markercolor}]
+coordinates{(0.5,2.7994e-06)(0.25,4.6958e-08)(0.125,7.9344e-10)};
+\logLogSlopeTriangleFlip{0.5}{0.125}{0.1}{6}{violet}
+
+%\node at (axis cs:.03,6.8e-10) {$u$ discontinuous};
+\legend{$N=1$,$N=2$,$N=3$,$N=4$,$N=5$}
+\end{loglogaxis}
+\end{tikzpicture}
+\label{subfig:stoneley1}
+}
+\subfloat[Non-fitted interface]{
+\begin{tikzpicture}
+\begin{loglogaxis}[
+    legend cell align=left,
+    legend style={legend pos=south east, font=\tiny},
+    width=.475\textwidth,
+    xlabel={Mesh size $h$},
+%    ylabel={$L^2$ errors}, 
+    xmin=.04, xmax=1,
+    ymin=1e-2, ymax=.2,
+    xmajorgrids=true,
+    ymajorgrids=true,
+    grid style=dashed,
+] 
+
+\addplot[color=blue,mark=*,semithick, mark options={fill=markercolor}]
+coordinates{(0.5,0.1507)(0.25,0.0796)(0.125,0.0495)(0.0625,0.0331)}; 
+%\logLogSlopeTriangleFlip{0.32}{0.125}{0.84}{1}{blue}
+
+\addplot[color=red,mark=square*,semithick, mark options={fill=markercolor}]
+coordinates{(0.5,0.0820)(0.25,0.0594)(0.125,0.0427)(0.0625, 0.0307)};
+%\logLogSlopeTriangleFlip{0.32}{0.125}{0.62}{3}{red}
+
+\addplot[color=black,mark=triangle*,semithick, mark options={fill=markercolor}]
+coordinates{(0.5, 0.0640)(0.25,0.0435)(0.125,0.0306)(0.0625,0.0216)};
+%\logLogSlopeTriangleFlip{0.32}{0.125}{0.41}{4}{black}
+
+\addplot[color=magenta,mark=diamond*,semithick, mark options={fill=markercolor}]
+coordinates{(0.5, 0.0593)(0.25, 0.0436)(0.125, 0.0318)(0.0625,0.0229)};
+\logLogSlopeTriangle{0.32}{0.125}{0.225}{1/2}{black}
+
+%\addplot[dashed,color=blue,mark=*,semithick, mark options={fill=markercolor}]
+%coordinates{(0.5,0.1648)(0.25,0.0927)(0.125,0.0607)(0.0625,0.0417)}; 
+%
+%\addplot[dashed,color=red,mark=square*,semithick, mark options={fill=markercolor}]
+%coordinates{(0.5,0.1200)(0.25, 0.0855)(0.125,0.0597)(0.0625,0.0421)};
+%
+%\addplot[dashed,color=black,mark=triangle*,semithick, mark options={fill=markercolor}]
+%coordinates{(0.5, 0.1399)(0.25,0.0942)(0.125,0.0660)(0.0625,0.0463)};
+%
+%\addplot[dashed,color=magenta,mark=diamond*,semithick, mark options={fill=markercolor}]
+%coordinates{(0.5,0.1410)(0.25, 0.0984)(0.125, 0.0697)(0.0625, 0.0490)};
+
+
+
+%\addplot[color=violet,mark=pentagon*,semithick, mark options={fill=markercolor}]
+%coordinates{(0.5,2.7994e-06)(0.25,4.6958e-08)(0.125,7.9344e-10)};
+%\logLogSlopeTriangleFlip{0.5}{0.125}{0.1}{6}{violet}
+
+%\node at (axis cs:.03,6.8e-10) {$u$ discontinuous};
+\legend{$N=1$,$N=2$,$N=3$,$N=4$}
+\end{loglogaxis}
+\end{tikzpicture}
+\label{subfig:stoneley2}
+}
+\caption{Convergence of WADG for a Stoneley wave using a fitted mesh aligned with the interface and a non-fitted mesh where the interface does not lie exactly on an element boundary. }
+\label{fig:stoneley}
+\end{figure}
+
+\subsubsection{Harmonic oscillation of an annulus}
+
+This example tests the convergence of WADG for curvilinear mappings.  
+
+\subsection{Application examples}
+
+\subsubsection{Stiff inclusion}
+
+Leveque stiff inclusion example.  
+
+\subsubsection{Heterogeneous anisotropic material}
+
+From \cite{de2007arbitrary}: discontinuous media with anisotropy on one side, isotropy on the other.
+
+Also do a similar case where random noise is added to both sides and the anisotropy is more strongly discontinuous.  
+
+\subsection{Three-dimensional example}
+
+Add GPU computations here.   
+
+\section{Conclusions}
+
+Generally applicable to problems with spatially varying matrices $\bm{A}_{0}(\bm{x})$, such as in Maxwell's equations for cloaking problems \cite{li2012time}, as well as in vector-valued $H({\rm div})$ or $H({\rm curl})$ functions under matrix-valued mappings such as Piola transforms.  
+
+Extension to hybrid meshes is straightforward in 2D \cite{smith2010elastic}. For 3D, care must be taken with pyramids \cite{chan2015orthogonal,chan2015gpu}.
+
+Formulation allows for the reduction of constant-coefficient RHS costs at high orders using BBDG \cite{chan2015bbdg}.  
+
+\section{Acknowledgments}
+
+The author gratefully thanks Thomas Hagstrom, Tim Warburton, Axel Modave, and Ruichao Ye for informative discussions.  
+
+\bibliographystyle{unsrt}
+\bibliography{dgpenalty}
+
+
+\end{document}
+
+
