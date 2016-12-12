@@ -5,10 +5,10 @@ clear -global *
 
 Globals2D
 
-K1D = 32;
-N = 6;
+K1D = 100;
+N = 5;
 c_flag = 0;
-FinalTime = .15;
+FinalTime = .3; % milliseconds
 
 filename = 'Grid/Other/block2.neu';
 % [Nv, VX, VY, K, EToV] = MeshReaderGambit2D(filename);
@@ -71,7 +71,7 @@ vmapBL = vmapP(mapBL);
 global Nfld mu lambda rho Vq Pq tau useWADG
 Nfld = 5; %(u1,u2,sxx,syy,sxy)
 
-rho = ones(size(xq))*7.1;
+rho = ones(size(xq))*7.100;
 
 global C11 C12 C13 C22 C23 C33
 
@@ -99,6 +99,17 @@ C13 = C13a*(xq < 0) + C13b*(xq > 0);
 C22 = C22a*(xq < 0) + C22b*(xq > 0);
 C23 = C23a*(xq < 0) + C23b*(xq > 0);
 C33 = C33a*(xq < 0) + C33b*(xq > 0);
+
+timescale = 1e0; % to scale to milli?
+C11 = C11/timescale;
+C12 = C12/timescale;
+C13 = C13/timescale;
+C22 = C22/timescale;
+C23 = C23/timescale;
+C33 = C33/timescale;
+
+% C33 = C33/2; % scale for sym(grad(u))
+
 
 Cnorm = zeros(size(xq));
 Cmax = 0;
@@ -147,9 +158,9 @@ U{5} = u;
 global rick ptsrc 
 f0 = 170;
 tR = 1/f0;
-rick = @(t) 1e6*(1 - 2*(pi*f0*(t-tR)).^2).*exp(-(pi*f0*(t-tR)).^2);
-% plot(rick(0:.001:.1));return
-ptsrc = exp(-(200)^2*((xq-x0).^2 + (yq-y0).^2));
+rick = @(t) 1e10*(1 - 2*(pi*f0*(t-tR)).^2).*exp(-(pi*f0*(t-tR)).^2);
+% tt = 0:.0001:.1; plot(tt,rick(tt));return
+ptsrc = exp(-(120)^2*((xq-x0).^2 + (yq-y0).^2));
 ptsrc = Pq*ptsrc;
 ptsrc = ptsrc/max(abs(ptsrc(:)));
 % color_line3(xp,yp,Vp*ptsrc,Vp*ptsrc,'.');return
@@ -165,7 +176,8 @@ end
 
 % compute time step size
 CN = (N+1)^2/2; % guessing...
-dt = 4/(Cmax*CN*max(Fscale(:)));
+dt = 2/(Cmax*CN*max(Fscale(:)))
+ceil(FinalTime/dt)
 
 % outer time step loop
 tstep = 0;
@@ -203,6 +215,7 @@ while (time<FinalTime)
         vv = abs(vv);
         color_line3(xp,yp,vv,vv,'.');
         axis tight        
+        axis equal
         title(sprintf('time = %f',time));
         colorbar;
 %         view(3); 
@@ -314,7 +327,7 @@ rr{5} =  du12dxy +  LIFT*(Fscale.*flux{5})/2.0;
 
 % C = [2*mu+lambda       lambda       0
 %      lambda       2*mu+lambda       0
-%           0       0                mu/2]
+%           0       0                mu]
 if useWADG
     for fld = 1:Nfld
         rr{fld} = Vq*rr{fld};
@@ -325,11 +338,11 @@ if useWADG
     rhs{4} = Pq*(C12.*rr{3} + C22.*rr{4} + C23.*rr{5});
     rhs{5} = Pq*(C13.*rr{3} + C23.*rr{4} + C33.*rr{5});
 else
-    rhs{1} = (rr{1}./rho);
-    rhs{2} = (rr{2}./rho);
-    rhs{3} = (C11.*rr{3} + C12.*rr{4} + C13.*rr{5});
-    rhs{4} = (C12.*rr{3} + C22.*rr{4} + C23.*rr{5});
-    rhs{5} = (C13.*rr{3} + C23.*rr{4} + C33.*rr{5});
+    rhs{1} = rr{1}./rho;
+    rhs{2} = rr{2}./rho;
+    rhs{3} = C11.*rr{3} + C12.*rr{4} + C13.*rr{5};
+    rhs{4} = C12.*rr{3} + C22.*rr{4} + C23.*rr{5};
+    rhs{5} = C13.*rr{3} + C23.*rr{4} + C33.*rr{5};
 end
 
 return;

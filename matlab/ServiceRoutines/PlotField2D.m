@@ -19,6 +19,7 @@ end
 
 % build matrix to interpolate field data to equally spaced nodes
 interp = InterpMatrix2D(rout, sout);
+% size(interp)
 
 % build triangulation of equally spaced nodes on reference triangle
 tri = [];
@@ -42,7 +43,7 @@ end
 
 % interpolate node coordinates and field to equally spaced nodes
 xout = interp*xin; yout = interp*yin; uout = interp*uin;
-
+uout=abs(uout);
 % render and format solution field
 trisurf(TRI, xout(:), yout(:), uout(:));
 shading interp
