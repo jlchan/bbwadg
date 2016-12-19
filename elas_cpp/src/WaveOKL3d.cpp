@@ -436,7 +436,7 @@ void InitWADG_subelem(Mesh *mesh,double(*c2_ptr)(double,double,double)){
   // array of wavefield at quadrature points
   MatrixXd rhoq(Vq_reduced.rows(),mesh->K);
   MatrixXd lambdaq(Vq_reduced.rows(),mesh->K);
-  MatrixXd muq(Vq_reduced.rows(),mesh->K);  
+  MatrixXd muq(Vq_reduced.rows(),mesh->K);
   for (int e = 0; e < mesh->K; ++e){
 
     // locally interpolate to cubature points
@@ -448,16 +448,16 @@ void InitWADG_subelem(Mesh *mesh,double(*c2_ptr)(double,double,double)){
     for (int i = 0; i < Vq_reduced.rows(); ++i){
       rhoq(i,e) = 1.f;//(*c2_ptr)(xq(i),yq(i),zq(i));
       lambdaq(i,e) = 1.f;
-      muq(i,e) = 1.f;      
+      muq(i,e) = 1.f;
     }
   }
   double wavespeed = sqrt((2*lambdaq.array()+muq.array())/rhoq.array()).maxCoeff();
   printf("Max wavespeed value = %f\n",wavespeed);
   dgInfo.addDefine("p_tau_v",1.0); // velocity penalty
   //dgInfo.addDefine("p_tau_s",(2.0*muq.array() + lambdaq.array()).maxCoeff());
-  dgInfo.addDefine("p_tau_s",1.0);   
+  dgInfo.addDefine("p_tau_s",1.0);
   //dgInfo.addDefine("p_tau_v",0.0); // velocity penalty
-  //dgInfo.addDefine("p_tau_s",0.0); // 
+  //dgInfo.addDefine("p_tau_s",0.0); //
 
   MatrixXd invM = mesh->V*mesh->V.transpose();
   MatrixXd Pq_reduced = invM*Vq_reduced.transpose()*wq.asDiagonal();
@@ -471,18 +471,18 @@ void InitWADG_subelem(Mesh *mesh,double(*c2_ptr)(double,double,double)){
   setOccaArray(rhoq,c_rhoq);
   setOccaArray(lambdaq,c_lambdaq);
   setOccaArray(muq,c_muq);
-  
+
   setOccaArray(Pq_reduced,c_Pq_reduced);
   setOccaArray(Vq_reduced,c_Vq_reduced);
 
   // ======== build kernels
 
-  std::string src = "okl/ElasKernelsWADG.okl";  
+  std::string src = "okl/ElasKernelsWADG.okl";
   printf("Building heterogeneous wave propagation WADG kernel from %s\n",src.c_str());
   rk_update_elas  = device.buildKernelFromSource(src.c_str(), "rk_update_elas", dgInfo);
   rk_volume_elas  = device.buildKernelFromSource(src.c_str(), "rk_volume_elas", dgInfo);
   rk_surface_elas = device.buildKernelFromSource(src.c_str(), "rk_surface_elas", dgInfo);
- 
+
 }
 
 // applies Gordon Hall to a sphere - just changes xyz coordinates.
@@ -959,10 +959,11 @@ dfloat WaveInitOCCA3d(Mesh *mesh, int KblkVin, int KblkSin,
 
   occa::printAvailableDevices();
 
-  //device.setup("mode = OpenCL, platformID = 0, deviceID = 1");
+  device.setup("mode = OpenCL, platformID = 0, deviceID = 0");
   //device.setup("mode = OpenMP, platformID = 0, deviceID = 0");
   //device.setup("mode = Serial");
-  device.setup("mode = CUDA, platformID = 0, deviceID = 2");
+  //device.setup("mode = CUDA, platformID = 0, deviceID = 2");
+
   //device.setCompiler("nvcc"); device.setCompilerFlags("--use_fast_math"); device.setCompilerFlags("--fmad=true");
 
   printf("KblkV = %d, KblkS = %d, KblkU = %d, KblkQ (skew only) = %d\n",
@@ -1204,11 +1205,13 @@ dfloat WaveInitOCCA3d(Mesh *mesh, int KblkVin, int KblkSin,
   std::string src = "okl/WaveKernels.okl";
   std::cout << "using src = " << src.c_str() << std::endl;
 
+#if USE_BERN
   printf("Building Bernstein kernels from %s\n",src.c_str());
   // bernstein kernels
   rk_volume_bern  = device.buildKernelFromSource(src.c_str(), "rk_volume_bern", dgInfo);
 
   printf("building rk_surface_bern from %s\n",src.c_str());
+
 #if USE_SLICE_LIFT
   rk_surface_bern = device.buildKernelFromSource(src.c_str(), "rk_surface_bern_slice", dgInfo);
   //rk_surface_bern = device.buildKernelFromSource(src.c_str(), "rk_surface_bern_slice_loads", dgInfo);
@@ -1218,7 +1221,7 @@ dfloat WaveInitOCCA3d(Mesh *mesh, int KblkVin, int KblkSin,
   printf("using non-optimal bern surface kernel; more efficient for N < 6\n");
   rk_surface_bern = device.buildKernelFromSource(src.c_str(), "rk_surface_bern", dgInfo);
 #endif
-
+#endif
   // nodal kernels
   rk_volume  = device.buildKernelFromSource(src.c_str(), "rk_volume", dgInfo);
   rk_surface = device.buildKernelFromSource(src.c_str(), "rk_surface", dgInfo);
@@ -1611,7 +1614,8 @@ void RK_step_WADG_subelem(Mesh *mesh, dfloat rka, dfloat rkb, dfloat fdt){
   		 c_rhoq, c_lambdaq, c_muq,
 		 rka, rkb, fdt,
   		 c_rhsQ, c_resQ, c_Q);
-  
+  device.finish();
+
 }
 
 void RK_step_WADG(Mesh *mesh, dfloat rka, dfloat rkb, dfloat fdt){
@@ -1746,7 +1750,7 @@ void WaveSetU0(Mesh *mesh, dfloat *Q, dfloat time, int field,
 
     for (int i = 0; i < p_Np; ++i){
       int id = k*p_Np*p_Nfields + i + p_Np*field;
-      Q[id] = Qloc[i]; 
+      Q[id] = Qloc[i];
     }
 
   }
@@ -1795,36 +1799,32 @@ void WaveProjectU0(Mesh *mesh, dfloat *Q, dfloat time,int field,
     // set pressure
     for (int i = 0; i < p_Np; ++i){
       int id = k*p_Np*p_Nfields + i + field*p_Np;
-      Q[id] = Qloc(i,0); 
+      Q[id] = Qloc(i,0);
     }
 
     //cout << "Q on elem " << k << " initialized to " << endl << Qloc << endl;
 
   }
 
-  
+
   //cout << "Vq = " << endl << mesh->Vq << endl;
   //cout << "Jq = " << endl << mesh->Jq << endl;
-  //cout << "wq = " << endl << mesh->wq << endl;  
+  //cout << "wq = " << endl << mesh->wq << endl;
   //cout << "xq = " << endl << mesh->xq << endl;
   //cout << "yq = " << endl << mesh->yq << endl;
-  //cout << "zq = " << endl << mesh->zq << endl;  
-  
+  //cout << "zq = " << endl << mesh->zq << endl;
+
 }
 
 void WaveSetData3d(dfloat *Q){
-
   c_Q.copyFrom(Q);
-
 }
 
 
 void WaveGetData3d(Mesh *mesh, dfloat *Q){//dfloat *d_p, dfloat *d_fp, dfloat *d_fdpdn){
-
   c_Q.copyTo(Q);
-
 #if USE_BERN // convert back to nodal representation for L2 error, etc
-  //printf("Converting back to nodal from Bern representation\n");
+  printf("Converting back to nodal from Bern representation\n");
   dfloat *Qtmp = BuildVector(p_Np);
   for (int fld = 0; fld < p_Nfields; fld++){
     for (int e = 0; e < mesh->K; ++e){
