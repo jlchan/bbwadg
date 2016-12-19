@@ -2,7 +2,8 @@
 
 double PulseInitialCondition(double x, double y, double z, double time){
   double rad = (x*x + y*y + z*z);
-  return exp(-100.0*rad);
+  double a = 25.0;
+  return exp(-a*a*rad);
 };
 
 double WaveField(double x, double y, double z){
