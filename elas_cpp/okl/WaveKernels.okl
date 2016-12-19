@@ -643,8 +643,8 @@ kernel void rk_surface_bern_slice(const    int K,
 
     shared dfloat s_nxyz[p_KblkS][4*p_Nfaces];
 
-    exclusive unsigned int slice_offset1;
-    exclusive unsigned int slice_offset2;
+    exclusive int slice_offset1;
+    exclusive int slice_offset2;
 
     for(int k2 = 0; k2 < p_KblkS; ++k2; inner1){
       for(int n=0;n<p_Nfp;++n;inner0){
@@ -761,7 +761,7 @@ kernel void rk_surface_bern_slice(const    int K,
           occaUnroll(p_L0_nnz)
 	  for(int j = 0; j < p_L0_nnz; ++j){
 	    const dfloat L0_j = L0_vals[n + j*p_Nfp];
-	    int id = L0_ids[n+j*p_Nfp];	    
+	    int id = L0_ids[n+j*p_Nfp];
 	    for (int f = 0; f < p_Nfaces; ++f){
 	      val1[f] += L0_j*s_pflux[k2][0][id];
 	      val2[f] += L0_j*s_Uflux[k2][0][id];
@@ -784,34 +784,34 @@ kernel void rk_surface_bern_slice(const    int K,
     barrier(localMemFence);
 
     // propagate changes through remaining slices
-    for (unsigned int slice = 0; slice < p_N+1; ++slice){
+    for (int slice = 0; slice < p_N+1; ++slice){
 
-      for(unsigned int k2 = 0; k2 < p_KblkS; ++k2; inner1){
-	for(unsigned int n=0;n<p_Nfp;++n;inner0){
+      for(int k2 = 0; k2 < p_KblkS; ++k2; inner1){
+	for(int n=0;n<p_Nfp;++n;inner0){
 
-	  unsigned int k = k1*p_KblkS + k2;
+	  int k = k1*p_KblkS + k2;
 	  if (k < K){
 
-	    const unsigned int N_slice  = p_N-slice;
-	    const unsigned int Np_slice = ((N_slice + 1)*(N_slice + 2)) >> 1; // face nodes
+	    const int N_slice  = p_N-slice;
+	    const int Np_slice = ((N_slice + 1)*(N_slice + 2)) >> 1; // face nodes
 
 	    // if slice = odd, read from index 0, write to index 1.
 	    // if slice = even, read from index 1, write to index 0.
-	    const unsigned int swap_write = slice & 1;
-	    const unsigned int swap_read = !swap_write; // 1-swap_write;
+	    const int swap_write = slice & 1;
+	    const int swap_read = !swap_write; // 1-swap_write;
 
 	    // compute degree reduction output for each node
 	    if ( n < Np_slice ){
 
 	      // prefetch ids
-	      const unsigned int fid = n + slice_offset1;
+	      const int fid = n + slice_offset1;
 	      const int4 slice_ids4 = slice_ids[fid];
 	      slice_offset1 += Np_slice;  // increment for next slice
 
-	      unsigned int id1,id2,id3;
+	      int id1,id2,id3;
 	      dfloat a,b,c;
 	      if (slice > 0){
-		unsigned int id = n + slice_offset2;
+		int id = n + slice_offset2;
 		// first "column" of packed val/id arrays
 		a = EEL_vals[id]; id1 = EEL_ids[id]; id += Np_slice;
 		b = EEL_vals[id]; id2 = EEL_ids[id]; id += Np_slice;
@@ -820,15 +820,15 @@ kernel void rk_surface_bern_slice(const    int K,
 	      } //slice > 0
 
 	      // load prefetched data
-	      unsigned int vol_ids[p_Nfaces];
+	      int vol_ids[p_Nfaces];
 	      vol_ids[0] = slice_ids4.x;
 	      vol_ids[1] = slice_ids4.y;
 	      vol_ids[2] = slice_ids4.z;
 	      vol_ids[3] = slice_ids4.w;
 
 	      dfloat reduced_p = 0.f, reduced_U = 0.f;
-	      for (unsigned int f = 0; f < p_Nfaces; ++f){
-		const unsigned int vol_id = vol_ids[f];
+	      for (int f = 0; f < p_Nfaces; ++f){
+		const int vol_id = vol_ids[f];
 
 		//if (slice==0){ // reduction = identity
 		reduced_p = s_pflux[k2][1][n + f*p_Nfp];
@@ -881,13 +881,13 @@ kernel void rk_surface_bern_slice(const    int K,
 
 
     // write results out to global mem
-    for(unsigned int k2 = 0; k2 < p_KblkS; ++k2; inner1){
-      for(unsigned int n = 0; n < p_Nfp; ++n; inner0){
+    for(int k2 = 0; k2 < p_KblkS; ++k2; inner1){
+      for(int n = 0; n < p_Nfp; ++n; inner0){
 
-	unsigned int k = k1*p_KblkS + k2;
+	int k = k1*p_KblkS + k2;
 	if (k < K){
 
-	  unsigned int m = n;
+	  int m = n;
 	  while(m < p_Np){
 
 	    int id = m + k*p_Np*p_Nfields;

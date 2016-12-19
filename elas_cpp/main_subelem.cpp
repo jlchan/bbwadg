@@ -2,13 +2,14 @@
 
 double PulseInitialCondition(double x, double y, double z, double time){
   double rad = (x*x + y*y + z*z);
-  return exp(-100.0*rad);
+  double a = 100;
+  return exp(-a*a*rad);
 };
 
 double WaveField(double x, double y, double z){
-  //return 1.0 + .25*cos(2.0*M_PI*x);
-  //return 1.0 + x;
-  return 1.0; // const for verification
+  double k = 2.0;
+  double a = .5;
+  return 1.0 + a*cos(k*M_PI*x)*cos(k*M_PI*y)*cos(k*M_PI*z);
 };
 
 
@@ -58,7 +59,7 @@ int main(int argc, char **argv){
   //WaveSetU0(mesh,Q,0.0,field,uexptr); // interpolate
   WaveProjectU0(mesh,Q,0.0,field,uexptr); // L2 projection
 
-  writeVisToGMSH("meshes/p0.msh",mesh,Q,0,p_Nfields); 
+  writeVisToGMSH("meshes/p0.msh",mesh,Q,0,p_Nfields);
 
   // double L2err, relL2err;
   // compute_error(mesh, 0.0, Q, uexptr, L2err, relL2err);
@@ -67,6 +68,7 @@ int main(int argc, char **argv){
   // =============  run solver  ================
 
   // load data onto GPU
+  printf("Loading data onto GPU\n");
   WaveSetData3d(Q);
 
   dfloat FinalTime = .1;
@@ -79,10 +81,12 @@ int main(int argc, char **argv){
   //FinalTime = dt;
   Wave_RK(mesh,FinalTime,dt,1); // run w/planar elems and WADG update
 
+  printf("Unloading data from GPU\n");
   WaveGetData3d(mesh, Q);  // unload data from GPU
 
+  printf("Writing data to GMSH\n");
   writeVisToGMSH("meshes/p.msh",mesh,Q,0,p_Nfields);
-  
+
   //compute_error(mesh, FinalTime, Q,
   //                uexptr, L2err, relL2err);
   //  printf("N = %d, Mesh size = %f, ndofs = %d, L2 error at time %f = %6.6e\n",
