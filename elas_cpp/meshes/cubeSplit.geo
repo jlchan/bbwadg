@@ -1,4 +1,8 @@
-h = 0.5;
+//Mesh.CharacteristicLengthMax = 1;
+//Mesh.CharacteristicLengthFactor = .2;
+Mesh.Optimize = 1;
+h = 0.0525;
+
 Point(1) = {-1.0,-1.0,0.0,h};
 Point(2) = {1.0,-1.0,0.0,h};
 Point(3) = {1.0,1.0,0.0,h};
@@ -16,6 +20,3 @@ Extrude {0.0,0.0,1}{
 Extrude {0.0,0.0,-1.0} {
   Surface{6};
 }
-
-
-Mesh.Optimize=1;

@@ -474,12 +474,12 @@ void InitWADG_subelem(Mesh *mesh,double(*c2_ptr)(double,double,double)){
       double x0 = 0.0;
       double y0 = 0.0;
       double z0 = 0.1;
-      double a = 100.0;
+      double a = 125.0;
       double dx = xq(i) - x0;
       double dy = yq(i) - y0;
       double dz = zq(i) - z0;      
       double r2 = dx*dx + dy*dy + dz*dz;
-      fsrcq(i,e) = exp(-a*r2);
+      fsrcq(i,e) = exp(-a*a*r2);
     }
   }
   //  cout << "c33" << endl  << c33.col(0) << endl;
@@ -487,13 +487,8 @@ void InitWADG_subelem(Mesh *mesh,double(*c2_ptr)(double,double,double)){
   //  cout << "mu" << endl  << muq.col(0) << endl;
   //  cout << "lambda" << endl  << lambdaq.col(0) << endl;
   
-  double wavespeed = sqrt((2*lambdaq.array()+muq.array())/rhoq.array()).maxCoeff();
-  printf("Max wavespeed value = %f\n",wavespeed);
   dgInfo.addDefine("p_tau_v",1.0); // velocity penalty
-  //dgInfo.addDefine("p_tau_s",(2.0*muq.array() + lambdaq.array()).maxCoeff());
   dgInfo.addDefine("p_tau_s",1.0);
-  //dgInfo.addDefine("p_tau_v",0.0); // velocity penalty
-  //dgInfo.addDefine("p_tau_s",0.0); //
 
   MatrixXd invM = mesh->V*mesh->V.transpose();
   MatrixXd Pq_reduced = invM*Vq_reduced.transpose()*wq.asDiagonal();
@@ -1271,7 +1266,8 @@ dfloat WaveInitOCCA3d(Mesh *mesh, int KblkVin, int KblkSin,
   rk_update  = device.buildKernelFromSource(src.c_str(), "rk_update", dgInfo);
 
   // estimate dt. may wish to replace with trace inequality constant
-  dfloat dt = .25 * 3.0/((p_N+1)*(p_N+3)*FscaleMax);
+  dfloat CN = (p_N+1)*(p_N+3)/3.0;
+  dfloat dt = 1.0/(CN*FscaleMax);
 
   return (dfloat) dt;
 }

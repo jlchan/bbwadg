@@ -720,7 +720,18 @@ void BuildMaps3d(Mesh *mesh){
 	    }
 	  }
 	  if(n2==p_Nfp){
-	    printf("LOST NODE on elem %d, face %d!!!\n",k1,f1);
+	    //printf("LOST NODE on elem %d, face %d!!!\n",k1,f1);
+	    printf("LOST NODE on elem %d, face %d!!!  ",k1,f1);
+	    printf("EToE(%d,:) = ",k1);
+	    for (int f = 0; f < p_Nfaces; ++f){
+	      printf("%d ",mesh->EToE[k1][f]);
+	    }
+	    printf(", EToF(%d,:) = ",k1);
+	    for (int f = 0; f < p_Nfaces; ++f){
+	      printf("%d ",mesh->EToF[k1][f]);
+	    }
+	    printf("\n");
+	    
 	  }
 	}
       }

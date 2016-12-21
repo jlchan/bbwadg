@@ -34,7 +34,7 @@ int main(int argc, char **argv){
 	 p_N,KblkV,KblkS,KblkU);
 
   FacePair3d(mesh);
-  StartUp3d(mesh);
+  StartUp3d(mesh);  
 
   printf("%d elements in mesh\n", mesh->K);
 

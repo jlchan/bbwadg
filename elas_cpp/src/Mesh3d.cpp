@@ -130,7 +130,7 @@ Mesh *ReadGmsh3d(char *filename){
 	
       }
 
-      std::cout << "BBDG: " << allVertices << " vertices and " << allElements << " elements in GMSH file " << std::endl;
+      std::cout << "Reading mesh: " << allVertices << " vertices and " << allElements << " elements in GMSH file " << std::endl;
       std::cout << "      (" << KTri << " triangles and " << KTetra << " tetrahedron)" << std::endl;
       std::cout << "mesh->K = " << mesh->K << std::endl;
 
@@ -389,7 +389,7 @@ void FacePair3d(Mesh *mesh){
     int vc1 = myfaces[n].vc;   int vc2 = myfaces[n+1].vc;
 
     // if faces match
-    if (va1==va2 && vb1==vb2 && vb1==vb2){
+    if (va1==va2 && vb1==vb2 && vc1==vc2){
 
       mesh->EToE[e1][f1] = e2;
       mesh->EToF[e1][f1] = f2;
