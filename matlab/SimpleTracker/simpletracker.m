@@ -143,15 +143,15 @@ function [ tracks adjacency_tracks A ] = simpletracker(points, varargin)
     unmatched_sources = cell(n_slices, 1);
     n_cells = cellfun(@(x) size(x, 1), points);
     
-    if debug
-       fprintf('%03d/%03d', 0, n_slices-1);
-    end
+%     if debug
+%        fprintf('%03d/%03d\n', 0, n_slices-1);
+%     end
     
     for i = 1 : n_slices-1
         
         if debug
-            fprintf(repmat('\b', 1, 7)); 
-            fprintf('%03d/%03d', i, n_slices-1);
+%             fprintf(repmat('\b', 1, 7)); 
+            fprintf('%03d/%03d\n', i, n_slices-1);
         end
 
         source = points{i};

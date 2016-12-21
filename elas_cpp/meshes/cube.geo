@@ -6,7 +6,7 @@ ay = .5;
 az = .5;
 
 Mesh.CharacteristicLengthMax = 10;
-Mesh.CharacteristicLengthFactor = .25;
+Mesh.CharacteristicLengthFactor = .125;
 Mesh.Optimize = 1;
 
 BOUNDARY_X = 100;

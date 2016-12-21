@@ -1,16 +1,19 @@
-function Elasticity2D_RayleighWave
+function [L2err errU errS] = Elasticity2D_RayleighWave(N,K1D,mu)
 
 % clear all, clear
 clear -global *
 
 Globals2D
 
-mu = .1;
+if nargin==0
+    mu = 1;
+    K1D = 4;
+    N = 3;
+end
+
 lambda = 1;
 FinalTime = .25*sqrt(1/mu);
 
-K1D = 4;
-N = 3;
 
 % filename = 'Grid/Other/block2.neu';
 % [Nv, VX, VY, K, EToV] = MeshReaderGambit2D(filename);
@@ -91,7 +94,8 @@ tau0 = 1;
 for fld = 1:5
     tau{fld} = tau0;
     if fld > 2
-        tau{fld} = tau0./(mu+lambda);
+        %tau{fld} = tau0./(mu+lambda);
+        tau{fld} = tau0*ones(size(mu));
     end
 end
 
@@ -176,7 +180,7 @@ dt = 1/(max(2*mu(:)+lambda(:))*CN*max(Fscale(:)));
 tstep = 0;
 
 
-figure
+% figure
 % colormap(gray)
 % colormap(hot)
 while (time<FinalTime)
@@ -196,7 +200,7 @@ while (time<FinalTime)
         
     end;
     
-    if 1 && mod(tstep,10)==0
+    if nargin==0 && mod(tstep,10)==0
         clf
 %                 subplot(1,2,1)
 %         vv = Vp*U{1}/10;
@@ -235,15 +239,17 @@ serr = (Vq*U{3} - sxx(xq,yq,FinalTime)).^2 + (Vq*U{4} - syy(xq,yq,FinalTime)).^2
 sq = sxx(xq,yq,FinalTime).^2 + syy(xq,yq,FinalTime).^2 + sxy(xq,yq,FinalTime).^2;
 errS = sqrt(sum(wqJ(:).*serr(:)))/sqrt(sum(wqJ(:).*sq(:)));
 
-figure
-pterr = abs(Vp*U{1} - v1(xp,yp,FinalTime)) + abs(Vp*U{2} - v2(xp,yp,FinalTime));
-color_line3(xp,yp,pterr,pterr,'.')
-title(sprintf('velocity L2 err = %g\n',errU))
-
-figure
-pterr = abs(Vp*U{3} - sxx(xp,yp,FinalTime)) + abs(Vp*U{4} - syy(xp,yp,FinalTime)) + abs(Vp*U{5} - sxy(xp,yp,FinalTime));
-color_line3(xp,yp,pterr,pterr,'.')
-title(sprintf('sigma L2 err = %g\n',errS))
+if nargin==0
+    figure
+    pterr = abs(Vp*U{1} - v1(xp,yp,FinalTime)) + abs(Vp*U{2} - v2(xp,yp,FinalTime));
+    color_line3(xp,yp,pterr,pterr,'.')
+    title(sprintf('velocity L2 err = %g\n',errU))
+    
+    figure
+    pterr = abs(Vp*U{3} - sxx(xp,yp,FinalTime)) + abs(Vp*U{4} - syy(xp,yp,FinalTime)) + abs(Vp*U{5} - sxy(xp,yp,FinalTime));
+    color_line3(xp,yp,pterr,pterr,'.')
+    title(sprintf('sigma L2 err = %g\n',errS))
+end
 
 L2err = sqrt(sum(wqJ(:).*(err(:)+serr(:))))/sqrt(sum(wqJ(:).*(uq(:)+sq(:))))
 errU

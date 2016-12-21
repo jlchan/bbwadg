@@ -60,9 +60,17 @@ occa::kernel rk_update;
 occa::kernel rk_update_WADG;
 occa::memory c_Vq_reduced;
 occa::memory c_Pq_reduced;
+
+// transversely isotropic media
 occa::memory c_rhoq;
 occa::memory c_lambdaq;
 occa::memory c_muq;
+occa::memory c_c33;
+occa::memory c_c44;
+
+// ricker ptsrc
+occa::memory c_fsrc;
+
 occa::kernel rk_volume_elas;
 occa::kernel rk_surface_elas;
 occa::kernel rk_update_elas;
@@ -437,6 +445,11 @@ void InitWADG_subelem(Mesh *mesh,double(*c2_ptr)(double,double,double)){
   MatrixXd rhoq(Vq_reduced.rows(),mesh->K);
   MatrixXd lambdaq(Vq_reduced.rows(),mesh->K);
   MatrixXd muq(Vq_reduced.rows(),mesh->K);
+  MatrixXd c33(Vq_reduced.rows(),mesh->K);
+  MatrixXd c44(Vq_reduced.rows(),mesh->K);
+
+  MatrixXd fsrcq(Vq_reduced.rows(),mesh->K);  
+  
   for (int e = 0; e < mesh->K; ++e){
 
     // locally interpolate to cubature points
@@ -446,11 +459,34 @@ void InitWADG_subelem(Mesh *mesh,double(*c2_ptr)(double,double,double)){
     zq = Vq_reduced*(mesh->z.col(e));
 
     for (int i = 0; i < Vq_reduced.rows(); ++i){
-      rhoq(i,e) = 1.f;//(*c2_ptr)(xq(i),yq(i),zq(i));
-      lambdaq(i,e) = 1.f;
-      muq(i,e) = 1.f;
+      double weight = (*c2_ptr)(xq(i),yq(i),zq(i));
+      rhoq(i,e) = 1.0; 
+      lambdaq(i,e) = 1.0 * weight;
+      muq(i,e) = 1.0 * weight;
+      c33(i,e) = 1.0 * weight;
+      c44(i,e) = 1.0 * weight;
+      if (zq(i) > 0){ // vertical part
+	c33(i,e) = 3.0 * weight; // 2*mu + lambda
+	c44(i,e) = 1.0 * weight;	
+      }
+
+      // smoothed ricker pulse
+      double x0 = 0.0;
+      double y0 = 0.0;
+      double z0 = 0.1;
+      double a = 100.0;
+      double dx = xq(i) - x0;
+      double dy = yq(i) - y0;
+      double dz = zq(i) - z0;      
+      double r2 = dx*dx + dy*dy + dz*dz;
+      fsrcq(i,e) = exp(-a*r2);
     }
   }
+  //  cout << "c33" << endl  << c33.col(0) << endl;
+  //  cout << "c44" << endl  << c44.col(0) << endl;
+  //  cout << "mu" << endl  << muq.col(0) << endl;
+  //  cout << "lambda" << endl  << lambdaq.col(0) << endl;
+  
   double wavespeed = sqrt((2*lambdaq.array()+muq.array())/rhoq.array()).maxCoeff();
   printf("Max wavespeed value = %f\n",wavespeed);
   dgInfo.addDefine("p_tau_v",1.0); // velocity penalty
@@ -461,6 +497,7 @@ void InitWADG_subelem(Mesh *mesh,double(*c2_ptr)(double,double,double)){
 
   MatrixXd invM = mesh->V*mesh->V.transpose();
   MatrixXd Pq_reduced = invM*Vq_reduced.transpose()*wq.asDiagonal();
+  
   dgInfo.addDefine("p_Nq_reduced",Vq_reduced.rows()); // for update step quadrature
 
   // not used in WADG subelem - just to compile other kernels
@@ -471,6 +508,12 @@ void InitWADG_subelem(Mesh *mesh,double(*c2_ptr)(double,double,double)){
   setOccaArray(rhoq,c_rhoq);
   setOccaArray(lambdaq,c_lambdaq);
   setOccaArray(muq,c_muq);
+  setOccaArray(c33,c_c33);
+  setOccaArray(c44,c_c44);
+
+  // smoothed ricker src
+  MatrixXd fsrc = Pq_reduced * fsrcq;
+  setOccaArray(fsrc,c_fsrc);
 
   setOccaArray(Pq_reduced,c_Pq_reduced);
   setOccaArray(Vq_reduced,c_Vq_reduced);
@@ -959,10 +1002,10 @@ dfloat WaveInitOCCA3d(Mesh *mesh, int KblkVin, int KblkSin,
 
   occa::printAvailableDevices();
 
-  device.setup("mode = OpenCL, platformID = 0, deviceID = 0");
+  //device.setup("mode = OpenCL, platformID = 0, deviceID = 0");
   //device.setup("mode = OpenMP, platformID = 0, deviceID = 0");
   //device.setup("mode = Serial");
-  //device.setup("mode = CUDA, platformID = 0, deviceID = 2");
+  device.setup("mode = CUDA, platformID = 0, deviceID = 2");
 
   //device.setCompiler("nvcc"); device.setCompilerFlags("--use_fast_math"); device.setCompilerFlags("--fmad=true");
 
@@ -1588,7 +1631,7 @@ void Wave_RK(Mesh *mesh, dfloat FinalTime, dfloat dt, int useWADG){
 	if (tstep==0 && INTRK==1){
 	  printf("running planar + subelem WADG kernel\n");
 	}
-	RK_step_WADG_subelem(mesh, fa, fb, fdt);
+	RK_step_WADG_subelem(mesh, fa, fb, fdt, time);
       }else if (useWADG==2){
 	if (tstep==0 && INTRK==1){
 	  printf("running curvilinear WADG kernels\n");
@@ -1606,13 +1649,19 @@ void Wave_RK(Mesh *mesh, dfloat FinalTime, dfloat dt, int useWADG){
 }
 
 // defaults to nodal!!
-void RK_step_WADG_subelem(Mesh *mesh, dfloat rka, dfloat rkb, dfloat fdt){
+void RK_step_WADG_subelem(Mesh *mesh, dfloat rka, dfloat rkb, dfloat fdt, dfloat time){
 
+  dfloat tR = 25;
+  dfloat f0 = 1.0 / tR;  
+  dfloat at = M_PI*f0*(time-tR);
+  dfloat ftime = 1e3*(1.0 - 2.0*at*at)*exp(-at*at); // ricker pulse 
+  
   rk_volume_elas(mesh->K, c_vgeo, c_Dr, c_Ds, c_Dt, c_Q, c_rhsQ);
   rk_surface_elas(mesh->K, c_fgeo, c_Fmask, c_vmapP, c_LIFT, c_Q, c_rhsQ);
   rk_update_elas(mesh->K, c_Vq_reduced, c_Pq_reduced,
-  		 c_rhoq, c_lambdaq, c_muq,
-		 rka, rkb, fdt,
+  		 c_rhoq, c_lambdaq, c_muq, c_c33, c_c44,
+		 ftime, c_fsrc,
+		 rka, rkb, fdt, 
   		 c_rhsQ, c_resQ, c_Q);
   device.finish();
 

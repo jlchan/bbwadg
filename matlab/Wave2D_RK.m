@@ -7,11 +7,12 @@ Globals2D
 
 if nargin==0
     %     Nin = 4; K1D = 16;
-    Nin = 8; K1D = 8; c_flag = 0;
+    Nin = 7; K1D = 2; c_flag = 0;
     FinalTime = .5;
 %     cfun = @(x,y) ones(size(x));
 %     cfun = @(x,y) 1 + .5*sin(pi*x).*sin(pi*y); % smooth velocity
     cfun = @(x,y) (1 + .5*sin(2*pi*x).*sin(2*pi*y) + (y > 0)); % piecewise smooth velocity
+%     cfun = @(x,y) 1 + .75*sin(8*pi*x).*sin(8*pi*y);
 %     cfun = @(x,y) 2 + sin(2*pi*sin(x));
 end
 N = Nin;
@@ -38,12 +39,12 @@ Jq = Vq*J;
 
 %% params setup
 
-global cq Vq Pq Minvc Mref USE_C_MASS
+global c cq Vq Pq Minvc Mref USE_C_MASS
 
 USE_C_MASS = c_flag;
 
 cq = cfun(xq,yq);
-
+c = cfun(x,y);
 
 [r1 s1] = Nodes2D(1); [r1 s1] = xytors(r1,s1);
 % V1 = Vandermonde2D(1,r,s)/Vandermonde2D(1,r1,s1);
@@ -58,7 +59,7 @@ for v = 1:length(VX)
     R(j + (e-1)*3,v) = 1;
 end
 % keyboard
-c = R*cfun(VX(:),VY(:));
+% c = R*cfun(VX(:),VY(:));
 % cq = Vq*V1*reshape(c,3,K);
 
 disp(sprintf('min continuous c value = %e\n',min(cq(:))))
@@ -95,7 +96,7 @@ end
 
 
 %% check eigenvalues of DG matrix 
-if 0 && nargin==0
+if 1 && nargin==0
     e = zeros(3*Np*K,1);
     A = zeros(3*Np*K);
     for i = 1:3*Np*K
@@ -204,7 +205,7 @@ function [rhsp, rhsu, rhsv] = acousticsRHS2D(p,u,v,time)
 % Purpose  : Evaluate RHS flux in 2D acoustics TM form
 
 Globals2D;
-global cq Vq Pq Minvc Mref USE_C_MASS
+global c cq Vq Pq Minvc Mref USE_C_MASS
 
 % Define field differences at faces
 dp = zeros(Nfp*Nfaces,K); dp(:) = p(vmapP)-p(vmapM);
@@ -245,6 +246,7 @@ elseif USE_C_MASS==0  % projection
 %         fprintf('low storage projection\n')
 %     end
     rhsp = Pq*(cq.*(Vq*rhsp));
+%     rhsp = rhsp./c;
     
 end
 

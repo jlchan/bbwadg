@@ -43,7 +43,7 @@ end
 
 % interpolate node coordinates and field to equally spaced nodes
 xout = interp*xin; yout = interp*yin; uout = interp*uin;
-uout=abs(uout);
+% uout=abs(uout);
 % render and format solution field
 trisurf(TRI, xout(:), yout(:), uout(:));
 shading interp

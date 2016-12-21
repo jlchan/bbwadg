@@ -1,12 +1,14 @@
-function Elasticity2D
+function L2err = Elasticity2D(N,K1D)
 
 % clear all, clear
 clear -global *
 
 Globals2D
 
-K1D = 2;
-N = 5;
+if nargin==0
+    K1D = 2;
+    N = 5;
+end
 c_flag = 0;
 FinalTime = 1;
 
@@ -73,7 +75,8 @@ tau0 = 1;
 for fld = 1:5
     tau{fld} = tau0;
     if fld > 2
-        tau{fld} = tau0./(mu+lambda);
+        %tau{fld} = tau0./(mu+lambda);
+        tau{fld} = tau0*ones(size(mu));
     end
 end
 
@@ -177,7 +180,7 @@ CNh = (max(mu(:)+lambda(:))*CN*max(Fscale(:)));
 tstep = 0;
 
 
-figure
+% figure
 % colormap(gray)
 % colormap(hot)
 while (time<FinalTime)
@@ -198,7 +201,7 @@ while (time<FinalTime)
         
     end;
     
-    if 1 && mod(tstep,10)==0
+    if nargin==0 && mod(tstep,10)==0
         clf
         
         p = U{5}; % trace(S)        
@@ -250,7 +253,9 @@ errS = sqrt(sum(wqJ(:).*serr(:)))/sqrt(sum(wqJ(:).*sq(:)));
 % title(sprintf('sigma L2 err = %g\n',errS))
 
 L2err = sqrt(sum(wqJ(:).*(err(:)+serr(:))))/sqrt(sum(wqJ(:).*(uq(:)+sq(:))))
- title(sprintf('L2 err = %g\n',L2err))
+if nargin==0
+    title(sprintf('L2 err = %g\n',L2err))
+end
 % vv = Vp*p;
 % err = (abs(u1(xp,yp,FinalTime)-vv));
 % figure
@@ -353,7 +358,7 @@ if useWADG
     rhs{2} = rr{2};
     rhs{3} = Pq*((2*mu+lambda).*rr{3} + lambda.*rr{4});
     rhs{4} = Pq*(lambda.*rr{3} + (2*mu+lambda).*rr{4});
-    rhs{5} = Pq*((mu/2) .* rr{5});
+    rhs{5} = Pq*((mu) .* rr{5});
 else
     rhs{1} = rr{1};
     rhs{2} = rr{2};

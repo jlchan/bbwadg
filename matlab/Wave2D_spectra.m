@@ -1,11 +1,11 @@
-function Advec2D_cfl
+function Wave2D_spectra
 
 Globals2D
 global bx by Vq Pq Vfq Pfq Vrq Vsq Prq Psq
 
 
 % Polynomial order used for approximation
-N = 2;
+N = 3;
 
 % Read in Mesh
 % [Nv, VX, VY, K, EToV] = MeshReaderGambit2D('Grid/Other/squarereg.neu');
@@ -66,7 +66,7 @@ dtscale = dtscale2D; dt = min(dtscale)*rmin*2/3
 if 1
     e = zeros(3*Np*K,1);
     A = zeros(3*Np*K);
-    for tau = [1e6]
+    for tau = [10]
         for i = 1:3*Np*K
             e(i) = 1;
             ids = 1:Np*K;
@@ -85,7 +85,7 @@ if 1
         end
         [W D] = eig(A);
         d = diag(D);
-        plot(d,'o')
+        plot(real(d),imag(d),'o')
         axis equal
 %         xlim([-100 1])
         %axis([-100 1 -50 50])
@@ -93,7 +93,7 @@ if 1
         title(sprintf('tau = %d\n',tau))
         drawnow
     end
-    
+    keyboard
     ids = find(abs(real(d)) < 1);
     d = d(ids);
     W = W(:,ids);
@@ -119,14 +119,12 @@ if 1
         color_line3(xp,yp,vv,vv,'.')
         view(3)
         pause
-    end
+    end       
     
-    
-    
-    [W2 D2] = eig(P*A);
-    d2 = diag(D2);
-    plot(d2,'x')
-    return
+%     [W2 D2] = eig(P*A);
+%     d2 = diag(D2);
+%     plot(d2,'x')
+%     return
 end
 
 %%

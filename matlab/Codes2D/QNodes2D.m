@@ -244,5 +244,6 @@ end
 XY = a*v;
 x = XY(:,1);
 y = XY(:,2);
+w = 2.0*w/sum(w(:));
 w = w(:);
 return;

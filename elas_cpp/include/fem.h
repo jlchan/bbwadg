@@ -67,7 +67,7 @@ void compute_error(Mesh *mesh, double time, dfloat *Q,
 		   double &L2err, double &relL2err);
 
 // planar elements + heterogeneous media
-void RK_step_WADG_subelem(Mesh *mesh, dfloat rka, dfloat rkb, dfloat fdt);
+void RK_step_WADG_subelem(Mesh *mesh, dfloat rka, dfloat rkb, dfloat fdt, dfloat time);
 
 // curvilinear and WADG-based
 void InitQuadratureArrays(Mesh *mesh);

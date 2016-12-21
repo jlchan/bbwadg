@@ -10,7 +10,7 @@ time = 0;
 resu = zeros(Np,K); 
 
 % compute time step size
-dt = .125/max( ((N+1)^2)*.5*Fscale(:));
+dt = .125/max(((N+1)^2)*.5*Fscale(:));
 
 % outer time step loop 
 tstep = 1;
@@ -43,7 +43,7 @@ alpha=1; du = zeros(Nfp*Nfaces,K);
 du(:) = 0.5*(u(vmapM)-u(vmapP)).*(nx(:) - alpha*abs(nx(:)));
 
 % impose boundary condition at x=0
-ubc  = 0;%exp(-1*( (Fx(mapB)-time).^2 + Fy(mapB).^2 + Fz(mapB).^2));
+ubc  = 0; 
 du(mapB) = 0.5*(u(vmapB)-ubc).*(nx(mapB)-alpha*abs(nx(mapB)));
 
 % compute right hand sides of the semi-discrete PDE

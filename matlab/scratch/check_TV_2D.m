@@ -2,20 +2,23 @@ function check_TV_2D
 
 Globals2D
 
-N = 4;
+N = 5;
 
 [Nv, VX, VY, K, EToV] = MeshReaderGambit2D('Grid/Other/block2.neu');
+% [Nv, VY, VX, K, EToV] = MeshReaderGambit2D('Grid/CFD/kovA02.neu');
+% VX = VX - .5; VY = VY - .25;
 
-% [Nv, VX, VY, K, EToV] = MeshReaderGambit2D('Grid/Other/lshape.neu');
 % [Nv VX VY K EToV] = unif_tri_mesh(4);
 StartUp2D
 
-Hrefine2D(1:K);
-StartUp2D
-
+nref = 1;
+for ref = 1:nref
+    Hrefine2D(1:K);
+    StartUp2D
+end
 [r s] = Nodes2D(N); [r s] = xytors(r,s);
 [re se] = EquiNodes2D(N); [re se] = xytors(re,se);
-[rp sp] = EquiNodes2D(N+4); [rp sp] = xytors(rp,sp);
+[rp sp] = EquiNodes2D(25); [rp sp] = xytors(rp,sp);
 
 Vp = Vandermonde2D(N,rp,sp)/V;
 xp = Vp*x; yp = Vp*y;
@@ -26,26 +29,31 @@ xe = Ve*x; ye = Ve*y;
 Dr = V\Vr; Ds = V\Vs;
 Ve = bern_basis_tri(N,re,se);
 
-f = @(x,y) (y > .5*sin(pi*x)) + exp(sin(pi*x+y)) + sin(2*pi*(x+y));
+rad = @(x,y) sqrt(x.^2+y.^2);
+% f = @(x,y) (y > .5*sin(pi*x)) + exp(sin(pi*(.5*x+y))).*sin(4*pi*x).*sin(4*pi*y);
 % f = @(x,y) y > .1;
 % f = @(x,y) sin(25*pi*x+exp(y));
-% r = @(x,y) sqrt(x.^2+y.^2);
-% f = @(x,y) 1./sqrt(r(x,y));
+f = @(x,y) (rad(x+2/3,y) < 1/4) + 4*abs(rad(x,y)-1/4).*(rad(x,y) < 1/4) + exp(-36*rad(x-2/3,y).^2);
 
 Vp = bern_basis_tri(N,rp,sp);
 
 u = V\f(x,y);
 
-% up = Vp*u;
-% color_line3(xp,yp,up,up,'.'); 
+up = Vp*u;
+%color_line3(xp,yp,up,up,'.'); 
+color_line3(xp,yp,f(xp,yp),f(xp,yp),'.'); 
 % hold on
 % plot3(xe,ye,u,'o');
 % return
+axis off
+axis tight
+%print(gcf,'-dpng','u_TVBB.png')
+view(-25,25)
+print(gcf,'-dpng','u_detector2D.png')
 
-%% plot TV estimate
-
-clf
-[TVK TVx TVy] = compute_TV(u);
+% plot TV estimate
+% clf
+TVK = compute_TV(u);
 TV = repmat(TVK,Np,1);
 % TVx = repmat(TVx,Np,1);
 % TVy = repmat(TVy,Np,1);
@@ -54,8 +62,17 @@ tvp = Vp*TV;
 
 % quiver(x,y,TVx,TVy)
 % hold on
+figure
+% PlotMesh2D
 color_line3(xp,yp,tvp,tvp,'.')
+colorbar
+set(gca,'fontsize',16)
+% axis equal
+axis off
+axis tight
 
+% print(gcf,'-dpng','TVBB.png')
+print(gcf,'-dpng','detector2D.png')
 return
 
 ux = rx.*(Dr*u) + sx.*(Ds*u);
@@ -119,7 +136,17 @@ TV = TVx+TVy;
 
 function TV = TV1D(N,u)
 
+x = linspace(0,1,N);
+% w = 4*x.*(1-x);
+w = ones(size(x));
 TV = 0;
 for i = 1:N
-    TV = TV + abs(u(i,:) - u(i+1,:));
+%     TV = TV + abs(u(i,:) - u(i+1,:)).*w(i);
+end
+
+tol = 1e-2; %max(abs(u - repmat(mean(u,1),N+1,1)))
+for i = 2:N
+    flag1 = abs(u(i,:)-u(i-1,:)) > tol;
+    flag2 = abs(u(i+1,:)-u(i,:)) > tol;
+    TV = TV + abs(sign(u(i,:) - u(i-1,:)).*flag1 - sign(u(i+1,:)- u(i,:)).*flag2); % sign variations at each node    
 end

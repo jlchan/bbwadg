@@ -34,13 +34,13 @@ up = Vp*u;
 % plot(xp(:),up(:),'r-.','linewidth',2)
 sum(u,1)
 W = Ve;
-W = get_BB_P1smoother(N);
-W = get_BB_smoother(N);
+% W = get_BB_P1smoother(N);
+% W = get_BB_smoother(N);
 
-a = 5; s = 2; nc = 2; n = linspace(0,1,N+1);
-d = exp(-a*((n-n(nc))./(1-n(nc))).^s);  d(1:nc) = 1;
-% clf;plot(n,d);return
-W = T*diag(d)/T;
+% a = 5; s = 2; nc = 2; n = linspace(0,1,N+1);
+% d = exp(-a*((n-n(nc))./(1-n(nc))).^s);  d(1:nc) = 1;
+% % clf;plot(n,d);return
+% W = T*diag(d)/T;
 
 [TVK] = TV1D(u);
 TV = sum(TVK(:));
@@ -55,11 +55,11 @@ u(:,ids) = W*u(:,ids);
 % u(:,ids) = W*(u(:,ids)-ulin(:,ids));
 % umodal = T\u(:,ids); u(:,ids) = u(:,ids) - T(:,1:2)*umodal(1:2,:) + ulin(:,ids);
 sum(u,1)
-uBp = Vp*u;
+uBp = Vp*f(xe);
 plot(xp(:),uBp(:),'r-.','linewidth',2)
 % plot(xe(:),u(:),'o--','linewidth',2,'markersize',10,'MarkerFaceColor','g')
 
-
+return
 % plot([x(1,:); x(end,:)],repmat(TVK,2,1),'ko-','linewidth',2,'MarkerFaceColor','g')
 %legend('Exact function','Polynomial interpolant','Bernstein coefficients','Location','NorthWest')
 % legend('Exact function','Polynomial interpolant','Shock detector')%,'Location','NorthWest')

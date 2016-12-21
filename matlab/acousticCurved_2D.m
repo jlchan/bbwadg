@@ -30,7 +30,6 @@ for e = 1:K
 end
 
 BuildBCMaps2D;
-
 for ref = 1:nref
     Refine2D(ones(size(EToV)));
     StartUp2D;

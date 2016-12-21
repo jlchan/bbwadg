@@ -2,7 +2,7 @@
 \BOOKMARK [1][-]{section.2}{Semi-discrete discontinuous Galerkin formulation}{}% 2
 \BOOKMARK [2][-]{subsection.2.1}{Penalization terms in numerical fluxes}{section.2}% 3
 \BOOKMARK [1][-]{section.3}{Dependence of spectra on the penalty parameter}{}% 4
-\BOOKMARK [2][-]{subsection.3.1}{Conforming and non-conforming spaces}{section.3}% 5
+\BOOKMARK [2][-]{subsection.3.1}{Conforming and non-conforming approximation spaces}{section.3}% 5
 \BOOKMARK [2][-]{subsection.3.2}{Scalar advection and acoustic wave propagation}{section.3}% 6
 \BOOKMARK [2][-]{subsection.3.3}{Behavior as }{section.3}% 7
 \BOOKMARK [1][-]{section.4}{Numerical experiments}{}% 8

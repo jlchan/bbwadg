@@ -289,6 +289,10 @@ kernel void rk_update_elas(const int K,
 			   const dfloat * restrict rhoq,
 			   const dfloat * restrict lambdaq,
 			   const dfloat * restrict muq,			   
+			   const dfloat * restrict c33q,
+			   const dfloat * restrict c44q,
+			   const dfloat ftime, 
+			   const dfloat * restrict fsrc,			   
 			   const dfloat fa,
 			   const dfloat fb,
 			   const dfloat fdt,
@@ -361,18 +365,20 @@ kernel void rk_update_elas(const int K,
 	  const dfloat lambda = lambdaq[id];
 	  const dfloat mu = muq[id];
 	  const dfloat A = 2*mu + lambda;
+	  const dfloat c33 = c33q[id];
+	  const dfloat c44 = c44q[id];
 
 	  // velocity	  
 	  sQ[k2][0][i] = rho*rv1;
 	  sQ[k2][1][i] = rho*rv2;
 	  sQ[k2][2][i] = rho*rv3;	  
 	    
-	  // isotropic media
+	  // transversely isotropic media
 	  sQ[k2][3][i] = A*rsxx + lambda*rsyy + lambda*rszz;
 	  sQ[k2][4][i] = A*rsyy + lambda*rsxx + lambda*rszz;
-	  sQ[k2][5][i] = A*rszz + lambda*rsxx + lambda*rsyy;
-	  sQ[k2][6][i] = mu * rsyz;
-	  sQ[k2][7][i] = mu * rsxy;
+	  sQ[k2][5][i] = c33 * rszz + lambda*rsxx + lambda*rsyy;
+	  sQ[k2][6][i] = c44 * rsyz;
+	  sQ[k2][7][i] = c44 * rsxy;
 	  sQ[k2][8][i] = mu * rsxz;	  
 	  
 	}
@@ -396,6 +402,9 @@ kernel void rk_update_elas(const int K,
 	      rQ[fld] += Pq_ij * sQ[k2][fld][j];
 	    }	    	   
 	  }
+
+	  // apply ricker pulse to x-coordinate
+	  rQ[0] += ftime * fsrc[i + k*p_Np];
 
 	  int id = i + k*p_Np*p_Nfields;
 	  for (int fld = 0; fld < p_Nfields; ++fld){

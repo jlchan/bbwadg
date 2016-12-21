@@ -1,12 +1,14 @@
-function Elasticity2D_Stonely
+function L2err = Elasticity2D_Stonely(N,K1D)
 
 % clear all, clear
 clear -global *
 
 Globals2D
 
-K1D = 4;
-N = 3;
+if nargin==0
+    K1D = 4;
+    N = 3;
+end
 c_flag = 0;
 FinalTime = 1;
 
@@ -128,6 +130,9 @@ tau{2} = tau0./rhoF;
 tau{3} = tau0./(2*muF + lambdaF);
 tau{4} = tau0./(2*muF + lambdaF);
 tau{5} = tau0./(2*muF + lambdaF);
+% for fld = 1:Nfld
+%     tau{fld} = tau0*ones(size(muF));
+% end
     
 
 rho = Vq*rho;
@@ -288,13 +293,13 @@ end
 
 % compute time step size
 CN = (N+1)^2/2; % guessing...
-dt = 2/(sqrt(max((2*mu(:)+lambda(:))./rho(:)))*CN*max(Fscale(:)));
+dt = .5/(sqrt(max((2*mu(:)+lambda(:))./rho(:)))*CN*max(Fscale(:)));
 
 % outer time step loop
 tstep = 0;
 
 
-figure
+% figure
 % colormap(gray)
 % colormap(hot)
 while (time<FinalTime)
@@ -314,7 +319,7 @@ while (time<FinalTime)
         
     end;
     
-    if 1 && mod(tstep,10)==0
+    if nargin==0 && mod(tstep,10)==0
         clf        
         p = U{3}+U{4}; % trace(S)
 %         p = U{1};
@@ -353,7 +358,7 @@ errU = sqrt(sum(wqJ(:).*err(:)))/sqrt(sum(wqJ(:).*uq(:)));
 serr = (Vq*U{3} - sxx(xq,yq,FinalTime)).^2 + (Vq*U{4} - syy(xq,yq,FinalTime)).^2 + (Vq*U{5} - sxy(xq,yq,FinalTime)).^2;
 sq = sxx(xq,yq,FinalTime).^2 + syy(xq,yq,FinalTime).^2 + sxy(xq,yq,FinalTime).^2;
 errS = sqrt(sum(wqJ(:).*serr(:)))/sqrt(sum(wqJ(:).*sq(:)));
-
+if nargin==0
 figure
 pterr = abs(Vp*U{1} - v1(xp,yp,FinalTime)) + abs(Vp*U{2} - v2(xp,yp,FinalTime));
 color_line3(xp,yp,pterr,pterr,'.')
@@ -363,7 +368,7 @@ figure
 pterr = abs(Vp*U{3} - sxx(xp,yp,FinalTime)) + abs(Vp*U{4} - syy(xp,yp,FinalTime)) + abs(Vp*U{5} - sxy(xp,yp,FinalTime));
 color_line3(xp,yp,pterr,pterr,'.')
 title(sprintf('sigma L2 err = %g\n',errS))
-
+end
 L2err = sqrt(sum(wqJ(:).*(err(:)+serr(:))))/sqrt(sum(wqJ(:).*(uq(:)+sq(:))))
 errU
 errS

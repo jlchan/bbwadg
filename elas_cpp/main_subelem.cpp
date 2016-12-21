@@ -6,9 +6,10 @@ double PulseInitialCondition(double x, double y, double z, double time){
   return exp(-a*a*rad);
 };
 
-double WaveField(double x, double y, double z){
+
+double WaveWeight(double x, double y, double z){
   double k = 2.0;
-  double a = .5;
+  double a = 0.0;
   return 1.0 + a*cos(k*M_PI*x)*cos(k*M_PI*y)*cos(k*M_PI*z);
 };
 
@@ -44,8 +45,8 @@ int main(int argc, char **argv){
 
   InitQuadratureArrays(mesh); // initialize quadrature-based geofacs on host
 
-  double (*c2_ptr)(double,double,double) = &WaveField;
-  InitWADG_subelem(mesh,c2_ptr);
+  double (*wptr)(double,double,double) = &WaveWeight;
+  InitWADG_subelem(mesh,wptr);
   printf("initialized wadg subelem\n");
 
   //  =========== field storage (dfloat) ===========
@@ -53,13 +54,12 @@ int main(int argc, char **argv){
   dfloat *Q = (dfloat*) calloc(p_Nfields*mesh->K*p_Np, sizeof(dfloat));   // 4 fields
 
   double (*uexptr)(double,double,double,double) = NULL;
-  uexptr = &PulseInitialCondition;
-
-  int field = 0;
+  //  uexptr = &PulseInitialCondition;
+  //int field = 0;
   //WaveSetU0(mesh,Q,0.0,field,uexptr); // interpolate
-  WaveProjectU0(mesh,Q,0.0,field,uexptr); // L2 projection
+  //WaveProjectU0(mesh,Q,0.0,field,uexptr); // L2 projection
 
-  writeVisToGMSH("meshes/p0.msh",mesh,Q,0,p_Nfields);
+  //writeVisToGMSH("meshes/p0.msh",mesh,Q,0,p_Nfields);
 
   // double L2err, relL2err;
   // compute_error(mesh, 0.0, Q, uexptr, L2err, relL2err);

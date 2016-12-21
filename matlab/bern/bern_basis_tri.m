@@ -2,6 +2,7 @@ function [V Vr Vs V1 V2 V3 id] = bern_basis_tri(N,r,s)
 
 
 [V Vr Vs V1 V2 V3] = bern_tri(N,r,s);
+
 return
 % 
 % % use equivalence between W&B and equispaced nodes - get ordering

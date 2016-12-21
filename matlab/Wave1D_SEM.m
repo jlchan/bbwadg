@@ -6,13 +6,15 @@ function Wave1D_SEM
 Globals1D;
 
 % Order of polymomials used for approximation
-N = 1;
+N = 8;
 
-CG = 1;
+CG = 0;
+% Solve Problem
+FinalTime = 8;
 
 % Generate simple mesh
-% K1D = 16;
-K1D = 64;
+K1D = 8;
+% K1D = 64;
 [Nv, VX, K, EToV] = MeshGen1D(-1.0,1.0,K1D);
 
 % Initialize solver and construct grid and metric
@@ -26,7 +28,6 @@ Vp = Vandermonde1D(N,rp)/V;
 xp = Vp*x;
 
 % CG
-
 pairs = sort([vmapM vmapP],2);
 [~,id] = unique(pairs(:,1));
 pairs = pairs(id,:);
@@ -48,10 +49,6 @@ pex = @(x) 1-(x > -1/3) + exp(-100*(x-1/3).^2);
 p = pex(x);
 % p = exp(-100*x.^2);
 u = zeros(size(x));
-
-
-% Solve Problem
-FinalTime = 8;
 
 time = 0;
 
@@ -99,6 +96,28 @@ for tstep=1:Nsteps
     end
 end;
 
+% s = [ones(N-1,1); .5; 0];
+% a = .5; kc = 1;
+% s = ones(N+1,1); s(kc:N+1) = 1-a*(((kc:N+1) - kc)./(N-kc)).^2;
+% plot(0:N,s);return
+% F = V*diag(s)/V;
+
+re = linspace(-1,1,N+1)';
+Ve = Vandermonde1D(N,re)/V;
+xe = Ve*x;
+VB = bern_basis_1D(N,r);
+VBe = bern_basis_1D(N,re);
+F = VB*Ve;
+% F = get_BB_P1smoother(N);
+
+TV = TV1D(VB\p) + TV1D(VB\u);
+[~,id] = max(TV);
+ids = id-2:id+1; % refine in neighborhood
+
+plim = p;
+plim(:,ids) = F*plim(:,ids);
+% [plim ids] = p1limit(plim);
+
 figure
 % plot(x(:),p(:),'o','linewidth',2,'markersize',8,'MarkerFaceColor','g');
 hold on
@@ -108,9 +127,24 @@ plot(xp(:),pex(xp(:)),'-','linewidth',2);
 axis([-1 1 -.5 1.5])
 hold off
 grid on
-legend('FEM approximation','Exact solution')
+legend('DG','Exact solution')
 set(gca,'fontsize',15)
-print(gcf,'-dpng','CG.png')
+
+print(gcf,'-dpng','DGosc.png')
+
+figure
+ppl = Vp*plim;
+hold on
+plot(xp(:),ppl(:),'-.','linewidth',2);
+plot(xp(:),pex(xp(:)),'-','linewidth',2);
+axis([-1 1 -.5 1.5])
+hold off
+grid on
+legend('Filtered DG','Exact solution')
+print(gcf,'-dpng','DGfilter.png')
+%legend('FEM approximation','Exact solution')
+set(gca,'fontsize',15)
+% print(gcf,'-dpng','CG.png')
 % print(gcf,'-dpng','DG1.png')
 % print(gcf,'-dpng','DG4.png')
 
@@ -142,4 +176,87 @@ rhsp = -rx.*(Dr*u) + LIFT*(Fscale.*pflux);
 rhsu = -rx.*(Dr*p) + LIFT*(Fscale.*uflux);
 
 return
+
+
+function [ulimit ids] = p1limit(u)
+
+Globals1D
+
+% Compute cell averages
+uh = invV*u;
+uh(2:Np,:)=0;
+uavg = V*uh;
+v = uavg(1,:);
+
+% Apply slope limiter as needed.
+ulimit = u; 
+eps0=1.0e-8;
+% find end values of each element
+ue1 = u(1,:); 
+ue2 = u(end,:);
+
+% find cell averages
+vk = v; 
+%vkm1 = [v(1),v(1:K-1)]; vkp1 = [v(2:K),v(K)];
+vkm1 = [v(K),v(1:K-1)]; vkp1 = [v(2:K),v(1)]; % periodic
+
+% Apply reconstruction to find elements in need of limiting
+ve1 = vk - minmodB([(vk-ue1);vk-vkm1;vkp1-vk]);
+ve2 = vk + minmodB([(ue2-vk);vk-vkm1;vkp1-vk]);
+ids = find(abs(ve1-ue1)>eps0 | abs(ve2-ue2)>eps0);
+
+% Check to see if any elements require limiting
+if(~isempty(ids))
+    % create piecewise linear solution for limiting on specified elements
+    uhl = invV*u(:,ids); uhl(3:Np,:)=0; ul = V*uhl;
+    % apply slope limiter to selected elements
+    ulimit(:,ids) = SlopeLimitLin(ul,x(:,ids),vkm1(ids),vk(ids),vkp1(ids));
+end
+
+return;
+
+function ulimit = SlopeLimitLin(ul,xl,vm1,v0,vp1)
+% function ulimit = SlopeLimitLin(ul,xl,vm1,v0,vp1);
+% Purpose: Apply slopelimited on linear function ul(Np,1) on x(Np,1)
+%          (vm1,v0,vp1) are cell averages left, center, and right
+Globals1D;
+
+% Compute various geometric measures
+% ulimit = ul; 
+h = xl(Np,:)-xl(1,:);
+x0 = ones(Np,1)*(xl(1,:) + h/2);
+hN = ones(Np,1)*h;
+
+% Limit function
+ux = (2./hN).*(Dr*ul); 
+ulimit = ones(Np,1)*v0+(xl-x0).*(ones(Np,1)*minmodB([ux(1,:); (vp1-v0)./(h/2); (v0-vm1)./(h/2)]));
+
+return
+
+
+function mfunc = minmodB(v)
+% function mfunc = minmodB(v,M,h)
+% Purpose: Implement the TVB modified midmod function. v is a vector
+
+Globals1D
+M = 40; h = VX(2)-VX(1);
+mfunc = v(1,:);
+ids = find(abs(mfunc) > M*h.^2);
+if(size(ids,2)>0)
+    mfunc(ids) = minmod(v(:,ids));
+end
+return
+
+
+function mfunc = minmod(v)
+% function mfunc = minmod(v)
+% Purpose: Implement the midmod function v is a vector
+m = size(v,1); 
+mfunc = zeros(1,size(v,2));
+s = sum(sign(v),1)/m;
+ids = find(abs(s)==1);
+if(~isempty(ids))
+    mfunc(ids) = s(ids).*min(abs(v(:,ids)),[],1);
+end
+return;
 

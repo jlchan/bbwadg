@@ -72,7 +72,7 @@ for n=1:NCurveFaces  % deform specified faces
   ids = find(abs(1-vr)>1e-7); % warp and blend
   if(f==1) blend = -(r(ids)+s(ids))./(1-vr(ids)); end;
   if(f==2) blend =      +(r(ids)+1)./(1-vr(ids)); end;
-  if(f==3) blend = -(r(ids)+s(ids))./(1-vr(ids)); end;
+  if(f==3) blend = -(r(ids)+s(ids))./(1-vr(ids)); end;    
 
   x(ids,k) = x(ids,k)+blend.*vdx(ids);
   y(ids,k) = y(ids,k)+blend.*vdy(ids);

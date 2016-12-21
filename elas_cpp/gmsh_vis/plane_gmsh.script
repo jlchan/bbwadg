@@ -1,4 +1,4 @@
-Merge "../meshes/cube4.msh";
+Merge "../meshes/cubeSplit4.msh";
 
 // ffmpeg -framerate 2.5 -i sol_%d.png -r 25 HABC2D.mpg
 
@@ -25,11 +25,22 @@ Plugin(CutPlane).TargetError = -1;
 Geometry.Points = 0;
 Mesh.SurfaceFaces = 0;
 Mesh.SurfaceEdges = 0;
+Mesh.VolumeEdges = 0;
+Mesh.VolumeFaces = 0;
+
+General.Light0X = -.25;
+General.Light0Y = .25;
+General.Light0Z = 1.0;
+
+General.Trackball = 0;
+General.RotationX = -80;
+General.RotationY = 0;
+General.RotationZ = 10;
 
 For p In {minI:maxI}
 
 //  Merge Sprintf("../output/sol4_field0_%g.msh", p*step);
-  Merge Sprintf("../meshes/p1.msh");
+  Merge Sprintf("../meshes/p.msh");
   View[0].AdaptVisualizationGrid = 1;
   View[0].MaxRecursionLevel = maxRec;
   View[0].TargetError = targError;
@@ -44,7 +55,7 @@ For p In {minI:maxI}
 
   Plugin(CutPlane).A = 1;
   Plugin(CutPlane).B = 0;
-  Plugin(CutPlane).C = 1;
+  Plugin(CutPlane).C = 0;
   Plugin(CutPlane).D = 0;
   Plugin(CutPlane).Run;
   View[1].ShowTime = 0;
@@ -82,7 +93,7 @@ For p In {minI:maxI}
   View[3].CustomMin = minVal;
   View[3].CustomMax = maxVal;
 
-//  Delete View[0];
+  Delete View[0];
   Print Sprintf("pplane%g.png",p);
 //  Delete View[0];
 //  Delete View[0];

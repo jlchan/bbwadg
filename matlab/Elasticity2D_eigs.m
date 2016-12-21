@@ -5,7 +5,7 @@ clear -global *
 
 Globals2D
 
-K1D = 4;
+K1D = 3;
 N = 3;
 c_flag = 0;
 FinalTime = 4;
@@ -72,9 +72,9 @@ global C11 C12 C13 C22 C23 C33 rho
 
 Nfld = 5; %(u1,u2,sxx,syy,sxy)
 
-rho = 10*ones(size(x));
-mu = ones(size(x));
-lambda = ones(size(x));
+rho = ones(size(x));
+mu = ones(size(x))*.01;
+lambda = ones(size(x))*.01;
 
 mu0 = mu(1);
 lambda0 = lambda(1);
@@ -89,7 +89,6 @@ lambda0 = lambda(1);
 % ids =  mean(y) > .375 & mean(y) < .625 & mean(x) > .5 & mean(x) < .75;
 % mu(:,ids) = 10*mu(:,ids);
 % lambda(:,ids) = 10*lambda(:,ids);
-
 
 
 useWADG = 1;
@@ -173,12 +172,13 @@ end
 
 tau0 = 1;
 for fld = 1:5
-    tau{fld} = tau0*ones(size(x)) / rho(1);
+    tau{fld} = tau0*ones(size(x));
     if fld > 2
         %tau{fld} = tau0./(2*mu+lambda);
-%         tau{fld} = tau0*ones(size(x));
-        tau{fld} = tau0./Cnorm;
-%         tau{fld} = tau0./max(Cnorm(:))*ones(size(x));
+                tau{fld} = tau0*ones(size(x));
+%                 tau{fld} = tau0./Cnorm;
+%         tau{fld} = tau0./Cnorm;
+        %         tau{fld} = tau0./max(Cnorm(:))*ones(size(x));
     end
 end
 
@@ -229,7 +229,7 @@ if 1
     end
     lam = eig(A);
     
-    plot(lam,'r.','markersize',24)
+    plot(lam,'.','markersize',24)
     hold on
 %     title(sprintf('Largest real part = %g\n',max(real(lam))))
 %     axis equal
@@ -238,7 +238,8 @@ if 1
     set(gca,'fontsize',14)
     grid on
 %     legend({'$d_{\min} = 10^{-1}$','$d_{\min} = 10^{-5}$'},'Interpreter','latex')
-    keyboard
+%     keyboard
+return
 end
 %%
 

@@ -105,6 +105,7 @@ occa::memory c_quad_ids;
 occa::kernel rk_update_BBWADGq;
 
 // ================ curvilinear specific kernels ====================
+
 occa::kernel rk_volume_WADG;
 occa::kernel rk_surface_WADG;
 occa::kernel rk_volume_planar;

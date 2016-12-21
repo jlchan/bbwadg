@@ -6,7 +6,7 @@ function  Wave2D_curved
 Globals2D;
 
 N = 7;
-nref = 2;
+nref = 0;
 useJprojection = 1;
 
 Nq = 2*N+1;
@@ -14,8 +14,8 @@ Nq = 2*N+1;
 filename = 'Grid/Other/circA01.neu';
 [Nv, VX, VY, K, EToV, BCType] = MeshReaderGambitBC2D(filename);
 
-% K1D = 2;
-% [Nv, VX, VY, K, EToV] = unif_tri_mesh(K1D);
+K1D = 2;
+[Nv, VX, VY, K, EToV] = unif_tri_mesh(K1D);
 
 % This builds the nodal DG stuff
 StartUp2D;
@@ -40,6 +40,14 @@ end
 if (useJprojection >= 0)
     MakeCylinder2D([k,f], 1, 0, 0);
 end
+
+% VB = bern_basis_tri(N,r,s);
+% [re se] = EquiNodes2D(N); [re se] = xytors(re,se);
+% Ve = Vandermonde2D(N,re,se)/V; 
+% xe = Ve*x; ye = Ve*y;
+% plot3(xe,ye,VB\x-x,'o')
+% keyboard
+
 cinfo = BuildCurvedOPS2D_opt(Nq,useJprojection);
 
 % PlotMesh2D
@@ -64,19 +72,18 @@ Vrq = Vrq/V; Vsq = Vsq/V;
 [rq1D, wq1D] = JacobiGQ(0, 0, Nq);
 rfq = [rq1D, -rq1D, -ones(size(rq1D))];
 sfq = [-ones(size(rq1D)), rq1D, -rq1D];
-rfq = rfq(:); sfq = sfq(:);
+rfq = rfq(:); sfq = sfq(:); 
 wfq = repmat(wq1D,Nfaces,1);
 Vfq = Vandermonde2D(N,rfq,sfq)/V;
 [Vrfq Vsfq] = GradVandermonde2D(N,rfq,sfq);
-Vrfq = Vrfq/V;
-Vsfq = Vsfq/V;
+Vrfq = Vrfq/V; 
+Vsfq = Vsfq/V; 
 
 V1D = Vandermonde1D(N,JacobiGL(0,0,N));
 VfqFace = Vandermonde1D(N,rq1D)/V1D;
 VfqFaceperm = Vandermonde1D(N,rq1D(end:-1:1))/V1D;
 %VfqFace = blkdiag(VfqFace,VfqFace,VfqFaceperm); % repeat for 3 faces
 VfqFace = blkdiag(VfqFace,VfqFace,VfqFace); % repeat for 3 faces
-
 
 % project down
 Pq = (V*V')*(Vq'*diag(wq));
@@ -104,7 +111,6 @@ for e = 1:K
     [~,~,~,~,JfqK] = GeometricFactors2D(x(:,e),y(:,e),Vrfq,Vsfq);
     Jfq(:,e) = JfqK;
 end
-
 
 global tau;
 tau = 1;
@@ -215,7 +221,7 @@ while (time<FinalTime)
         pp = Vp*p;
         color_line3(xp,yp,pp,pp,'.');
         view(2)
-        %         axis([-1 1 -1 1 -.5 .5])
+%                 axis([-1 1 -1 1 -.5 .5])
         title(sprintf('time = %f',time));
         drawnow
     end
@@ -394,9 +400,16 @@ rhsu =  Pq*(-dpdx.*Jq) + Pfq*(fluxu.*sJq/2.0);
 rhsv =  Pq*(-dpdy.*Jq) + Pfq*(fluxv.*sJq/2.0);
 
 % apply inverse mass matrix
-rhsp = Pq*((Vq*rhsp)./Jq);
-rhsu = Pq*((Vq*rhsu)./Jq);
-rhsv = Pq*((Vq*rhsv)./Jq);
+if 1
+    rhsp = Pq*((Vq*rhsp)./Jq);
+    rhsu = Pq*((Vq*rhsu)./Jq);
+    rhsv = Pq*((Vq*rhsv)./Jq);
+else
+    rhsp = rhsp./J;
+    rhsu = rhsu./J;
+    rhsv = rhsv./J;
+    
+end
 
 return;
 
@@ -478,6 +491,11 @@ for n=1:NCurveFaces  % deform specified faces
     if(f==2) blend =      +(r(ids)+1)./(1-vr(ids)); end;
     if(f==3) blend = -(r(ids)+s(ids))./(1-vr(ids)); end;
     
+%     % removes blend
+%     blend = zeros(Np,1); 
+%     blend(Fmask(:,f)) = 1;
+%     blend = blend(ids);
+
     x(ids,k) = x(ids,k)+blend.*vdx(ids);
     y(ids,k) = y(ids,k)+blend.*vdy(ids);
     

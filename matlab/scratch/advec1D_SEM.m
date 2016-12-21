@@ -7,10 +7,10 @@ function advec1D_SEM
 Globals1D;
 
 % Order of polymomials used for approximation
-N = 8;
+N = 1;
 
 % Generate simple mesh
-K1D = 8;
+K1D = 256;
 [Nv, VX, K, EToV] = MeshGen1D(-1,1,K1D);
 
 % Initialize solver and construct grid and metric
@@ -34,20 +34,20 @@ for e = 1:K
 end
 R=sparse(1:Np*K,gmap,1,Np*K,(K+1) + (N-1)*K);
 
-% filter
-a = .005;
-kc = N-1;
-s = ones(N+1,1); s(kc:N+1) = 1-a*(((kc:N+1) - kc)./(N-kc)).^2;
-% plot(s,'o--')
-% return
-F = V*diag(s)*inv(V);
+% % filter
+% a = .00;
+% kc = N-1;
+% s = ones(N+1,1); s(kc:N+1) = 1-a*(((kc:N+1) - kc)./(N-kc)).^2;
+% % plot(s,'o--')
+% % return
+% F = V*diag(s)*inv(V);
 % u = rand(size(x));
 % u(:) = R*R'*u(:);
 % plot(x,u,'o-')
 
 
 % Set initial conditions
-d = 100;
+d = 10000;
 u = -1./(1 + exp(-d*(x-1/3))) + 1./(1 + exp(-d*(x+1/3)));%x > -1/3 & x < 1/3;%exp(-25*x.^2);
 % u = -sin(pi*x);
 
@@ -62,7 +62,7 @@ resu = zeros(Np,K);
 % compute time step size
 xmin = min(abs(x(1,:)-x(2,:)));
 
-dt   = .25*xmin;
+dt   = .75*xmin;
 Nsteps = ceil(FinalTime/dt); dt = FinalTime/Nsteps;
 
 % advection speed
@@ -75,7 +75,7 @@ for tstep=1:Nsteps
         [rhsu] = AdvecRHS1D(u, timelocal, a);
         resu = rk4a(INTRK)*resu + dt*rhsu;
         u = u+rk4b(INTRK)*resu;
-        u = F*u;
+%         u = F*u;
         u(:) = R*diag(1./sum(R,1))*R'*u(:);
     end;
     if mod(tstep,10)

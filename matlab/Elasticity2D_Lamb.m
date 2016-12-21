@@ -1,12 +1,14 @@
-function Elasticity2D_Lamb
+function L2err = Elasticity2D_Lamb(N,K1D)
 
 % clear all, clear
 clear -global *
 
 Globals2D
 
-K1D = 2;
-N = 1;
+if nargin==0
+    K1D = 16;
+    N = 5;
+end
 c_flag = 0;
 FinalTime = 1;
 
@@ -80,7 +82,8 @@ tau0 = 1;
 for fld = 1:5
     tau{fld} = tau0;
     if fld > 2
-        tau{fld} = tau0./(mu+lambda);
+        %tau{fld} = tau0./(mu+lambda);
+        tau{fld} = tau0*ones(size(mu));
     end
 end
 
@@ -182,13 +185,13 @@ end
 % compute time step size
 CN = (N+1)^2/2; % guessing...
 %dt = 1/(CN*max(abs(sJ(:)))*max(abs(1./J(:))));
-dt = 2/(max(mu(:)+lambda(:))*CN*max(Fscale(:)));
+dt = 1/(max(mu(:)+lambda(:))*CN*max(Fscale(:)));
 
 % outer time step loop
 tstep = 0;
 
 
-figure
+% figure
 % colormap(gray)
 % colormap(hot)
 while (time<FinalTime)
@@ -208,7 +211,7 @@ while (time<FinalTime)
         
     end;
     
-    if 1 && mod(tstep,10)==0
+    if nargin==0 && mod(tstep,10)==0
         clf
         
         %         p = U{3}+U{4}; % trace(S)
@@ -263,7 +266,7 @@ sq = sxx(xq,yq,FinalTime).^2 + syy(xq,yq,FinalTime).^2 + sxy(xq,yq,FinalTime).^2
 errS = sqrt(sum(wqJ(:).*serr(:)))/sqrt(sum(wqJ(:).*sq(:)));
 
 L2err = sqrt(sum(wqJ(:).*(err(:)+serr(:))))/sqrt(sum(wqJ(:).*(uq(:)+sq(:))))
- title(sprintf('L2 err = %g\n',L2err))
+%  title(sprintf('L2 err = %g\n',L2err))
 
 % vv = Vp*p;
 % err = (abs(u1(xp,yp,FinalTime)-vv));

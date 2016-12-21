@@ -9,7 +9,6 @@ Vs = zeros(length(r),(N+1)^2);
 sk = 1;
 for j = 0:N
     for i = 0:N    
-    
         V(:,sk) = bern_1D(N,i,r).*bern_1D(N,j,s);
         Vr(:,sk) = .5*d_bern_1D(N,i,r).*bern_1D(N,j,s);
         Vs(:,sk) = .5*bern_1D(N,i,r).*d_bern_1D(N,j,s);

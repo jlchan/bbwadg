@@ -385,19 +385,43 @@ legend style={font=\small}
 \newcommand{\squareface}{[-1,1]^2}
 
 \date{}
-%\author{Jesse Chan, Russell J.\ Hewett, T.\ Warburton}
+\author{Jesse Chan}
 %\title{Nodal discontinuous Galerkin methods on vertically mapped wedges}
-\title{Notes on weight-adjusted discontinuous Galerkin methods with Bernstein-Bezier basis functions}
+\title{Efficient $L^2$ projection on simplices using Bernstein polynomials}
+%\title{Weight-adjusted Bernstein-Bezier Discontinuous Galerkin methods}
 
 \begin{document}
 
 \maketitle
+\tableofcontents
 
-\section{Projection}
+\begin{abstract}
+Alternative formula for mass inversion.  GPU-accelerated versions of Ainsworth and Kirby Duffy transforms.  Additional polynomial multiplication-based approach.  
+\end{abstract}
 
-For non-constant coefficients, DG requires being able to deal with polynomial multiplication and projection onto lower-dimensional subspaces.  Multiplying polynomials together may be done using a discrete convolution and polynomial multiplication (J. Sanchez-Reyes 2003).  The projection operator may be derived by noting that degree elevation operators are diagonal when transformed to a modal basis.  
+\section{Introduction}
+
+
+\cite{chan2015bbdg}
+
+
+
+\section{Bernstein-Bezier bases}
+
+
+\section{Fast $L^2$ projections with Bernstein polynomials} 
+
+Involves three steps - evaluation in an enriched representation (either at quadrature points or in a higher degree polynomial basis), scaling by the weight, and projection down to polynomials of degree $N$.  
+
+\subsection{Collapsed-coordinate quadratures}
+
+Fast evaluation at Duffy points \cite{ainsworth2011bernstein,kirby2011fast,kirby2012fast}.  
+
+Component-wise scaling by weight evaluated at collapsed-coordinate quadrature points.  
 
 \subsection{Polynomial multiplication}
+
+For non-constant coefficients, DG requires being able to deal with polynomial multiplication and projection onto lower-dimensional subspaces.  Multiplying polynomials together may be done using a discrete convolution and polynomial multiplication (J. Sanchez-Reyes 2003).  The projection operator may be derived by noting that degree elevation operators are diagonal when transformed to a modal basis.  
 
 Rescaling by binomial coefficients results in the unscaled Bernstein basis.  Polynomial multiplication is then equivalent to discrete convolution of the scaled binomial coefficients.  
 
@@ -405,34 +429,55 @@ Quadrature-free strategy for nonlinear volume terms: polynomial multiplication +
 \begin{enumerate}
 \item Polynomial multiplication of two BB basis functions representable as coefficient scaling, $N_p$ scalar multiplications and storage of $N_p$ coeffs, and another coefficient scaling.  
 \item To reduce local memory costs, process coeffs for $fg$ over one or more $(d-1)$ dimensional layers.  
-\item Store ids and load
+\item Store ids and load a triangular number of loads.  
 \end{enumerate}
 
-\subsection{Projection operator}
+\subsection{Inversion of modally diagonal matrices}
 
-Waldron showed that the projection operator has the form
+The inverse of any modally diagonal matrix $\bm{D}_N^{-1}$ can be represented in the form
 \[
-\bm{M}_N^{-1} \bm{M}_{N,M} = \sum_{j=0}^N c_jE^N_{N-j} \LRp{E^M_{N-j}}^T.
+\bm{D}_N^{-1} = \sum_{j=0}^N c_jE^N_{N-j} \LRp{E^M_{N-j}}^T.
 \]
-The constants $c_j$ may be computed through the solution of an $(N+1)\times (N+1)$ matrix system, using the fact that upon transformation to a modal basis, $E^N_{N-j}$ is a diagonal matrix of ones and zeros, while $E^M_{N-j}$ is a diagonal matrix with entries
+This property was shown for the polynomial projection matrix by Waldron in \cite{waldron2006bernstein,waldron2006computing}.  We give an alternative proof of this below where $\bm{M}$ is any modally diagonal matrix, including rectangular matrices.  
+
+The constants $c_j$ may be computed through the solution of an $(N+1)\times (N+1)$ matrix system, using the fact that upon transformation to a modal basis, $E^N_{N-j}$ is a diagonal matrix of ones and zeros, while $E^M_{N-j}$ is a diagonal matrix with entries 
 \[
 \frac{\lambda^{N-j}_i}{\lambda^M_i}, \qquad i = 0,\ldots,N.
 \]
-
 This may be factored into an application of $E^M_N$, then an application of 
 \begin{align*}
 \sum_{j = 0}^N c_j E^N_{N-j}\LRp{E^N_{N-j}}^T &= c_0 \bm{I} + c_1 E^N_{N-1}\LRp{E^N_{N-1}}^T +  c_2 E^N_{N-1}E^{N-1}_{N-2}\LRp{E^{N-1}_{N-2}}^T\LRp{E^N_{N-1}}^T + \ldots\\
 &= c_0 \bm{I} + c_1 E^N_{N-1} \LRp{I + \frac{c_2}{c_1} E^{N-1}_{N-2} \LRp{ I + \ldots} \LRp{E^{N-1}_{N-2}}^T}\LRp{E^{N}_{N-1}}^T.
 \end{align*}
-This may be applied in two sweeps of length $N$, using in-place updates to memory.  On GPUs, this will unfortunately still require synchronizations between each application.  
-
-%To apply this, initialize $b = u$.  Then, compute $\tilde{u} = E^N_{N-1}^T u$ and store within storage of $u$.  Compute $E^N_{N-1}\tilde{u}$ and accumulate into $b$.  Repeat 
+This may be applied in two sweeps of length $N$, using in-place updates to memory.  Unfortunately, for shared-memory parallelization, this will require synchronizations between each application of each matrix.  
 
 The cost of applying $\LRp{E^M_N}^T$ is the application of $(M-N)$ sparse degree elevation operations, each of which is $O(M^d)$ cost.  Assuming $M\approx N$ (it is reasonable to match the order of the data with the order of approximation), this gives $O(N^{d+1})$ cost.  
 
 When applying the projection operator, since each operation is $O(N^3)$ and we apply $O(N)$ total operations, we have an $O(N^{d+1})$ overall cost.  
 
 This can also be used to apply the inverse mass matrix since it is diagonal under the transformation $T$.  
+
+\section{Numerical experiments}
+
+\subsection{Expansion kernels}
+\subsubsection{Polynomial multiplication}
+\subsubsection{Collapsed-coordinate quadrature}
+
+\subsection{Mass matrix inversion kernel}
+
+\subsection{Monolithic kernel}
+
+
+\section{Application to Weight-adjusted Discontinuous Galerkin (WADG) methods}
+
+Numerical experiment: time to solution for order 7 and 8 using both NDG-WADG and BB-WADG.  
+
+\cite{chan2016weight1,chan2016weight2}
+
+
+\bibliographystyle{unsrt}
+\bibliography{bbwadg}
+
 
 \end{document}
 

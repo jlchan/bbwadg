@@ -263,6 +263,7 @@ for fld = 1:Nfld
     Lf{fld} = LIFT*(Fscale.*flux{fld})/2.0;
 end
 [divSx(:,1) divSy(:,1) divSz(:,1) du1dx(:,1) du2dy(:,1) du3dz(:,1)]
+[flux{1}(:,1) flux{2}(:,1) flux{3}(:,1) flux{4}(:,1) flux{5}(:,1) flux{6}(:,1)]
 [Lf{1}(:,1) Lf{2}(:,1) Lf{3}(:,1) Lf{4}(:,1) Lf{5}(:,1) Lf{6}(:,1)]
 [rr{1}(:,1) rr{2}(:,1) rr{3}(:,1) rr{4}(:,1) rr{5}(:,1) rr{6}(:,1)]
 keyboard

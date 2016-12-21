@@ -329,10 +329,6 @@ kernel void rk_volume_bern(const    int K,
     shared dfloat sG[p_KblkV][p_Nvgeo];
 
     exclusive dfloat Dval1,Dval2,Dval3,Dval4;
-    //    exclusive int D1i,D1j,D1k,D1l;
-    //    exclusive int D2i,D2j,D2k,D2l;
-    //    exclusive int D3i,D3j,D3k,D3l;
-    //    exclusive int D4i,D4j,D4k,D4l;
 
     // lapp has to survive multiple inner loops
     for(int k2 = 0; k2 < p_KblkV; ++k2; inner1){
@@ -349,7 +345,10 @@ kernel void rk_volume_bern(const    int K,
 
           // load deriv operators into register
 	  const dfloat4 Dvali = Dvals[n];
-	  Dval1 = Dvali.x; Dval2 = Dvali.y; Dval3 = Dvali.z; Dval4 = Dvali.w;
+	  Dval1 = Dvali.x;
+	  Dval2 = Dvali.y;
+	  Dval3 = Dvali.z;
+	  Dval4 = Dvali.w;
 
         }
       }

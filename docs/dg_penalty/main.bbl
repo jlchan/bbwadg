@@ -1,5 +1,49 @@
 \begin{thebibliography}{10}
 
+\bibitem{warburton2013low}
+T.~Warburton.
+\newblock A low-storage curvilinear discontinuous {G}alerkin method for wave
+  problems.
+\newblock {\em SIAM Journal on Scientific Computing}, 35(4):A1987--A2012, 2013.
+
+\bibitem{ye2016discontinuous}
+Ruichao Ye, Maarten~V de~Hoop, Christopher~L Petrovitch, Laura~J Pyrak-Nolte,
+  and Lucas~C Wilcox.
+\newblock {A discontinuous Galerkin method with a modified penalty flux for the
+  propagation and scattering of acousto-elastic waves}.
+\newblock {\em Geophysical Journal International}, 205(2):1267--1289, 2016.
+
+\bibitem{grote2006discontinuous}
+Marcus~J Grote, Anna Schneebeli, and Dominik Sch{\"o}tzau.
+\newblock Discontinuous {Galerkin} finite element method for the wave equation.
+\newblock {\em SIAM Journal of Numerical Analysis}, 44(6):2408--2431, 2006.
+
+\bibitem{hesthaven2007nodal}
+Jan~S Hesthaven and Tim Warburton.
+\newblock {\em Nodal discontinuous Galerkin methods: algorithms, analysis, and
+  applications}, volume~54.
+\newblock Springer, 2007.
+
+\bibitem{riviere2008discontinuous}
+Beatrice Riviere.
+\newblock {\em {Discontinuous Galerkin methods for solving elliptic and
+  parabolic equations: theory and implementation}}.
+\newblock Society for Industrial and Applied Mathematics, 2008.
+
+\bibitem{Warburton20063205}
+T.~Warburton and Mark Embree.
+\newblock {The role of the penalty in the local discontinuous Galerkin method
+  for Maxwell's eigenvalue problem}.
+\newblock {\em Computer Methods in Applied Mechanics and Engineering},
+  195(25-28):3205 -- 3223, 2006.
+
+\bibitem{fezoui2005convergence}
+Loula Fezoui, St{\'e}phane Lanteri, St{\'e}phanie Lohrengel, and Serge Piperno.
+\newblock {Convergence and stability of a discontinuous Galerkin time-domain
+  method for the 3D heterogeneous Maxwell equations on unstructured meshes}.
+\newblock {\em ESAIM: Mathematical Modelling and Numerical Analysis},
+  39(6):1149--1176, 2005.
+
 \bibitem{chan2016weight1}
 Jesse Chan, Russell~J Hewett, and T~Warburton.
 \newblock {Weight-adjusted discontinuous Galerkin methods: wave propagation in
@@ -18,18 +62,19 @@ Lucas~C Wilcox, Georg Stadler, Carsten Burstedde, and Omar Ghattas.
   through coupled elastic--acoustic media.
 \newblock {\em Journal of Computational Physics}, 229(24):9373--9396, 2010.
 
-\bibitem{ye2016discontinuous}
-Ruichao Ye, Maarten~V de~Hoop, Christopher~L Petrovitch, Laura~J Pyrak-Nolte,
-  and Lucas~C Wilcox.
-\newblock {A discontinuous Galerkin method with a modified penalty flux for the
-  propagation and scattering of acousto-elastic waves}.
-\newblock {\em Geophysical Journal International}, 205(2):1267--1289, 2016.
-
 \bibitem{hesthaven2002nodal}
 Jan~S Hesthaven and T.~Warburton.
 \newblock Nodal high-order methods on unstructured grids: {I.} time-domain
   solution of {Maxwell's} equations.
 \newblock {\em Journal of Computational Physics}, 181(1):186--221, 2002.
+
+\bibitem{hesthaven2004high}
+JS~Hesthaven and T~Warburton.
+\newblock {High-order nodal discontinuous Galerkin methods for the Maxwell
+  eigenvalue problem}.
+\newblock {\em Philosophical Transactions of the Royal Society of London.
+  Series A: Mathematical, Physical and Engineering Sciences},
+  362(1816):493--524, 2004.
 
 \bibitem{grote2007interior}
 Marcus~J Grote, Anna Schneebeli, and Dominik Sch{\"o}tzau.
@@ -37,24 +82,6 @@ Marcus~J Grote, Anna Schneebeli, and Dominik Sch{\"o}tzau.
   equations: Energy norm error estimates.
 \newblock {\em Journal of Computational and Applied Mathematics},
   204(2):375--386, 2007.
-
-\bibitem{warburton2013low}
-T.~Warburton.
-\newblock A low-storage curvilinear discontinuous {G}alerkin method for wave
-  problems.
-\newblock {\em SIAM Journal on Scientific Computing}, 35(4):A1987--A2012, 2013.
-
-\bibitem{mercerat2015nodal}
-E~Diego Mercerat and Nathalie Glinsky.
-\newblock A nodal high-order discontinuous {Galerkin} method for elastic wave
-  propagation in arbitrary heterogeneous media.
-\newblock {\em Geophysical Journal International}, 201(2):1101--1118, 2015.
-
-\bibitem{hesthaven2007nodal}
-Jan~S Hesthaven and Tim Warburton.
-\newblock {\em Nodal discontinuous Galerkin methods: algorithms, analysis, and
-  applications}, volume~54.
-\newblock Springer, 2007.
 
 \bibitem{brezzi1985two}
 Franco Brezzi, Jim Douglas~Jr, and L~Donatella Marini.
@@ -74,17 +101,15 @@ Robert~C Kirby.
 \newblock {\em ACM Transactions on Mathematical Software (TOMS)},
   30(4):502--516, 2004.
 
-\bibitem{Warburton20063205}
-T.~Warburton and Mark Embree.
-\newblock {The role of the penalty in the local discontinuous Galerkin method
-  for Maxwell's eigenvalue problem}.
-\newblock {\em Computer Methods in Applied Mechanics and Engineering},
-  195(25-28):3205 -- 3223, 2006.
-
 \bibitem{chan2015gpu}
 Jesse Chan, Zheng Wang, Axel Modave, Jean-Francois Remacle, and T~Warburton.
 \newblock {GPU-accelerated discontinuous Galerkin methods on hybrid meshes}.
 \newblock {\em Journal of Computational Physics}, 318:142--168, 2016.
+
+\bibitem{chan2016weight2}
+Jesse Chan, Russell~J Hewett, and T~Warburton.
+\newblock {Weight-adjusted discontinuous Galerkin methods: curvilinear meshes}.
+\newblock {\em arXiv preprint arXiv:1608.03836}, 2016.
 
 \bibitem{kopriva2014energy}
 David~A Kopriva and Gregor~J Gassner.
@@ -100,7 +125,7 @@ Roger~A Horn and Charles~R Johnson.
 \bibitem{simpletracker}
 A simple multiple particle tracker with gap closing.
 \newblock
-  \url{https://www.mathworks.com/matlabcentral/fileexchange/34040-simple-tracker}.
+  https://www.mathworks.com/matlabcentral/fileexchange/34040-simple-tracker.
 \newblock Accessed 10/1/2016.
 
 \bibitem{ainsworth2014dispersive}

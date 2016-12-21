@@ -249,17 +249,13 @@ legend style={font=\small}
 \newcommand{\del}{\triangle}
 \newcommand{\curl}{\grad \times}
 \renewcommand{\div}{\grad \cdot}
+
+\newcommand{\bs}[1]{\boldsymbol{#1}}
+\newcommand{\equaldef}{\stackrel{\mathrm{def}}{=}}
+
 \newcommand{\td}[2]{\frac{{\rm d}#1}{{\rm d}{\rm #2}}}
 \newcommand{\pd}[2]{\frac{\partial#1}{\partial#2}}
 \newcommand{\pdd}[2]{\frac{\partial^2#1}{\partial#2^2}}
-
-\newcommand{\bs}[1]{\boldsymbol{#1}}
-
-\newcommand{\equaldef}{\stackrel{\mathrm{def}}{=}}
-
-
-
-\newcommand{\mi}{\mathrm{i}} %% roman "i"
 \newcommand{\mb}[1]{\mathbf{#1}}
 \newcommand{\mbb}[1]{\mathbb{#1}}
 \newcommand{\mc}[1]{\mathcal{#1}}
@@ -281,9 +277,9 @@ legend style={font=\small}
 \newcommand{\jump}[1] {\ensuremath{\llbracket#1\rrbracket}}
 \newcommand{\avg}[1] {\ensuremath{\LRc{\!\{#1\}\!}}}
 
-\renewcommand{\Oh}{{\Omega_h}}
+\newcommand{\Oh}{{\Omega_h}}
 \renewcommand{\L}{L^2\LRp{\Omega}}
-%\newcommand{\Lk}{\Lk}
+%\newcommand{\Lk}{L^2\LRp{D^k}}
 %\newcommand{\Ldk}{L^2\LRp{\partial D^k}}
 \newcommand{\Lk}{D^k}
 \newcommand{\Ldk}{\partial D^k}
@@ -327,14 +323,14 @@ legend style={font=\small}
 
 \date{}
 \author{Jesse Chan}
-\title{Weight-adjusted discontinuous Galerkin methods: matrix-valued weights and linear elastic wave propagation}
+\title{Weight-adjusted discontinuous Galerkin methods: matrix-valued weights and elastic wave propagation in heterogeneous media}
 
 \begin{document}
 
 \maketitle
 
 \begin{abstract}
-Weight-adjusted inner products \cite{chan2016weight1,chan2016weight2} replace weighted $L^2$ inner products with easily invertible weight-adjusted approximations.  When paired with discontinuous Galerkin (DG) methods, the result is a low storage, energy stable, and (for sufficiently regular weights) high order accurate method for wave propagation in the presence of general heterogeneous media and curvilinear meshes.  In this work, we extend weight-adjusted DG (WADG) methods to weighted inner products with matrix-valued weights, focusing on the linear elastic wave equation as an application.  We present a new DG formulation based on the discretization of the symmetric form of the linear elasticity wave equation, with upwind-like dissipation incorporated through simple penalty terms in the numerical fluxes.  This results in provably stable formulations for arbitrary anisotropic stiffness tensors and curvilinear meshes.  A convergence analysis is given, and numerical results confirm the stability and high order accuracy of WADG for several problems in elastic wave propagation.  
+Weight-adjusted inner products \cite{chan2016weight1,chan2016weight2} replace weighted $L^2$ inner products with easily invertible weight-adjusted approximations.  When paired with discontinuous Galerkin (DG) methods, the result is a low storage, energy stable, and (for sufficiently regular weights) high order accurate method for wave propagation in the presence of general heterogeneous media and curvilinear meshes.  In this work, we extend weight-adjusted DG (WADG) methods to weighted inner products with matrix-valued weights, focusing on the linear elastic wave equation as an application.  We present a unified DG formulation for isotropic and anisotropic media based on the discretization of the symmetric form of the linear elasticity wave equation, with upwind-like dissipation incorporated through simple penalty terms in the numerical fluxes.  This formulation is provably stable for arbitrary stiffness tensors and curvilinear meshes.  A convergence analysis is given, and numerical results confirm the stability and high order accuracy of WADG for several problems in elastic wave propagation.  
 \end{abstract}
 
 %\tableofcontents
@@ -342,56 +338,46 @@ Weight-adjusted inner products \cite{chan2016weight1,chan2016weight2} replace we
 
 \section{Introduction}
 
-There exist many high order energy stable discontinuous Galerkin formulations for the elastic wave equations in first order form.  Wilcox et al.\ introduced a discontinuous Galerkin spectral element method on hexahedral meshes 
+Efficient and accurate simulations of elastic wave propagation form the foundation for various seismic applications, including imaging and inversion techniques, as well as rupture and earthquake simulations.  The most common methods for the simulation of waves are finite difference methods \cite{virieux1986p}; however, finite element methods have garnered interest due to their low numerical dispersion and ability to accomodate geometrically flexible unstructured meshes.  
 
-SEM \cite{komatitsch2010high}
+Typical methods for time-domain wave propagation utilize explicit time stepping methods, since the hyperbolic partial differential equations (PDEs) governing wave propagation typically admit less restrictive stable timestep restrictions than parabolic equations.  However, finite element methods require the inversion of a global mass matrix when paired with explicit time integrators.  On hexahedral meshes, this can be avoided by using spectral element methods (SEM), which utilize mass lumping to produce a diagonal mass matrix \cite{komatitsch1998spectral}.  This global inversion can also be avoided through the use of discontinuous Galerkin (DG) methods, which result in a locally invertible block diagonal mass matrix.  Due to difficulties in extending mass-lumping techniques to tetrahedra, high order DG methods are often employed for seismic simulations which use simplicial meshes \cite{kaser2006arbitrary, dumbser2006arbitrary, de2007arbitrary,delcourte2009high,delcourte2015analysis,ye2016discontinuous}.  Such methods also lend themselves well to efficient implementations using Graphics Processing Units (GPUs) \cite{klockner2009nodal, modave2015nodal, modave2016gpu, chan2015gpu}.  
 
-DG-SEM \cite{wilcox2010high} 
+Most high order DG methods on simplicial meshes assume that material coefficients are constant over each element, which can result in spurious reflections and the loss of high order accuracy \cite{castro2010seismic,mercerat2015nodal,bencomo2015discontinuous}.  This limitation can be overcome for DG methods by incorporating sub-element variation in media through weighted mass matrices, which results in an energy stable method \cite{mercerat2015nodal, bencomo2015discontinuous}.  For DG methods on hexahedral meshes, mass lumping reduces the construction of weighted mass matrices to entry-wise scalings of a diagonal mass matrix.  However, on tetrahedral meshes, this approach necessitates the pre-computation and storage of factorizations for each local mass matrix, which greatly increases both storage costs and data transferred at high orders of approximation.  These costs are especially problematic for accelerator architectures such as GPUs, which possess limited memory.  %Additionally, excessive storage costs can require reduced problem sizes and under-utilization of accelerator cards.  
 
-High order DG \cite{kaser2006arbitrary, dumbser2006arbitrary, de2007arbitrary, ye2016discontinuous}
+Storage costs associated with weighted mass matrices can be avoided by approximating weighted $L^2$ inner products using weight-adjusted inner products, which result in easily invertible approximations to weighted mass matrices \cite{chan2016weight1,chan2016weight2}.  For sufficiently regular weights, high order accuracy is also retained.  When paired with an energy stable DG formulation, weight-adjusted inner products result in weight-adjusted DG methods (WADG), which preserve energy stability and high order accuracy while retaining a low asymptotic storage cost.  Additionally, unlike mass-lumping techniques, WADG does not rely on the use of inexact quadrature rules, and reduces to the exact inversion of mass matrices for constant weights.  
 
-Interior penalty formulations.  Analysis: Riviere et al.\ \cite{riviere2003discontinuous,riviere2007discontinuous} and Delcourte et al.\ \cite{delcourte2009high,delcourte2015analysis}
+Weight-adjusted DG methods have been applied to both acoustic wave propagation in heterogeneous media and on curvilinear meshes \cite{chan2016weight1,chan2016weight2}.  Both cases involve scalar weighting functions.  In this work, we extend weight-adjusted inner products to matrix-valued weights, and demonstrate the usefulness of this generalization to elastic wave propagation in arbitrary media.  A new energy stable DG formulation is introduced based on the symmetric form of the elastic wave equations, with upwind-like numerical dissipation introduced through simple penalty fluxes \cite{warburton2013low,ye2016discontinuous}.  
 
-GPU-accelerated DG methods \cite{klockner2009nodal,godel2010gpu,godel2010scalability}.  Also elastic wave propagation and seismic wave applications \cite{modave2015nodal, modave2016gpu}
-
-High order approximations of material data \cite{castro2010seismic, mercerat2015nodal}, but not low storage or not energy stable.  
-
-Extending mass lumping without dispersive effects \cite{christon1999influence,guermond2013correction}.  Reduces to exact mass matrix inversion for constant weights.  
-
-
-A simpler extension of WADG \cite{chan2016weight1,chan2016weight2} to elasticity and weight-adjusted inner products for vector-valued functions.  
-
-
-Outline: present elasticity and an energy stable DG method, motivate need for alternative to inverting large dense coupled mass matrix, introduce weight-adjusted inner products.  
+This work proceeds as follows.  Sections~\ref{sec:symelas} and \ref{sec:dgform} begin by presenting an energy stable DG formulation with simple penalty fluxes for the elastic wave equation in symmetric hyperbolic form, and discusses issues related to storage and inversion of local mass matrices for material coefficients with sub-element variations.  Section~\ref{sec:mwadg} extends weight-adjusted approximations to weighted $L^2$ inner products and mass matrices to the case of matrix-valued weights, and proves interpolation estimates which account for the regularity of the matrix weight.  These results are incorporated into a weight-adjusted DG method for the linear elastic wave equations in Section~\ref{sec:wadgelas}.  Finally, numerical results in Section~\ref{sec:numerical} demonstrate the accuracy of this method for several analytic solutions in linear elasticity.  
 
 \section{Symmetric form of the elastic wave equation }
-
-We begin with the linear elastic wave equation under small deformations in a domain $\Omega$.  These equations can be written a first order velocity-stress system for velocity $\bm{v}$ and symmetric stress tensor $\bm{S}$ 
+\label{sec:symelas}
+We begin with the linear elastic wave equation under small deformations in a domain $\Omega \in \mathbb{R}^d$.  These equations can be written a first order velocity-stress system for velocity $\bm{v}$ and symmetric stress tensor $\bm{S}$ 
 \begin{align*}
 \rho \pd{\bm{v}}{t} &= \Div{\bm{S}} + \bm{f}\\
-\pd{\bm{S}}{t} &= \frac{1}{2} \bar{\bm{C}}\LRp{\Grad\bm{v} + \Grad\bm{v}^T},
+\pd{\bm{S}}{t} &= \frac{1}{2} \tensor{\bm{C}}\LRp{\Grad\bm{v} + \Grad\bm{v}^T},
 \end{align*}
-where $\bm{f}$ is the body force per unit volume, $\rho$ is density, and $\bar{\bm{C}}$ is the symmetric constitutive stiffness tensor relating stress and strain.  These equations can also be rewritten as a symmetric hyperbolic system of PDEs \cite{hughes1978classical}  
+where $\bm{f}$ is the body force per unit volume, $\rho$ is density, and $\tensor{\bm{C}}$ is the symmetric constitutive stiffness tensor relating stress and strain.  We rewrite these equations as a symmetric hyperbolic system of PDEs \cite{hughes1978classical}  
 \begin{align}
 \rho \pd{\bm{v}}{t} &= \sum_{i=1}^d \bm{A}_i^T \pd{\bm{\sigma}}{\bm{x}_i}\nonumber + \bm{f}\\
 \bm{C}^{-1} \pd{\bm{\sigma}}{t} &= \sum_{i=1}^d \bm{A}_i \pd{\bm{v}}{\bm{x}_i}.
 \label{eq:symelas}
 \end{align}
-where $\bm{C}$ is the symmetric matrix form of the constitutive tensor $\bar{\bm{C}}$ and $\sigma$ is a vector of length $N_d = \frac{d(d+1)}{2}$, the number of unique entries of the stress tensor $\bm{S}$.  We note that the matrices $\bm{A}_i$ are constant, while $\rho$ and $\bm{C}$ can vary spatially.  Furthermore, we will assume that $\rho$ and $\bm{C}$ are positive-definite and bounded such that 
+where $\bm{C}$ is the symmetric matrix form of the constitutive tensor $\tensor{\bm{C}}$ and $\sigma$ is a vector of length $N_d = \frac{d(d+1)}{2}$, the number of unique entries of the stress tensor $\bm{S}$ in $d$ dimensions.  We note that the matrices $\bm{A}_i$ are constant, while $\rho$ and $\bm{C}$ can vary spatially.  Furthermore, we will assume that $\rho$ and $\bm{C}$ are positive-definite and bounded pointwise such that 
 \begin{align*}
-\rho_{\min} &\leq \rho(\bm{x}) \leq \rho_{\max} \\
-0 < c_{\min} \leq \bm{x}^T\bm{C}\bm{x} &\leq c_{\max} < \infty, \qquad \bm{x} \in \mathbb{R}^{N_d},
+0 < \rho_{\min} &\leq \rho(\bm{x}) \leq \rho_{\max} < \infty, \qquad \forall \bm{x} \in \mathbb{R}^d,\\
+0 < c_{\min} \leq \bm{u}^T\bm{C}(\bm{x})\bm{u} &\leq c_{\max} < \infty, \qquad \forall \bm{u} \in \mathbb{R}^{N_d}, \quad \forall \bm{x} \in \mathbb{R}^d,
 \end{align*}
-which also implies that $\bm{C}^{-1}$ is positive-definite and bounded.
+which also implies that $\bm{C}^{-1}$ is pointwise positive-definite and bounded.
 
 In two dimensions, $\bm{v} = (\bm{v}_1, \bm{v}_2)^T$ and $\bm{\sigma}= (\sigma_{xx},\sigma_{yy},\sigma_{xy})^T$ 
 \[
 \bm{S} = \LRp{\begin{array}{cc}
 \sigma_{xx} & \sigma_{xy}\\
 \sigma_{xy} & \sigma_{yy}
-\end{array}}.
+\end{array}},
 \]
-The matrices $\bm{A}_i$ are given as
+while the matrices $\bm{A}_i$ are 
 \[
 \bm{A}_1 = \left(\begin{array}{cc}
 1 & 0\\
@@ -404,7 +390,6 @@ The matrices $\bm{A}_i$ are given as
 1 & 0
 \end{array}\right).
 \]
-
 In three dimensions, the velocity is $\bm{v} = (\bm{v}_1,\bm{v}_2,\bm{v}_3)^T$, while $\bm{\sigma}= (\sigma_{xx},\sigma_{yy},\sigma_{zz},\sigma_{yz},\sigma_{xy},\sigma_{xz})^T$ denotes the unique entries of the stress tensor $\bm{S}$
 \[
 \bm{S} = \LRp{\begin{array}{ccc}
@@ -452,20 +437,27 @@ In general anisotropic media, $\bm{C}$ is symmetric and positive-definite.  For 
 \]
 where $\lambda,\mu$ are Lame parameters.  For three-dimensional isotropic media, $\bm{C}$ is given instead by
 \[
-\bm{C}= \LRp{
-\begin{array}{cccccc}
-2\mu+\lambda  &  \lambda  &     \lambda  & & & \\
-\lambda &   2\mu+\lambda & \lambda   & & & \\
-\lambda & \lambda &   2\mu+\lambda &    & &\\
- &   &    & {\mu} & &\\
-&  &   &    & {\mu} &\\
-& &  &   &    & {\mu} \\
+%\bm{C}= 
+%\LRp{
+%\begin{array}{cccccc}
+%2\mu+\lambda  &  \lambda  &     \lambda  & & & \\
+%\lambda &   2\mu+\lambda & \lambda   & & & \\
+%\lambda & \lambda &   2\mu+\lambda &    & &\\
+% &   &    & {\mu} & &\\
+%&  &   &    & {\mu} &\\
+%& &  &   &    & {\mu} \\
+%\end{array}}.  
+\LRp{\begin{array}{cccc}
+2\mu+\lambda  &  \lambda  &     \lambda   & \\
+\lambda &   2\mu+\lambda & \lambda   &  \\
+\lambda & \lambda &   2\mu+\lambda &    \\
+ &   &    & {\mu}\bm{I}^{3\times3} \\
 \end{array}}.  
 \]
 We will consider both spatially varying isotropic and anisotropic media in this work.  
 
 \section{An energy stable discontinuous Galerkin formulation for elastic wave propagation}
-
+\label{sec:dgform}
 The advantage of the symmetric first order formulation of the elastic wave equations (\ref{eq:symelas}) is that it is straightforward to derive an energy stable discontinuous Galerkin formulation.  We assume that the domain $\Omega$ is Lipschitz and exactly triangulated by a mesh $\Omega_h$, which consists of elements $D^k$.  We further assume that each element $D^k$ is the image of a reference element $\widehat{D}$ under the local elemental mapping 
 \[
 \bm{x}^k = \bm{\Phi}^k \widehat{\bm{x}},
@@ -484,7 +476,6 @@ and in three dimensions,
 \[
 P^N\LRp{\widehat{D}} = \LRc{ \widehat{x}^i \widehat{y}^j \widehat{z}^k, \quad 0 \leq i + j +k \leq N}.  
 \]
-
 We denote the $L^2$ inner product and norm over $D^k$ by $\LRp{\cdot,\cdot}_{\Lk}$, such that
 \[
 \LRp{\bm{f},\bm{g}}_{\Lk} = \int_{D^k} \bm{f}\cdot\bm{g} \diff x = \int_{\widehat{D}} \bm{f}\cdot\bm{g} J, \qquad \nor{\bm{f}}_{\Lk}^2 = \LRp{\bm{f},\bm{f}}_{\Lk},
@@ -493,6 +484,11 @@ where $\bm{f},\bm{g}$ are vector-valued functions.  Global $L^2$ inner products 
 \[
 \LRp{\bm{f},\bm{g}}_{\Oh} = \sum_{D^k\in \Oh} \int_{D^k} \LRp{\bm{f},\bm{g}}_{\Lk}, \qquad \nor{\bm{f}}_{\Oh}^2 = \sum_{D^k\in \Oh} \nor{\bm{f}}^2_{\Lk}.
 \]
+We define also the $L^2$ inner product and norm over the boundary $\partial D^k$ of an element
+\[
+\LRa{u,v}_{\Ldk} = \int_{\partial D^k}uv\diff{x} = \sum_{f\in \partial D^k}\int_{\widehat{f}}uvJ^f\diff{\widehat{x}}, \qquad \nor{u}_{\Ldk}^2 = \LRa{u,u},
+\]
+where $J^f$ is the Jacobian of the mapping from a reference face (triangle) $\widehat{f}$ to a physical face $f$ of an element.  
 
 Let $f$ be a face of an element $D^{k}$ with neighboring element $D^{k,+}$ and unit outward normal $\bm{n}$.  We define $u^-$ and $u^+$ denote interior and exterior values of a discontinuous function $u$ such that
 \[
@@ -507,7 +503,7 @@ Jumps and averages of a vector-valued functions $\bm{u}\in \mathbb{R}^m$ and $\b
 \LRp{\jump{\bm{u}}}_i = \jump{\bm{u}_i}, \qquad 1\leq i \leq m, \qquad \LRp{\jump{\bm{S}}}_{ij} = \jump{\bm{S}_i}, \qquad 1\leq i \leq m, \quad 1\leq j \leq n.
 \]
 
-We can now specify a DG formulation for the linear elastic wave equation (\ref{eq:symelas}).  Symmetric hyperbolic systems readily admit a DG formulation based on penalty fluxes, as detailed in \cite{chan2016short}.  For the linear elastic wave equation in symmetric first order form, this formulation is given as
+We can now specify a unified DG formulation for the linear elastic wave equation (\ref{eq:symelas}) in either isotropic or anisotropic media.  Symmetric hyperbolic systems readily admit a DG formulation based on penalty fluxes \cite{chan2016short}.  For the linear elastic wave equation in symmetric first order form, this formulation is given as
 \begin{align}
 \sum_{D^k\in \Oh} \LRp{\rho \pd{\bm{v}}{t},\bm{w}}_{\Lk} &= 
 \sum_{D^k\in \Oh} \LRp{\LRp{ \sum_{i=1}^d \bm{A}_i^T\pd{\bm{\sigma}}{\bm{x}_i} + \bm{f},\bm{w}}_{\Lk}  + \LRa{\frac{1}{2}\bm{A}_n^T\jump{\bm{\sigma}} + \frac{\tau_v}{2}\bm{A}_n^T\bm{A}_n\jump{\bm{v}},\bm{w}}_{\Ldk}} \nonumber\\
@@ -579,7 +575,7 @@ Taking $(\bm{w},\bm{q}) = (\bm{v},\bm{\sigma})$ and adding both equations togeth
 Let $\Gamma_h$ denote the set of unique faces in $\Oh$, and let $\Gamma_v,\Gamma_\sigma,\Gamma_{\rm abc}$ denote the parts of the boundary where velocity, traction, and non-reflective boundary conditions are imposed, respectively.  We separate surface terms into contributions from interior shared faces and from boundary faces.  On an interior shared face, we sum contributions from the two adjacent elements to yield
 \begin{align*}
 &\sum_{f\in \Gamma_h \setminus \partial \Omega} \int_{f}{\bm{A}_n^T\avg{\bm{\sigma}}\bm{v} + \frac{\tau_v}{2}\bm{A}_n^T\bm{A}_n\jump{\bm{v}}\bm{v}} + {\frac{1}{2}\bm{A}_n\jump{\bm{v}}\bm{\sigma} + \frac{\tau_\sigma}{2}\bm{A}_n\bm{A}_n^T\jump{\bm{\sigma}}\bm{\sigma}}\\
-&\leq - \sum_{f \in\Gamma_h \setminus \partial \Omega} \int_{f} \frac{\tau_v}{2}\LRb{\bm{A}_n\jump{\bm{v}}}^2 + \frac{\tau_\sigma}{2}\LRb{\bm{A}_n^T\jump{\bm{\sigma}}}^2.  
+&= - \sum_{f \in\Gamma_h \setminus \partial \Omega} \int_{f} \frac{\tau_v}{2}\LRb{\bm{A}_n\jump{\bm{v}}}^2 + \frac{\tau_\sigma}{2}\LRb{\bm{A}_n^T\jump{\bm{\sigma}}}^2.  
 %\label{thm:stability}
 \end{align*}
 For faces which lie on the boundary $\Gamma_v$ where velocity boundary conditions are imposed, $\jump{\bm{v}} = -2\bm{v}^-$, $\jump{\bm{A}_n^T\bm{\sigma}} = 0$, and $\bm{A}_n^T\avg{\bm{\sigma}} = \bm{Sn}^-$, implying that 
@@ -600,7 +596,7 @@ Combining all face contributions together gives the following result:
 \begin{theorem}
 The DG formulation (\ref{eq:dgform}) is energy stable for $\tau_v,\tau_\sigma \geq 0$, in the sense that
 \begin{align}
-&\sum_{D^k\in \Oh} \frac{1}{2}\pd{}{t}\LRp{\LRp{\rho \bm{v},\bm{v}}_{\Lk} + \LRp{\bm{C}^{-1} \bm{\sigma},\bm{\sigma}}_{\Lk}} \leq - \sum_{f \in\Gamma_h \setminus \partial \Omega} \int_{f} \frac{\tau_v}{2}\LRb{\bm{A}_n\jump{\bm{v}}}^2 + \frac{\tau_\sigma}{2}\LRb{\bm{A}_n^T\jump{\bm{\sigma}}}^2\nonumber\\
+&\sum_{D^k\in \Oh} \frac{1}{2}\pd{}{t}\LRp{\LRp{\rho \bm{v},\bm{v}}_{\Lk} + \LRp{\bm{C}^{-1} \bm{\sigma},\bm{\sigma}}_{\Lk}} = - \sum_{f \in\Gamma_h \setminus \partial \Omega} \int_{f} \frac{\tau_v}{2}\LRb{\bm{A}_n\jump{\bm{v}}}^2 + \frac{\tau_\sigma}{2}\LRb{\bm{A}_n^T\jump{\bm{\sigma}}}^2\nonumber\\
 & - \sum_{f\in \Gamma_v} \int_f \tau_v  \LRb{\bm{A}_n\bm{v}^-}^2  - \sum_{f\in \Gamma_\sigma} \int_f \tau_\sigma  \LRb{\bm{A}_n^T\bm{\sigma}^-}^2- \sum_{f\in \Gamma_{\rm abc}} \int_f \frac{\tau_v}{2} \LRb{\bm{A}_n\bm{v}^-}^2 + \frac{\tau_\sigma}{2} \LRb{\bm{A}_n^T\bm{\sigma}^-}^2 \leq 0.  
 \label{thm:stability}
 \end{align}
@@ -676,7 +672,7 @@ In order to apply standard time integration methods, we must invert $\bm{M}_{\rh
 \end{array}} 
 = \LRp{\bm{C}^{-1}\otimes \bm{M}}.
 \]
-Then, $\bm{M}^{-1}_\rho = \frac{1}{\rho}\bm{M}^{-1} = \frac{1}{J\rho}\widehat{\bm{M}}^{-1}$, and $\bm{M}^{-1}_{\bm{C}^{-1}} = \bm{C}\otimes \bm{M}^{-1} = \bm{C}\otimes \LRp{\frac{1}{J}\widehat{\bm{M}}^{-1}}$, and each matrix inverse can be applied using the inverse of the reference mass matrix $\widehat{\bm{M}}^{-1}$ and the values of $\rho, \bm{C}$, and $J$ on each element.  Applying this observation to \ref{eq:dgmat} then yields the following system of ODEs
+Then, $\bm{M}^{-1}_\rho = \frac{1}{\rho}\bm{M}^{-1} = \frac{1}{J\rho}\widehat{\bm{M}}^{-1}$, and $\bm{M}^{-1}_{\bm{C}^{-1}} = \bm{C}\otimes \bm{M}^{-1} = \bm{C}\otimes \LRp{\frac{1}{J}\widehat{\bm{M}}^{-1}}$, and each matrix inverse can be applied using the inverse of the reference mass matrix $\widehat{\bm{M}}^{-1}$ and the values of $\rho, \bm{C}$, and $J$ on each element.  Applying this observation to \ref{eq:dgmat} then yields the following local system of ODEs 
 \begin{align*}
 \pd{\bm{V}}{t} &= \sum_{i=1}^d  \LRp{\frac{1}{\rho}\bm{A}_i^T\otimes \bm{D}_{i}} \bm{\Sigma} + \sum_{f\in \partial D^k}\LRp{\frac{1}{\rho}\bm{I}\otimes \bm{L}_f}\bm{F}_{v}\\
 \pd{\bm{\Sigma}}{t} &= \sum_{i=1}^d \LRp{\bm{C}\bm{A}_i\otimes \bm{D}_{i}}\bm{V}  +  \sum_{f\in \partial D^k}\LRp{\bm{C}\otimes\bm{L}_f}\bm{F}_{\sigma},
@@ -685,7 +681,7 @@ where we have introduced the differentiation matrix $\bm{D}_i = \bm{M}^{-1}\bm{S
 
 Unfortunately, if $\rho$ and $\bm{C}$ vary spatially within an element, the above approach can no longer be used to invert $\bm{M}_\rho$ and $\bm{M}_{\bm{C}^{-1}}$ in an efficient and low-storage manner.  
 %One can avoid these issues by using mass lumping techniques, where nodal points for Lagrange basis functions are co-located at quadrature points on simplices \cite{chin1999higher, cohen2001higher}; however, these points are only available up to order $N\leq 4$ in three dimensions.  Additionally, these techniques can require the use of enriched polynomial spaces due to a mismatch between the number of points and dimension of $P^N$.  Mass-lumping can also be done using interior quadratures with $N_p$ points \cite{williams2014symmetric}, though these are defined only up to $N=6$ in three dimensions, and proving high order accuracy.
-We address these issues by approximating the weighted mass matrix and corresponding weighted $L^2$ inner product with a weight-adjusted approximation which is low storage and simple to invert, energy stable, and provably high order accurate for spatially varying weights $\rho, \bm{C}$ with sufficiently regularity.   
+For isotropic media, one way to address sub-element variations in material parameters is to diagonalize the matrix $\bm{C}$ through a change of variables \cite{etienne2010hp}.  This results in a local system of ODEs with only scalar weighted mass matrices \cite{mercerat2015nodal}, which can be treated using scalar weight-adjusted approximations.  We take a different approach in addressing these issues by approximating the matrix-weighted mass matrix $\bm{M}_{\bm{C}^{-1}}$ and corresponding matrix-weighted $L^2$ inner product with a weight-adjusted approximation which is low storage, simple to invert, energy stable, and provably high order accurate for spatially varying weights $\rho, \bm{C}$ with sufficiently regularity.   
 
 %This implies that the RHS terms are 
 %\[
@@ -809,7 +805,7 @@ We address these issues by approximating the weighted mass matrix and correspond
 %We choose the penalty parameter $\bm{\tau}$ as a diagonal matrix such that $\bm{A}_0^{-1}\bm{\tau}\bm{A}_n^T\bm{A}_n = O(1)$.  In this case, $\tau_v = O\LRp{\frac{1}{\rho}}$, while $\tau_{\sigma} = O\LRp{\frac{1}{2\mu + \lambda}}$. 
 
 \section{Weight-adjusted inner products for matrix-valued weights}
-
+\label{sec:mwadg}
 Weight-adjusted inner products are high order accurate approximations of weighted $L^2$ inner products.  These can be interpreted as generalizations of mass lumping techniques, reducing to mass lumping when integrals are evaluated with appropriate quadrature rules.  These weight-adjusted inner products result in weight-adjusted mass matrices, whose inverses approximate the inverse of a weighted $L^2$ mass matrix.  
 
 We wish to apply weight-adjusted approximations to avoid the inversion of $\bm{M}_\rho$ and $\bm{M}_{\bm{C}^{-1}}$.  Approximating the inverse of $\bm{M}_\rho$ can be done using weight-adjusted approximations for scalar weights \cite{chan2016weight1,chan2016weight2}, which we review in Section~\ref{sec:swadg}.  We then extend scalar weight-adjusted approximations to matrix-valued weights in Section~\ref{sec:mwadg} to approximate the inverse of $\bm{M}_{\bm{C}^{-1}}$.  
@@ -844,7 +840,7 @@ A weighted $L^2$ inner product $\LRp{wu,v}_{\Lk}$ can be approximated by a weigh
 \[
 \LRp{wu,v}_{\Lk} = \LRp{T_wu,v}_{\Lk}\approx \LRp{T^{-1}_{1/w}u,v}_{\Lk}.  
 \]
-based on the observation that $T^{-1}_{1/w}u \approx uw$.  This approximation is made precise by the following estimates for errors in approximations of the product $uw$ and weighted moments:
+based on the observation that $T^{-1}_{1/w}u \approx uw$.  This approximation is made precise by the following estimates for approximations of the product $uw$ and weighted moments on affinely mapped elements:
 \begin{theorem}[Theorem 5 in \cite{chan2016weight1}]
 Let $D^k$ be quasi-regular with representative size $h = {\rm diam}\LRp{D^k}$.  For $N \geq 0$, $w\in W^{N+1,\infty}\LRp{D^k}$, and $u \in W^{N+1,2}\LRp{D^k}$, 
 \begin{align}
@@ -859,13 +855,20 @@ C_w = C\nor{w}_{L^{\infty}\LRp{D^k}}\nor{\frac{1}{w}}_{L^{\infty}\LRp{D^k}} \nor
 \begin{theorem}[Theorem 6 in \cite{chan2016weight1}]
 Let $u\in W^{N+1,2}\LRp{D^k}$, $w\in W^{N+1,\infty}\LRp{D^k}$, and $v \in P^M\LRp{D^k}$ for $0 \leq M\leq N$; then
 \begin{align*}
-&\LRb{\LRp{{w}u,v}_{L^2\LRp{D^k}} - \waip{u,v}{w}} \\
+&\LRb{\LRp{{w}u,v}_{L^2\LRp{D^k}} - \LRp{T^{-1}_{1/w}u,v}} \\
 &\leq Ch^{2N+2 - M} \nor{{w}}_{L^{\infty}\LRp{D^k}}\nor{\frac{1}{w}}_{L^{\infty}\LRp{D^k}}^2 \nor{w}^2_{W^{N+1,\infty}\LRp{D^k}}  \nor{u}_{W^{N+1,2}\LRp{D^k}} \nor{v}_{L^{\infty}\LRp{D^k}}.
 \end{align*}
 \end{theorem}
+Both theorems rely on a scalar weighted interpolation estimate derived in \cite{warburton2013low,chan2016weight1} for a general non-affine element $D^k$.  
+\begin{theorem}[Theorem 3.1 in \cite{chan2016weight1}]
+Let $D^k$ be a quasi-regular element with representative size $h = {\rm diam}\LRp{D^k}$. For $N \geq 0$, $w\in W^{N+1,\infty}$, and $u\in W^{N+1,2}$, 
+\[
+\nor{u - \frac{1}{w}\Pi_N(wu)}_{\Lk} \leq C_N h^{N+1} \nor{{\sqrt{J}}}_{\LinfDk}\nor{\frac{1}{\sqrt{J}}}_{\LinfDk}\nor{\frac{1}{w}}_{L^\infty}\nor{w}_{W^{N+1,\infty}}\nor{u}_{W^{N+1,2}}.
+\]
+\label{thm:wproj}
+\end{theorem}
 
 \subsection{Extension to matrix weights}
-\label{sec:mwadg}
 
 We now aim to generalize weight-adjusted inner products to the case of matrix-valued weights.  We first define appropriate generalizations of norms used in Section~\ref{sec:swadg} to vector-valued functions.  Let $D^{\bm{\alpha}}\bm{v}$ denote component-wise differentiation of $\bm{v}$ with respect to a $d$-dimensional multi-index $\bm{\alpha}$.  Then, vector $L^p$ Sobolev norms for $\bm{v}(\bm{x}) \in \mathbb{R}^m$ can be defined as 
 \begin{align*}
@@ -880,7 +883,7 @@ Let $\bm{W}(\bm{x})$ be a matrix-valued weight function which is pointwise symme
 \]
 We define a $k$th order Sobolev norm for $\bm{W}(\bm{x})$ in terms of the induced $p$-norm
 \begin{align*}
-\nor{\bm{W}(\bm{x})}_{k,p}^p &= \sum_{\LRb{\bm{\alpha}} \leq k} \sup_{\bm{x}} \nor{D^{\bm{\alpha}}\bm{W}(\bm{x})}^p_p
+\nor{\bm{W}(\bm{x})}_{k,p,\infty}^p &= \sum_{\LRb{\bm{\alpha}} \leq k} \sup_{\bm{x}} \nor{D^{\bm{\alpha}}\bm{W}(\bm{x})}^p_p
 \end{align*}
 While this norm is not sub-multiplicative, the following bound holds
 \begin{align*}
@@ -888,26 +891,17 @@ While this norm is not sub-multiplicative, the following bound holds
 %\leq C_N \sum_{\LRb{\alpha}\leq k} \nor{\sum_{\LRb{\beta}\leq \alpha} \LRp{D^{\beta}\bm{W}}\LRp{D^{\alpha-\beta}\bm{v}} }_{L^p}^p\\
 \leq C_N \int  \sum_{\LRb{\alpha}\leq k} \sum_{\LRb{\beta}\leq \LRb{\alpha}} \nor{\LRp{D^{\beta}\bm{W}}\LRp{D^{\alpha-\beta}\bm{v}} }_{p}^p \\
 &\leq C_N\int \LRp{\sum_{\LRb{\alpha}\leq k} \nor{\LRp{D^{\alpha}\bm{W}}}}^p \LRp{\sum_{\LRb{\alpha}\leq k} \nor{D^{\alpha}\bm{v}}_{p} }^p\\
-&\leq C_N \nor{\bm{W}}_{k,p}^p \nor{\bm{v}}_{k,p}^p,
+&\leq C_N \nor{\bm{W}}_{k,p,\infty}^p \nor{\bm{v}}_{k,p}^p,
 \end{align*}
 where we have used Leibniz's rule, Cauchy-Schwarz, and the arithmetic-geometric mean inequality.  
-
-To show that weight-adjusted DG methods are high order accurate, we make use of a scalar weighted interpolation estimate derived in \cite{warburton2013low,chan2016weight1}.  
-\begin{theorem}[Theorem 3.1 in \cite{chan2016weight1}]
-Let $D^k$ be a quasi-regular element with representative size $h = {\rm diam}\LRp{D^k}$. For $N \geq 0$, $w\in W^{N+1,\infty}$, and $u\in W^{N+1,2}$, 
-\[
-\nor{u - \frac{1}{w}\Pi_N(wu)}_{\Lk} \leq C_N h^{N+1} \nor{{\sqrt{J}}}_{\LinfDk}\nor{\frac{1}{\sqrt{J}}}_{\LinfDk}\nor{\frac{1}{w}}_{L^\infty}\nor{w}_{W^{N+1,\infty}}\nor{u}_{W^{N+1,2}}.
-\]
-\label{thm:wproj}
-\end{theorem}
 
 The following theorem extends Theorem~\ref{thm:wproj} to matrix weights by computing weighted interpolation estimates for the quantity $\bm{W}^{-1}\Pi_N\LRp{\bm{W}\bm{v}}$.  
 \begin{theorem}
 Let $D^k$ be a quasi-regular element with representative size $h = {\rm diam}\LRp{D^k}$. For $N \geq 0$, $\bm{W} \in \LRp{W^{N+1,\infty}}^{d\times d}$, and $\bm{v}\in \LRp{W^{N+1,2}}^d$, 
 \[
-\nor{\bm{v} - \bm{W}^{-1}\Pi_N\LRp{\bm{W}\bm{v}}}_{L^2} \leq Ch^{N+1} \nor{{\sqrt{J}}}_{\LinfDk}\nor{\frac{1}{\sqrt{J}}}_{\LinfDk}\tilde{w}_{\max}\nor{\bm{W}}_{N+1} \nor{\bm{v}}_{W^{N+1,2}}
+\nor{\bm{v} - \bm{W}^{-1}\Pi_N\LRp{\bm{W}\bm{v}}}_{L^2} \leq Ch^{N+1} \nor{{\sqrt{J}}}_{\LinfDk}\nor{\frac{1}{\sqrt{J}}}_{\LinfDk}\tilde{w}_{\max}\nor{\bm{W}}_{N+1,2,\infty} \nor{\bm{v}}_{W^{N+1,2}}
 \]
-\label{thm:Wproj}
+\label{thm:wwproj}
 \end{theorem}
 \begin{proof}
 The proof is the similar to the scalar case.  Using vector-valued versions of Bramble-Hilbert and a scaling argument for quasi-regular elements yields
@@ -915,11 +909,11 @@ The proof is the similar to the scalar case.  Using vector-valued versions of Br
 \nor{\bm{v} - \bm{W}^{-1}\Pi_N\LRp{\bm{W}\bm{v}}}_{L^2} &\leq C_1 \nor{\sqrt{J}}_{\LinfDk} \sup_{\bm{x}}\nor{\bm{W}^{-1}}_{2} \nor{\bm{W}\bm{v} - \Pi_N\LRp{\bm{W}\bm{v}}}_{L^2}\\
 &\leq C_1 \nor{{\sqrt{J}}}_{\LinfDk} \sup_{\bm{x}}\nor{\bm{W}^{-1}}_{2} \LRb{\bm{W}\bm{v}}_{W^{N+1,2}\LRp{\Dhat}}\\
 &\leq C_2 h^{N+1}\nor{{\sqrt{J}}}_{\LinfDk}\nor{\frac{1}{\sqrt{J}}}_{\LinfDk} \sup_{\bm{x}}\nor{\bm{W}^{-1}}_{2} \nor{\bm{W}\bm{v}}_{W^{N+1,2}\LRp{D^k}}\\
-&\leq C_3 h^{N+1}\nor{{\sqrt{J}}}_{\LinfDk}\nor{\frac{1}{\sqrt{J}}}_{\LinfDk} \tilde{w}_{\max} \nor{\bm{W}}_{W^{N+1,2}}\nor{\bm{v}}_{W^{N+1,2}\LRp{D^k}}.
+&\leq C_3 h^{N+1}\nor{{\sqrt{J}}}_{\LinfDk}\nor{\frac{1}{\sqrt{J}}}_{\LinfDk} \tilde{w}_{\max} \nor{\bm{W}}_{{N+1,2,\infty}}\nor{\bm{v}}_{W^{N+1,2}\LRp{D^k}}.
 \end{align*}
 \end{proof}
 
-\subsubsection{Properties of weight-adjusted vector-valued inner products}
+\subsubsection{Weight-adjusted approximations with matrix weights}
 \label{sec:mwadgprop}
 
 Let $\Pi_N\bm{u}$ be defined as the $L^2$ projection applied to each component of the vector-valued function $\bm{u}$.  We then define the operator $T_{\bm{W}}$ analogously to the scalar case
@@ -930,7 +924,7 @@ The inverse operator $T^{-1}_{\bm{W}}$ is defined implicitly via
 \[
 \LRp{\bm{W}T^{-1}_{\bm{W}}\bm{v},\bm{w}} = \LRp{\bm{v},\bm{w}} .
 \]
-This definition is a straightforward generalization of $T^{-1}_w}$ to matrix-valued weights $\bm{W}$.  Conveniently, all properties of $T_{w},T^{-1}_{w}$ for scalar $w(\bm{x})$ carry over to matrix weights $\bm{W}(\bm{x})$ as well \cite{chan2016weight1}.
+This definition is a straightforward generalization of $T^{-1}_{w}$ to matrix-valued weights $\bm{W}$.  Conveniently, all properties of $T_{w},T^{-1}_{w}$ for scalar $w(\bm{x})$ carry over to matrix weights $\bm{W}(\bm{x})$ as well \cite{chan2016weight1}.
 \begin{lemma}
 Let $\Pi_N$ denote the component-wise $L^2$ projection, and let $\bm{W} \in \LRp{L^{\infty}}^m$.  Then, $T_{\bm{W}}$ satisfies the following properties:
 \begin{enumerate}
@@ -957,7 +951,7 @@ Property~\ref{p3} then simply requires the lower bound
 \]
 \end{proof}
 
-Using Theorem~\ref{thm:Wproj}, we may also show that the matrix-valued weight-adjusted inner product is also high order accurate for sufficiently regular $\bm{W}$.
+Using Theorem~\ref{thm:wwproj}, we may also show that the matrix-valued weight-adjusted inner product is also high order accurate for sufficiently regular $\bm{W}$.
 \begin{theorem}
 Let $D^k$ be a quasi-regular element with representative size $h = {\rm diam}\LRp{D^k}$. For $N > 0$
 \[
@@ -966,15 +960,16 @@ Let $D^k$ be a quasi-regular element with representative size $h = {\rm diam}\LR
 with constant $C_{\bm{W}}$ depending on $\bm{W}$ and $N$
 \[
 %C_{\bm{W}} = C_N \cond{\bm{W}}{2,\infty} \nor{\bm{W}}_{W^{N+1,2}\LRp{D^k}}.  
-C_{\bm{W}} = C_N \nor{\sqrt{J}}_{\LinfDk}\nor{\frac{1}{\sqrt{J}}}_{\LinfDk} \tilde{w}_{\max}{w}_{\max} \nor{\bm{W}}_{W^{N+1,2}\LRp{D^k}}.  
+C_{\bm{W}} = C_N \nor{\sqrt{J}}_{\LinfDk}\nor{\frac{1}{\sqrt{J}}}_{\LinfDk} \tilde{w}_{\max}{w}_{\max} \nor{\bm{W}}_{{N+1,2,\infty}}.  
 \]
+\label{thm:west}
 \end{theorem}
 \begin{proof}
 The proof is again similar to the scalar case.  The triangle inequality gives
 \[
 \nor{ \bm{W}\bm{v} - {T}^{-1}_{\bm{W}^{-1}}\bm{v} }_{\Lk } \leq \nor{ \bm{W}\bm{v} - \Pi_N(\bm{W}\bm{v})}_{\Lk} + \nor{\Pi_N(\bm{W}\bm{v}) - T^{-1}_{\bm{W}^{-1}}\bm{v} }_{\Lk }.  
 \]
-The former term is bounded by interpolation estimates and by arguments used in the proof of Theorem~\ref{thm:Wproj}.  The latter term is bounded 
+The former term is bounded by interpolation estimates and by arguments used in the proof of Theorem~\ref{thm:wwproj}.  The latter term is bounded 
 \begin{align*}
 \nor{\Pi_N(\bm{W}\bm{v})- T^{-1}_{\bm{W}^{-1}}\bm{v} }_{\Lk} &= \nor{T^{-1}_{\bm{W}^{-1}} T_{\bm{W}^{-1}}\Pi_N(\bm{W}\bm{v})- T^{-1}_{\bm{W}^{-1}}\Pi_N\bm{v} }_{\Lk } \\
 &= \nor{T^{-1}_{\bm{W}^{-1}} \Pi_N \LRp{T_{\bm{W}^{-1}}\Pi_N(\bm{W}\bm{v})}- T^{-1}_{\bm{W}^{-1}}\Pi_N\bm{v} }_{\Lk } \\
@@ -983,10 +978,11 @@ The former term is bounded by interpolation estimates and by arguments used in t
 &\leq C_N {w}_{\max} \nor{ \bm{W}^{-1}\Pi_N(\bm{W}\bm{v}) - \bm{v} }_{\Lk }.
 \end{align*}
 where we have used $\nor{T_{\bm{W}^{-1}}^{-1}} \leq {w}_{\max}$ (Lemma~\ref{lemma:props}) and $\nor{\Pi_N}_{\Lk} = 1$.  
-An application of Theorem~\ref{thm:Wproj} to bound $\nor{ \bm{W}^{-1}\Pi_N(\bm{W}\bm{v}) - \bm{v} }_{\Lk }$ completes the proof.
+An application of Theorem~\ref{thm:wwproj} to bound $\nor{ \bm{W}^{-1}\Pi_N(\bm{W}\bm{v}) - \bm{v} }_{\Lk }$ completes the proof.
 \end{proof}
 
-\note{This is a good generalization because defining $T^{-1}_w \bm{v} = T^{-1}_{w\bm{I}}\bm{v}$ recovers estimates for scalar weight-adjusted inner products.}
+We note that these estimates are tight, in the sense that we recover estimates for scalar weight-adjusted inner products when the matrix weight is taken to be $\bm{W} = w\bm{I}$.  
+%\note{This is a good generalization because defining $T^{-1}_w \bm{v} = T^{-1}_{w\bm{I}}\bm{v}$ recovers estimates for scalar weight-adjusted inner products.}
 
 %We note that the local conservation property of DG is lost when using weight-adjusted inner products.  However, 
 
@@ -1009,7 +1005,7 @@ We note that, when $\bm{W}$ is constant over $D^k$, $\bm{M}_{\bm{W}}$ reduces to
 \[
 \bm{M}_{\bm{W}} = \bm{W}\otimes \bm{M}, \qquad \bm{M}_{\bm{W}}^{-1} = \bm{W}^{-1}\otimes \bm{M}^{-1}.
 \] 
-In this case, we also have $\bm{M}_{\bm{W}^{-1}} = \bm{W}^{-1}\otimes \bm{M}$. Substituting this explicit inverse into the weight adjusted mass matrix inverse $\LRp{\bm{I} \otimes \bm{M}^{-1}} \bm{M}_{\bm{W}^{-1}} \LRp{\bm{I} \otimes \bm{M}^{-1}}$ in (\ref{eq:wadgmc}) recovers the exact inversion of $\bm{M}_{\bm{W}}$.  
+In this case, we also have $\bm{M}_{\bm{W}^{-1}} = \bm{W}^{-1}\otimes \bm{M}$, and substituting this explicit inverse into the weight adjusted mass matrix inverse $\LRp{\bm{I} \otimes \bm{M}^{-1}} \bm{M}_{\bm{W}^{-1}} \LRp{\bm{I} \otimes \bm{M}^{-1}}$ in (\ref{eq:wadgmc}) recovers the exact inversion of $\bm{M}_{\bm{W}}$.  
 
 \section{An energy stable weight-adjusted discontinuous Galerkin formulation for elastic wave propagation}
 \label{sec:wadgelas}
@@ -1034,25 +1030,17 @@ The substitution of weight-adjusted inner products for weighted $L^2$ inner prod
 %\bm{M}_{\rho \bm{I}} \pd{\bm{V}}{t} &= \sum_{i=1}^d  \LRp{\bm{A}_i^T\otimes \bm{S}_{i}} \bm{\Sigma} + \sum_{f\in \partial D^k}\LRp{\bm{I}\otimes \bm{M}_f}\bm{F}_{v}\nonumber\\
 %\bm{M}_{\bm{C}^{-1}} \pd{\bm{\Sigma}}{t} &= \sum_{i=1}^d \LRp{\bm{A}_i\otimes \bm{S}_{i}}\bm{V}  +  \sum_{f\in \partial D^k}\LRp{\bm{I}\otimes\bm{M}_f}\bm{F}_{\sigma}. 
 %\end{align*}
-Inverting these weight-adjusted mass matrices yields the following system of ODEs for $\bm{V},\bm{\Sigma}$
+Inverting these weight-adjusted mass matrices yields the following local system of ODEs for $\bm{V},\bm{\Sigma}$
 \begin{align*}
 \pd{\bm{V}}{t} &= \LRp{\bm{I}\otimes\bm{M}^{-1}} \bm{M}_{\LRp{\rho^{-1}\bm{I}}} \LRp{\sum_{i=1}^d  \LRp{\bm{A}_i^T\otimes \bm{D}_{i}} \bm{\Sigma} + \sum_{f\in \partial D^k}\LRp{\bm{I}\otimes \bm{L}_f}\bm{F}_{v}} \nonumber\\
 \pd{\bm{\Sigma}}{t} &= \LRp{\bm{I}\otimes\bm{M}^{-1}} \bm{M}_{\bm{C}}  \LRp{\sum_{i=1}^d \LRp{\bm{A}_i\otimes \bm{D}_{i}}\bm{V}  +  \sum_{f\in \partial D^k}\LRp{\bm{I}\otimes\bm{L}_f}\bm{F}_{\sigma}}. 
+\label{eq:wadgmat}
 \end{align*}
-In practice, the matrices $\LRp{\bm{I}\otimes\bm{M}^{-1}} \bm{M}_{\LRp{\rho^{-1}\bm{I}}}$ and $\LRp{\bm{I}\otimes\bm{M}^{-1}} \bm{M}_{\bm{C}}$ are applied to a vector using quadrature.  After fusing operations together, this procedure can be boiled down to multiplication by two rectangular matrices.  
+In practice, the matrices $\LRp{\bm{I}\otimes\bm{M}^{-1}} \bm{M}_{\LRp{\rho^{-1}\bm{I}}}$ and $\LRp{\bm{I}\otimes\bm{M}^{-1}} \bm{M}_{\bm{C}}$ are applied in a matrix-free fashion using reference element matrices and values of $\rho,\bm{C}$ at quadrature points.  After fusing operations together, this procedure can be boiled down to multiplication by two rectangular matrices \cite{chan2016weight2}.  
 
-%The matrix form of DG 
-%\begin{align*}
-%\bm{M}_{\rho \bm{I}} \pd{\bm{V}}{t} &= \sum_{i=1}^d  \LRp{\bm{A}_i^T\otimes \bm{S}_{i}} \bm{\Sigma} + \sum_{f\in \partial D^k}\LRp{\bm{I}\otimes \bm{M}_f}\bm{F}_{v}\nonumber\\
-%\bm{M}_{\bm{C}^{-1}} \pd{\bm{\Sigma}}{t} &= \sum_{i=1}^d \LRp{\bm{A}_i\otimes \bm{S}_{i}}\bm{V}  +  \sum_{f\in \partial D^k}\LRp{\bm{I}\otimes\bm{M}_f}\bm{F}_{\sigma}. 
-%\end{align*}
-%where the matrices $\bm{A}_{\bm{v}_i}$ and $\bm{A}_{\sigma}$ are induced by the discretization of the right hand side.  
+One drawback of the analysis presented in this work is that accuracy is not guaranteed in the isotropic incompressible limit $\mu / \lambda \rightarrow 0$.  In this case, the stiffness matrix $\bm{C}$ becomes singular, and the constant $\tilde{w}_{\max}$ in the upper bound on $\nor{\bm{C}^{-1}}$ blows up.  However, numerical experiments in Section~\ref{sec:incomp} suggest that, while taking $\mu/\lambda \approx 0$ (or $\bm{C}$ nearly singular) results in larger relative errors for $\bm{\sigma}$, the accuracy of the WADG solution for $\bm{v}$ does not degrade significantly for near-incompressible materials.  
 
-We note that, for isotropic media, another way to address sub-element variations in material parameters is to diagonalize the matrix $\bm{C}$ through a change of variables \cite{etienne2010hp}.  This results in a local system of ODEs with only scalar weighted mass matrices \cite{mercerat2015nodal}, which can be treated using scalar weight-adjusted approximations.  However, this approach is more difficult to apply when $\bm{C}$ is anisotropic.  
-
-One drawback of the analysis presented in this work is that accuracy is not guaranteed in the isotropic incompressible limit $\mu / \lambda \rightarrow 0$.  In this case, the stiffness matrix $\bm{C}$ becomes singular, and the constant $\tilde{w}_{\max}$ in the upper bound on $\nor{\bm{C}}$ blows up.  However, numerical experiments in Section~\ref{sec:incomp} suggest that the accuracy of WADG  for linear elastic wave propagation does not degrade significantly in the incompressible limit.  
-
-\subsection{An energy stable formulation for curvilinear meshes}
+\subsection{Energy stability on curvilinear meshes}
 
 We have shown the energy stability of the DG formulation (\ref{eq:dgform}) on meshes of affine elements by assuming exact integration of all terms.  However, energy stability can still be guaranteed if integrals are evaluated inexactly using quadrature.  Instead of discretizing the ``strong'' DG formulation (\ref{eq:dgform}), we discretize the ``skew-symmetric'' formulation, where the right hand side of the velocity equations is integrated by parts,\footnote{The choice of which equation to integrate by parts is arbitrary, since integrating the stress equations by parts also results in an energy stable formulation. } resulting in the formulation 
 \begin{align*}
@@ -1063,28 +1051,126 @@ We have shown the energy stability of the DG formulation (\ref{eq:dgform}) on me
 \end{align*}
 where we have incorporated spatial variations of $J$ into the definition of the weights on the left hand side.  
 
-Since the proof of stability in Theorem~\ref{thm:stability} requires only algebraic manipulations of this formulation, the same energy stability result holds for this formulation.  More importantly, a discrete version of energy stability is still guaranteed in the presence of inexact quadrature, where integrals in Theorem~\ref{thm:stability} are replaced with quadrature approximations.  This is especially important for discretizations on curvilinear meshes, where the exact integration of spatially varying geometric factors and Jacobians can be either inhibitively expensive for high order curvilinear mappings or impossible for rational mappings \cite{engvall2016isogeometric, michoski2015foundations}.  
+Since the proof of stability in Theorem~\ref{thm:stability} requires only algebraic manipulations of this formulation, the same energy stability result holds for this formulation.  More importantly, a discrete version of energy stability is still guaranteed in the presence of inexact quadrature, where integrals in Theorem~\ref{thm:stability} are replaced with quadrature approximations.  This is especially important for discretizations on curvilinear meshes, where the exact integration of spatially varying geometric factors and Jacobians can be either inhibitively expensive for high order curvilinear mappings or impossible for rational mappings \cite{engvall2016isogeometric, michoski2015foundations}.  
 
 We note that, to ensure energy stability on curved and non-affine elements, the ``skew-symmetric'' formulation must be evaluated explicitly using quadrature, which is typically more expensive than quadrature-free evaluations used to evaluate the ``strong'' DG formulation (\ref{eq:dgform}).  These costs can be slightly reduced for curvilinear meshes by evaluating the DG formulation using the ``skew-symmetric'' formulation on curvilinear elements and the more efficient ``strong'' DG formulation on affine elements \cite{chan2016weight2}.  
 
 \subsection{Convergence analysis}
 
+Using estimates from Section~\ref{sec:mwadgprop}, we can extend the semi-discrete convergence analysis in \cite{houston2002discontinuous,warburton2013low,chan2016weight1} to linear elastic wave propagation on meshes of affine elements.  Techniques in \cite{warburton2013low} can be used to extend this analysis to curvilinear elements.  
 
-%Nodal collocation does not work for arbitrary wavespeeds.  Example: wave equation, $c^2 = 1 + .9\sin(8\pi x)\sin(8\pi y)$.
+In terms of group variables $\bm{U} = \LRp{\bm{v},\bm{\sigma}}$ and $\bm{V} = \LRp{\bm{w},\bm{q}} \in \LRp{V_h\LRp{\Oh}}^d\times\LRp{V_h\LRp{\Oh}}^{N_d}$, the variational formulation can be written as
+\begin{align*}
+&\LRp{T^{-1}_{\bm{A}_0^{-1}}\pd{\bm{U}}{t},\bm{V}}_{\Omega} + a(\bm{U},\bm{V}) + b(\bm{U},\bm{V}) = (\bm{f},\bm{V})\\
+a(\bm{U},\bm{V}) &= \sum_{D^k\in \Oh} \LRp{-\LRp{ \sum_{i=1}^d \bm{\sigma},\bm{A}_i \pd{\bm{w}}{\bm{x}_i}}_{\Lk}  + \LRp{\sum_{i=1}^d \bm{A}_i \pd{\bm{v}}{\bm{x}_i},\bm{q}}_{\Lk}} \\
+b(\bm{U},\bm{V}) &= \sum_{D^k\in \Oh}\LRp{ \LRa{\bm{A}_n^T\avg{\bm{\sigma}} + \frac{\tau_v}{2}\bm{A}_n^T\bm{A}_n\jump{\bm{v}},\bm{w}}_{\Ldk} + \LRa{\frac{1}{2}\bm{A}_n\jump{\bm{v}} + \frac{\tau_{\sigma}}{2}\bm{A}_n\bm{A}_n^T\jump{\bm{\sigma}},\bm{q}}_{\Ldk} },
+%a(\bm{U},\bm{V}) &= \sum_{D^k\in \Oh} \LRp{\LRp{ \sum_{i=1}^d \bm{A}_i^T\pd{\bm{\sigma}}{\bm{x}_i},\bm{w}}_{\Lk}  + \LRp{\sum_{i=1}^d \bm{A}_i \pd{\bm{v}}{\bm{x}_i},\bm{q}}_{\Lk}} \\
+%b(\bm{U},\bm{V}) &= \sum_{D^k\in \Oh}\LRp{ \LRa{\bm{A}_n^T\jump{\bm{\sigma}} + \frac{\tau_v}{2}\bm{A}_n^T\bm{A}_n\jump{\bm{v}},\bm{w}}_{\Ldk} + \LRa{\frac{1}{2}\bm{A}_n\jump{\bm{v}} + \frac{\tau_{\sigma}}{2}\bm{A}_n\bm{A}_n^T\jump{\bm{\sigma}},\bm{q}}_{\Ldk} },
+\end{align*}
+where $\bm{A}_0 = {\rm diag}\LRp{\rho\bm{I},\bm{C}^{-1}}$.  Energy stability implies that
+\begin{align*}
+&b(\bm{U},\bm{U}) = \frac{1}{2}\sum_{D^k\in\Oh} \LRp{\tau_v\nor{\jump{\bm{A}_n\bm{v}}}_{\Ldk}^2 + \tau_\sigma\nor{\jump{\bm{A}^T_n\bm{\sigma}}}_{\Ldk}^2}\\
+&\LRp{T^{-1}_{\bm{A}_0^{-1}}\pd{\bm{U}}{t},\bm{U}}_{\Omega} + b(\bm{U},\bm{U}) =  (\bm{f},\bm{U}).
+\end{align*}
+Let $\bm{U},\bm{U}_h$ denote the exact and discrete WADG solutions, respectively.  Since the DG formulation (\ref{eq:dgform}) is consistent, these solutions satisfy
+\begin{align}
+\LRp{\bm{A}_0\pd{\bm{U}}{t},\bm{V}} + a(\bm{U},\bm{V}) + b(\bm{U},\bm{V}) &= (\bm{f},\bm{V}) \nonumber\\
+\LRp{T_{\bm{A}_0^{-1}}^{-1}\pd{\bm{U}_h}{t},\bm{V}} + a(\bm{U}_h,\bm{V}) + b(\bm{U}_h,\bm{V}) &= (\bm{f},\bm{V})
+\label{eq:dgvswadg}
+\end{align}
+for all $\bm{V} \in \LRp{V_h\LRp{\Oh}}^d\times\LRp{V_h\LRp{\Oh}}^{N_d}$.  We decompose the error $\bm{U}-\bm{U}_h$ into a projection error $\bm{\epsilon}$ and discretization error $\bm{\eta}$.
+\[
+\bm{U}-\bm{U}_h  = \LRp{\Pi_N\bm{U}-\bm{U}_h}-\LRp{\Pi_N\bm{U}-\bm{U}} = \bm{\eta} - \bm{\epsilon}.
+\]
+We also introduce a consistency error $\bm{\delta} = \bm{A}_0\bm{U} - T_{\bm{A}_0^{-1}}^{-1}\bm{U}$ resulting from the approximation of $\bm{A}_0\bm{U}$ by a weight-adjusted inner product
+\[
+\bm{A}_0\pd{\bm{U}}{t} - T_{\bm{A}_0^{-1}}^{-1}\pd{\bm{U}_h}{t} = \pd{}{t}\LRp{\bm{A}_0\bm{U} - T_{\bm{A}_0^{-1}}^{-1}\bm{U}} + \pd{}{t}T_{\bm{A}_0^{-1}}^{-1}\LRp{\Pi_N\bm{U}-\bm{U}_h} = \pd{\bm{\delta}}{t} + \pd{}{t}\LRp{T_{\bm{A}_0^{-1}}^{-1}\bm{\eta}}
+\]  
+where we have used that $\bm{T}_{\bm{A}_0^{-1}}^{-1} = \bm{T}_{\bm{A}_0^{-1}}^{-1}\Pi_N$.  Subtracting the DG and WADG formulations in (\ref{eq:dgvswadg}) and setting $\bm{V} = \bm{\eta}$ then yields 
+\begin{align}
+\frac{1}{2}\pd{}{t}\LRp{T^{-1}_{\bm{A}_0^{-1}}\bm{\eta},\bm{\eta}}_{\Omega} + b(\bm{\eta},\bm{\eta}) &= \LRp{\pd{\bm{\delta}}{t},\bm{\eta}} + a(\bm{\epsilon},\bm{\eta}) + b(\bm{\epsilon},\bm{\eta}),
+\label{eq:erreqn}
+\end{align}
+where we have used that $a(\bm{\eta},\bm{\eta}) = 0$ by skew symmetry.  
+
+
+We bound $a(\bm{\epsilon},\bm{\eta}) + b(\bm{\epsilon},\bm{\eta})$ on the right hand side by integrating by parts the stress equation and using the component-wise $L^2$ orthogonality of $\bm{\epsilon}$ to derivatives of $\bm{\eta}$.  This reduces the term $a(\bm{\epsilon},\bm{\eta}) + b(\bm{v},\bm{\eta})$ to surface contributions over each element, which can be combined with contributions from neighboring elements
+\begin{align*}
+ \sum_{D^k\in \Oh}&\LRp{ \LRa{\bm{A}_n^T\avg{\bm{\epsilon}_\sigma} + \frac{\tau_v}{2}\bm{A}_n^T\bm{A}_n\jump{\bm{\epsilon}_v},\bm{\eta}_v}_{\Ldk} + \LRa{\bm{A}_n\avg{\bm{\epsilon}_v} + \frac{\tau_{\sigma}}{2}\bm{A}_n\bm{A}_n^T\jump{\bm{\epsilon}_\sigma},\bm{\eta}_\sigma}_{\Ldk}}\\
+&= \sum_{D^k\in \Oh}\LRp{ 
+\LRa{\avg{\bm{\epsilon}_\sigma} - \frac{\tau_v}{2}\bm{A}_n\jump{\bm{\epsilon}_v},\bm{A}_n\jump{\bm{\eta}_v}}_{\Ldk} + \LRa{\avg{\bm{\epsilon}_v} - \frac{\tau_\sigma}{2}\bm{A}_n^T\jump{\bm{\epsilon}_\sigma},\bm{A}_n^T\jump{\bm{\eta}_{\sigma}}}_{\Ldk}}\\ %- \LRa{\bm{A}_n^T\jump{\bm{\epsilon}_\sigma},\frac{\tau_{\sigma}}{2}\bm{A}_n^T\jump{\bm{\eta}}_\sigma}_{\Ldk} }\\
+&\leq \sum_{D^k\in \Oh}\nor{\avg{\bm{\epsilon}_\sigma} - \frac{\tau_v}{2}\bm{A}_n\jump{\bm{\epsilon}_v}}_{\Ldk} \nor{\bm{A}_n\jump{\bm{\eta}_v}}_{\Ldk} + \nor{\avg{\bm{\epsilon}_v} - \frac{\tau_\sigma}{2}\bm{A}_n^T\jump{\bm{\epsilon}_\sigma}}_{\Ldk}\nor{\bm{A}_n^T\jump{\bm{\eta}_{\sigma}}}_{\Ldk}\\ 
+%&\leq \LRp{\nor{\avg{\bm{\epsilon}_\sigma} - \frac{\tau_v}{2}\bm{A}_n\jump{\bm{\epsilon}_v}}_{\Ldk}  + \nor{\avg{\bm{\epsilon}_v} - \frac{\tau_\sigma}{2}\bm{A}_n^T\jump{\bm{\epsilon}_\sigma}}_{\LDk}} +  \LRp{\nor{\bm{A}_n\jump{\bm{\eta}_v}}_{\Ldk}^2 + \nor{\bm{A}_n^T\jump{\bm{\eta}_{\sigma}}}_{\Ldk}^2}\\ 
+&\leq C_\tau \sum_{D^k\in \Oh}\nor{\bm{\epsilon}}_{\Ldk}\frac{1}{2}\LRp{\tau_v\nor{\bm{A}_n\jump{\bm{\eta}_v}}_{\Ldk}^2 + \tau_\sigma\nor{\bm{A}_n^T\jump{\bm{\eta}_{\sigma}}}_{\Ldk}^2}^{1/2}
+\end{align*}
+where $C_\tau$ is proportional to $\max\LRp{\tau_v, \tau_\sigma}$.  Using Young's inequality with $\alpha \geq 1/\max\LRp{\tau_v,\tau_\sigma,1}$ sufficiently large yields the following bound 
+\[
+\LRb{a(\bm{\epsilon},\bm{\eta}) + b(\bm{\epsilon},\bm{\eta})} \leq \frac{C}{4\alpha}{b(\bm{\eta},\bm{\eta})} + \frac{C\alpha}{4} \sum_{D^k\in \Oh}\nor{\bm{\epsilon}}_{\Ldk}^2.
+\]
+%where $\bm{E}_v,\bm{E}_\sigma,\bm{\eta}_v,\bm{\eta}_\sigma$ denote respective components of $\bm{E},\bm{\eta}$.  
+This can be used to bound (\ref{eq:erreqn}).  Using Young's inequality on the remaining terms and absorbing terms involving $\bm{\eta}$ into the left hand side yields
+\[
+\frac{1}{2}\pd{}{t}\LRp{T^{-1}_{\bm{A}_0^{-1}}\bm{\eta},\bm{\eta}}_{\Omega} + \LRp{1-\frac{C}{4\alpha}} b(\bm{\eta},\bm{\eta}) \leq \nor{\pd{\bm{\delta}}{t}}_{\Lk} + \sum_{D^k \in \Oh}\frac{ C\alpha}{4} \nor{\bm{\epsilon}}_{\Ldk}^2.
+\]
+Integrating from $[0,T]$, and using the arithmetic-geometric mean inequality yields
+\[
+\frac{1}{2}\LRp{T^{-1}_{\bm{A}_0^{-1}}\bm{\eta},\bm{\eta}}_{\Omega} + \LRp{1-\frac{C}{4\alpha}}\int_0^T  b(\bm{\eta},\bm{\eta}) \leq \int_0^T\nor{\pd{\bm{\delta}}{t}}_{\Lk} + \int_0^T\sum_{D^k \in \Oh}C\nor{\bm{\epsilon}}_{\Ldk}.
+\]
+Using Theorem~\ref{thm:west} and a standard $hp$ trace inequality $\nor{u}_{\Ldk} \leq Ch^{-1/2} \nor{u}_{\L}$ \cite{chan2015gpu} then yields
+\[
+\nor{\bm{\eta}} \leq C_{\bm{W}} T \sup_{t\in [0,T]}\LRp{\nor{\pd{\bm{\delta}}{t}} + \nor{\bm{\epsilon}}h^{-1/2}}.
+\]
+Bounding each term on the right using interpolation estimates for sufficiently regular $\bm{U}$ yields the final result
+\[
+\nor{\bm{U}-\bm{U}_h} \leq (C_1 + C_2 T) h^{N + 1/2}\LRp{\nor{\bm{U}}_{W^{N+1,2}} + C_3 h^{1/2}\nor{\pd{\bm{U}}{t}}_{W^{N+1,2}}}.
+\]
+where $C_2$ depends on $N$ and $C_3$ depends on $\nor{\bm{W}}_{{N+1,2,\infty}}$.
+\note{Todo - finish}
 
 \section{Numerical experiments}
+\label{sec:numerical}
+The following sections present several numerical experiments validating the stability and accuracy of the proposed method in two and three dimensions.  The energy stability of the method is also confirmed for examples with sub-cell variations in heterogeneous media and curvilinear meshes.  The convergence of the new DG formulation in piecewise constant isotropic media is confirmed using analytic solutions, while the convergence of the method for high order approximations of heterogeneous media is confirmed using a fine grid reference solution.  Finally, the method is applied to problems with anisotropy and stiffness matrices $\bm{C}$ with sub-element variations.  
 
-The following sections present several numerical experiments validating the stability and accuracy of the proposed method in two and three dimensions.  
+In all experiments, we follow \cite{chan2016weight1} and compute application of weight-adjusted mass matrices using a quadrature exact for polynomials of degree $(2N+1)$.  Time integration is performed using the low-storage 4th order five-stage Runge-Kutta scheme of Carpenter and Kennedy \cite{carpenter1994fourth}, and the timestep is chosen based on the global restriction
+\[
+dt = \min_{f} \frac{C_{\rm CFL}}{  \nor{\bm{C}(\bm{x})}_{2,\infty,\Omega} C_N \nor{J^f}_{L^{\infty}(f)}\nor{J^{-1}}_{L^{\infty}(f)}}
+\]
+where $C_N = O(N^2)$ is the order-dependent constant in the surface polynomial trace inequality \cite{chan2015gpu}, $C_{\rm CFL}$ is a tunable global CFL constant, and $\nor{\bm{C}}_{2,\infty,\Omega}$ denotes the spatial supremum of the $2$-norm of the stiffness matrix $\bm{C}(\bm{x})$.  
+\[
+\nor{\bm{C}}_{2,\infty,\Omega} = \sup_{\bm{x}\in\Omega}\nor{\bm{C}(\bm{x})}_{2}.  
+\]
 
-\subsection{Verification of stability}
+\subsection{Spectra and choice of penalty parameter}
 
-blah
+We first verify the energy stability of the WADG method for arbitrary heterogeneous media.  We use a stiffness matrix constructed using random numbers and similarity transforms, such that at every quadrature point, $\bm{C}(\bm{x}) = \bm{U}\bm{D}\bm{U}^{T}$, where $\bm{D}$ is a diagonal matrix with positive entries $d_{\min} \leq \bm{D}_{ii} \leq d_{\max}$ and $\bm{U}$ is a random unitary matrix.  Let $\bm{A}_h$ denote the matrix induced by the global semi-discrete DG formulation, such that the time evolution of the solution $\bm{v},\bm{\sigma}$ is governed by
+\[
+\pd{\bm{Q}}{t} = \bm{A}_h\bm{Q},
+\]
+with $\bm{Q}$ denotes a vector of degrees of freedom for $(\bm{v},\bm{\sigma})$.  Figure~\ref{fig:spectra} shows computed eigenvalues of $\bm{A}_h$ for $[d_{\min},d_{\max}] = [1/10,1]$ and $[10^{-4},1]$, $\tau_v=\tau_\sigma = 0$ and $\tau_v=\tau_\sigma = 1$ under discretization parameters $N=4$ and $h = 1/4$.  
 
-\note{Eigenvalue plots with $\tau = 0$ and $\tau = O(1)$ for both square and curvilinear grids with random coefficients close to zero and 1.  Change in solution norm as time goes on.  }
+\begin{figure}
+\centering
+\subfloat[$\tau_v = \tau_\sigma = 0$]{\includegraphics[width=.475\textwidth]{../figs/spectra_tau0.png}}
+%\hspace{1em}
+\subfloat[$\tau_v = \tau_\sigma = 1$]{\includegraphics[width=.475\textwidth]{../figs/spectra_tau1.png}}
+\caption{Spectra for $N=4$ and $h = 1/4$, using randomly chosen $\bm{C}(\bm{x})$ with eigenvalues between $[d_{\min}, 1]$ at each quadrature point.  For both $\tau_v = \tau_\sigma = 0$ and $\tau_v = \tau_\sigma = 1$, the largest real part of the spectra is $O(10^{-14})$.}
+\label{fig:spectra}
+\end{figure}
+
+We note that, for $\tau_v = \tau_\sigma = 1$, $\nor{\bm{A}_h}$ is approximately twice as large compared to when $\tau_v = \tau_\sigma = 0$.   This can result in a more restrictive stability condition on the timestep.  We observe that the growth in $\nor{\bm{A}_h}$ for $\tau_v,\tau_\sigma = 1$ is due to the presence of eigenvalues with large negative real parts, which implies that larger timesteps may be used under time integrators with extended stability regions along the real axis \cite{abdulle2002fourth}.  
+
+Alternatively, we can avoid growth in $\nor{\bm{A}_h}$ by scaling $\tau$.  To avoid artificially increasing the stiffness of (\ref{eq:wadgmat}), it was argued in \cite{chan2016short} that the magnitude of the penalty parameter should depend on the largest singular value of $\bm{A}_n$, which is $O(1)$ in two and three dimensions.  However, this does not factor in the effect of $\rho$ and $\bm{C}^{-1}$ appearing in the left hand side.  These coefficients can be taken into account by scaling only the stress penalization parameter with the average of local max norms over a face $f$
+\[
+\tau_{\sigma,f} \approx \frac{2}{\nor{\bm{C}^+(\bm{x})}_{2,\infty,f}+\nor{\bm{C}^-(\bm{x})}_{2,\infty,f}},
+\]
+where $\bm{C}^+,\bm{C}^-$ denote values of the stiffness matrix on elements which share the face $f$.  It may also be advantageous to rescale $\tau_\sigma$ for each individual component of stress based on the rows of $\bm{C}$.  Under this rescaling of the stress penalty parameter, we observe numerically that the norm of $\bm{A}_h$ remains roughly the same magnitude as for $\tau_p = \tau_\sigma = 0$.   %Since we do not observe significant changes in computed $L^2$, we adopt this rescaling of $\tau_\sigma$ in all reported results.  
+%We note that this rescaling of the penalty parameters also avoids other issues associated with over-penalization, such as the reintroduction of spurious modes which would otherwise be damped under less aggressive penalties \cite{chan2016short}.  
+
+In the following experiments, we use $\tau_v = \tau_\sigma = 1$.  However, we do not observe significant changes in computed $L^2$ errors under the aforementioned rescaling of $\tau_\sigma$.  
 
 \subsection{Analytic solutions} 
 
-Next, we study the accuracy and convergence of weight-adjusted DG method for several analytical solutions in linear elasticity.  In all cases, the solution in expressed terms of the displacement vector $\bm{u}(\bm{x},t)$.  Initial conditions for velocity and stress are computed through 
+Next, we study the accuracy and convergence of weight-adjusted DG method for several analytical solutions in linear elasticity.  In all cases, the solution in expressed terms of the displacement vector $\bm{u}(\bm{x},t) = (u_1,\ldots,u_d)$.  Initial conditions for velocity and stress are computed through 
 \[
 \bm{v}(\bm{x},t) = \pd{\bm{u}}{t}, \qquad \bm{\sigma} = \bm{C}\bm{E} = \bm{C}\frac{1}{2}\LRp{\Grad\bm{u} + \Grad\bm{u}^T}.  
 \]
@@ -1095,7 +1181,7 @@ Unless otherwise stated, we report relative $L^2$ errors for all components of t
 
 \subsubsection{Harmonic oscillation of a square} 
 
-We first examine convergence  on a unit square domain with  $\lambda = \mu = \rho = 1$.   The displacement is given by
+We first examine convergence  on a unit square domain with  $\lambda = \mu = \rho = 1$.   The components of the displacement vector is given by
 \begin{align*}
 u_1(x,y,t) &= \cos(\omega\pi t)\cos(\pi x)\sin(\pi y)\\
 u_2(x,y,t) &= -\cos(\omega\pi t)\sin(\pi x)\cos(\pi y),
@@ -1110,7 +1196,7 @@ where $\omega = \sqrt{2\mu}$.  Figure~\ref{fig:harmonic_osc} shows $L^2$ errors 
 	width=.49\textwidth,
     xlabel={Mesh size $h$},
        ylabel={$L^2$ errors}, 
-    xmin=.04, xmax=1,
+    xmin=.025, xmax=1,
     ymin=1e-12, ymax=1,
     legend pos=south east,
     xmajorgrids=true,
@@ -1119,34 +1205,25 @@ where $\omega = \sqrt{2\mu}$.  Figure~\ref{fig:harmonic_osc} shows $L^2$ errors 
 ] 
 
 \addplot[color=blue,mark=*,semithick, mark options={fill=markercolor}]
-coordinates{(0.5,0.1732)(0.25,0.0439)(0.125,0.0110)(0.0625,0.0027)};
-%\node at (axis cs:.04,.0027) {$N = 1$};
-
-\logLogSlopeTriangleFlip{0.32}{0.125}{0.815}{2}{blue}
+coordinates{(0.5,0.162198)(0.25,0.0389974)(0.125,0.0095562)(0.0625,0.00227802)};
+\logLogSlopeTriangleFlip{0.4}{0.125}{0.81}{2.05}{blue}
 
 \addplot[color=red,mark=square*,semithick, mark options={fill=markercolor}]
-coordinates{(0.5,0.0150)(0.25,0.0020)(0.125,2.4911e-04)(0.0625,3.1277e-05)};
-%\node at (axis cs:.04,3e-5) {$N = 2$};
-
-\logLogSlopeTriangleFlip{0.32}{0.125}{0.66}{3}{red}
+coordinates{(0.5,0.0128844)(0.25,0.00156487)(0.125,0.000197047)(0.0625,2.42153e-05)};
+\logLogSlopeTriangleFlip{0.4}{0.125}{0.65}{3.01}{red}
 
 \addplot[color=black,mark=triangle*,semithick, mark options={fill=markercolor}]
-coordinates{(0.5, 0.0013)(0.25,8.3910e-05)(0.125,5.3840e-06)(0.0625,3.2015e-07)};
-%\node at (axis cs:.04,3e-7) {$N = 3$};
-
-\logLogSlopeTriangleFlip{0.32}{0.125}{0.505}{4}{black}
+coordinates{(0.5,0.00110186)(0.25,6.9321e-05)(0.125,4.31386e-06)(0.0625,2.49229e-07)};
+\logLogSlopeTriangleFlip{0.4}{0.125}{0.49}{4.06}{black}
 
 \addplot[color=magenta,mark=diamond*,semithick, mark options={fill=markercolor}]
-coordinates{(0.5,1.0687e-04)(0.25,3.3041e-06)(0.125,9.7715e-08)(0.0625, 2.8750e-09)};
-%\node at (axis cs:.03,1.5e-13) {$a = 10^{-4}$};
-\logLogSlopeTriangleFlip{0.32}{0.125}{0.34}{5}{magenta}
+coordinates{(0.5,8.42986e-05)(0.25,2.47716e-06)(0.125,7.21337e-08)(0.0625,2.17472e-09)};
+\logLogSlopeTriangleFlip{0.4}{0.125}{0.325}{5.08}{magenta}
 
 \addplot[color=violet,mark=pentagon*,semithick, mark options={fill=markercolor}]
-coordinates{(0.5,5.9754e-06)(0.25,9.3644e-08)(0.125,1.3980e-09)(0.0625,2.0686e-11)};
+coordinates{(0.5,4.91233e-06)(0.25,7.57947e-08)(0.125,1.10789e-09)(0.0625,1.63538e-11)};
+\logLogSlopeTriangleFlip{0.4}{0.125}{0.15}{6.09}{violet}
 
-\logLogSlopeTriangleFlip{0.32}{0.125}{0.17}{6}{violet}
-
-%\node at (axis cs:.03,6.8e-10) {$u$ discontinuous};
 \legend{$N=1$,$N=2$,$N=3$,$N=4$,$N=5$}
 \end{loglogaxis}
 \end{tikzpicture}
@@ -1160,7 +1237,7 @@ Next, we examine the convergence of WADG for Rayleigh and Lamb waves, both of wh
 
 Rayleigh waves are elastic surface waves which decay exponentially away from the surface.  These waves are given by the displacement vector
 \begin{align*}
-\bm{v}\LRp{x,y,t} &= e^{-\omega x \sqrt{1-\xi^2}}
+\bm{u}\LRp{x,y,t} &= e^{-\omega x \sqrt{1-\xi^2}}
 \LRp{
 \begin{array}{c}
 \cos(\omega(y+c_r t)) \\
@@ -1181,10 +1258,10 @@ where $\omega$ is the wavespeed, $c_r$ is the Rayleigh phase velocity $c_r = \xi
 \]
 In our computations, we use $\rho = \mu = \lambda = 1$, $\xi = 0.949554083888034$, and $\omega = 2\pi$.  We solve on the domain $[0,2]\times[0,1]$ using a sequence of uniform triangular meshes, and enforce traction-free boundary conditions at $x=0$ and exact Dirichlet boundary conditions at $x=2$.  Periodic boundary conditions are applied at $y = 0$ and $y = 1$.  
 
-Lamb waves are supported by elastic waveguides with traction-free (free surface) boundary conditions at the top and bottom of the domain.  The displacement of these waves 
+Lamb waves are supported by elastic waveguides with traction-free (free surface) boundary conditions at the top and bottom of the domain.  The displacement of these waves is given by
 \begin{align*}
-\bm{v}_1\LRp{x,y,t} &= \LRp{-kB_1 \cos(p y)- qB_2 \cos(q y)} \sin(k x - \omega t)\\
-\bm{v}_2\LRp{x,y,t} &= \LRp{-pB_1 \sin(py) + kB_2 \sin(qy)} \cos(kx - \omega t)
+{u}_1\LRp{x,y,t} &= \LRp{-kB_1 \cos(p y)- qB_2 \cos(q y)} \sin(k x - \omega t)\\
+{u}_2\LRp{x,y,t} &= \LRp{-pB_1 \sin(py) + kB_2 \sin(qy)} \cos(kx - \omega t)
 \end{align*}
 where $k$ is the wavenumber and $\omega$ is the frequency, and the constants $p$ and $q$ are defined as
 \[
@@ -1192,7 +1269,7 @@ p^2 = \frac{\omega^2}{2\mu + \lambda} - k^2, \qquad q^2 = \frac{\omega^2}{\mu} -
 \]
 The wavenumber $k$ and frequency $\omega$ are related through a dispersion relation.  The ratio of the amplitudes $B_1/ B_2$ can be determined using other parameters, implying that $B_1, B_2$ are unique up to a scaling constant.  In our experiments, we use $\rho = \mu = 1$, $\lambda = 2$, $k = 2\pi$.  For these values, $\omega = 13.137063197233$, $B_1 = 126.1992721468$ and $B_2 = 53.88807700007$.  We solve on the domain $[-1,1]\times[-1/2,1/2]$, with traction-free boundary conditions at $y = \pm 1/2$ and periodic boundary conditions at $x = \pm 1$.  
 
-Figure~\ref{fig:rayleigh} shows $L^2$ errors for both waves at time $T = 1$.  Observed convergence rates fall between the optimal rate of $O(h^{N+1})$ and theoretical rate of $O(h^{N+1/2})$ \cite{johnson1986analysis}.  
+Figure~\ref{fig:rayleigh} shows $L^2$ errors for both waves at time $T = 1$.  Computed convergence rates fall between the optimal rate of $O(h^{N+1})$ and theoretical rate of $O(h^{N+1/2})$ \cite{johnson1986analysis}.  
 
 \begin{figure}
 \centering
@@ -1203,7 +1280,7 @@ Figure~\ref{fig:rayleigh} shows $L^2$ errors for both waves at time $T = 1$.  Ob
     width=.475\textwidth,
     xlabel={Mesh size $h$},
     ylabel={$L^2$ errors}, 
-    xmin=.04, xmax=1,
+    xmin=.025, xmax=1,
     ymin=1e-8, ymax=1.5,
     legend pos=south east,
     xmajorgrids=true,
@@ -1212,25 +1289,24 @@ Figure~\ref{fig:rayleigh} shows $L^2$ errors for both waves at time $T = 1$.  Ob
 ] 
 
 \addplot[color=blue,mark=*,semithick, mark options={fill=markercolor}]
-coordinates{(0.5,0.9569)(0.25,0.4509)(0.125,0.1234)(0.0625,0.0292)};%\node at (axis cs:.04,.0027) {$N = 1$};
-\logLogSlopeTriangleFlip{0.32}{0.125}{0.83}{2}{blue}
+coordinates{(0.5,1.04483)(0.25,0.342112)(0.125,0.102275)(0.0625,0.0277191)};    
+\logLogSlopeTriangleFlip{.39}{0.11}{0.815}{1.81}{blue}
 
 \addplot[color=red,mark=square*,semithick, mark options={fill=markercolor}]
-coordinates{(0.5,0.3483)(0.25,0.0521)(0.125,0.0072)(0.0625,9.3104e-04)};
-\logLogSlopeTriangleFlip{0.32}{0.125}{0.66}{3}{red}
+coordinates{(0.5,0.287061)(0.25,0.0563744)(0.125,0.00785962)(0.0625,0.000992348)};    
+\logLogSlopeTriangleFlip{.38}{0.1}{0.64}{2.91}{red}
 
 \addplot[color=black,mark=triangle*,semithick, mark options={fill=markercolor}]
-coordinates{(0.5,0.0759)(0.25,  0.0072)(0.125,5.3457e-04)(0.0625,3.6842e-05)};
-\logLogSlopeTriangleFlip{0.32}{0.125}{0.49}{4}{black}
+coordinates{(0.5,0.0736249)(0.25,0.00747192)(0.125,0.000529189)(0.0625,3.53252e-05)};   
+\logLogSlopeTriangleFlip{.38}{0.1}{0.475}{3.86}{black}
 
 \addplot[color=magenta,mark=diamond*,semithick, mark options={fill=markercolor}]
-coordinates{(0.5,0.0169)(0.25,  7.7478e-04)(0.125,2.6817e-05)(0.0625,8.6998e-07)};
-\logLogSlopeTriangleFlip{0.32}{0.125}{0.31}{5}{magenta}
+coordinates{(0.5,0.0199958)(0.25,0.000774494)(0.125,2.70714e-05)(0.0625,8.78659e-07)};   
+\logLogSlopeTriangleFlip{.38}{0.1}{0.285}{4.89}{magenta}
 
 \addplot[color=violet,mark=pentagon*,semithick, mark options={fill=markercolor}]
-coordinates{(0.5,0.0031)(0.25,6.7730e-05)(0.125,1.235333472480438e-06)(0.0625,2.023726469227763e-08)};
-
-\logLogSlopeTriangleFlip{0.32}{0.125}{0.12}{6}{violet}
+coordinates{(0.5,0.00304235)(0.25,6.78379e-05)(0.125,1.18747e-06)(0.0625,1.92431e-08)};    
+\logLogSlopeTriangleFlip{.38}{0.1}{0.09}{5.89}{violet}
 
 %\node at (axis cs:.03,6.8e-10) {$u$ discontinuous};
 \legend{$N=1$,$N=2$,$N=3$,$N=4$,$N=5$}
@@ -1244,7 +1320,7 @@ coordinates{(0.5,0.0031)(0.25,6.7730e-05)(0.125,1.235333472480438e-06)(0.0625,2.
 	width=.475\textwidth,
     xlabel={Mesh size $h$},
 %       ylabel={$L^2$ errors}, 
-    xmin=.04, xmax=1,
+    xmin=.025, xmax=1,
     ymin=2e-7, ymax=1.5,
     legend pos=south east,
     xmajorgrids=true,
@@ -1253,26 +1329,24 @@ coordinates{(0.5,0.0031)(0.25,6.7730e-05)(0.125,1.235333472480438e-06)(0.0625,2.
 ] 
 
 \addplot[color=blue,mark=*,semithick, mark options={fill=markercolor}]
-coordinates{(0.5,0.9924)(0.25,0.6613)(0.125,0.2713)(0.0625,0.0737)};%\node at (axis cs:.04,.0027) {$N = 1$};
-\logLogSlopeTriangleFlip{0.32}{0.125}{0.85}{2}{blue}
+coordinates{(0.5,0.97515)(0.25,0.667267)(0.125,0.26441)(0.0625,0.0643182)};   
+\logLogSlopeTriangleFlip{.39}{0.11}{0.835}{2.04}{blue}
 
 \addplot[color=red,mark=square*,semithick, mark options={fill=markercolor}]
-coordinates{(0.5,0.6614)(0.25,0.2338)(0.125,0.0205)(0.0625,0.0021)};
-\logLogSlopeTriangleFlip{0.32}{0.125}{0.65}{3}{red}
+coordinates{(0.5,0.659983)(0.25,0.191328)(0.125,0.0172492)(0.0625,0.00168533)};   
+\logLogSlopeTriangleFlip{.38}{0.1}{0.62}{3.41}{red}
 
 \addplot[color=black,mark=triangle*,semithick, mark options={fill=markercolor}]
-coordinates{(0.5,0.4237)(0.25, 0.0280)(0.125, 0.0018)(0.0625,1.3754e-04)};
-\logLogSlopeTriangleFlip{0.32}{0.125}{0.475}{4}{black}
-
+coordinates{(0.5,0.366154)(0.25,0.024884)(0.125,0.0014833)(0.0625,0.000103456)};    
+\logLogSlopeTriangleFlip{.38}{0.1}{0.45}{3.96}{black}
 \addplot[color=magenta,mark=diamond*,semithick, mark options={fill=markercolor}]
-coordinates{(0.5, 0.1700 )(0.25,0.0054 )(0.125,1.9613e-04)(0.0625,6.7755e-06)};
-\logLogSlopeTriangleFlip{0.32}{0.125}{0.295}{5}{magenta}
+coordinates{(0.5,0.141902)(0.25,0.00437419)(0.125,0.000154364)(0.0625,5.20702e-06)};   
+\logLogSlopeTriangleFlip{.38}{0.1}{0.26}{4.86}{magenta}
 
 \addplot[color=violet,mark=pentagon*,semithick, mark options={fill=markercolor}]
-coordinates{(0.5, 0.0393)(0.25,9.0649e-04)(0.125, 1.7466e-05)(0.0625,3.1730e-07)};
-\logLogSlopeTriangleFlip{0.32}{0.125}{0.1075}{6}{violet}
+coordinates{(0.5,0.0327909)(0.25,0.000752122)(0.125,1.34499e-05)(0.0625,2.18614e-07)};   
+\logLogSlopeTriangleFlip{0.38}{0.1}{0.075}{5.87}{violet}
 
-%\node at (axis cs:.03,6.8e-10) {$u$ discontinuous};
 \legend{$N=1$,$N=2$,$N=3$,$N=4$,$N=5$}
 \end{loglogaxis}
 \end{tikzpicture}
@@ -1287,45 +1361,46 @@ coordinates{(0.5, 0.0393)(0.25,9.0649e-04)(0.125, 1.7466e-05)(0.0625,3.1730e-07)
 As noted in Section~\ref{sec:wadgelas}, error estimates for isotropic elasticity no longer hold in the incompressible limit with $\mu / \lambda \rightarrow 0$ limit due to the fact that $\bm{C}$ becomes singular.  We use the propagation of Rayleigh waves to examine the behavior of WADG for near-incompressible materials.  We follow \cite{sjogreen2012fourth,appelo2015energy} and fix $\lambda = 1$ and set $\mu = 1, .1, .01, .001, .0001$.  Since the Rayleigh wave propagates with speed proportional to $\sqrt{\mu}$, we compute $L^2$ errors at the final time $1 / (4\sqrt{\mu})$ to ensure a fair comparison between solutions at different values of $\mu$.  
 
 %Table~\ref{tab:incomp} shows total relative errors and relative errors for $\bm{v}$, $\bm{\sigma}$ individually at different orders and mesh sizes.  While the relative errors for $\bm{\sigma}$ grow as $\mu/\lambda \rightarrow 0$, total errors and errors for $\bm{v}$ remain roughly the same magnitude for all values of $\mu$.  
-Table~\ref{tab:incomp} shows relative errors for $\bm{v}$, $\bm{\sigma}$ at different orders and mesh sizes.  The relative errors for $\bm{\sigma}$ grow as $\mu/\lambda \rightarrow 0$.  This is not surprising, as the constant in the error estimates of Section~\ref{sec:mwadgprop} blows up in the incompressible limit.  However, because the magnitude of $\bm{\sigma}$ also decreases as $\mu/\lambda\rightarrow 0$, relative errors for $\bm{v}$ remain roughly the same magnitude as the material approaches incompressibility.
+Table~\ref{tab:incomp} shows relative errors for $\bm{v}$, $\bm{\sigma}$ at different orders and mesh sizes.  The relative errors for $\bm{\sigma}$ grow as $\mu/\lambda \rightarrow 0$.  This is not surprising, as the constant in the error estimates of Section~\ref{sec:mwadgprop} blows up in the incompressible limit.  However, because the magnitude of $\bm{\sigma}$ also decreases as $\mu/\lambda\rightarrow 0$, relative errors for $\bm{v}$ remain roughly the same magnitude as the material approaches incompressibility.  Decreasing $\mu$ by four orders of magnitude results in up to a ten-fold increase in relative error for $\bm{\sigma}$, but less than a two-fold increase in error for $\bm{v}$.  
 
 \begin{table}
 \centering
 \subfloat[Relative error in $\bm{v}$]{
 \begin{tabular}{|c||c|c|c|c|c|}
 \hline
- & $\mu = 1$ & $\mu = .1$ & $\mu = .01$ & $\mu = .001$ & \mu = .0001$  \\
+ & $\mu = 1$ & $\mu = .1$ & $\mu = .01$ & $\mu = .001$ & $\mu = .0001$  \\
 \hhline{|=|=|=|=|=|=|}
-$N = 2$, $h = 1/4$ &  0.0288 &  0.0270 &  0.0309 & 0.0401 & 0.0568\\
+$N = 2$, $h = 1/4$ &  3.1063e-02  &  2.6972e-02  & 3.0858e-02 &  4.0103e-02  & 5.6835e-02\\
 \hline
-$N = 3$, $h = 1/4$ & 0.0030 & 0.0027 &0.0030 & 0.0037 & 0.0049\\
+$N = 3$, $h = 1/4$ & 3.1677e-03 &  2.6848e-03 &  2.9854e-03 &  3.6960e-03 &  4.9362e-03\\
 \hline
-$N = 4$, $h = 1/4$ & 2.7705e-04 & 2.5060e-04 & 2.9185e-04 &3.9779e-04 &5.2470e-04\\
+$N = 4$, $h = 1/4$ & 2.8726e-04 &  2.4990e-04 &  2.9142e-04 &  3.9774e-04 &  5.2469e-04\\      
+
 \hhline{|=|=|=|=|=|=|}
-$N = 2$, $h = 1/8$ & 0.0028  & 0.0025  & 0.0029 & 0.0036 & 0.0047 \\
+$N = 2$, $h = 1/8$ & 3.1819e-03  & 2.5476e-03 &  2.8877e-03 &  3.5608e-03  & 4.7010e-03 \\
 \hline
-$N = 3$, $h = 1/8$ & 1.8315e-04 & 1.6960e-04 &1.8524e-04 &2.2522e-04 & 2.8301e-04\\
+$N = 3$, $h = 1/8$ & 1.8867e-04  & 1.6925e-04  & 1.8509e-04  & 2.2520e-04  & 2.8301e-04\\
 \hline
-$N = 4$, $h = 1/8$ & 8.2285e-06 & 7.5813e-06 &8.1174e-06 & 1.0762e-05&1.4886e-05\\
-\hline
+$N = 4$, $h = 1/8$ & 8.4999e-06  & 7.5750e-06 &  8.1094e-06  & 1.0760e-05  & 1.4886e-05\\
+\hline         
 \end{tabular}
 }\\
 \subfloat[Relative error in $\bm{\sigma}$]{
 \begin{tabular}{|c||c|c|c|c|c|}
 \hline
- & $\mu = 1$ & $\mu = .1$ & $\mu = .01$ & $\mu = .001$& \mu = .0001$ \\
+ & $\mu = 1$ & $\mu = .1$ & $\mu = .01$ & $\mu = .001$& $\mu = .0001$ \\
 \hhline{|=|=|=|=|=|=|}
-$N = 2$, $h = 1/4$ & 0.0656 &  0.0754 &  0.1214 & 0.2134 & 0.4145\\
+$N = 2$, $h = 1/4$ & 6.8250e-02  & 7.4130e-02 &  1.2104e-01 &  2.1333e-01 &  4.1451e-01\\
 \hline
-$N = 3$, $h = 1/4$ & 0.0091 & 0.0108 & 0.0182 & 0.0321& 0.0576\\
+$N = 3$, $h = 1/4$ & 9.2980e-03  & 1.0685e-02 &  1.8109e-02 &  3.2046e-02 &  5.7612e-02\\
 \hline
-$N = 4$, $h = 1/4$ & 9.7408e-04 & 0.0012 &  0.0022 & 0.0041 &0.0068\\
+$N = 4$, $h = 1/4$ & 9.7251e-04  & 1.1687e-03  & 2.1941e-03 &  4.1378e-03 &  6.8404e-03\\
 \hhline{|=|=|=|=|=|=|}
-$N = 2$, $h = 1/8$ & 0.0093 & 0.0116 &0.0204  & 0.0379 &0.0765  \\
+$N = 2$, $h = 1/8$ & 9.8138e-03  & 1.1429e-02  & 2.0331e-02 &  3.7889e-02 & 7.6516e-02\\
 \hline
-$N = 3$, $h = 1/8$ & 6.8288e-04 & 8.0145e-04 & 0.0015 & 0.0031 &0.0056\\
+$N = 3$, $h = 1/8$ & 6.6596e-04  & 7.8157e-04  & 1.5353e-03  & 3.1239e-03 &  5.6341e-03\\
 \hline
-$N = 4$, $h = 1/8$ &3.4231e-05 &  4.3510e-05 & 8.8747e-05 & 1.9771e-04& 3.6053e-04 \\
+$N = 4$, $h = 1/8$ & 3.4272e-05  & 4.2639e-05 &  8.8393e-05  & 1.9764e-04 &  3.6052e-04 \\
 \hline
 \end{tabular}
 }
@@ -1366,11 +1441,11 @@ A Stoneley wave is supported along the interface between two solids \cite{stonel
 \]
 The displacement vector for a Stoneley wave is then given by
 \begin{align*}
-\bm{v}_1(x,y,t) &= \begin{cases}
+u_1(x,y,t) &= \begin{cases}
 {\rm Re}\LRp{\LRp{ikB_1e^{-kb_{1p}y} + kb_{1s}B_2 e^{-kb_{1s}y}}e^{i(ky-\omega t)}}, & y > 0\\
 {\rm Re}\LRp{\LRp{-k b_{1p}B_1e^{-k b_{1p} y} + i kB_2e^{-kb_{1s}y}}e^{i(kx-\omega t)}}, & y < 0
 \end{cases}\\
-\bm{v}_2(x,y,t) &= \begin{cases}
+u_2(x,y,t) &= \begin{cases}
 {\rm Re}\LRp{\LRp{ikB_3 e^{k b_{2p} y} - kb_{2s}B_4 e^{k b_{2s}y }} e^{i(kx-\omega t)}}, & y > 0\\
 {\rm Re}\LRp{\LRp{k b_{2p} B_3 e^{k b_{2p}y} + ikB_4 e^{k b_{2s}y}}e^{i(kx-\omega t)}}, & y < 0
 \end{cases},
@@ -1381,9 +1456,9 @@ k = \omega/ c_{st}, \qquad b_{jp} = \sqrt{1 - \frac{c_{st}^2}{(2\mu_j + \lambda_
 \]
 The Stoneley wave speed $c_{st}$ can be determined based material parameters and interface conditions, and the amplitudes $B_1,B_2,B_3,B_4$ are determined from $c_{st}$ up to scaling by a constant.  For the parameters used in this study, we take $c_{st} = 0.546981324213884$, $B_1 = i0.2952173626624, B_2 = -0.6798795208473, B_3 = i0.5220044931212$, and $B_4 = -0.9339639688697$.  We assume $k =1$, which gives $\omega=c_{st}$.  
 
-We solve on the domain $[-1,1]\times [-5,5]$, and enforce Dirichlet boundary conditions at all boundaries using the exact solution.  Figure~\ref{fig:stoneley} shows $L^2$ errors for two uniform meshes of triangles constructed by bisecting a quadrilateral mesh of $K_{\rm 1D} \times 5K_{\rm 1D}$ elements. Figure~\ref{subfig:stoneley1} shows errors when $K_{\rm 1D}$ is even and the mesh is fitted to the interface at $y = 0$, while Figure~\ref{subfig:stoneley2} shows errors when $K_{\rm 1D}$ is odd and the interface cuts through element interiors.  When the mesh is fitted to the interface, we observe optimal $O(h^{N+1})$ rates of convergence for $N > 1$.  
+We solve on the domain $[-1,1]\times [-5,5]$, and enforce Dirichlet boundary conditions at all boundaries using the exact solution.  Figure~\ref{fig:stoneley} shows $L^2$ errors for two uniform meshes of triangles constructed by bisecting a quadrilateral mesh of $K_{\rm 1D} \times 5K_{\rm 1D}$ elements. Figure~\ref{subfig:stoneley1} shows errors when $K_{\rm 1D}$ is even and the mesh is fitted to the interface at $y = 0$, while Figure~\ref{subfig:stoneley2} shows errors when $K_{\rm 1D}$ is odd and the interface cuts through element interiors.  When the mesh is fitted to the interface, computed convergence rates are between $O(h^{N+1/2})$ and $O(h^{N+1})$.  
 
-When the mesh is not fitted to the interface exactly, we compute the application of the weight-adjusted mass matrix inverse using a quadrature rule from Xiao and Gimbutas \cite{xiao2010quadrature} which is exact for degree $2N+1$ polynomials.  Since the values of $\rho,\mu$, and $\lambda$ are positive at all quadrature points, the method is energy stable.  However, since the exact solution is discontinuous, we expect an $O(1)$ error in elements cut by the interface, resulting in $L^2$ errors which converge at rate $O(h^{1/2})$.  We note that, when using piecewise constant approximations of $\mu$ and $\lambda$, we observe the same $O(h^{1/2})$ convergence rate, though errors are roughly twice as large in magnitude.  \note{Discuss possibly extending theory for WADG to low regularity weights.}  
+When the mesh is not fitted to the interface exactly, we compute the application of the weight-adjusted mass matrix inverse using a quadrature rule from Xiao and Gimbutas \cite{xiao2010quadrature} which is exact for degree $2N+1$ polynomials.  Since the values of $\rho,\mu$, and $\lambda$ are positive at all quadrature points, the method is energy stable.  However, since the exact solution is discontinuous, the error in elements cut by the interface is $O(1)$, resulting in $L^2$ errors which converge at rate $O(h^{1/2})$.  We note that, when using piecewise constant approximations of $\mu$ and $\lambda$, we observe the same $O(h^{1/2})$ convergence rate, though errors are roughly twice as large in magnitude.  
 
 \begin{figure}
 \centering
@@ -1395,32 +1470,32 @@ When the mesh is not fitted to the interface exactly, we compute the application
     width=.475\textwidth,
     xlabel={Mesh size $h$},
     ylabel={$L^2$ errors}, 
-    xmin=.04, xmax=1,
-    ymin=2.5e-10, ymax=.15,
+    xmin=.025, xmax=1,
+    ymin=.75e-11, ymax=.25,
     xmajorgrids=true,
     ymajorgrids=true,
     grid style=dashed,
 ] 
 
 \addplot[color=blue,mark=*,semithick, mark options={fill=markercolor}]
-coordinates{(0.5,0.0961)(0.25,0.0321)(0.125,0.0108)(0.0625,0.0034)}; 
-\logLogSlopeTriangleFlip{0.32}{0.125}{0.84}{2}{blue}
+coordinates{(0.5,0.108456)(0.25,0.0385149)(0.125,0.0138288)(0.0625,0.0043988)};    
+\logLogSlopeTriangleFlip{.4}{0.125}{0.86}{1.65}{blue}
 
 \addplot[color=red,mark=square*,semithick, mark options={fill=markercolor}]
-coordinates{(0.5,0.0088)(0.25,0.0013)(0.125,1.9177e-04)(0.0625, 2.8444e-05)};
-\logLogSlopeTriangleFlip{0.32}{0.125}{0.62}{3}{red}
+coordinates{(0.5,0.00887301)(0.25,0.00128102)(0.125,0.000186756)(0.0625,2.73376e-05)};    
+\logLogSlopeTriangleFlip{.4}{0.125}{0.65}{2.77}{red}
 
 \addplot[color=black,mark=triangle*,semithick, mark options={fill=markercolor}]
-coordinates{(0.5, 8.9050e-04)(0.25,7.5838e-05)(0.125,4.9595e-06)(0.0625,3.4440e-07)};
-\logLogSlopeTriangleFlip{0.32}{0.125}{0.41}{4}{black}
+coordinates{(0.5,0.000930299)(0.25,7.92165e-05)(0.125,5.2534e-06)(0.0625,3.67676e-07)};    
+\logLogSlopeTriangleFlip{.4}{0.125}{0.475}{3.84}{black}
 
 \addplot[color=magenta,mark=diamond*,semithick, mark options={fill=markercolor}]
-coordinates{(0.5,4.2348e-05)(0.25, 1.4232e-06)(0.125, 4.8606e-08)(0.0625,1.7358e-09)};
-\logLogSlopeTriangleFlip{0.32}{0.125}{0.16}{5}{magenta}
+coordinates{(0.5,4.34823e-05)(0.25,1.45784e-06)(0.125,4.92754e-08)(0.0625,1.74105e-09)};   
+\logLogSlopeTriangleFlip{.4}{0.125}{0.26}{4.82}{magenta}
 
 \addplot[color=violet,mark=pentagon*,semithick, mark options={fill=markercolor}]
-coordinates{(0.5,2.7994e-06)(0.25,4.6958e-08)(0.125,7.9344e-10)};
-\logLogSlopeTriangleFlip{0.5}{0.125}{0.1}{6}{violet}
+coordinates{(0.5,2.97005e-06)(0.25,4.94512e-08)(0.125,8.48451e-10)(0.0625,1.47109e-11)};  
+\logLogSlopeTriangleFlip{0.4}{0.125}{0.075}{ 5.85}{violet}
 
 %\node at (axis cs:.03,6.8e-10) {$u$ discontinuous};
 \legend{$N=1$,$N=2$,$N=3$,$N=4$,$N=5$}
@@ -1436,8 +1511,8 @@ coordinates{(0.5,2.7994e-06)(0.25,4.6958e-08)(0.125,7.9344e-10)};
     width=.475\textwidth,
     xlabel={Mesh size $h$},
 %    ylabel={$L^2$ errors}, 
-    xmin=.04, xmax=1,
-    ymin=1e-2, ymax=.2,
+    xmin=.025, xmax=1,
+    ymin=1e-2, ymax=.25,
     xmajorgrids=true,
     ymajorgrids=true,
     grid style=dashed,
@@ -1457,25 +1532,7 @@ coordinates{(0.5, 0.0640)(0.25,0.0435)(0.125,0.0306)(0.0625,0.0216)};
 
 \addplot[color=magenta,mark=diamond*,semithick, mark options={fill=markercolor}]
 coordinates{(0.5, 0.0593)(0.25, 0.0436)(0.125, 0.0318)(0.0625,0.0229)};
-\logLogSlopeTriangle{0.32}{0.125}{0.225}{1/2}{black}
-
-%\addplot[dashed,color=blue,mark=*,semithick, mark options={fill=markercolor}]
-%coordinates{(0.5,0.1648)(0.25,0.0927)(0.125,0.0607)(0.0625,0.0417)}; 
-%
-%\addplot[dashed,color=red,mark=square*,semithick, mark options={fill=markercolor}]
-%coordinates{(0.5,0.1200)(0.25, 0.0855)(0.125,0.0597)(0.0625,0.0421)};
-%
-%\addplot[dashed,color=black,mark=triangle*,semithick, mark options={fill=markercolor}]
-%coordinates{(0.5, 0.1399)(0.25,0.0942)(0.125,0.0660)(0.0625,0.0463)};
-%
-%\addplot[dashed,color=magenta,mark=diamond*,semithick, mark options={fill=markercolor}]
-%coordinates{(0.5,0.1410)(0.25, 0.0984)(0.125, 0.0697)(0.0625, 0.0490)};
-
-
-
-%\addplot[color=violet,mark=pentagon*,semithick, mark options={fill=markercolor}]
-%coordinates{(0.5,2.7994e-06)(0.25,4.6958e-08)(0.125,7.9344e-10)};
-%\logLogSlopeTriangleFlip{0.5}{0.125}{0.1}{6}{violet}
+\logLogSlopeTriangle{0.425}{0.125}{0.225}{1/2}{black}
 
 %\node at (axis cs:.03,6.8e-10) {$u$ discontinuous};
 \legend{$N=1$,$N=2$,$N=3$,$N=4$}
@@ -1487,38 +1544,165 @@ coordinates{(0.5, 0.0593)(0.25, 0.0436)(0.125, 0.0318)(0.0625,0.0229)};
 \label{fig:stoneley}
 \end{figure}
 
-\subsubsection{Harmonic oscillation of an annulus}
+\subsubsection{Convergence to a reference solution}
 
-This example tests the convergence of WADG for curvilinear mappings.  
+Finally, we examine the accuracy of the WADG method for smoothly varying heterogeneous media by comparing against a reference spectral method solution with order $N = 50$ on a unit square $[-1,1]^2$.  Boundary conditions are enforced weakly through DG-like fluxes \cite{wilcox2010high}.  We use a heterogeneous isotropic medium with $\rho,\lambda, \mu$ set to
+\[
+\rho(\bm{x}) = 1, \qquad \lambda(\bm{x}) = 1 + .25\sin(\pi x)\sin(\pi y), \qquad \mu(\bm{x}) = 1 + .25\cos(\pi x) \cos(\pi y).  
+\]
+Initial stresses are set to zero, while the initial velocity is set to 
+\[
+v_1(\bm{x}) = \cos(\pi x)\sin(\pi y), \qquad v_2(\bm{x}) = -\sin(\pi x)\cos(\pi y).
+\]
+Zero traction boundary conditions are enforced on all domain boundaries.  Figure~\ref{fig:refsol} shows $L^2$ errors with respect to the reference solution at time $T=1/2$ for different mesh sizes and orders of approximation.  Computed convergence rates fall between the optimal $O(h^{N+1})$ and predicted $O(h^{N+1/2})$.  
+\begin{figure}
+\centering
+\begin{tikzpicture}
+\begin{loglogaxis}[
+    legend cell align=left,
+    legend style={legend pos=south east, font=\tiny},
+    width=.475\textwidth,
+    xlabel={Mesh size $h$},
+%    ylabel={$L^2$ errors}, 
+    xmin=.025, xmax=1,
+    ymin=1e-7, ymax=1.25,
+    xmajorgrids=true,
+    ymajorgrids=true,
+    grid style=dashed,
+] 
+
+\addplot[color=blue,mark=*,semithick, mark options={fill=markercolor}]
+coordinates{(0.5,1)(0.25,0.473741)(0.125,0.141342)(0.0625,0.0355409)};    
+\logLogSlopeTriangleFlip{0.375}{0.11}{0.81}{1.99}{blue}
+
+\addplot[color=red,mark=square*,semithick, mark options={fill=markercolor}]
+coordinates{(0.5,0.484875)(0.25,0.0686547)(0.125,0.00767686)(0.0625,0.000933392)};   
+\logLogSlopeTriangleFlip{0.375}{0.11}{0.59}{3.04}{red}
+
+\addplot[color=black,mark=triangle*,semithick, mark options={fill=markercolor}]
+coordinates{(0.5,0.141415)(0.25,0.0126263)(0.125,0.0008361)(0.0625,5.57276e-05)};    
+\logLogSlopeTriangleFlip{0.35}{0.09}{0.42}{3.91}{black}
+
+\addplot[color=magenta,mark=diamond*,semithick, mark options={fill=markercolor}]
+coordinates{(0.5,0.0452398)(0.25,0.00182005)(0.125,9.0346e-05)(0.0625,3.08518e-06)};   
+\logLogSlopeTriangleFlip{0.35}{0.08}{0.255}{4.87}{magenta}
+
+\addplot[color=violet,mark=diamond*,semithick, mark options={fill=markercolor}]
+coordinates{(0.5,0.0186937)(0.25,0.000684602)(0.125,1.12013e-05)(0.0625,2.13796e-07)};    
+\logLogSlopeTriangleFlip{0.35}{0.075}{0.1}{5.71}{violet}
+
+\legend{$N=1$,$N=2$,$N=3$,$N=4$,$N=5$}
+\end{loglogaxis}
+\end{tikzpicture}
+\caption{Convergence of WADG under mesh refinement to a reference $N=50$ spectral method solution with smoothly varying heterogeneous media for $N=1,\ldots,5$.}
+\label{fig:refsol}
+\end{figure}
+
+%\subsubsection{Harmonic oscillation of an annulus}
+%
+%This example tests the convergence of WADG for curvilinear mappings.  
+
 
 \subsection{Application examples}
 
+Next, we investigate the behavior of WADG for linear elasticity for several application examples.  
+
 \subsubsection{Stiff inclusion}
 
-Leveque stiff inclusion example.  
+A common test of methods for linear elastic wave propagation is the stiff inclusion problem \cite{leveque2002finite,kaser2006arbitrary,appelo2015energy}.  We solve on a domain $[-1,1]\times [-.5, .5]$ with a rectangular inclusion located at $[-.5,.5]\times[-.1,.1]$.  Outside of the inclusion, material parameters are taken to be 
+\[
+\rho = 1, \qquad \mu = 1,\qquad \lambda = 2.
+\]
+Within the inclusion, material parameters are taken to be
+\[
+\rho = 1, \qquad \mu = 100,\qquad \lambda = 200,
+\]
+such that the wave speed in the rectangular inclusion is ten times that of the wave speed outside.  A pulse is generated through velocity boundary conditions at $x = -1$
+\[
+v_1(x,y,t) = \begin{cases}
+\sin(\pi t / t_0), & t < t_0\\
+0, & t \geq t_0
+\end{cases}, \qquad
+v_2(x,y,t) = 0.
+\]
+In our experiments, we take $t_0 = .025$.  Traction free boundary conditions are enforced at all other domain boundaries.  A wave is generated when the pulse hits the inclusion, bouncing back and forth and producing reflected waves which propagate outward from the stiff region.  
+
+\begin{figure}
+\centering
+\subfloat[$\LRb{\bm{\sigma}_{xx}+\bm{\sigma}_{yy}}$]{\includegraphics[width=.475\textwidth]{../figs/inclusion_aligned.png}}
+\hspace{2em}
+\subfloat[$\LRb{\bm{\sigma}_{xy}}$]{\includegraphics[width=.475\textwidth]{../figs/inclusion_aligned_shear.png}}
+%\subfloat[Aligned mesh (zoom)]{\includegraphics[height=.24\textwidth]{../figs/inclusion_aligned_zoom.png}}
+%\\
+%\subfloat[Un-aligned mesh]{\includegraphics[height=.24\textwidth]{../figs/inclusion_unaligned.png}}
+%\hspace{2em}
+%\subfloat[Un-aligned mesh (zoom)]{\includegraphics[height=.24\textwidth]{../figs/inclusion_unaligned_zoom.png}}
+\caption{Values of different solution fields at $T=.4$ for the stiff inclusion problem of Leveque \cite{leveque2002finite} with order of approximation $N=5$.}
+\label{fig:incl}
+\end{figure}
+
+%We consider both aligned meshes where the inclusion boundary coincides with interior faces and an un-aligned mesh where the inclusion cuts through element interiors.  Both are constructed by dividing each element of a quadrilateral meshes along the diagonal to produce triangular meshes.  The aligned mesh is constructed using $100 \times 50$ quadrilateral elements in the $x$ and $y$ coordinates, respectively, while the un-aligned mesh was constructed using $101 \times 51$ elements.  Figure~\ref{fig:incl} shows values of $\LRb{\bm{\sigma}_{xx} + \bm{\sigma}_{yy}}$ at final time $T=.4$, along with a zoomed-in view along the interface.  The results for the interface-aligned mesh show good agreement with results in the literature \cite{leveque2002finite,kaser2006arbitrary,appelo2015energy}.  %The sub-element resolution of $\mu,\lambda$, an error is still incurred when the mesh is un-aligned with the interface 
+%For the un-aligned mesh, the sub-element resolution of material data is clearly visible, though an interface error is still incurred by the under-resolution of the interface \cite{symes2009interface}.
+
+We construct a mesh by dividing each element of a quadrilateral meshes along the diagonal to produce triangular meshes, using $100 \times 50$ quadrilateral elements in the $x$ and $y$ coordinates, respectively.  Figure~\ref{fig:incl} shows values of $\LRb{\bm{\sigma}_{xx} + \bm{\sigma}_{yy}}$ at final time $T=.4$.  Following \cite{leveque2002finite}, a nonlinear color scale is used in order to distinguish small-amplitude waves.  The results for the interface-aligned mesh show qualitatively good agreement with results in the literature \cite{leveque2002finite,kaser2006arbitrary,appelo2015energy}.  
+
+%\note{Finish}
 
 \subsubsection{Heterogeneous anisotropic material}
 
-From \cite{de2007arbitrary}: discontinuous media with anisotropy on one side, isotropy on the other.
+We next examine a model wave propagation problem in heterogeneous anisotropy media \cite{carcione1988wave,komatitsch2000simulation,de2007arbitrary}.   The density $\rho = 7100$ is constant over the domain, while the entries of the stiffness matrix $\bm{C}$ are taken to be
+\begin{align*}
+\bm{C}_{11} &= .165, \quad \bm{C}_{12} = .05, \quad \bm{C}_{22} = .062, \quad \bm{C}_{33} = .0396, \qquad x < 0\\
+\bm{C}_{11} &= .165, \quad \bm{C}_{12} = .0858, \quad \bm{C}_{22} = .165, \quad \bm{C}_{33} = .0396, \qquad x > 0,
+\end{align*}
+with the remaining entries determined by symmetry or set to zero if unspecified.  For $ x < 0$, this corresponds to an anisotropic material, while for $x > 0$, this corresponds to an isotropic material with $\mu = .0396, \lambda = .0858$.
 
-Also do a similar case where random noise is added to both sides and the anisotropy is more strongly discontinuous.  
+The computational domain is taken to be $[-.16, .16]^2$, and following \cite{komatitsch2000simulation,de2007arbitrary}, we use $N=5$ and a triangular mesh constructed by subdividing a grid of $32\times 32$ uniform quadrilaterals.  This mesh corresponds to an element size of $.005$, which was used in \cite{komatitsch2000simulation,de2007arbitrary}.  Forcing is applied to the $y$-component of the velocity by a Ricker pulse point source 
+\[
+f(\bm{x},t) = \LRp{1 - 2(\pi f_0 (t-t_0))^2} e^{-(\pi f_0 (t-t_0))^2}\delta(x-x_0),
+\]
+where $x_0 = -.02$, $f_0 = .17$, and $t_0 = 1/f_0$.\footnote{All values and units are adapted from \cite{komatitsch2000simulation,de2007arbitrary}, and correspond to units of meters, kg, and microseconds.}  
 
-\subsection{Three-dimensional example}
+\begin{figure}
+\centering
+%\subfloat[$\bm{v}_1$]{\includegraphics[width=.45\textwidth]{}}
+%\subfloat[$\bm{v}_2$]{\includegraphics[width=.45\textwidth]{}}
+\subfloat[$T=30 \mu s$]{\includegraphics[width=.4\textwidth]{../figs/aniso.png}}
+\hspace{2em}
+\subfloat[$T=60 \mu s$]{\includegraphics[width=.4\textwidth]{../figs/aniso.png}}
+\caption{Example of wave propagation in heterogeneous anisotropic media.  The vertical component of the velocity $\bm{v}_2$ is shown at $T = 30$ and $T=60$ microseconds. }
+\end{figure}
 
-Add GPU computations here.   
+\subsection{A three-dimensional example}
+
+Finally, we present a three-dimensional example of elastic wave propagation in heterogeneous media with sub-element variations, anisotropy, and a discontinuity across an interface.  We consider elastic wave propagation on the bi-unit cube $[-1,1]^3$, with isotropic media for $z < 0$ and transversely isotropic media for $z > 0$.  For isotropic media, we take $\mu(\bm{x}) = \lambda(\bm{x}) = w(\bm{x})$, where 
+\[
+w(\bm{x}) = 1 + \cos(k\pi x)\cos(k\pi y)\cos(k\pi z).  
+\]
+For the transversely isotropic media, we take the entries of the stiffness matrix $\bm{C}$ to be 
+\begin{align*}
+\bm{C}_{11} &= \frac{2\mu + \lambda}{4}\\
+\bm{C}_{12} &= \frac{2\mu + \lambda}{4}\\
+\bm{C}_{13} &= \frac{2\mu + \lambda}{4}\\
+\bm{C}_{22} &= \frac{2\mu + \lambda}{4}\\
+\bm{C}_{23} &= \frac{2\mu + \lambda}{4}\\
+\bm{C}_{33} &= \frac{2\mu + \lambda}{4}
+\end{align*}
+
+We follow the implementation of GPU-accelerated DG methods outlined in \cite{klockner2009nodal}, which breaks the computational work in each timestep \emph{volume} and \emph{surface} kernels for the evaluation of the DG formulation and an \emph{update} step to apply a time integration method.  For this work, apply the weight-adjusted mass matrix inverse within the update kernel as well.  Strategies for volume and surface kernels follow \cite{klockner2009nodal}, while computational approaches for WADG are outlined in \cite{chan2016weight2}.  More detailed computational performance analyses will be performed in future work.  All three-dimensional computations are performed on an AMD Tahiti GPU.  
 
 \section{Conclusions}
+\label{sec:conclusions}
 
-Generally applicable to problems with spatially varying matrices $\bm{A}_{0}(\bm{x})$, such as in Maxwell's equations for cloaking problems \cite{li2012time}, as well as in vector-valued $H({\rm div})$ or $H({\rm curl})$ functions under matrix-valued mappings such as Piola transforms.  
+This work presents a weight-adjusted discontinuous Galerkin (WADG) method for the linear elastic wave equations with arbitrary heterogeneous media.  The method is energy stable and high order accurate for arbitrary stiffness matrices, and a slight modification results in an energy stable method for curvilinear meshes as well.  The penalty numerical fluxes for this formulation are simple to derive and implement, and their lack of dependence on the stiffness matrix allows for a unified treatment of isotropic and anisotropic media.  Numerical examples confirm the accuracy of this method for analytic solutions in of the elastic wave equations, as well as its high order accuracy with respect to a reference solution for smoothly varying heterogeneous media.  The behavior of this method for several application examples in also shows good agreement with existing results in the literature for both isotropic and anisotropic heterogeneous media.  
 
-Extension to hybrid meshes in 3D, care must be taken with pyramids \cite{chan2015orthogonal,chan2015gpu}.
+We note that the implementation of this method reduces to the application of the weight-adjusted mass matrix inverse and the evaluation of constant-coefficient terms in the DG formulation.  Fast methods based on Bernstein-Bezier bases for the application of derivative and lift matrices for constant-coefficient terms can reduce this latter cost, especially at high orders of approximation \cite{chan2015bbdg}.  Finally, we note that the approach presented here is more generally applicable to problems involving a weighted mass matrix with a matrix-valued weight, which we will explore in the future.  These include hyperbolic systems of PDEs with a right hand side of the form $\bm{A}_{0}(\bm{x})\pd{\bm{U}}{t}$, such as Maxwell's equations for cloaking problems \cite{li2012time}.  
 
-which can be further accelerated by exploiting structure under Bernstein-Bezier bases \cite{chan2015gpu}. 
-Formulation allows for the reduction of constant-coefficient RHS costs at high orders using BBDG \cite{chan2015bbdg}.  
+%Extension to hybrid meshes in 3D, care must be taken with pyramids \cite{chan2015orthogonal, chan2015gpu}.
 
 \section{Acknowledgments}
 
-The author gratefully thanks Thomas Hagstrom, Tim Warburton, Axel Modave, and Ruichao Ye for helpful and informative discussions.  
+The author gratefully thanks Thomas Hagstrom, Tim Warburton, Axel Modave, Ruichao Ye, Zheng Wang, and Mario Bencomo for helpful and informative discussions.  
 
 \bibliographystyle{unsrt}
 \bibliography{dgpenalty}

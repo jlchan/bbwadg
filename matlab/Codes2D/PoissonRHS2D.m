@@ -6,7 +6,7 @@ function [rhsu,Mu] = PoissonRHS2D(u)
 Globals2D;
 
 % Define field differences at faces and impose Dirichlet BCs
-du = zeros(Nfp*Nfaces,K); du(:)=u(vmapM)-u(vmapP); du(mapD) = 2*u(vmapD);
+du = zeros(Nfp*Nfaces,K); du(:)=u(vmapM)-u(vmapP); %du(mapD) = 2*u(vmapD);
 
 % Compute qx and qy, define differences and impose Neumann BC's
 [dudx,dudy] = Grad2D(u);
@@ -20,8 +20,8 @@ hmin = min(2*J(vmapP)./sJ(mapP), 2*J(vmapM)./sJ(mapM));
 tau = reshape(Np./hmin, Nfp*Nfaces, K); 
 
 % Evaluate jumps in components of q at element interfaces
-dqx=zeros(Nfp*Nfaces,K); dqx(:)=qx(vmapM)-qx(vmapP); dqx(mapN) = 2*qx(vmapN);
-dqy=zeros(Nfp*Nfaces,K); dqy(:)=qy(vmapM)-qy(vmapP); dqy(mapN) = 2*qy(vmapN);
+dqx=zeros(Nfp*Nfaces,K); dqx(:)=qx(vmapM)-qx(vmapP); %dqx(mapN) = 2*qx(vmapN);
+dqy=zeros(Nfp*Nfaces,K); dqy(:)=qy(vmapM)-qy(vmapP); %dqy(mapN) = 2*qy(vmapN);
 
 % Evaluate flux function
 fluxq = (nx.*dqx + ny.*dqy + tau.*du)/2;
