@@ -65,8 +65,8 @@ occa::memory c_Pq_reduced;
 occa::memory c_rhoq;
 occa::memory c_lambdaq;
 occa::memory c_muq;
-occa::memory c_c33;
-occa::memory c_c44;
+occa::memory c_c11;
+occa::memory c_c12;
 
 // ricker ptsrc
 occa::memory c_fsrc;
@@ -445,11 +445,11 @@ void InitWADG_subelem(Mesh *mesh,double(*c2_ptr)(double,double,double)){
   MatrixXd rhoq(Vq_reduced.rows(),mesh->K);
   MatrixXd lambdaq(Vq_reduced.rows(),mesh->K);
   MatrixXd muq(Vq_reduced.rows(),mesh->K);
-  MatrixXd c33(Vq_reduced.rows(),mesh->K);
-  MatrixXd c44(Vq_reduced.rows(),mesh->K);
+  MatrixXd c11(Vq_reduced.rows(),mesh->K);
+  MatrixXd c12(Vq_reduced.rows(),mesh->K);
 
   MatrixXd fsrcq(Vq_reduced.rows(),mesh->K);  
-  
+
   for (int e = 0; e < mesh->K; ++e){
 
     // locally interpolate to cubature points
@@ -460,21 +460,22 @@ void InitWADG_subelem(Mesh *mesh,double(*c2_ptr)(double,double,double)){
 
     for (int i = 0; i < Vq_reduced.rows(); ++i){
       double weight = (*c2_ptr)(xq(i),yq(i),zq(i));
-      rhoq(i,e) = 1.0; 
-      lambdaq(i,e) = 1.0 * weight;
+      double mu = 1.0; double lambda = 2.0;
+      rhoq(i,e) = mu * weight; 
+      lambdaq(i,e) = lambda * weight;
       muq(i,e) = 1.0 * weight;
-      c33(i,e) = 1.0 * weight;
-      c44(i,e) = 1.0 * weight;
+      c11(i,e) = (2*mu + lambda) * weight;
+      c12(i,e) = lambda * weight;
       if (zq(i) > 0){ // vertical part
-	c33(i,e) = 3.0 * weight; // 2*mu + lambda
-	c44(i,e) = 1.0 * weight;	
+	c11(i,e) *= 1.0/3.0; // 2*mu + lambda
+	c12(i,e) *= 0.5;
       }
 
       // smoothed ricker pulse
       double x0 = 0.0;
       double y0 = 0.0;
       double z0 = 0.1;
-      double a = 125.0;
+      double a = 50.0;
       double dx = xq(i) - x0;
       double dy = yq(i) - y0;
       double dz = zq(i) - z0;      
@@ -482,8 +483,8 @@ void InitWADG_subelem(Mesh *mesh,double(*c2_ptr)(double,double,double)){
       fsrcq(i,e) = exp(-a*a*r2);
     }
   }
-  //  cout << "c33" << endl  << c33.col(0) << endl;
-  //  cout << "c44" << endl  << c44.col(0) << endl;
+  //  cout << "c11" << endl  << c11.col(0) << endl;
+  //  cout << "c12" << endl  << c12.col(0) << endl;
   //  cout << "mu" << endl  << muq.col(0) << endl;
   //  cout << "lambda" << endl  << lambdaq.col(0) << endl;
   
@@ -503,8 +504,8 @@ void InitWADG_subelem(Mesh *mesh,double(*c2_ptr)(double,double,double)){
   setOccaArray(rhoq,c_rhoq);
   setOccaArray(lambdaq,c_lambdaq);
   setOccaArray(muq,c_muq);
-  setOccaArray(c33,c_c33);
-  setOccaArray(c44,c_c44);
+  setOccaArray(c11,c_c11);
+  setOccaArray(c12,c_c12);
 
   // smoothed ricker src
   MatrixXd fsrc = Pq_reduced * fsrcq;
@@ -1267,7 +1268,7 @@ dfloat WaveInitOCCA3d(Mesh *mesh, int KblkVin, int KblkSin,
 
   // estimate dt. may wish to replace with trace inequality constant
   dfloat CN = (p_N+1)*(p_N+3)/3.0;
-  dfloat dt = 1.0/(CN*FscaleMax);
+  dfloat dt = .25/(CN*FscaleMax);
 
   return (dfloat) dt;
 }
@@ -1647,7 +1648,7 @@ void Wave_RK(Mesh *mesh, dfloat FinalTime, dfloat dt, int useWADG){
 // defaults to nodal!!
 void RK_step_WADG_subelem(Mesh *mesh, dfloat rka, dfloat rkb, dfloat fdt, dfloat time){
 
-  dfloat tR = 25;
+  dfloat tR = 10;
   dfloat f0 = 1.0 / tR;  
   dfloat at = M_PI*f0*(time-tR);
   dfloat ftime = 1e3*(1.0 - 2.0*at*at)*exp(-at*at); // ricker pulse 
@@ -1655,7 +1656,7 @@ void RK_step_WADG_subelem(Mesh *mesh, dfloat rka, dfloat rkb, dfloat fdt, dfloat
   rk_volume_elas(mesh->K, c_vgeo, c_Dr, c_Ds, c_Dt, c_Q, c_rhsQ);
   rk_surface_elas(mesh->K, c_fgeo, c_Fmask, c_vmapP, c_LIFT, c_Q, c_rhsQ);
   rk_update_elas(mesh->K, c_Vq_reduced, c_Pq_reduced,
-  		 c_rhoq, c_lambdaq, c_muq, c_c33, c_c44,
+  		 c_rhoq, c_lambdaq, c_muq, c_c11, c_c12,
 		 ftime, c_fsrc,
 		 rka, rkb, fdt, 
   		 c_rhsQ, c_resQ, c_Q);

@@ -1,4 +1,4 @@
-Merge "../meshes/cubeSplit8.msh";
+Merge "../meshes/cubeSplit4.msh";
 
 // ffmpeg -framerate 2.5 -i sol_%d.png -r 25 HABC2D.mpg
 
@@ -35,7 +35,7 @@ General.Light0Z = 1.0;
 General.Trackball = 0;
 General.RotationX = -80;
 General.RotationY = 0;
-General.RotationZ = 5;
+General.RotationZ = 15;
 
 For p In {minI:maxI}
 
@@ -49,8 +49,8 @@ For p In {minI:maxI}
   View[0].ShowTime = 0;
   View[0].ShowScale = 0;
   
-  minVal = View[0].Min;
-  maxVal = View[0].Max;
+  minVal = -.0001; //View[0].Min;
+  maxVal = .0002;  //View[0].Max;
   myTime = View[0].Time;
 
   Plugin(CutPlane).A = 1;
