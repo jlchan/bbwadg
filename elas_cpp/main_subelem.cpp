@@ -8,9 +8,9 @@ double PulseInitialCondition(double x, double y, double z, double time){
 
 
 double WaveWeight(double x, double y, double z){
-  double k = 2.0;
-  double a = 0.0;
-  return 1.0 + a*cos(k*M_PI*x)*cos(k*M_PI*y)*cos(k*M_PI*z);
+  double k = 3.0;
+  double a = 0.5;
+  return a*cos(k*M_PI*x)*cos(k*M_PI*y)*cos(k*M_PI*z);
 };
 
 
@@ -34,7 +34,7 @@ int main(int argc, char **argv){
 	 p_N,KblkV,KblkS,KblkU);
 
   FacePair3d(mesh);
-  StartUp3d(mesh);  
+  StartUp3d(mesh);
 
   printf("%d elements in mesh\n", mesh->K);
 

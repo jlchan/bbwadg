@@ -448,7 +448,7 @@ void InitWADG_subelem(Mesh *mesh,double(*c2_ptr)(double,double,double)){
   MatrixXd c11(Vq_reduced.rows(),mesh->K);
   MatrixXd c12(Vq_reduced.rows(),mesh->K);
 
-  MatrixXd fsrcq(Vq_reduced.rows(),mesh->K);  
+  MatrixXd fsrcq(Vq_reduced.rows(),mesh->K);
 
   for (int e = 0; e < mesh->K; ++e){
 
@@ -460,40 +460,63 @@ void InitWADG_subelem(Mesh *mesh,double(*c2_ptr)(double,double,double)){
 
     for (int i = 0; i < Vq_reduced.rows(); ++i){
       double weight = (*c2_ptr)(xq(i),yq(i),zq(i));
-      double mu = 1.0; double lambda = 2.0;
-      rhoq(i,e) = mu * weight; 
-      lambdaq(i,e) = lambda * weight;
-      muq(i,e) = 1.0 * weight;
-      c11(i,e) = (2*mu + lambda) * weight;
-      c12(i,e) = lambda * weight;
+      double mu = 1; double lambda = 1;
+      rhoq(i,e) = 1.0;
+      lambdaq(i,e) = lambda;
+      muq(i,e) = mu + weight; // constant mu
+
+#if 0
+      double A = 2*mu+lambda;
+      double B = lambda;
+
+      // transverse isotropy
+      c11(i,e) = A + weight;
+      c12(i,e) = B + weight;
       if (zq(i) > 0){ // vertical part
 	c11(i,e) *= 1.0/3.0; // 2*mu + lambda
 	c12(i,e) *= 0.5;
       }
+#else
+      // isotropic but discontinuous
+      double BB = 2.0;
+      if (zq(i) < 0){
+        muq(i,e) = BB + weight;
+        lambdaq(i,e) = BB;
+      }
 
+#endif
       // smoothed ricker pulse
+      double a = 100.0;
       double x0 = 0.0;
       double y0 = 0.0;
-      double z0 = 0.1;
-      double a = 50.0;
+      double z0 = .1;
       double dx = xq(i) - x0;
       double dy = yq(i) - y0;
-      double dz = zq(i) - z0;      
+      double dz = zq(i) - z0;
       double r2 = dx*dx + dy*dy + dz*dz;
       fsrcq(i,e) = exp(-a*a*r2);
     }
   }
+
+#if 0 // take local average of coeffs
+
+  for (int e = 0; e < mesh->K; ++e){
+    VectorXd wJq = wq.array()*Jq_reduced.col(e).array();
+    double muavg = wJq.dot(muq.col(e));
+  }
+#endif 0
+
   //  cout << "c11" << endl  << c11.col(0) << endl;
   //  cout << "c12" << endl  << c12.col(0) << endl;
   //  cout << "mu" << endl  << muq.col(0) << endl;
   //  cout << "lambda" << endl  << lambdaq.col(0) << endl;
-  
+
   dgInfo.addDefine("p_tau_v",1.0); // velocity penalty
   dgInfo.addDefine("p_tau_s",1.0);
 
   MatrixXd invM = mesh->V*mesh->V.transpose();
   MatrixXd Pq_reduced = invM*Vq_reduced.transpose()*wq.asDiagonal();
-  
+
   dgInfo.addDefine("p_Nq_reduced",Vq_reduced.rows()); // for update step quadrature
 
   // not used in WADG subelem - just to compile other kernels
@@ -508,6 +531,7 @@ void InitWADG_subelem(Mesh *mesh,double(*c2_ptr)(double,double,double)){
   setOccaArray(c12,c_c12);
 
   // smoothed ricker src
+  fsrcq *= 1.0/fsrcq.array().abs().maxCoeff(); // normalize to 1
   MatrixXd fsrc = Pq_reduced * fsrcq;
   setOccaArray(fsrc,c_fsrc);
 
@@ -998,10 +1022,10 @@ dfloat WaveInitOCCA3d(Mesh *mesh, int KblkVin, int KblkSin,
 
   occa::printAvailableDevices();
 
-  //device.setup("mode = OpenCL, platformID = 0, deviceID = 0");
+  device.setup("mode = OpenCL, platformID = 0, deviceID = 0");
   //device.setup("mode = OpenMP, platformID = 0, deviceID = 0");
   //device.setup("mode = Serial");
-  device.setup("mode = CUDA, platformID = 0, deviceID = 2");
+  //device.setup("mode = CUDA, platformID = 0, deviceID = 2");
 
   //device.setCompiler("nvcc"); device.setCompilerFlags("--use_fast_math"); device.setCompilerFlags("--fmad=true");
 
@@ -1648,17 +1672,19 @@ void Wave_RK(Mesh *mesh, dfloat FinalTime, dfloat dt, int useWADG){
 // defaults to nodal!!
 void RK_step_WADG_subelem(Mesh *mesh, dfloat rka, dfloat rkb, dfloat fdt, dfloat time){
 
-  dfloat tR = 10;
-  dfloat f0 = 1.0 / tR;  
+  dfloat f0 = 10.0;
+  dfloat tR = 1.0 / f0;
   dfloat at = M_PI*f0*(time-tR);
-  dfloat ftime = 1e3*(1.0 - 2.0*at*at)*exp(-at*at); // ricker pulse 
-  
+  dfloat ftime = 1e4*(1.0 - 2.0*at*at)*exp(-at*at); // ricker pulse
+  //  if (time > tR){
+  //    printf("ftime = %f\n",ftime);
+  //  }
   rk_volume_elas(mesh->K, c_vgeo, c_Dr, c_Ds, c_Dt, c_Q, c_rhsQ);
   rk_surface_elas(mesh->K, c_fgeo, c_Fmask, c_vmapP, c_LIFT, c_Q, c_rhsQ);
   rk_update_elas(mesh->K, c_Vq_reduced, c_Pq_reduced,
   		 c_rhoq, c_lambdaq, c_muq, c_c11, c_c12,
 		 ftime, c_fsrc,
-		 rka, rkb, fdt, 
+		 rka, rkb, fdt,
   		 c_rhsQ, c_resQ, c_Q);
   device.finish();
 
