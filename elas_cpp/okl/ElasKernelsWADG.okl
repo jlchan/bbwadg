@@ -54,10 +54,10 @@ kernel void rk_volume_elas(const    int K,
 	  int offset = 0;
 	  const int id = i + k*p_Np*p_Nfields;
 	  for (int fld = 0; fld < p_Nfields; ++fld){
-	    sQ[k2][fld][i] = Q[id + offset];	    
+	    sQ[k2][fld][i] = Q[id + offset];
 	    offset += p_Np;
 	  }
-	  
+
         }
       }
     }
@@ -73,8 +73,8 @@ kernel void rk_volume_elas(const    int K,
 	  for (int fld = 0; fld < p_Nfields; ++fld){
 	    Qr[fld] = 0.f; Qs[fld] = 0.f; Qt[fld] = 0.f;
 	  }
-	  
-	  for(int j=0;j<p_Np;++j){ 
+
+	  for(int j=0;j<p_Np;++j){
 	    const dfloat Dr_ij = Dr[i+j*p_Np];
 	    const dfloat Ds_ij = Ds[i+j*p_Np];
 	    const dfloat Dt_ij = Dt[i+j*p_Np];
@@ -83,14 +83,14 @@ kernel void rk_volume_elas(const    int K,
 	      const dfloat Qfld = sQ[k2][fld][j];
 	      Qr[fld] += Dr_ij*Qfld;
 	      Qs[fld] += Ds_ij*Qfld;
-	      Qt[fld] += Dt_ij*Qfld;	      
-	    }	    
+	      Qt[fld] += Dt_ij*Qfld;
+	    }
           }
 	  dfloat Qx[p_Nfields],Qy[p_Nfields],Qz[p_Nfields];
 	  for (int fld = 0; fld < p_Nfields; ++fld){
 	    Qx[fld] = rx*Qr[fld] + sx*Qs[fld] + tx*Qt[fld];
 	    Qy[fld] = ry*Qr[fld] + sy*Qs[fld] + ty*Qt[fld];
-	    Qz[fld] = rz*Qr[fld] + sz*Qs[fld] + tz*Qt[fld];	    
+	    Qz[fld] = rz*Qr[fld] + sz*Qs[fld] + tz*Qt[fld];
 	  }
 
 	  const dfloat divSx = Qx[3] + Qy[8] + Qz[7];
@@ -172,7 +172,7 @@ kernel void rk_surface_elas(const    int K,
 		dQ[fld] += Q[idP];
 	      }
 	      idM += p_Np;
-	      idP += p_Np; 
+	      idP += p_Np;
 	    }
 
 	    // central flux terms
@@ -189,20 +189,20 @@ kernel void rk_surface_elas(const    int K,
 
 	    // velocity penalties
 	    dfloat fp = fc[3]*nx + fc[8]*ny + fc[7]*nz;
-	    s_flux[k2][0][i] = fc[0] + p_tau_v*fp;	    
+	    s_flux[k2][0][i] = fc[0] + p_tau_v*fp;
 
 	    fp = fc[8]*nx + fc[4]*ny + fc[6]*nz;
-	    s_flux[k2][1][i] = fc[1] + p_tau_v*fp;	    
+	    s_flux[k2][1][i] = fc[1] + p_tau_v*fp;
 
 	    fp = fc[7]*nx + fc[6]*ny + fc[5]*nz;
 	    s_flux[k2][2][i] = fc[2] + p_tau_v*fp;
 
 	    // stress penalties
 	    fp = fc[0]*nx;
-	    s_flux[k2][3][i] = fc[3] + p_tau_s*fp;	    
+	    s_flux[k2][3][i] = fc[3] + p_tau_s*fp;
 
 	    fp = fc[1]*ny;
-	    s_flux[k2][4][i] = fc[4] + p_tau_s*fp;	    
+	    s_flux[k2][4][i] = fc[4] + p_tau_s*fp;
 
 	    fp = fc[2]*nz;
 	    s_flux[k2][5][i] = fc[5] + p_tau_s*fp;
@@ -210,7 +210,7 @@ kernel void rk_surface_elas(const    int K,
 	    fp = fc[2]*ny + fc[1]*nz;
 	    s_flux[k2][6][i] = fc[6] + p_tau_s*fp;
 
-	    fp = fc[2]*nx + fc[0]*nz;	    
+	    fp = fc[2]*nx + fc[0]*nz;
 	    s_flux[k2][7][i] = fc[7] + p_tau_s*fp;
 
 	    fp = fc[1]*nx + fc[0]*ny;
@@ -227,11 +227,11 @@ kernel void rk_surface_elas(const    int K,
 	      dfloat f3 = s_flux[k2][2][i];
 	      dfloat f4 = s_flux[k2][3][i];
 	      dfloat f5 = s_flux[k2][4][i];
-	      dfloat f6 = s_flux[k2][5][i];	    
+	      dfloat f6 = s_flux[k2][5][i];
 	      printf("surf_fluxes(%d) = %g, %g, %g, %g, %g, %g\n",
 		     i,f1,f2,f3,f4,f5,f6);
 	    }
-#endif	    
+#endif
           }
         }
       }
@@ -245,17 +245,17 @@ kernel void rk_surface_elas(const    int K,
 	if (k < K && i<p_Np){
 
 	  // accumulate lift/normal lift contributions
-	  int id = i + k*p_Nfields*p_Np;	    
+	  int id = i + k*p_Nfields*p_Np;
 	  dfloat val[p_Nfields];
 	  for (int fld = 0; fld < p_Nfields; ++fld){
 	    //val[fld] = rhsQ[id]; id += p_Np;
 	    val[fld] = 0.f;
 	  }
-	  
+
 	  for(int j=0;j<p_NfpNfaces;++j){
 	    const dfloat Lij = LIFT[i + j*p_Np];
-	    
-	    // v testing	      
+
+	    // v testing
 	    for (int fld = 0; fld < p_Nfields; ++fld){
 	      val[fld] += Lij * s_flux[k2][fld][j];
 	    }
@@ -271,9 +271,9 @@ kernel void rk_surface_elas(const    int K,
 	    printf("surf rhs[%d] = %g, %g, %g, %g, %g, %g\n",
 		   i,rhs1,rhs2,rhs3,rhs4,rhs5,rhs6);
 	  }
-#endif	  
-	  
-	  id = i + k*p_Nfields*p_Np;	
+#endif
+
+	  id = i + k*p_Nfields*p_Np;
 	  for (int fld = 0; fld < p_Nfields; ++fld){
 	    rhsQ[id] += val[fld]; id += p_Np;
 	  }
@@ -288,25 +288,25 @@ kernel void rk_update_elas(const int K,
 			   const dfloat * restrict Pq,
 			   const dfloat * restrict rhoq,
 			   const dfloat * restrict lambdaq,
-			   const dfloat * restrict muq,			   
+			   const dfloat * restrict muq,
 			   const dfloat * restrict c11q,
 			   const dfloat * restrict c12q,
-			   const dfloat ftime, 
-			   const dfloat * restrict fsrc,			   
+			   const dfloat ftime,
+			   const dfloat * restrict fsrc,
 			   const dfloat fa,
 			   const dfloat fb,
 			   const dfloat fdt,
 			   const dfloat * restrict rhsQ,
 			   dfloat * restrict resQ,
 			   dfloat * restrict Q){
-  
+
   for(int k1=0; k1<(K+p_KblkU-1)/p_KblkU; ++k1; outer0){
 
     shared dfloat sQ[p_KblkV][p_Nfields][p_Nq_reduced];
 
     exclusive dfloat rv1,rv2,rv3;
     exclusive dfloat rsxx,rsyy,rszz,rsyz,rsxy,rsxz;
-    
+
     exclusive int k;
 
     for(int k2 = 0; k2 < p_KblkU; ++k2; inner1){
@@ -335,7 +335,7 @@ kernel void rk_update_elas(const int K,
 	  // interp to quad nodes
 	  rv1 = 0.f;  rv2 = 0.f;  rv3 = 0.f;
 	  rsxx = 0.f; rsyy = 0.f; rszz = 0.f;
-	  rsyz = 0.f; rsxy = 0.f; rsxz = 0.f;	  
+	  rsyz = 0.f; rsxy = 0.f; rsxz = 0.f;
 	  for (int j = 0; j < p_Np; ++j){
 
 	    const dfloat Vq_ij = Vq[i + j*p_Nq_reduced];
@@ -347,15 +347,15 @@ kernel void rk_update_elas(const int K,
 	    rszz += Vq_ij * sQ[k2][5][j];
 	    rsyz += Vq_ij * sQ[k2][6][j];
 	    rsxz += Vq_ij * sQ[k2][7][j];
-	    rsxy += Vq_ij * sQ[k2][8][j];	    
-	    
+	    rsxy += Vq_ij * sQ[k2][8][j];
+
 	  }
 	}
       }
     }
     barrier(localMemFence);
 
-    // pointwise scaling 
+    // pointwise scaling
     for(int k2 = 0; k2 < p_KblkU; ++k2; inner1){
       for(int i = 0; i < p_Nq_reduced; ++i; inner0){
 
@@ -364,22 +364,32 @@ kernel void rk_update_elas(const int K,
 	  const dfloat rho = rhoq[id];
 	  const dfloat lambda = lambdaq[id];
 	  const dfloat mu = muq[id];
+
+	  // velocity
+	  sQ[k2][0][i] = rho*rv1;
+	  sQ[k2][1][i] = rho*rv2;
+	  sQ[k2][2][i] = rho*rv3;
+
+#if 0
 	  const dfloat c11 = c11q[id];
 	  const dfloat c12 = c12q[id];
 
-	  // velocity	  
-	  sQ[k2][0][i] = rho*rv1;
-	  sQ[k2][1][i] = rho*rv2;
-	  sQ[k2][2][i] = rho*rv3;	  
-	    
 	  // transversely isotropic media
-	  sQ[k2][3][i] = c11 * rsxx + c12*rsyy + lambda*rszz;
-	  sQ[k2][4][i] = c11 * rsyy + c12*rsxx + lambda*rszz;
-	  sQ[k2][5][i] = (2.f*mu+lambda) * rszz + lambda*rsxx + lambda*rsyy;
-	  sQ[k2][6][i] = mu * rsyz;
-	  sQ[k2][7][i] = mu * rsxz;
-	  sQ[k2][8][i] = .5f*(c11-c12) * rsxy;
-	  
+	  sQ[k2][3][i] = c11*rsxx + c12*rsyy + lambda*rszz;
+	  sQ[k2][4][i] = c11*rsyy + c12*rsxx + lambda*rszz;
+	  sQ[k2][5][i] = (2.f*mu+lambda)*rszz + lambda*rsxx + lambda*rsyy;
+	  sQ[k2][6][i] = mu*rsyz;
+	  sQ[k2][7][i] = mu*rsxz;
+	  sQ[k2][8][i] = .5f*(c11-c12)*rsxy;
+#else
+          const dfloat A = 2.f*mu+lambda;
+	  sQ[k2][3][i] = A*rsxx + lambda*rsyy + lambda*rszz;
+	  sQ[k2][4][i] = A*rsyy + lambda*rsxx + lambda*rszz;
+	  sQ[k2][5][i] = A*rszz + lambda*rsxx + lambda*rsyy;
+	  sQ[k2][6][i] = mu*rsyz;
+	  sQ[k2][7][i] = mu*rsxz;
+	  sQ[k2][8][i] = mu*rsxy;
+#endif
 	}
       } // inner0
     } // inner1
@@ -399,15 +409,17 @@ kernel void rk_update_elas(const int K,
 	    const dfloat Pq_ij = Pq[i + j*p_Np];
 	    for (int fld = 0; fld < p_Nfields; ++fld){
 	      rQ[fld] += Pq_ij * sQ[k2][fld][j];
-	    }	    	   
+	    }
 	  }
 
-	  // apply ricker pulse to x-coordinate
-	  rQ[0] += ftime * fsrc[i + k*p_Np];
+	  // apply ricker pulse to x,y coordinates
+          //const dfloat ff = ;
+	  rQ[0] += ftime*fsrc[i + k*p_Np];
+          //rQ[1] += ff;
 
 	  int id = i + k*p_Np*p_Nfields;
 	  for (int fld = 0; fld < p_Nfields; ++fld){
-	    dfloat res = resQ[id]; 
+	    dfloat res = resQ[id];
 	    res = fa*res + fdt*rQ[fld];
 	    resQ[id] = res;
 	    Q[id] += fb*res;
