@@ -9,13 +9,15 @@ addpath([pw,'/Codes1D']);
 addpath([pw,'/Codes3D']);
 addpath([pw,'/Grid']);
 addpath([pw,'/ServiceRoutines']);
-% addpath([pw,'/wedge']);
-% addpath([pw,'/pyr']);
-% addpath([pw,'/pyr/sym_pyr']);
-% addpath([pw,'/hex']);
-% addpath([pw,'/tet']);
-% addpath([pw,'/hybrid']);
+addpath([pw,'/wedge']);
+addpath([pw,'/pyr']);
+addpath([pw,'/pyr/sym_pyr']);
+addpath([pw,'/hex']);
+addpath([pw,'/tet']);
+addpath([pw,'/hybrid']);
 addpath([pw,'/scratch']);
 addpath([pw,'/bern']);
-addpath([pw,'/bspline']);
+% addpath([pw,'/bspline']);
 addpath([pw]);
+
+addpath([pw,'/PAT'])

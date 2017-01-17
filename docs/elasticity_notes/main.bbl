@@ -189,11 +189,11 @@ T~Warburton and Jan~S Hesthaven.
 \newblock {\em Computer methods in applied mechanics and engineering},
   192(25):2765--2773, 2003.
 
-\bibitem{riviere2008discontinuous}
-Beatrice Riviere.
-\newblock {\em {Discontinuous Galerkin methods for solving elliptic and
-  parabolic equations: theory and implementation}}.
-\newblock Society for Industrial and Applied Mathematics, 2008.
+\bibitem{dolejvsi2015discontinuous}
+V{\'\i}t Dolej{\v{s}}{\'\i} and Miloslav Feistauer.
+\newblock {\em {Discontinuous Galerkin Method: Analysis and Applications to
+  Compressible Flow}}, volume~48.
+\newblock Springer, 2015.
 
 \bibitem{xiao2010quadrature}
 H~Xiao and Zydrunas Gimbutas.
@@ -244,11 +244,5 @@ Dimitri Komatitsch, Christophe Barnes, and Jeroen Tromp.
 \newblock Simulation of anisotropic wave propagation based upon a spectral
   element method.
 \newblock {\em Geophysics}, 65(4):1251--1260, 2000.
-
-\bibitem{li2012time}
-Jichun Li and Yunqing Huang.
-\newblock {\em Time-domain finite element methods for Maxwell's equations in
-  metamaterials}, volume~43.
-\newblock Springer Science \& Business Media, 2012.
 
 \end{thebibliography}

@@ -36,15 +36,21 @@ for n=1:Nout+1
 end
 
 % build triangulation for all equally spaced nodes on all elements
-TRI = [];
-for k=1:K
-    TRI = [TRI; tri+(k-1)*Npout];
+% disp('building triangulation')
+TRI = zeros(K*size(tri,1),size(tri,2));
+ids = 1:size(tri,1);
+for k=1:K    
+    TRI(ids + (k-1)*size(tri,1),:) = tri+(k-1)*Npout;
+%     if (mod(k,100)==0)        
+%         disp(sprintf('on k = %d out of %d\n',k,K))
+%     end
 end
 
 % interpolate node coordinates and field to equally spaced nodes
 xout = interp*xin; yout = interp*yin; uout = interp*uin;
 % uout=abs(uout);
 % render and format solution field
+% disp('trisurfing...')
 trisurf(TRI, xout(:), yout(:), uout(:));
 shading interp
 

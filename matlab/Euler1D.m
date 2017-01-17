@@ -7,8 +7,8 @@ function Euler1D
 Globals1D;
 
 % Order of polymomials used for approximation
-N = 7;
-K1D = 8;
+N = 2;
+K1D = 32;
 FinalTime = 25;
 
 % Generate simple mesh
@@ -33,7 +33,7 @@ VBe = bern_basis_1D(N,re);
 xe = Vandermonde1D(N,re)/V * x;
 
 W = get_BB_smoother(N);
-% W = VBe;
+W = VBe;
 W = VB*W/VB;
 
 % Set initial conditions
@@ -63,7 +63,7 @@ resE = zeros(Np,K);
 % compute time step size
 xmin = min(abs(x(1,:)-x(2,:)));
 
-dt   = .1*xmin;
+dt   = .2*xmin;
 Nsteps = ceil(FinalTime/dt); dt = FinalTime/Nsteps;
 
 M = inv(V*V');
@@ -125,6 +125,12 @@ rho(:,ids) = W*rho(:,ids);
 m(:,ids)   = W*m(:,ids);
 E(:,ids)   = W*E(:,ids);
 
+function TV = TV1D(N,u)
+
+TV = 0;
+for i = 1:N
+    TV = TV + abs(u(i,:) - u(i+1,:));
+end
 
 function [rho m E] = vortexSolution(x,t)
 
@@ -144,15 +150,18 @@ x0 = 5;
 % m = rho.*u;
 % E = p/(gamma-1) + .5*rho.*u.^2;
 
-
 rho = 1+exp(-(x-x0).^2); 
 % rho = 1 + (x > x0);
 p = rho.^gamma;
-
-% rho = 1+.2*sin(pi*x); p = ones(size(rho)); 
 u = 0*rho;
 E = p/(gamma-1) + .5*rho.*u.^2;
 m = rho.*u;
+
+% % steady sine solution
+% rho = 1+.2*sin(pi*x); p = ones(size(rho)); 
+% u = 0*rho;
+% E = p/(gamma-1) + .5*rho.*u.^2;
+% m = rho.*u;
 
 % % sine solution
 % rho = 2 + sin(pi*x);
@@ -160,6 +169,7 @@ m = rho.*u;
 % p = ones(size(x));
 % m = rho;
 % E = p/(gamma-1) + .5*rho.*u.^2;
+
 
 
 function [rhsrho, rhsm, rhsE] = EulerRHS1D(rho, m ,E)
@@ -209,9 +219,3 @@ rhsE    = -rx.*(Dr*Ef)   + LIFT*(Fscale.*dEf/2);
 return
 
 
-function TV = TV1D(N,u)
-
-TV = 0;
-for i = 1:N
-    TV = TV + abs(u(i,:) - u(i+1,:));
-end

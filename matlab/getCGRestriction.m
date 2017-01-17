@@ -1,6 +1,7 @@
 % returns R such that R*Ak*R' gives back a CG matrix from the
 % block diagonal matrix Ak.
 % other return values: vmapBT, the boundary indices in the reduced system.  
+
 function [R vmapBT] = getCGRestriction()
 
 Globals2D

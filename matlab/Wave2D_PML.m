@@ -7,7 +7,7 @@ Globals2D
 
 if nargin==0
     %     Nin = 4; K1D = 16;
-    Nin = 3; K1D = 8; c_flag = 0;
+    Nin = 4; K1D = 16; c_flag = 0;
     cfun = @(x,y) ones(size(x));
     % cfun = @(x,y) 1 + .5*sin(pi*x).*sin(pi*y); % smooth velocity
 %     cfun = @(x,y) (1 + .5*sin(2*pi*x).*sin(2*pi*y) + (y > 0)); % piecewise smooth velocity
@@ -18,7 +18,7 @@ N = Nin;
 
 StartUp2D;
 
-[rp sp] = EquiNodes2D(25); [rp sp] = xytors(rp,sp);
+[rp sp] = EquiNodes2D(50); [rp sp] = xytors(rp,sp);
 Vp = Vandermonde2D(N,rp,sp)/V;
 xp = Vp*x; yp = Vp*y;
 
@@ -52,37 +52,27 @@ u = zeros(Np, K); v = zeros(Np, K);
 
 showSol = 1;
 delta = .5;
-smax = 100;
+smax = 300;
 
 M = 3;
 L = 1-delta;
 sigmax = (x > L).*(x-L).^M - (x < -L).*(x+L).^M;
 sigmay = (y > L).*(y-L).^M - (y < -L).*(y+L).^M;
 
-Q = zeros(Np,K);
-R = zeros(Np,K);
-resQ = zeros(Np,K); 
-resR = zeros(Np,K);
+Q = zeros(Np,K); R = zeros(Np,K);
+resQ = zeros(Np,K); resR = zeros(Np,K);
 
 P1 = eye(Np);
 for e = 1:K
     %     sigmax(:,e) = max(sigmax(:,e));
     %     sigmay(:,e) = max(sigmay(:,e));
-    sigmax(:,e) = mean(sigmax(:,e));
-    sigmay(:,e) = mean(sigmay(:,e));
+%     sigmax(:,e) = mean(sigmax(:,e));
+%     sigmay(:,e) = mean(sigmay(:,e));
 end
 % P1 = V*diag([1;0;0;zeros(Np-3,1)])*inv(V); % reduce to const or linear modes
-% 
-sk = 1;
-for e = 1:K
-    if (max(sigmax(:,e)) > 1e-8 || max(sigmay(:,e))> 1e-8)
-        pmlK(sk) = e;
-        sk = sk + 1;
-    end
-end
 
 
-% clf
+pmlK = sum(sigmax | sigmay,1)>0;
 % plot3(x,y,sigmax,'o'); return
 % PlotMesh2D; axis on; return
 
@@ -91,7 +81,7 @@ sigmay = smax*sigmay/max(sigmay(:));
 
 M = inv(V*V');
 %%
-FinalTime = 25.0;
+FinalTime = 2.0;
 
 time = 0;
 
@@ -101,7 +91,7 @@ resu = zeros(Np,K); resv = zeros(Np,K); resp = zeros(Np,K);
 % compute time step size
 CN = (N+1)^2/2; % guessing...
 %dt = 1/(CN*max(abs(sJ(:)))*max(abs(1./J(:))));
-dt = 1/(max(cq(:))*CN*max(Fscale(:)));
+dt = 2/(max(cq(:))*CN*max(Fscale(:)));
 
 dt = min(dt,1/(2*smax));
 
@@ -141,12 +131,16 @@ while (time<FinalTime)
     
     if showSol && mod(tstep,10)==0
         clf
-        %         vv = Vp*p;
-        %         color_line3(x,y,p,p,'.');
+        vv = Vp*p;
+        color_line3(xp,yp,vv,vv,'.');
+        axis tight
         %         axis([-1 1 -1 1 -1.25 1.25]);
-        PlotField2D(N+1, x, y, p); view(2)
+%         PlotField2D(N+1, x, y, p); view(2)
         %         caxis([-.5 .5])
         colorbar
+
+        vv = vv(:,~pmlK); % exclude pml region
+        title(sprintf('time = %f, max solution val = %f',time,max(abs(vv(:)))))
         drawnow
     elseif mod(tstep,10)==0
         Mp = M*p*diag(J(1,:));
@@ -198,18 +192,16 @@ dp = zeros(Nfp*Nfaces,K); dp(:) = p(vmapP)-p(vmapM);
 du = zeros(Nfp*Nfaces,K); du(:) = u(vmapP)-u(vmapM);
 dv = zeros(Nfp*Nfaces,K); dv(:) = v(vmapP)-v(vmapM);
 
-% Impose reflective boundary conditions (p+ = -p-)
-% du(mapB) = 0; dv(mapB) = 0; dp(mapB) = -2*p(vmapB);
- du(mapB) = -2*u(vmapB); 
- dv(mapB) = -2*v(vmapB); 
- dp(mapB) = 0;
-
 % evaluate upwind fluxes
 ndotdU = nx.*du + ny.*dv;
+
+% abcs
+dp(mapB) = -p(vmapB);
+ndotdU(mapB) = -(nx(mapB).*u(vmapM(mapB)) + ny(mapB).*v(vmapM(mapB)));
+
 tau = 1;
 fluxp =  .5*(tau*dp - ndotdU);
-fluxu =  .5*(tau*ndotdU - dp).*nx;
-fluxv =  .5*(tau*ndotdU - dp).*ny;
+fluxu =  .5*(tau*ndotdU - dp);
 
 pr = Dr*p; ps = Ds*p;
 dpdx = rx.*pr + sx.*ps;
@@ -218,8 +210,8 @@ divU = Dr*(u.*rx + v.*ry) + Ds*(u.*sx + v.*sy);
 
 % compute right hand sides of the PDE's
 rhsp =  -divU + LIFT*(Fscale.*fluxp);
-rhsu =  -dpdx + LIFT*(Fscale.*fluxu);
-rhsv =  -dpdy + LIFT*(Fscale.*fluxv);
+rhsu =  -dpdx + LIFT*(Fscale.*fluxu.*nx);
+rhsv =  -dpdy + LIFT*(Fscale.*fluxv.*ny);
 
 % pml terms
 dQ = zeros(Nfp*Nfaces,K); dQ(:) = Q(vmapP)-Q(vmapM);

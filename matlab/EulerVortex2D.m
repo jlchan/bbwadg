@@ -6,7 +6,7 @@ clear
 Globals2D;
 
 N = 4;
-nref = 2;
+nref = 1;
 useJprojection = 1;
 
 FinalTime = 15;
@@ -192,6 +192,21 @@ VB = bern_basis_tri(N,r,s);
 
 M = inv(V*V');
 
+f = zeros(Np,1);
+sk = 1;
+for i = 0:N
+    for j = 0:N-i
+        f(sk) = 1;
+        if (i==N || j==N)
+            f(sk) = .1;
+        end
+        sk = sk + 1;
+    end
+end
+F = V * diag(f) *inv(V);
+
+% keyboard
+
 % outer time step loop
 time = 0; tstep = 1;
 while (time<FinalTime)
@@ -214,6 +229,12 @@ while (time<FinalTime)
         m1  = m1 + rk4b(INTRK)*resm1;
         m2  = m2 + rk4b(INTRK)*resm2;
         E   = E + rk4b(INTRK)*resE;        
+        
+        % filter
+        rho = F*rho;
+        m1 = F*m1;
+        m2 = F*m2;
+        E = F*E;
                 
     end
     
@@ -234,6 +255,7 @@ while (time<FinalTime)
 %         view(90,0)
 %         axis([-1 1 -1 1 -.5 .5])
         title(sprintf('time = %f',time));
+        colorbar
         drawnow
     end
     

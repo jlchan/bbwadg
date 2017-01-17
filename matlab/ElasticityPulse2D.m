@@ -6,9 +6,9 @@ clear -global *
 Globals2D
 
 K1D = 16;
-N = 4;
+N = 5;
 c_flag = 0;
-FinalTime = 4;
+FinalTime = 1;
 
 filename = 'Grid/Other/block2.neu';
 % [Nv, VX, VY, K, EToV] = MeshReaderGambit2D(filename);
@@ -52,7 +52,7 @@ global mapBL vmapBL t0
 
 t0 = .0;
 % t0 = .075;
-t0 = .05;
+t0 = .1;
 
 % find x = 0 faces 
 fbids = reshape(find(vmapP==vmapM),Nfp,nnz(vmapP==vmapM)/Nfp);
@@ -77,19 +77,20 @@ lambda0 = lambda(1);
 
 % C = [2*mu0+lambda0       lambda0       0
 %      lambda0       2*mu0+lambda0       0
-%           0       0                mu0/2];
+%           0       0                mu0];
 
 % mu = 1 + .5*sin(2*pi*x).*sin(2*pi*y);
 % lambda = 1 + .5*sin(2*pi*x).*sin(2*pi*y);
 
 % ids =  mean(y) > .375 & mean(y) < .625 & mean(x) > .5 & mean(x) < .75;
-% mu(:,ids) = 10*mu(:,ids);
-% lambda(:,ids) = 10*lambda(:,ids);
+ids = mean(y) < .5;
+mu(:,ids) = 0*mu(:,ids);
+% lambda(:,ids) = .5*lambda(:,ids);
 
 
 global C11 C12 C13 C22 C23 C33
 
-useWADG = 1;
+useWADG = 0;
 if useWADG
     mu = Vq*mu;
     lambda = Vq*lambda;
@@ -116,13 +117,13 @@ end
 %% params setup
 
 x0 = .5;
-y0 = .5;
-p = exp(-50^2*((x-x0).^2 + (y-y0).^2));
+y0 = .65;
+p = exp(-25^2*((x-x0).^2 + (y-y0).^2));
 % p = exp(-50^2*((x-x0).^2));
 u = zeros(Np, K);
 
 U{1} = u;
-U{2} = u;
+U{2} = p;
 U{3} = u;
 U{4} = u;
 U{5} = u;
@@ -134,6 +135,7 @@ rick = @(t) 1e5*(.5 - (a*(t-tD)).^2).*exp(-(a*(t-tD)).^2);
 ptsrc = exp(-100^2*((xq-x0).^2 + (yq-y0).^2));
 ptsrc = Pq*ptsrc;
 ptsrc = ptsrc/max(abs(ptsrc(:)));
+ptsrc(:) = 0;
 
 % PlotMesh2D;
 % for e = 1:K
@@ -143,8 +145,7 @@ ptsrc = ptsrc/max(abs(ptsrc(:)));
 % return
 
 
-
-
+%%
 if 0
     
     t0 = 0;
@@ -305,7 +306,7 @@ du12dxy = Ux{2} + Uy{1}; % du2dx + du1dy
 nSx = nx.*dU{3} + ny.*dU{5};
 nSy = nx.*dU{5} + ny.*dU{4};
  
-opt=3;
+opt=1;
 if opt==1 % traction BCs
     %     global mapBL vmapBL t0
     %     if time < t0

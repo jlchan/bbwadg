@@ -76,23 +76,25 @@ mu(ids) = cscale*mu(ids);
 lambda(ids) = cscale*lambda(ids);
 % PlotMesh2D;axis on;return
 
-tau0 = 1;
 
-rhoF = min(rho(vmapM),rho(vmapP));
-muF = min(mu(vmapM),mu(vmapP));
-lambdaF = min(lambda(vmapM),lambda(vmapP));
-
+rhoF = .5*(rho(vmapM)+rho(vmapP));
+muF = .5*(mu(vmapM)+mu(vmapP));
+lambdaF = .5*(lambda(vmapM)+lambda(vmapP));
 rhoF = reshape(rhoF,Nfp*Nfaces,K);
 muF = reshape(muF,Nfp*Nfaces,K);
 lambdaF = reshape(lambdaF,Nfp*Nfaces,K);
-tau{1} = tau0./rhoF;
-tau{2} = tau0./rhoF;
-tau{3} = 1.5*tau0./(2*muF + lambdaF);
-tau{4} = 1.5*tau0./(2*muF + lambdaF);
-tau{5} = 1.5*tau0./(2*muF + lambdaF);
-% tau{3} = tau0*ones(size(rhoF));
-% tau{4} = tau0*ones(size(rhoF));
-% tau{5} = tau0*ones(size(rhoF));
+
+Cnorm = 2*muF + 3*lambdaF; 
+cc = sqrt(Cnorm.*rhoF);
+
+tau0 = 1;
+for fld = 1:Nfld
+    tau{fld} = tau0*ones(size(muF));
+    if fld > 2
+        tau{fld} = tau0*ones(size(muF));
+    end
+end
+
 
 %%
 global mapBx vmapBx mapBt vmapBt t0 mapBL vmapBL

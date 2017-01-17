@@ -12,6 +12,7 @@ docs/figs/*eps-converted-to.pdf
 *.dSYM/
 */*/*.DS_Store
 
+*cpp/obj/*.o
 elas_cpp/obj/*.o
 matlab/.DS_Store
 .DS_Store

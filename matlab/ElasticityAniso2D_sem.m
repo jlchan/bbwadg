@@ -5,16 +5,16 @@ clear -global *
 
 Globals2D
 
-K1D = 120;
+K1D = 64;
 N = 5;
 c_flag = 0;
-FinalTime = 60; % microseconds
+FinalTime = 30; % microseconds
 
 filename = 'Grid/Other/block2.neu';
 % [Nv, VX, VY, K, EToV] = MeshReaderGambit2D(filename);
 [Nv, VX, VY, K, EToV] = unif_tri_mesh(K1D,K1D);
-% VX = .16*VX; VY = .16*VY;
-VX = .3*VX; VY = .3*VY;
+VX = .16*VX; VY = .16*VY;
+% VX = .3*VX; VY = .3*VY;
 
 % VX = (VX+1)/2; 
 % VY = (VY+1)/2;

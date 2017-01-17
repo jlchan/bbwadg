@@ -15,12 +15,14 @@ FinalTime = 2;
 % GMSH meshes
 % cubeTetra1
 filename = 'Grid/cube1.msh';
+% filename = '../elas_cpp/meshes/cubeSplit.msh';
 % filename = 'Grid/sphere48.msh';
 [Nv, VX, VY, VZ, K, EToV] = MeshReaderGmsh3D(filename);
 % VX = 2*VX; VY = 2*VY; VZ = 2*VZ; % biunit cube
 
 % Initialize solver and construct grid and metric
 StartUp3D;
+
 
 %% cubature and plotting
 
@@ -71,15 +73,18 @@ U{1} = Pq*exp(-100*r2(xq,yq,zq));
 
 %% eigs
 
-if 0
-    tauvec = 0;
+if 1
+    tauvec = 1;
     for ii = 1:length(tauvec)
+        Cnorm = 5; rho = 1;
+        cc = sqrt(Cnorm*rho);
         for fld = 1:Nfld
-            tau{fld} = tauvec(ii);
-            if fld > 2
-                tau{fld} = tauvec(ii)./max(mu(:)+lambda(:));
+            tau{fld} = .5*tauvec(ii)*cc;
+            if fld > 3
+                tau{fld} = tauvec(ii)/cc;
             end
         end
+        
         u = zeros(Nfld*Np*K,1);
         rhs = zeros(Nfld*Np*K,1);
         A = zeros(Nfld*Np*K);
@@ -106,7 +111,7 @@ if 0
         title(sprintf('Largest real part = %g\n',max(real(lam))))
         axis equal
 %         drawnow
-%         max(abs(lam))
+        max(abs(lam))
     end
     keyboard
 end
@@ -207,7 +212,7 @@ nSx = nx.*dU{4} + ny.*dU{9} + nz.*dU{8};
 nSy = nx.*dU{9} + ny.*dU{5} + nz.*dU{7};
 nSz = nx.*dU{8} + ny.*dU{7} + nz.*dU{6};
 
-if 0 % traction BCs
+if 1 % traction BCs
     nSx(mapB) = -2*(nx(mapB).*U{4}(vmapB) + ny(mapB).*U{9}(vmapB) + nz(mapB).*U{8}(vmapB));
     nSy(mapB) = -2*(nx(mapB).*U{9}(vmapB) + ny(mapB).*U{5}(vmapB) + nz(mapB).*U{7}(vmapB));
     nSz(mapB) = -2*(nx(mapB).*U{8}(vmapB) + ny(mapB).*U{7}(vmapB) + nz(mapB).*U{6}(vmapB));
@@ -262,11 +267,11 @@ rr{9} =  du3     +  LIFT*(Fscale.*flux{9})/2.0;
 for fld = 1:Nfld
     Lf{fld} = LIFT*(Fscale.*flux{fld})/2.0;
 end
-[divSx(:,1) divSy(:,1) divSz(:,1) du1dx(:,1) du2dy(:,1) du3dz(:,1)]
-[flux{1}(:,1) flux{2}(:,1) flux{3}(:,1) flux{4}(:,1) flux{5}(:,1) flux{6}(:,1)]
-[Lf{1}(:,1) Lf{2}(:,1) Lf{3}(:,1) Lf{4}(:,1) Lf{5}(:,1) Lf{6}(:,1)]
-[rr{1}(:,1) rr{2}(:,1) rr{3}(:,1) rr{4}(:,1) rr{5}(:,1) rr{6}(:,1)]
-keyboard
+% [divSx(:,1) divSy(:,1) divSz(:,1) du1dx(:,1) du2dy(:,1) du3dz(:,1)]
+% [flux{1}(:,1) flux{2}(:,1) flux{3}(:,1) flux{4}(:,1) flux{5}(:,1) flux{6}(:,1)]
+% [Lf{1}(:,1) Lf{2}(:,1) Lf{3}(:,1) Lf{4}(:,1) Lf{5}(:,1) Lf{6}(:,1)]
+% [rr{1}(:,1) rr{2}(:,1) rr{3}(:,1) rr{4}(:,1) rr{5}(:,1) rr{6}(:,1)]
+% keyboard
 
 % C = [2*mu+lambda       lambda       0
 %      lambda       2*mu+lambda       0

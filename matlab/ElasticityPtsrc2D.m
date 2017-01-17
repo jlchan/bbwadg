@@ -1,21 +1,20 @@
-function ElasticityPulse2D
+function ElasticityAniso2D_sem
 
 % clear all, clear
 clear -global *
 
 Globals2D
 
-K1D = 16;
-N = 4;
+K1D = 32;
+N = 5;
 c_flag = 0;
-FinalTime = 2; % milliseconds
+FinalTime = .5; % microseconds
 
 filename = 'Grid/Other/block2.neu';
 % [Nv, VX, VY, K, EToV] = MeshReaderGambit2D(filename);
 [Nv, VX, VY, K, EToV] = unif_tri_mesh(K1D,K1D);
-% VX = .325*VX; VY = .325*VY;
-% VX = .17*VX;
-% VY = .17*VY;
+% VX = .16*VX; VY = .16*VY;
+% VX = .3*VX; VY = .3*VY;
 
 % VX = (VX+1)/2; 
 % VY = (VY+1)/2;
@@ -68,25 +67,37 @@ mapBL = fbids;
 vmapBL = vmapP(mapBL);
 
 %%
-global Nfld mu lambda rho Vq Pq tau useWADG
+global Nfld rho Vq Pq tau useWADG
 Nfld = 5; %(u1,u2,sxx,syy,sxy)
 
-% rho = ones(size(xq))*sqrt(7100);
-rho = ones(size(xq)); % convert to milliseconds
+% rho = ones(size(xq));
+% keyboard
+rho = ones(size(xq)); % convert to microsec
 
 global C11 C12 C13 C22 C23 C33
 
 useWADG = 0;
 
-mu = ones(size(xq));
-lambda = 2*ones(size(xq));
+% isotropic media
+% mu = 3.96; lambda = 8.58;
+mu = 1; lambda = 2;
+C11b = 2*mu + lambda ;
+C12b = lambda ;
+C22b = 2*mu + lambda ;
+C33b = mu ;
 
-C11 = 2*mu+lambda;
-C12 = lambda;
-C13 = 0*ones(size(xq));
-C22 = 2*mu+lambda;
-C23 = 0*ones(size(xq));
-C33 = mu;
+% anisotropic
+C11a = C11b ;
+C12a = 0.5 * C12b ;
+C22a = .33 * C22b ;
+C33a = C33b;
+
+% keyboard
+
+C11 = C11a*(xq < 0) + C11b*(xq > 0);
+C12 = C12a*(xq < 0) + C12b*(xq > 0);
+C22 = C22a*(xq < 0) + C22b*(xq > 0);
+C33 = C33a*(xq < 0) + C33b*(xq > 0);
 
 Cnorm = zeros(size(xq));
 for fld = 1:Nfld
@@ -94,9 +105,9 @@ for fld = 1:Nfld
 end
 Cmax = 0;
 for i = 1:length(xq(:))
-    C = [C11(i) C12(i) C13(i);
-        C12(i) C22(i) C23(i);
-        C13(i) C23(i) C33(i)];
+    C = [C11(i) C12(i) 0;
+        C12(i) C22(i) 0;
+        0 0 C33(i)];
     Cnorm(i) = norm(C);
     Crow{3}(i) = norm(C(1,:));
     Crow{4}(i) = norm(C(2,:));
@@ -108,9 +119,7 @@ if useWADG==0
     rho = Pq*rho;
     C11 = Pq*C11;
     C12 = Pq*C12;
-    C13 = Pq*C13;
     C22 = Pq*C22;
-    C23 = Pq*C23;
     C33 = Pq*C33;
 end
 
@@ -135,35 +144,26 @@ end
 
 %% params setup
 
-x0 = 0;
-y0 = 0;
-
-for e = 1:K
-    cx(e) = mean(VX(EToV(e,:)));
-    cy(e) = mean(VY(EToV(e,:)));    
+for fld = 1:Nfld
+    U{fld} = zeros(Np, K);
 end
 
-[~,emin] = min(abs(cx - x0) + abs(cy-y0));
+x0 = -.125;
+y0 = 0;
+
 [vals,p] = sort(abs(x(:) - x0)+abs(y(:)-y0));
 ids = abs(vals)<1e-8; ids = p(ids);
 
-u = zeros(Np, K);
-U{1} = u;
-U{2} = u;
-U{3} = u;
-U{4} = u;
-U{5} = u;
-
 global rick ptsrc 
-%f0 = 170;
-f0 = 10;
-tR = 1/f0;
+f0 = 10; tR = 1/f0;
 
-rick = @(t) 1e3*(1 - 2*(pi*f0*(t-tR)).^2).*exp(-(pi*f0*(t-tR)).^2);
+rick = @(t) 1e1*(1 - 2*(pi*f0*(t-tR)).^2).*exp(-(pi*f0*(t-tR)).^2);
 
-ptsrc = zeros(Np,K);
+ptsrc = zeros(Np,K); 
 ptsrc(ids) = 1;
-ptsrc = V*V'*ptsrc;
+ptsrc = (V*V')*ptsrc;
+
+% vv = ptsrc; color_line3(x,y,vv,vv,'.'); return
 
 %%
 
@@ -177,7 +177,9 @@ end
 % compute time step size
 CN = (N+1)^2/2; % guessing...
 dt = 8/(Cmax*CN*max(Fscale(:)))
+% dt = .0206;
 % dt = 2/(Cmax*CN*max(Fscale(:)))
+% ceil(2*tR/(1/(Cmax*CN*max(Fscale(:)))))
 ceil(FinalTime/dt)
 
 % outer time step loop
@@ -209,18 +211,17 @@ while (time<FinalTime)
     if 1 && mod(tstep,10)==0
         clf
         
-%         p = U{3} + U{4}; % trace(S)        
-        p = U{1};
-
-        vv = Vp*p;
-%         vv = abs(vv);
-%         color_line3(xp,yp,vv,vv,'.');
-        PlotField2D(2*N+2,x,y,U{2}); view(2)        
-        axis tight        
+        %         p = U{3} + U{4}; % trace(S)
+        p = U{2};
+%         vv = p;
+                vv = Vp*p;
+        %         vv = abs(vv);
+        color_line3(xp,yp,vv,vv,'.');
+        axis tight
         axis equal
         title(sprintf('time = %f',time));
         colorbar;
-%         caxis([-1 2])
+%         caxis([-.02 .025])
 %         view(3); 
         drawnow
         
@@ -246,8 +247,8 @@ function [rhs] = ElasRHS2D(U,time)
 
 Globals2D;
 
-global Nfld mu lambda rho Vq Pq tau useWADG
-global C11 C12 C13 C22 C23 C33
+global Nfld  rho Vq Pq tau useWADG
+global C11 C12 C22 C33
 
 % Define field differences at faces
 for fld = 1:Nfld
@@ -322,7 +323,7 @@ end
 
 % compute right hand sides of the PDE's
 global rick ptsrc 
-rr{1} =  divSx   +  LIFT*(Fscale.*flux{1})/2.0 + rick(time)*ptsrc;
+rr{1} =  divSx   +  LIFT*(Fscale.*flux{1})/2.0;
 rr{2} =  divSy   +  LIFT*(Fscale.*flux{2})/2.0;
 rr{3} =  du1dx   +  LIFT*(Fscale.*flux{3})/2.0;
 rr{4} =  du2dy   +  LIFT*(Fscale.*flux{4})/2.0;
@@ -337,16 +338,18 @@ if useWADG
     end
     rhs{1} = Pq*(rr{1}./rho);
     rhs{2} = Pq*(rr{2}./rho);
-    rhs{3} = Pq*(C11.*rr{3} + C12.*rr{4} + C13.*rr{5});
-    rhs{4} = Pq*(C12.*rr{3} + C22.*rr{4} + C23.*rr{5});
-    rhs{5} = Pq*(C13.*rr{3} + C23.*rr{4} + C33.*rr{5});
+    rhs{3} = Pq*(C11.*rr{3} + C12.*rr{4});
+    rhs{4} = Pq*(C12.*rr{3} + C22.*rr{4});
+    rhs{5} = Pq*(C33.*rr{5});
 else
     rhs{1} = rr{1}./rho;
     rhs{2} = rr{2}./rho;
-    rhs{3} = C11.*rr{3} + C12.*rr{4} + C13.*rr{5};
-    rhs{4} = C12.*rr{3} + C22.*rr{4} + C23.*rr{5};
-    rhs{5} = C13.*rr{3} + C23.*rr{4} + C33.*rr{5};
+    rhs{3} = C11.*rr{3} + C12.*rr{4};
+    rhs{4} = C12.*rr{3} + C22.*rr{4};
+    rhs{5} = C33.*rr{5};
 end
+
+rhs{2} = rhs{2} + rick(time)*ptsrc;
 
 return;
 

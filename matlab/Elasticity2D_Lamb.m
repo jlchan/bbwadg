@@ -6,7 +6,7 @@ clear -global *
 Globals2D
 
 if nargin==0
-    K1D = 16;
+    K1D = 4;
     N = 5;
 end
 c_flag = 0;
@@ -72,18 +72,23 @@ rho = 1;
 lambda = 2;
 mu = 1;
 
-% global invC
-% C = [2*mu+lambda       lambda       0
-%      lambda       2*mu+lambda       0
-%           0       0                mu];
-% invC = inv(C);
-
 tau0 = 1;
-for fld = 1:5
-    tau{fld} = tau0;
+
+% rhoF = .5*(rho(vmapM)+rho(vmapP));
+% muF = .5*(mu(vmapM)+mu(vmapP));
+% lambdaF = .5*(lambda(vmapM)+lambda(vmapP));
+% rhoF = reshape(rhoF,Nfp*Nfaces,K);
+% muF = reshape(muF,Nfp*Nfaces,K);
+% lambdaF = reshape(lambdaF,Nfp*Nfaces,K);
+rhoF = rho;
+muF = mu;
+lambdaF = lambda;
+Cnorm = 2*muF + 3*lambdaF; % for isotropic
+cc = sqrt(Cnorm.*rhoF);
+for fld = 1:Nfld
+    tau{fld} = (1/3)*tau0;%*cc;
     if fld > 2
-        %tau{fld} = tau0./(mu+lambda);
-        tau{fld} = tau0*ones(size(mu));
+        tau{fld} = tau0;%/cc;
     end
 end
 

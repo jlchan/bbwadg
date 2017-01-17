@@ -6,7 +6,7 @@ clear -global *
 Globals2D
 
 if nargin==0
-    K1D = 2;
+    K1D = 8;
     N = 5;
 end
 c_flag = 0;
@@ -160,6 +160,15 @@ U{3} = sxx(x,y,0);
 U{4} = syy(x,y,0);
 U{5} = sxy(x,y,0);
 
+x0 = .5; y0 = .5;
+p = exp(-25^2*((x-x0).^2 + (y-y0).^2));
+u = zeros(Np, K);
+U{1} = p;
+U{2} = u;
+U{3} = u;
+U{4} = u;
+U{5} = u;
+
 
 %%
 
@@ -204,7 +213,7 @@ while (time<FinalTime)
     if nargin==0 && mod(tstep,10)==0
         clf
         
-        p = U{5}; % trace(S)        
+        p = U{3}+U{4}; % trace(S)        
 %         p = U{1};
 
         vv = Vp*p;        
@@ -213,8 +222,8 @@ while (time<FinalTime)
         color_line3(xp,yp,vv,vv,'.');
         axis tight        
         title(sprintf('time = %f',time)) 
-        view(3);
-        axis([0 1 0 1 -5 5])
+        view(2);
+%         axis([0 1 0 1 -5 5])
         drawnow
         
         

@@ -6,15 +6,10 @@
 \documentclass{siamart0216}
 
 \usepackage{fullpage}
-\usepackage{hyperref}
-%\let\proof\relax
-%\let\endproof\relax
-\usepackage{amsmath,amssymb,amsfonts,mathrsfs}%,amsthm}
+\usepackage{amsmath,amssymb,amsfonts}
 \usepackage[titletoc,toc,title]{appendix}
 
-%\usepackage{lineno}
 \usepackage{array} 
-\usepackage[utf8]{inputenc}
 \usepackage{listings}
 \usepackage{mathtools}
 \usepackage{pdfpages}
@@ -46,14 +41,12 @@
 \usepackage{pgfplots}
 \usepackage{pgfplotstable}
 \definecolor{markercolor}{RGB}{124.9, 255, 160.65}
-\pgfplotsset{width=10cm,compat=1.9}
+\pgfplotsset{width=10cm,compat=1.3}
 \pgfplotsset{
 tick label style={font=\small},
 label style={font=\small},
 legend style={font=\small}
 }
-
-\usetikzlibrary{calc}
 
 \usetikzlibrary{calc}
 
@@ -436,21 +429,11 @@ In general anisotropic media, $\bm{C}$ is symmetric and positive-definite.  For 
 \begin{array}{ccc}
 2\mu+\lambda  &  \lambda  &     0\\
 \lambda &       2\mu+\lambda &      0\\
-          0 &      0           &     {\mu}
+0 & 0 & \mu
 \end{array}}, 
 \]
 where $\lambda,\mu$ are Lame parameters.  For three-dimensional isotropic media, $\bm{C}$ is given instead by
 \[
-%\bm{C}= 
-%\LRp{
-%\begin{array}{cccccc}
-%2\mu+\lambda  &  \lambda  &     \lambda  & & & \\
-%\lambda &   2\mu+\lambda & \lambda   & & & \\
-%\lambda & \lambda &   2\mu+\lambda &    & &\\
-% &   &    & {\mu} & &\\
-%&  &   &    & {\mu} &\\
-%& &  &   &    & {\mu} \\
-%\end{array}}.  
 \LRp{\begin{array}{cccc}
 2\mu+\lambda  &  \lambda  &     \lambda   & \\
 \lambda &   2\mu+\lambda & \lambda   &  \\
@@ -513,10 +496,8 @@ Jumps and averages of a vector-valued functions $\bm{u}\in \mathbb{R}^m$ and $\b
 
 We can now specify a DG formulation for the linear elastic wave equation (\ref{eq:symelas}).  Symmetric hyperbolic systems readily admit a DG formulation based on penalty fluxes \cite{chan2016short}.  For the linear elastic wave equation in symmetric first order form, this formulation is given as
 \begin{align}
-\sum_{D^k\in \Oh} \LRp{\rho \pd{\bm{v}}{t},\bm{w}}_{\Lk} &= 
-\sum_{D^k\in \Oh} \LRp{\LRp{ \sum_{i=1}^d \bm{A}_i^T\pd{\bm{\sigma}}{\bm{x}_i} + \bm{f},\bm{w}}_{\Lk}  + \LRa{\frac{1}{2}\bm{A}_n^T\jump{\bm{\sigma}} + \frac{\tau_v}{2}\bm{A}_n^T\bm{A}_n\jump{\bm{v}},\bm{w}}_{\Ldk}} \nonumber\\
-\sum_{D^k\in \Oh}\LRp{\bm{C}^{-1} \pd{\bm{\sigma}}{t},\bm{q}}_{\Lk} &=
-\sum_{D^k\in \Oh}\LRp{\LRp{\sum_{i=1}^d \bm{A}_i \pd{\bm{v}}{\bm{x}_i},\bm{q}}_{\Lk} + \LRa{\frac{1}{2}\bm{A}_n\jump{\bm{v}} + \frac{\tau_{\sigma}}{2}\bm{A}_n\bm{A}_n^T\jump{\bm{\sigma}},\bm{q}}_{\Ldk}},
+&\sum_{D^k\in \Oh} \LRp{\rho \pd{\bm{v}}{t},\bm{w}}_{\Lk} = \sum_{D^k\in \Oh} \LRp{\LRp{ \sum_{i=1}^d \bm{A}_i^T\pd{\bm{\sigma}}{\bm{x}_i} + \bm{f},\bm{w}}_{\Lk}  + \LRa{\frac{1}{2}\bm{A}_n^T\jump{\bm{\sigma}} + \frac{\tau_v}{2}\bm{A}_n^T\bm{A}_n\jump{\bm{v}},\bm{w}}_{\Ldk}} \nonumber\\
+&\sum_{D^k\in \Oh} \LRp{\bm{C}^{-1} \pd{\bm{\sigma}}{t},\bm{q}}_{\Lk} = \sum_{D^k\in \Oh}\LRp{\LRp{\sum_{i=1}^d \bm{A}_i \pd{\bm{v}}{\bm{x}_i},\bm{q}}_{\Lk} + \LRa{\frac{1}{2}\bm{A}_n\jump{\bm{v}} + \frac{\tau_{\sigma}}{2}\bm{A}_n\bm{A}_n^T\jump{\bm{\sigma}},\bm{q}}_{\Ldk}},
 \label{eq:dgform}
 \end{align}
 for all $\bm{w},\bm{q}\in V_h\LRp{\Omega_h}$.  Here, $\tau_v,\tau_\sigma \geq 0$ are penalty parameters and $\bm{A}_n$ is the normal matrix defined on a face $f$ as $\bm{A}_n = \sum_{i=1}^d \bm{n}_i \bm{A}_i$.  In two dimensions, $\bm{A}_n$ is 
@@ -1072,9 +1053,9 @@ Using estimates from Section~\ref{sec:mwadgprop}, we can extend the semi-discret
 
 Let $\bm{U},\bm{U}_h$ denote the exact and discrete WADG solutions, respectively.  We will assume that $\bm{U},\pd{\bm{U}}{t}$ are sufficiently regular such that
 \[
-\nor{\bm{U}}_{W^{N+1,2}\LRp{\Oh}}} < \infty, \qquad \nor{\pd{\bm{U}}{t}}_{W^{N+1,2}\LRp{\Oh}} < \infty,
+\nor{\bm{U}}_{W^{N+1,2}\LRp{\Oh}} < \infty, \qquad \nor{\pd{\bm{U}}{t}}_{W^{N+1,2}\LRp{\Oh}} < \infty,
 \]
-where we define $\nor{\bm{U}}_{W^{N+1,2}\LRp{\Oh}}}^2 = \sum_k \nor{\bm{U}}_{W^{N+1,2}\LRp{D^k}}}^2$.
+where we define $\nor{\bm{U}}_{W^{N+1,2}\LRp{\Oh}}^2 = \sum_k \nor{\bm{U}}_{W^{N+1,2}\LRp{D^k}}^2$.
 
 %We will also use Gronwall's inequality:
 %\begin{lemma}[Lemma 4.4 in \cite{dolejvsi2002finite}]
@@ -1140,34 +1121,29 @@ Applying this to (\ref{eq:erreqn}) and using Cauchy-Schwarz on $\LRp{\pd{\bm{\de
 \[
 \frac{1}{2}\pd{}{t}\LRp{T^{-1}_{\bm{A}_0^{-1}}\bm{\eta},\bm{\eta}}_{\L} + b(\bm{\eta},\bm{\eta}) \leq \nor{\pd{\bm{\delta}}{t}}_{\L} \nor{\bm{\eta}}_{\L} +  b(\bm{\eta},\bm{\eta}) + \sum_{D^k \in \Oh}\frac{ C_\tau^2}{4} \nor{\bm{\epsilon}}_{\Ldk}^2.
 \]
-The right hand side term involving $\bm{\epsilon}$ can be bounded using interpolation estimates and a standard $hp$ trace inequality $\nor{u}_{\Ldk} \leq Ch^{-1/2} \nor{u}_{\Lk}$ \cite{warburton2003constants,chan2015gpu} 
+We eliminate factors of $b(\bm{\eta},\bm{\eta})$ on both sides and bound right hand side terms.  The trace term is bounded using a standard $hp$ trace inequality \cite{warburton2003constants} and an interpolation estimate
 \[
 \sum_{D^k \in \Oh} \nor{\bm{\epsilon}}_{\Ldk}^2 \leq \sum_{D^k \in \Oh} C h^{-1} \nor{\bm{\epsilon}}_{\Lk}^2 = Ch^{-1} \nor{\bm{\epsilon}}^2_{\L} \leq Ch^{2N+1} \nor{\bm{U}}^2_{W^{N+1,2}}.  
 \]
-We apply this estimate and eliminate factors of $b(\bm{\eta},\bm{\eta})$ on both sides.  Then, integrating from $[0,T]$ and using Lemma~\ref{lemma:props} yields
-\begin{equation}
-A_{\min}^2 \nor{\bm{\eta}}^2_{\L} \leq \int_0^T \nor{\pd{\bm{\delta}}{t}}_{\L} \nor{\bm{\eta}}_{\L} + C h^{2N+1} \nor{\bm{U}}^2_{W^{N+1,2}(\Omega)}.
-\label{eq:intermed}
-\end{equation}
-%where $C$ depends on $\tau_v,\tau_\sigma, N$, and 
-where $A_{\min} =\min\LRp{ \rho_{\min}, \tilde{c}_{\min}}$.  Since $\bm{A}_0$ is independent of $t$, Theorem~\ref{thm:west} gives
+Since $\bm{A}_0$ is independent of $t$, Theorem~\ref{thm:west} gives
 \[
 \nor{\pd{\bm{\delta}}{t}}_{\L} = \nor{\bm{A}_0 \pd{\bm{U}}{t} - T_{\bm{A}_0^{-1}}^{-1}\pd{\bm{U}}{t}}_{\L} \leq C h^{N+1} {A}_{\max} \nor{\bm{A}_0}_{W^{N+1,\infty}(\Oh)}\nor{\pd{\bm{U}}{t}}_{\L}.
 \]
-where $A_{\max} = \max\LRp{\frac{\rho_{\max}}{\rho_{\min}}, c_{\max} \tilde{c}_{\max}}$.  
-Using this estimate and Young's inequality on $\nor{\pd{\bm{\delta}}{t}}_{\L} \nor{\bm{\eta}}_{\L}$ gives
-\[
-\nor{\bm{\eta}}_{\L}^2 \leq \int_0^T \nor{\bm{\eta}}^2_{\L} + C\LRp{h^{2N+2} \LRp{\frac{A_{\max}}{A_{\min}}}^2\nor{\bm{A}_0}_{W^{N+1,\infty}(\Oh)}^2\nor{\pd{\bm{U}}{t}}_{\L}^2  + h^{2N+1} \nor{\bm{U}}^2_{W^{N+1,2}(\Oh)}}.
-\]
-An application of Gronwall's inequality \cite{riviere2008discontinuous} and the arithmetic-geometric mean inequality then gives 
-\[
-\nor{\bm{\eta}}_{\L} \leq C e^{T} h^{N+1/2} \sup_{t \in [0,T]}\LRp{h^{1/2} \LRp{\frac{A_{\max}}{A_{\min}}}\nor{\bm{A}_0}_{W^{N+1,\infty}(\Oh)}\nor{\pd{\bm{U}}{t}}_{\L}  +  \nor{\bm{U}}_{W^{N+1,2}(\Oh)}}.
-\]
+where $A_{\max} = \max\LRp{\frac{\rho_{\max}}{\rho_{\min}}, c_{\max} \tilde{c}_{\max}}$.  Then, integrating from $[0,T]$ and using Lemma~\ref{lemma:props} yields 
+\begin{equation}
+A_{\min} \nor{\bm{\eta}}^2_{\L} \leq C\int_0^T  h^{N+1}A_{\max}\nor{\bm{A}_0}_{W^{N+1,\infty}(\Oh)}\nor{\pd{\bm{U}}{t}}_{\L} \nor{\bm{\eta}}_{\L} + h^{2N+1} \nor{\bm{U}}^2_{W^{N+1,2}(\Omega)}.
+\label{eq:intermed}
+\end{equation}
+where $A_{\min} =\min\LRp{ \rho_{\min}, \tilde{c}_{\min}}$.  Applying the modified Gronwall's inequality (Lemma 1.10 in \cite{dolejvsi2015discontinuous}; see also \cite{chan2016weight1}) to (\ref{eq:intermed}) then yields
+\begin{align*}
+\nor{\bm{\eta}}_{\L} &\leq \frac{1}{A_{\min}} \int_0^T CA_{\max} h^{N+1}\nor{\bm{A}_0}_{W^{N+1,\infty}(\Oh)}\nor{\pd{\bm{U}}{t}}_{\L} + \sup_{t\in [0,T]} \sqrt{\int_0^T C h^{2N+1} \nor{\bm{U}}^2_{W^{N+1,2}(\Omega)}}\\
+&\leq \frac{C T h^{N+1/2}}{A_{\min}} \sup_{t \in [0,T]}\LRp{h^{1/2} A_{\max}\nor{\bm{A}_0}_{W^{N+1,\infty}(\Oh)}\nor{\pd{\bm{U}}{t}}_{\L}  +  \nor{\bm{U}}_{W^{N+1,2}(\Oh)}}.
+\end{align*}
 The triangle inequality gives the final estimate
 \[
-\nor{\bm{U}-\bm{U}_h} \leq C\LRp{1 + e^{T}} h^{N + 1/2}\sup_{t \in [0,T]}\LRp{ h^{1/2}C_A\nor{\pd{\bm{U}}{t}}_{W^{N+1,2}(\Oh)}+\nor{\bm{U}}_{W^{N+1,2}(\Oh)}}.
+\nor{\bm{U}-\bm{U}_h} \leq \LRp{C_1 + C_2 T} h^{N + 1/2}\sup_{t \in [0,T]}\LRp{ h^{1/2}\nor{\bm{A}_0}_{W^{N+1,\infty}(\Oh)}\nor{\pd{\bm{U}}{t}}_{W^{N+1,2}(\Oh)}+\nor{\bm{U}}_{W^{N+1,2}(\Oh)}}.
 \]
-where $C_A = \LRp{\frac{A_{\max}}{A_{\min}}}\nor{\bm{A}_0}_{W^{N+1,\infty}(\Oh)}$.  
+where $C_2$ depends on $A_{\min}, A_{\max}$.  
 
 %We note that the exponential dependence of the constant $C$ on $T$ is due to the appearance of the non-conformity error $\pd{\bm{\delta}}{t}$ on the right hand side.  If the weighted $L^2$ inner products in the DG formulation (\ref{eq:dgform}) are used instead of weight-adjusted approximations, then $\bm{\delta} = 0$.  Then, taking the supremum over $t$ of (\ref{eq:intermed}) gives
 %\[
@@ -1200,9 +1176,9 @@ with $\bm{Q}$ denotes a vector of degrees of freedom for $(\bm{v},\bm{\sigma})$.
 
 \begin{figure}
 \centering
-\subfloat[$\tau_v = \tau_\sigma = 0$]{\includegraphics[width=.475\textwidth]{../figs/spectra_tau0.png}}
+\subfloat[$\tau_v = \tau_\sigma = 0$]{\includegraphics[width=.475\textwidth]{figs/spectra_tau0.png}}
 %\hspace{1em}
-\subfloat[$\tau_v = \tau_\sigma = 1$]{\includegraphics[width=.475\textwidth]{../figs/spectra_tau1.png}}
+\subfloat[$\tau_v = \tau_\sigma = 1$]{\includegraphics[width=.475\textwidth]{figs/spectra_tau1.png}}
 \caption{Spectra for $N=4$ and $h = 1/4$, using randomly chosen $\bm{C}(\bm{x})$ with eigenvalues between $[d_{\min}, 1]$ at each quadrature point.  For both $\tau_v = \tau_\sigma = 0$ and $\tau_v = \tau_\sigma = 1$, the largest real part of the spectra is $O(10^{-14})$.}
 \label{fig:spectra}
 \end{figure}
@@ -1691,14 +1667,14 @@ In our experiments, we take $t_0 = .025$.  Traction free boundary conditions are
 
 \begin{figure}
 \centering
-\subfloat[$\LRb{\bm{\sigma}_{xx}+\bm{\sigma}_{yy}}$]{\includegraphics[width=.475\textwidth]{../figs/inclusion_aligned.png}}
+\subfloat[$\LRb{\bm{\sigma}_{xx}+\bm{\sigma}_{yy}}$]{\includegraphics[width=.475\textwidth]{figs/inclusion_aligned.png}}
 \hspace{2em}
-\subfloat[$\LRb{\bm{\sigma}_{xy}}$]{\includegraphics[width=.475\textwidth]{../figs/inclusion_aligned_shear.png}}
-%\subfloat[Aligned mesh (zoom)]{\includegraphics[height=.24\textwidth]{../figs/inclusion_aligned_zoom.png}}
+\subfloat[$\LRb{\bm{\sigma}_{xy}}$]{\includegraphics[width=.475\textwidth]{figs/inclusion_aligned_shear.png}}
+%\subfloat[Aligned mesh (zoom)]{\includegraphics[height=.24\textwidth]{figs/inclusion_aligned_zoom.png}}
 %\\
-%\subfloat[Un-aligned mesh]{\includegraphics[height=.24\textwidth]{../figs/inclusion_unaligned.png}}
+%\subfloat[Un-aligned mesh]{\includegraphics[height=.24\textwidth]{figs/inclusion_unaligned.png}}
 %\hspace{2em}
-%\subfloat[Un-aligned mesh (zoom)]{\includegraphics[height=.24\textwidth]{../figs/inclusion_unaligned_zoom.png}}
+%\subfloat[Un-aligned mesh (zoom)]{\includegraphics[height=.24\textwidth]{figs/inclusion_unaligned_zoom.png}}
 \caption{Values of different solution fields at $T=.4$ for the stiff inclusion problem of Leveque \cite{leveque2002finite} with order of approximation $N=5$.}
 \label{fig:incl}
 \end{figure}
@@ -1728,9 +1704,9 @@ where $x_0 = -.02$, $f_0 = .17$, and $t_0 = 1/f_0$.\footnote{All values and unit
 \centering
 %\subfloat[$\bm{v}_1$]{\includegraphics[width=.45\textwidth]{}}
 %\subfloat[$\bm{v}_2$]{\includegraphics[width=.45\textwidth]{}}
-\subfloat[$T=30 \mu s$ (zoomed in)]{\includegraphics[height=18em]{../figs/aniso1.png}}
+\subfloat[$T=30 \mu s$ (zoomed in)]{\includegraphics[height=18em]{figs/aniso1.png}}
 \hspace{3em}
-\subfloat[$T=60 \mu s$]{\includegraphics[height=18.25em]{../figs/aniso2.png}}
+\subfloat[$T=60 \mu s$]{\includegraphics[height=18.25em]{figs/aniso2.png}}
 \caption{An example of wave propagation in heterogeneous anisotropic media.  The vertical component of the velocity $\bm{v}_2$ is shown at $T = 30$ and $T=60$ microseconds. }
 \label{fig:aniso}
 \end{figure}
@@ -1771,11 +1747,11 @@ f(\bm{x},t) = \LRp{1 - 2(\pi f_0 (t-t_0))^2} e^{-(\pi f_0 (t-t_0))^2}e^{- \LRp{a
 where $\bm{x}_0 = (0,0,.1)^T$, $a = 100$, $f_0 = 10$, and $t_0 = 1/f_0$.  
 \begin{figure}
 \centering
-\subfloat[Computational mesh]{\includegraphics[width=.28\textwidth]{../figs/cubeSplitFine.png}\label{subfig:mesh}}
+\subfloat[Computational mesh]{\includegraphics[width=.28\textwidth]{figs/cubeSplitFine.png}\label{subfig:mesh}}
 \hspace{.5em}
-\subfloat[$w(\bm{x}) = 0$]{\includegraphics[width=.35\textwidth]{../figs/pplane0.png}}
+\subfloat[$w(\bm{x}) = 0$]{\includegraphics[width=.35\textwidth]{figs/pplane0.png}}
 %\hspace{.25em}
-\subfloat[$w(\bm{x})  = .5 \cos(3\pi x)\cos(3\pi y)\cos(3\pi z) $]{\includegraphics[width=.35\textwidth]{../figs/pplanew0.png}}
+\subfloat[$w(\bm{x})  = .5 \cos(3\pi x)\cos(3\pi y)\cos(3\pi z) $]{\includegraphics[width=.35\textwidth]{figs/pplanew0.png}}
 \caption{Mesh and $xz$, $xy$ slices of $\bm{v}_1$ at $T = .5$.  The order of approximation is taken to be $N=5$.  }
 \label{fig:3d}
 \end{figure}
@@ -1792,7 +1768,7 @@ as well as $w(\bm{x}) = 0$ for reference.  Figure~\ref{subfig:mesh} shows the un
 
 This work presents a weight-adjusted discontinuous Galerkin (WADG) method for the linear elastic wave equations with arbitrary heterogeneous media.  The method is energy stable and high order accurate for arbitrary stiffness matrices, and a slight modification results in an energy stable method for curvilinear meshes as well.  The penalty numerical fluxes for this formulation are simple to derive and implement, and their lack of dependence on the stiffness matrix allows for a unified treatment of isotropic and anisotropic media.  Numerical examples confirm the accuracy of this method for analytic solutions in of the elastic wave equations, as well as its high order accuracy with respect to a reference solution for smoothly varying heterogeneous media.  Results obtained using this method also show good agreement with existing results in the literature for both problems involving both isotropic and anisotropic heterogeneous media.  
 
-We note that the implementation of this method reduces to the application of the weight-adjusted mass matrix inverse and the evaluation of constant-coefficient terms in the DG formulation.  The cost of the latter step can be reduced (especially at high orders of approximation) by using fast methods based on Bernstein-Bezier bases for the application of derivative and lift matrices for constant-coefficient terms \cite{chan2015bbdg}.  Finally, the approach presented here is more generally applicable to problems involving a weighted mass matrix with a matrix-valued weight, which we will explore in the future.  These include hyperbolic systems of PDEs with a right hand side of the form $\bm{A}_{0}(\bm{x})\pd{\bm{U}}{t}$, such as Maxwell's equations for cloaking problems \cite{li2012time}.  
+We note that the implementation of this method reduces to the application of the weight-adjusted mass matrix inverse and the evaluation of constant-coefficient terms in the DG formulation.  The cost of the latter step can be reduced (especially at high orders of approximation) by using fast methods based on Bernstein-Bezier bases for the application of derivative and lift matrices for constant-coefficient terms \cite{chan2015bbdg}.  %Finally, the approach presented here is more generally applicable to problems involving a weighted mass matrix with a matrix-valued weight, including hyperbolic systems of PDEs with a left hand side of the form $\bm{A}_{0}(\bm{x})\pd{\bm{U}}{t}$, such as Maxwell's equations for cloaking problems \cite{li2012time}.  
 
 %Extension to hybrid meshes in 3D, care must be taken with pyramids \cite{chan2015orthogonal, chan2015gpu}.
 

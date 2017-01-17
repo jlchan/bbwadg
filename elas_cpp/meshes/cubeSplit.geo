@@ -1,7 +1,7 @@
 //Mesh.CharacteristicLengthMax = 1;
 //Mesh.CharacteristicLengthFactor = .2;
 Mesh.Optimize = 1;
-h = 0.0525;
+h = 0.0325;
 
 Point(1) = {-1.0,-1.0,0.0,h};
 Point(2) = {1.0,-1.0,0.0,h};

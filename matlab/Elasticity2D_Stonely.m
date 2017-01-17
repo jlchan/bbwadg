@@ -6,22 +6,23 @@ clear -global *
 Globals2D
 
 if nargin==0
-    K1D = 4;
-    N = 3;
+    K1D = 2;
+    N = 4;
 end
 c_flag = 0;
-FinalTime = 1;
+FinalTime = 10;
 
 % filename = 'Grid/Other/block2.neu';
 % [Nv, VX, VY, K, EToV] = MeshReaderGambit2D(filename);
 aa = 5;
 % [Nv, VX, VY, K, EToV] = unif_tri_mesh(aa*K1D,K1D);
-[Nv, VX, VY, K, EToV] = unif_tri_mesh(K1D,aa*K1D);
+[Nv, VX, VY, K, EToV] = unif_tri_mesh(3*K1D,aa*K1D+1);
 VY = aa*VY;
+VX = pi*VX;
 
 StartUp2D;
 
-% BuildPeriodicMaps2D(2,0);
+BuildPeriodicMaps2D(2,0);
 
 % PlotMesh2D; axis on; return
 
@@ -58,8 +59,8 @@ global mapBd vmapBd mapBt vmapBt
 fbids = reshape(find(vmapP==vmapM),Nfp,nnz(vmapP==vmapM)/Nfp);
 % xfb = x(vmapM(fbids));
 % bfaces = sum(abs(abs(xfb)),1)<1e-8;
-yfb = y(vmapM(fbids));
-bfaces = sum(abs(abs(yfb)-.5),1)<1e-8;
+xfb = x(vmapM(fbids));
+bfaces = sum(abs(abs(xfb)-1),1)<1e-8;
 
 % yfb = y(vmapM(fbids));
 % bfaces = sum(abs(ptsfb),1)<1e-8;
@@ -74,12 +75,14 @@ vmapBt = vmapP(fbids);
 mapBd = setdiff(mapB,mapBt);
 vmapBd = vmapP(mapBd);
 
+mapB = setdiff(mapB,mapBt);
+vmapB = vmapP(mapB);
 if 0
     hold on
     plot(x(vmapB),y(vmapB),'bo')
-%     plot(x(vmapBt),y(vmapBt),'bo')
+    %     plot(x(vmapBt),y(vmapBt),'bo')
     
-%     plot(x(vmapBd),y(vmapBd),'rd')
+    %     plot(x(vmapBd),y(vmapBd),'rd')
     plot(x,y,'k.')
     return
 end
@@ -113,31 +116,30 @@ lambda(ids) = lambda1;
 % mu = repmat(mu(1,:)*V(1,1),length(wq),1);
 % % plot3(xq,yq,mu,'.');return
 
-rho = Pq*rho;
-mu = Pq*mu;
-lambda = Pq*lambda;
+% rho = Pq*rho;
+% mu = Pq*mu;
+% lambda = Pq*lambda;
+tau0 = 1/2;
+% rhoF = max(rho(vmapM),rho(vmapP));
+% muF = max(mu(vmapM),mu(vmapP));
+% lambdaF = max(lambda(vmapM),lambda(vmapP));
+% rhoF = reshape(rhoF,Nfp*Nfaces,K);
+% muF = reshape(muF,Nfp*Nfaces,K);
+% lambdaF = reshape(lambdaF,Nfp*Nfaces,K);
+% tau{1} = tau0./rhoF;
+% tau{2} = tau0./rhoF;
+% tau{3} = tau0./(2*muF + lambdaF);
+% tau{4} = tau0./(2*muF + lambdaF);
+% tau{5} = tau0./(2*muF + lambdaF);
+% rho = Vq*rho;
+% mu = Vq*mu;
+% lambda = Vq*lambda;
 
-tau0 = 1;
-rhoF = max(rho(vmapM),rho(vmapP));
-muF = max(mu(vmapM),mu(vmapP));
-lambdaF = max(lambda(vmapM),lambda(vmapP));
+for fld = 1:Nfld
+    tau{fld} = tau0*ones(Nfp*Nfaces,K);
+end
 
-rhoF = reshape(rhoF,Nfp*Nfaces,K);
-muF = reshape(muF,Nfp*Nfaces,K);
-lambdaF = reshape(lambdaF,Nfp*Nfaces,K);
-tau{1} = tau0./rhoF;
-tau{2} = tau0./rhoF;
-tau{3} = tau0./(2*muF + lambdaF);
-tau{4} = tau0./(2*muF + lambdaF);
-tau{5} = tau0./(2*muF + lambdaF);
-% for fld = 1:Nfld
-%     tau{fld} = tau0*ones(size(muF));
-% end
-    
 
-rho = Vq*rho;
-mu = Vq*mu;
-lambda = Vq*lambda;
 
 %% params setup
 
@@ -220,14 +222,12 @@ if 0
         clf
         ids = (yp > 0); xp1 = xp(ids); yp1 = yp(ids);
         plot(xp1-u1a(xp1,yp1,t)/sc,yp1+.01-u2a(xp1,yp1,t)/sc,'.')
-        
         hold on
-        
         ids = (yp < 0); xp2 = xp(ids); yp2 = yp(ids);
         plot(xp2-u1b(xp2,yp2,t)/sc,yp2-.01-u2b(xp2,yp2,t)/sc,'.')
         axis equal
-%         axis([-2 2 -2 2 -1 1])
-%         view(3)
+        %         axis([-2 2 -2 2 -1 1])
+        %         view(3)
         drawnow
         
     end
@@ -237,21 +237,21 @@ end
 %%
 
 if 0
-    tau0 = 1;
-    
-    rhoF = max(rho(vmapM),rho(vmapP));
-    muF = max(mu(vmapM),mu(vmapP));
-    lambdaF = max(lambda(vmapM),lambda(vmapP));
-    
-    rhoF = reshape(rhoF,Nfp*Nfaces,K);
-    muF = reshape(muF,Nfp*Nfaces,K);
-    lambdaF = reshape(lambdaF,Nfp*Nfaces,K);
-    for fld = 1:5
-        tau{fld} = tau0./rhoF;
-        if fld > 2
-            tau{fld} = tau0./(2*muF+lambdaF);
-        end
-    end
+    %     tau0 = 1;
+    %
+    %     rhoF = max(rho(vmapM),rho(vmapP));
+    %     muF = max(mu(vmapM),mu(vmapP));
+    %     lambdaF = max(lambda(vmapM),lambda(vmapP));
+    %
+    %     rhoF = reshape(rhoF,Nfp*Nfaces,K);
+    %     muF = reshape(muF,Nfp*Nfaces,K);
+    %     lambdaF = reshape(lambdaF,Nfp*Nfaces,K);
+    %     for fld = 1:5
+    %         tau{fld} = tau0./rhoF;
+    %         if fld > 2
+    %             tau{fld} = tau0./(2*muF+lambdaF);
+    %         end
+    %     end
     
     u = zeros(Nfld*Np*K,1);
     rhs = zeros(Nfld*Np*K,1);
@@ -272,15 +272,15 @@ if 0
             disp(sprintf('on col %d out of %d\n',i,Np*K*Nfld))
         end
     end
-    lam = eig(A);    
+    lam = eig(A);
     plot(lam,'.','markersize',32)
     hold on
     title(sprintf('Largest real part = %g\n',max(real(lam))))
     axis equal
     %         drawnow
     max(abs(lam))
-
-keyboard
+    
+    keyboard
 end
 %%
 
@@ -298,6 +298,11 @@ dt = .5/(sqrt(max((2*mu(:)+lambda(:))./rho(:)))*CN*max(Fscale(:)));
 % outer time step loop
 tstep = 0;
 
+Nq2 = 3*N;
+[rq2 sq2 wq2] = Cubature2D(Nq2); % integrate u*v*c
+Vq2 = Vandermonde2D(N,rq2,sq2)/V;
+xq2 = Vq2*x; yq2 = Vq2*y;
+Jq2 = Vq2*J;
 
 % figure
 % colormap(gray)
@@ -320,17 +325,17 @@ while (time<FinalTime)
     end;
     
     if nargin==0 && mod(tstep,10)==0
-        clf        
+        clf
         p = U{3}+U{4}; % trace(S)
-%         p = U{1};
-        vp1 = Vp*p;        
+        %         p = U{1};
+        vp1 = Vp*p;
         color_line3(xp,yp,vp1,vp1,'.');
         axis equal
         axis tight
-        view(2)       
+        view(2)
         
         title(sprintf('time = %f',time))
-        colorbar        
+        colorbar
         drawnow
         
         
@@ -338,11 +343,28 @@ while (time<FinalTime)
     
     % Increment time
     time = time+dt; tstep = tstep+1;
+    
+    wqJ = diag(wq2)*(Vq2*J);
+    verr = (Vq2*U{1} - v1(xq2,yq2,time)).^2 + (Vq2*U{2} - v2(xq2,yq2,time)).^2;
+    serr = (Vq2*U{3} - sxx(xq2,yq2,time)).^2 + (Vq2*U{4} - syy(xq2,yq2,time)).^2 + (Vq2*U{5} - sxy(xq2,yq2,time)).^2;
+    err = verr + serr;
+    L2err = sqrt(sum(abs(wqJ(:).*err(:))));
+    
+    tvec(tstep) = time;
+    errvec(tstep) = L2err;
+    
     if mod(tstep,100)==0
         disp(sprintf('On timestep %d out of %d\n',tstep,round(FinalTime/dt)))
     end
 end
 
+%semilogy(tvec,errvec/errvec(1),'b-','linewidth',2)
+semilogy(tvec,errvec,'b-','linewidth',2)
+set(gca,'fontsize',15)
+xlabel('Time','fontsize',14)
+ylabel('Change in initial error','fontsize',14)
+keyboard
+return
 
 Nq = 3*N;
 [rq sq wq] = Cubature2D(Nq); % integrate u*v*c
@@ -358,20 +380,21 @@ errU = sqrt(sum(wqJ(:).*err(:)))/sqrt(sum(wqJ(:).*uq(:)));
 serr = (Vq*U{3} - sxx(xq,yq,FinalTime)).^2 + (Vq*U{4} - syy(xq,yq,FinalTime)).^2 + (Vq*U{5} - sxy(xq,yq,FinalTime)).^2;
 sq = sxx(xq,yq,FinalTime).^2 + syy(xq,yq,FinalTime).^2 + sxy(xq,yq,FinalTime).^2;
 errS = sqrt(sum(wqJ(:).*serr(:)))/sqrt(sum(wqJ(:).*sq(:)));
-if nargin==0
-figure
-pterr = abs(Vp*U{1} - v1(xp,yp,FinalTime)) + abs(Vp*U{2} - v2(xp,yp,FinalTime));
-color_line3(xp,yp,pterr,pterr,'.')
-title(sprintf('velocity L2 err = %g\n',errU))
-
-figure
-pterr = abs(Vp*U{3} - sxx(xp,yp,FinalTime)) + abs(Vp*U{4} - syy(xp,yp,FinalTime)) + abs(Vp*U{5} - sxy(xp,yp,FinalTime));
-color_line3(xp,yp,pterr,pterr,'.')
-title(sprintf('sigma L2 err = %g\n',errS))
-end
 L2err = sqrt(sum(wqJ(:).*(err(:)+serr(:))))/sqrt(sum(wqJ(:).*(uq(:)+sq(:))))
 errU
 errS
+
+if nargin==0
+    figure
+    pterr = abs(Vp*U{1} - v1(xp,yp,FinalTime)) + abs(Vp*U{2} - v2(xp,yp,FinalTime));
+    color_line3(xp,yp,pterr,pterr,'.')
+    title(sprintf('velocity L2 err = %g\n',errU))
+    
+    figure
+    pterr = abs(Vp*U{3} - sxx(xp,yp,FinalTime)) + abs(Vp*U{4} - syy(xp,yp,FinalTime)) + abs(Vp*U{5} - sxy(xp,yp,FinalTime));
+    color_line3(xp,yp,pterr,pterr,'.')
+    title(sprintf('sigma L2 err = %g\n',errS))
+end
 
 
 
@@ -425,7 +448,7 @@ elseif opt==3
     
     dU{1}(mapB) = 2*(v1(x(vmapB),y(vmapB),time)-U{1}(vmapB));
     dU{2}(mapB) = 2*(v2(x(vmapB),y(vmapB),time)-U{2}(vmapB));
-    
+%     [norm(v1(x(vmapB),y(vmapB),time)),  norm(v2(x(vmapB),y(vmapB),time))]
 else
     
 end
@@ -469,6 +492,7 @@ if useWADG
     for fld = 1:Nfld
         rr{fld} = Vq*rr{fld};
     end
+    
     rhs{1} = Pq*(rr{1}./rho);
     rhs{2} = Pq*(rr{2}./rho);
     rhs{3} = Pq*((2*mu+lambda).*rr{3} + lambda.*rr{4});
