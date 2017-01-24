@@ -6,13 +6,13 @@ clear -global *
 Globals2D
 
 N = 5;
-K1D = 16;
+K1D = 8;
 c_flag = 0;
 cfun = @(x,y) ones(size(x));
 % cfun = @(x,y) 1 + (x > 0);
 
 % cfun = @(x,y) 1 + .25*sin(2*pi*x).*sin(2*pi*y); % smooth velocity
-cfun = @(x,y) (1 + .25*sin(2*pi*x).*sin(2*pi*y) + (y > 0)); % piecewise smooth velocity
+% cfun = @(x,y) (1 + .25*sin(2*pi*x).*sin(2*pi*y) + (y > 0)); % piecewise smooth velocity
 
 % filename = 'Grid/Other/block2.neu';
 % filename = 'Grid/Maxwell2D/Maxwell05.neu';
@@ -42,24 +42,30 @@ cq = cfun(xq,yq);
 % clf; vv = Vp*Pq*cq; color_line3(xp,yp,vv,vv,'.');axis equal;axis tight;return
 
 % FinalTime = 2/min(cq(:));
-FinalTime = 2.5;
+FinalTime = 2;
 
 %% params setup
 
 x0 = .1; y0 = 0;
-% p = exp(-10^2*((x-x0).^2 + (y-y0).^2));
-a = 4/K1D;
-pex = @(x,y) (abs(x+a)<.5 & abs(y)<.5) + (abs(x)<.5 & abs(y-a)<.5) + (abs(x-a)<.5 & abs(y+a)<.5);
-% p = Pq*(abs(xq+a)<.5 & abs(yq)<.5) + Pq*(abs(xq)<.5 & abs(yq-a)<.5) + Pq*(abs(xq-a)<.5 & abs(yq+a)<.5);
-p = Pq*pex(xq,yq);
 
-% sig = @(x) 1-1./(1+exp(-200*x));
+% gaussian pulse
+pex = @(x,y) exp(-5^2*((x-x0).^2 + (y-y0).^2));
+% pex = @(x,y) cos(.5*pi*x).*cos(.5*pi*y);
+
+% % smooth annulus
+% sig = @(x) 1-1./(1+exp(-100*x));
 % r2 = @(x,y) x.^2 + y.^2;
-% p = sig((r2(x,y)-.25).^2);
+% pex = @(x,y) sig((r2(x,y)-.25).^2);
 
+% % boxes overlapping
+% a = 2/K1D;
+% pex = @(x,y) (abs(x+a)<.5 & abs(y)<.5) + (abs(x)<.5 & abs(y-a)<.5) + (abs(x-a)<.5 & abs(y+a)<.5);
+
+% projection
+p = Pq*pex(xq,yq);
 u = zeros(Np, K);
 v = zeros(Np, K);
-% p = 0*p;
+
 % vv = Vp*p; color_line3(xp,yp,vv,vv,'.'); axis equal; axis tight; return
 
 %% check eigs
@@ -89,10 +95,10 @@ resu = zeros(Np,K); resv = zeros(Np,K); resp = zeros(Np,K);
 CN = (N+1)^2/2; % guessing...
 %dt = 1/(CN*max(abs(sJ(:)))*max(abs(1./J(:))));
 CNh = max(CN*max(Fscale(:)));
-dt = 1.5/CNh;
+dt = 2/CNh;
 
 Nstep = ceil(FinalTime/dt);
-dt = FinalTime/Nstep
+dt = FinalTime/Nstep;
 
 tau = 1;
 
@@ -120,20 +126,23 @@ for i = 1:Nstep
         Ubc{2}(:,NstepRK - id0) = UbcI{2}; 
     end;
     
-    if 1 && nargin==0 && mod(i,10)==0
-        vv = Vp*p;
-        clf; color_line3(xp,yp,vv,vv,'.');
-        axis equal; axis tight; colorbar        
-        title(sprintf('time = %f, max solution val = %f',time,max(abs(vv(:)))))
-        drawnow
-    end
+%     if 1 && nargin==0 && mod(i,10)==0
+%         vv = Vp*p;
+%         clf; color_line3(xp,yp,vv,vv,'.');
+%         axis equal; axis tight; colorbar        
+%         title(sprintf('time = %f, max solution val = %f',time,max(abs(vv(:)))))
+%         drawnow
+%     end
     time = i * dt;
+    if (mod(i,ceil(Nstep/10))==0)
+        disp(sprintf('generating synthetic data: tstep %d out of %d\n',i,Nstep))
+    end
 end
 
 disp('Synthetic data generated. ')
 % pause
 
-%% playback : reverse data
+%% playback : reverse propagate to generate Rm from pressure boundary data
 
 dt = -dt;
 p = zeros(Np,K); u = p; v = p;
@@ -145,17 +154,17 @@ for i = 1:Nstep
         UbcI{1} = Ubc{1}(:,id0+1);
         UbcI{2} = Ubc{2}(:,id0+1);
                 
-        [rhsp, rhsu, rhsv] = acousticsRHS2D(p,u,v,sign(dt)*tau,'r',UbcI);
+        [rhsp, rhsu, rhsv] = acousticsRHS2D(p,u,v,sign(dt)*tau,'rd',UbcI);
         resp = rk4a(INTRK)*resp + dt*rhsp;
         resu = rk4a(INTRK)*resu + dt*rhsu;
-        resv = rk4a(INTRK)*resv + dt*rhsv;        
+        resv = rk4a(INTRK)*resv + dt*rhsv;
         p = p + rk4b(INTRK)*resp;
         u = u + rk4b(INTRK)*resu;
-        v = v + rk4b(INTRK)*resv;                
+        v = v + rk4b(INTRK)*resv;
     end;
     
-    if (mod(i,ceil(Nstep/10))==0)
-        disp(sprintf('first backwards prop: tstep %d out of %d\n',i,Nstep))
+    if (mod(i,ceil(Nstep/5))==0)
+        disp(sprintf('first backwards prop: tstep %d out of %d',i,Nstep))
     end
 %     if mod(i,10)==0
 %         vv = Vp*p;
@@ -175,28 +184,32 @@ Rm = p;
 % initalize pressure condition
 p0 = Rm;
 
-for iter = 1:3
-    % compute forward propagation
+for iter = 1:50
+    
     p = p0; u = zeros(Np,K); v = zeros(Np,K);
+    resp = zeros(Np,K); resu = resp; resv = resp;
+
+    % compute forward propagation        
     dt = abs(dt);
     for i = 1:Nstep
-        for INTRK = 1:5
-            [rhsp, rhsu, rhsv, UbcI] = acousticsRHS2D(p,u,v,sign(dt)*tau,'abc',UbcI);
+        for INTRK = 1:5                        
+            [rhsp, rhsu, rhsv, UbcI] = acousticsRHS2D(p,u,v,sign(dt)*tau,'abc');
             resp = rk4a(INTRK)*resp + dt*rhsp;
             resu = rk4a(INTRK)*resu + dt*rhsu;
             resv = rk4a(INTRK)*resv + dt*rhsv;
             p = p + rk4b(INTRK)*resp;
             u = u + rk4b(INTRK)*resu;
-            v = v + rk4b(INTRK)*resv;
+            v = v + rk4b(INTRK)*resv;                        
             
             % save traces
             id0 = ((i-1)*5+(INTRK-1)); % zero index
             Ubc{1}(:,NstepRK - id0) = UbcI{1};
             Ubc{2}(:,NstepRK - id0) = UbcI{2};
+
         end;
         
         if (mod(i,ceil(Nstep/5))==0)
-            disp(sprintf('fwd prop: tstep %d out of %d\n',i,Nstep))
+            disp(sprintf('fwd prop: tstep %d out of %d',i,Nstep))
         end
 %         if mod(i,10)==0
 %             vv = Vp*p;
@@ -207,16 +220,15 @@ for iter = 1:3
 %         end
     end
     
-    % compute backwards propagation using saved traces
+    % compute backwards propagation
     dt = -dt;
     for i = 1:Nstep
         for INTRK = 1:5
             id0 = ((i-1)*5+(INTRK-1)); % 1-index
-            
             UbcI{1} = Ubc{1}(:,id0+1);
             UbcI{2} = Ubc{2}(:,id0+1);
             
-            [rhsp, rhsu, rhsv] = acousticsRHS2D(p,u,v,sign(dt)*tau,'r',UbcI);
+            [rhsp, rhsu, rhsv] = acousticsRHS2D(p,u,v,sign(dt)*tau,'rd',UbcI);
             resp = rk4a(INTRK)*resp + dt*rhsp;
             resu = rk4a(INTRK)*resu + dt*rhsu;
             resv = rk4a(INTRK)*resv + dt*rhsv;
@@ -226,7 +238,7 @@ for iter = 1:3
         end;
         
         if (mod(i,ceil(Nstep/5))==0)
-            disp(sprintf('backwards prop: tstep %d out of %d\n',i,Nstep))
+            disp(sprintf('backwards prop: tstep %d out of %d',i,Nstep))
         end
 %         if mod(i,10)==0
 %             vv = Vp*p;
@@ -238,15 +250,21 @@ for iter = 1:3
     end
     
     % update initial condition
-    p0 = Rm + (p0-p);
+    p0 = (p0-p) + Rm; 
     
     % plot initial cond
-    figure
-    vv = Vp*p0;
-    clf; color_line3(xp,yp,vv,vv,'.');
-    axis equal; axis tight; colorbar
-    title(sprintf('iter = %d, time = %f, max solution val = %f',iter,time,max(abs(vv(:)))))
-    pause
+    err = diag(wq)*(Vq*J).*(Vq*p0-pex(xq,yq)).^2;
+    L2err(iter) = sqrt(sum(err(:)));   
+    uq = diag(wq)*(Vq*J).*pex(xq,yq).^2;    
+    Unorm = sqrt(sum(uq(:)));
+%     figure
+%     vv = pex(xp,yp)-Vp*p0;
+%     clf; color_line3(xp,yp,vv,vv,'.');
+%     axis equal; axis tight; colorbar
+%     s = sprintf('iter = %d, reconstruction error = %f',iter,L2err(iter));
+%     title(s)
+    disp(['L2 err in recon = ', num2str(L2err/Unorm)])
+%     pause
 end
 
 keyboard
@@ -270,9 +288,9 @@ ndotdU = nx.*du + ny.*dv;
 
 if strcmp(bcOpt,'d') % Impose reflective boundary conditions (p+ = -p-)    
     ndotdU(mapB) = 0;
-    dp(mapB) = 2*(Ubc{1}-p(vmapB));
+    dp(mapB) = 2*(-p(vmapB));
 elseif strcmp(bcOpt,'n') % free surface BCs    
-    ndotdU(mapB) = 2*(Ubc{2}-nx(mapB).*u(vmapM(mapB)) + ny(mapB).*v(vmapM(mapB)));
+    ndotdU(mapB) = -2*(nx(mapB).*u(vmapM(mapB)) + ny(mapB).*v(vmapM(mapB)));
     dp(mapB) = 0;
 elseif strcmp(bcOpt,'abc') % basic abcs
     un = nx(mapB).*u(vmapM(mapB)) + ny(mapB).*v(vmapM(mapB));    
@@ -280,15 +298,15 @@ elseif strcmp(bcOpt,'abc') % basic abcs
     ndotdU(mapB) = -un;
 end
 
-if strcmp(bcOpt,'r')
-%     dp(mapB) = 0;
+if strcmp(bcOpt,'rd')
     dp(mapB) = 2*(Ubc{1}-p(vmapB));
-%     ndotdU(mapB) = 2*(Ubc{2}-nx(mapB).*u(vmapM(mapB)) + ny(mapB).*v(vmapM(mapB)));
     ndotdU(mapB) = 0;
-else
-    UbcO{1} = p(vmapB);
-    UbcO{2} = ndotdU(mapB);
+elseif strcmp(bcOpt,'rn')
+    dp(mapB) = 0;
+    ndotdU(mapB) = 2*(Ubc{2}-nx(mapB).*u(vmapM(mapB)) + ny(mapB).*v(vmapM(mapB)));
 end
+UbcO{1} = p(vmapB);
+UbcO{2} = ndotdU(mapB);
 
 fluxp =  tau*dp - ndotdU;
 fluxu =  (tau*ndotdU - dp);
