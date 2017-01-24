@@ -11,19 +11,24 @@ wedge_mesh; K = size(EToV,1);
 p = [4 5 6 1 2 3]; EToV(:,1:6) = EToV(:,p); % permute for wedges and jacobian > 0
 
 ids = abs(abs(VX)-1)>1e-8 & abs(abs(VY)-1)>1e-8 & abs(abs(VZ)-1)>1e-8; % perturb interior verts
-VZ(ids) = VZ(ids) + .25;
+% VZ(ids) = VZ(ids) + .5;
+
+a = .25;
+VX = VX + a*randn(size(VX));
+VY = VY + a*randn(size(VX));
+VZ = VZ + a*randn(size(VX));
 
 N = 2;
 hybridgStartUp
 
 global rx ry rz sx sy sz tx ty tz J nx ny nz sJ
-global vmapM vmapP vmapB mapM mapP mapB
-global Dr Ds Dt LIFT Vq Pq
+global mapM mapP mapB
+global Dr Ds Dt LIFT Vq Pq Vf
 
 % EToF = EToF(:,1:5); % trim for wedges
 % EToE = EToE(:,1:5); % trim for wedges
 
-% drawMesh
+% drawMesh;pause;close
 % plot3(VX,VY,VZ,'o')
 % keyboard
 
@@ -33,14 +38,27 @@ Npquad = (N+1)^2;
 Nfp = 2*Nptri + 3*Npquad;
 
 NODETOL=1e-6;
-[r s t] = wedge_nodes(N);
+% [r s t] = wedge_nodes(N);
+
+% tensor product wedge nodes
+[rtri stri] = Nodes2D(N); [rtri stri] = xytors(rtri,stri);
+r1D = JacobiGL(0,0,N);
+[rquad squad] = meshgrid(r1D,r1D); 
+rquad = rquad(:); squad = squad(:);
+
+[~,r] = meshgrid(r1D,rtri); [s,t] = meshgrid(r1D,stri);
+r = r(:); s = s(:); t = t(:);
+
 Np = length(r);
 
-Fmask{1} = find(abs(s-1)<NODETOL);
-Fmask{2} = find(abs(s+1)<NODETOL);
-Fmask{3} = find(abs(t+1)<NODETOL);
-Fmask{4} = find(abs(r+1)<NODETOL);
-Fmask{5} = find(abs(r+t)<NODETOL);
+% Fmask{1} = find(abs(s-1)<NODETOL);
+% Fmask{2} = find(abs(s+1)<NODETOL);
+% Fmask{3} = find(abs(t+1)<NODETOL);
+% Fmask{4} = find(abs(r+1)<NODETOL);
+% Fmask{5} = find(abs(r+t)<NODETOL);
+% rf = r(vertcat(Fmask{:}));
+% sf = s(vertcat(Fmask{:}));
+% tf = t(vertcat(Fmask{:}));
 
 offset = 0;
 fids{1} = (1:Nptri) + offset; offset = offset + Nptri;
@@ -49,6 +67,37 @@ fids{3} = (1:Npquad) + offset; offset = offset + Npquad;
 fids{4} = (1:Npquad) + offset; offset = offset + Npquad;
 fids{5} = (1:Npquad) + offset; 
 
+rf = zeros(Nfp,1);
+sf = zeros(Nfp,1);
+tf = zeros(Nfp,1);
+
+% s = 1
+rf(fids{1}) = rtri;
+sf(fids{1}) = ones(Nptri,1);
+tf(fids{1}) = stri;
+
+% s = -1
+rf(fids{2}) = rtri;
+sf(fids{2}) = -ones(Nptri,1);
+tf(fids{2}) = stri;
+
+% t = -1
+rf(fids{3}) = rquad;
+sf(fids{3}) = squad;
+tf(fids{3}) = -ones(Npquad,1);
+
+% r = -1
+rf(fids{4}) = -ones(Npquad,1);
+sf(fids{4}) = rquad;
+tf(fids{4}) = squad;
+
+% r + t = 0
+rf(fids{5}) = rquad;
+sf(fids{5}) = squad;
+tf(fids{5}) = -rquad;
+
+% plot3(rf,sf,tf,'o');return
+
 x = zeros(Np,K);  y = zeros(Np,K);  z = zeros(Np,K);
 rx = zeros(Np,K); sx = zeros(Np,K); tx = zeros(Np,K);
 ry = zeros(Np,K); sy = zeros(Np,K); ty = zeros(Np,K);
@@ -56,67 +105,78 @@ rz = zeros(Np,K); sz = zeros(Np,K); tz = zeros(Np,K);
 J = zeros(Np,K);
 
 nx = zeros(Nfp,K); ny = zeros(Nfp,K); nz = zeros(Nfp,K);
-
+Jf = zeros(Nfp,K);
 for e = 1:K
     v = EToV(e,:); v = v(v > 0); NvK = nnz(v); Nv(e) = NvK;
     [xe,ye,ze,rxe,sxe,txe,rye,sye,tye,rze,sze,tze,Je] = wedge_geom_factors(VX(v),VY(v),VZ(v),r,s,t);
-    x(:,e) = xe;
-    y(:,e) = ye;
-    z(:,e) = ze;
-   
+    x(:,e) = xe; y(:,e) = ye;  z(:,e) = ze;   
     rx(:,e) = rxe;    sx(:,e) = sxe;    tx(:,e) = txe;
     ry(:,e) = rye;    sy(:,e) = sye;    ty(:,e) = tye;
     rz(:,e) = rze;    sz(:,e) = sze;    tz(:,e) = tze;
     J(:,e) = Je;
         
-    rf = r(vertcat(Fmask{:})); 
-    sf = s(vertcat(Fmask{:})); 
-    tf = t(vertcat(Fmask{:}));
-    [xf,yf,zf,rxf,sxf,txf,ryf,syf,tyf,rzf,szf,tzf] = wedge_geom_factors(VX(v),VY(v),VZ(v),rf,sf,tf);
+    [xfe,yfe,zfe,rxf,sxf,txf,ryf,syf,tyf,rzf,szf,tzf,Jfe] = wedge_geom_factors(VX(v),VY(v),VZ(v),rf,sf,tf);
     
     offset = 0;    
     
-    % s = 1
+    % s = 1    
     fid = 1:Nptri;
-    nx(fid + offset,e) = sxf(Fmask{1});
-    ny(fid + offset,e) = syf(Fmask{1});
-    nz(fid + offset,e) = szf(Fmask{1});
+    nx(fid + offset,e) = sxf(fids{1});
+    ny(fid + offset,e) = syf(fids{1});
+    nz(fid + offset,e) = szf(fids{1});
     offset = offset + Nptri;
     
     % s = -1
     fid = 1:Nptri;
-    nx(fid + offset,e) = -sxf(Fmask{2});
-    ny(fid + offset,e) = -syf(Fmask{2});
-    nz(fid + offset,e) = -szf(Fmask{2});
+    nx(fid + offset,e) = -sxf(fids{2});
+    ny(fid + offset,e) = -syf(fids{2});
+    nz(fid + offset,e) = -szf(fids{2});
     offset = offset + Nptri;    
     
     % t = -1
     fid = 1:Npquad;
-    nx(fid + offset,e) = -txf(Fmask{3});
-    ny(fid + offset,e) = -tyf(Fmask{3});
-    nz(fid + offset,e) = -tzf(Fmask{3});
+    nx(fid + offset,e) = -txf(fids{3});
+    ny(fid + offset,e) = -tyf(fids{3});
+    nz(fid + offset,e) = -tzf(fids{3});
     offset = offset + Npquad;        
     
     % r = -1
-    nx(fid + offset,e) = -rxf(Fmask{4});
-    ny(fid + offset,e) = -ryf(Fmask{4});
-    nz(fid + offset,e) = -rzf(Fmask{4});
+    nx(fid + offset,e) = -rxf(fids{4});
+    ny(fid + offset,e) = -ryf(fids{4});
+    nz(fid + offset,e) = -rzf(fids{4});
     offset = offset + Npquad;
     
     % r+t = 0
-    nx(fid + offset,e) = rxf(Fmask{5})+txf(Fmask{5});
-    ny(fid + offset,e) = ryf(Fmask{5})+tyf(Fmask{5});
-    nz(fid + offset,e) = rzf(Fmask{5})+tzf(Fmask{5});
+    nx(fid + offset,e) = rxf(fids{5})+txf(fids{5});
+    ny(fid + offset,e) = ryf(fids{5})+tyf(fids{5});
+    nz(fid + offset,e) = rzf(fids{5})+tzf(fids{5});
     offset = offset + Npquad;
         
+    Jf(:,e) = Jfe;    
 end
 sJ = sqrt(nx.^2 + ny.^2 + nz.^2);    
 nx = nx./sJ; ny = ny./sJ; nz = nz./sJ;
-sJ = sJ.*J(vertcat(Fmask{:}),:);
+sJ = sJ.*Jf([fids{:}],:);
 
-xf = x(vertcat(Fmask{:}),:); 
-yf = y(vertcat(Fmask{:}),:); 
-zf = z(vertcat(Fmask{:}),:);
+if min(J(:)) < 1e-12
+    disp(sprintf('min J = %f\n',min(J(:))))
+    return
+end
+
+% surface nodes
+Vf = [];
+for f = 1:5
+    Vf = [Vf;wedge_basis(N,rf(fids{f}),sf(fids{f}),tf(fids{f}))/wedge_basis(N,r,s,t)];
+end
+
+% make surface nodes
+xf = Vf*x; 
+yf = Vf*y;
+zf = Vf*z;
+
+% drawMesh;hold on
+% plot3(x,y,z,'o')
+% return
 
 % e = 1;
 % drawMesh(e)
@@ -124,10 +184,6 @@ zf = z(vertcat(Fmask{:}),:);
 % hold on
 % quiver3(xf(:,e),yf(:,e),zf(:,e),nx(:,e),ny(:,e),nz(:,e))
 % return
-
-% drawMesh; hold on;
-% plot3(x(Fmask{f},e),y(Fmask{f},e),z(Fmask{f},e),'o');
-% enbr = EToE(e,f); fnbr = EToF(e,f); plot3(x(Fmask{fnbr},enbr),y(Fmask{fnbr},enbr),z(Fmask{fnbr},enbr),'*');
 
 Nfaces = 5;
 nodeids = reshape(1:K*Nfp, Nfp, K);
@@ -171,21 +227,15 @@ mapB = mapM(mapP==mapM);
 mapM = reshape(mapM,Nfp,K);
 mapP = reshape(mapP,Nfp,K);
 
-vmapM = zeros(Np,K);
-vmapM(:) = 1:Np*K;
-vmapM = vmapM(vertcat(Fmask{:}),:);
-vmapP = vmapM(mapP);
-
-vmapB = vmapM(vmapM==vmapP);
-
 %% lift matrices
 
 [V Vr Vs Vt] = wedge_basis(N,r,s,t);
 Dr = Vr/V; Ds = Vs/V; Dt = Vt/V;
 
+% quadrature nodes
 [r2 t2 wrt] = Cubature2D(2*N+1);
-[s1D ws] = JacobiGQ(0,0,N);
-% [s1D ws] = JacobiGL(0,0,N);
+% [s1D ws] = JacobiGQ(0,0,N);
+[s1D ws] = JacobiGL(0,0,N);
 [sq rq] = meshgrid(s1D,r2); [~, tq] = meshgrid(s1D,t2);
 rq = rq(:); sq = sq(:); tq = tq(:);
 [wrt ws] = meshgrid(ws,wrt); wq = wrt(:).*ws(:); wq = 4*wq/sum(wq);
@@ -193,7 +243,6 @@ rq = rq(:); sq = sq(:); tq = tq(:);
 Vq = wedge_basis(N,rq,sq,tq)/V;
 invM = V*V';
 % invM = inv(Vq'*diag(wq)*Vq);
-
 Pq = invM*Vq'*diag(wq);
 
 % lift matrix
@@ -201,45 +250,43 @@ E = zeros(Np,Nfp);
 off = 0;
 
 % s = 1
-Vtri = Vandermonde2D(N,r(Fmask{1}),t(Fmask{1}));
+Vtri = Vandermonde2D(N,rf(fids{1}),tf(fids{1}));
 Mtri = inv(Vtri*Vtri');
-E(Fmask{1},(1:Nptri)+off) = Mtri;
+Vfq = wedge_basis(N,rf(fids{1}),sf(fids{1}),tf(fids{1}))/V;
+E(:,(1:Nptri)+off) = Vfq'*Mtri;
 off = off + Nptri;
 
 % s = -1
-Vtri = Vandermonde2D(N,r(Fmask{2}),t(Fmask{2}));
+Vtri = Vandermonde2D(N,rf(fids{2}),tf(fids{2}));
 Mtri = inv(Vtri*Vtri');
-E(Fmask{2},(1:Nptri)+off) = Mtri;
+Vfq = wedge_basis(N,rf(fids{2}),sf(fids{2}),tf(fids{2}))/V;
+E(:,(1:Nptri)+off) = Vfq'*Mtri;
 off = off + Nptri;
 
 % quad faces
-Vquad = Vandermonde2DQuad(N,r(Fmask{3}),s(Fmask{3}));
+Vquad = Vandermonde2DQuad(N,rf(fids{3}),sf(fids{3}));
 Mquad = inv(Vquad*Vquad');
-Mquad = diag(sum(Mquad,2));
-E(Fmask{3},(1:Npquad)+off) = Mquad;
+% Mquad = diag(sum(Mquad,2));
+Vfq = wedge_basis(N,rf(fids{3}),sf(fids{3}),tf(fids{3}))/V;
+E(:,(1:Npquad)+off) = Vfq'*Mquad;
 off = off + Npquad;
 
-Vquad = Vandermonde2DQuad(N,s(Fmask{4}),t(Fmask{4}));
+Vquad = Vandermonde2DQuad(N,sf(fids{4}),tf(fids{4}));
 Mquad = inv(Vquad*Vquad');
-Mquad = diag(sum(Mquad,2));
-E(Fmask{4},(1:Npquad)+off) = Mquad;
+% Mquad = diag(sum(Mquad,2));
+Vfq = wedge_basis(N,rf(fids{4}),sf(fids{4}),tf(fids{4}))/V;
+E(:,(1:Npquad)+off) = Vfq'*Mquad;
 off = off + Npquad;
 
-Vquad = Vandermonde2DQuad(N,r(Fmask{5}),s(Fmask{5}));
+Vquad = Vandermonde2DQuad(N,rf(fids{5}),sf(fids{5}));
 Mquad = inv(Vquad*Vquad');
-Mquad = diag(sum(Mquad,2));
-E(Fmask{5},(1:Npquad)+off) = Mquad;
+% Mquad = diag(sum(Mquad,2)); 
+Vfq = wedge_basis(N,rf(fids{5}),sf(fids{5}),tf(fids{5}))/V;
+E(:,(1:Npquad)+off) = Vfq'*Mquad;
 
 LIFT = invM*E;
-keyboard
 
-%% for plotting
-
-[rp sp tp] = wedge_equi_nodes(10);
-Vp = wedge_basis(N,rp,sp,tp)/V;
-xp = Vp*x;
-yp = Vp*y;
-zp = Vp*z;
+% keyboard
 
 %% check eigs
 
@@ -273,9 +320,17 @@ if 1
     title(sprintf('Max real part = %g\n',max(real(lam))))
     keyboard
 end
-%% set initial conditions
+%% for plotting
 
-ids = yp > -1;
+[rp tp sp] = wedge_equi_nodes(10);
+Vp = wedge_basis(N,rp,sp,tp)/V;
+xp = Vp*x; 
+yp = Vp*y; 
+zp = Vp*z; 
+
+ids = yp > 0;
+
+%% set initial conditions
 
 f = @(x,y,z) cos(pi/2*x).*cos(pi/2.*y).*cos(pi/2.*z);
 uexf = @(x,y,z,time) cos(pi/2*x).*cos(pi/2.*y).*cos(pi/2.*z)*cos(sqrt(3)*pi/2*time);
@@ -323,7 +378,7 @@ while time < FinalTime
     % Increment time
     time = time+dt; tstep = tstep+1;      
     
-    if (mod(tstep,25)==0)        
+    if (mod(tstep,10)==0)        
         clf
         pp = Vp*p;
         drawMesh        
@@ -363,19 +418,25 @@ function [rhsp rhsu rhsv rhsw] = RHS(p,u,v,w)
 hybridgGlobals3D;
 
 global rx ry rz sx sy sz tx ty tz J nx ny nz sJ
-global vmapM vmapP vmapB mapM mapP mapB
-global Dr Ds Dt LIFT Vq Pq
+global mapM mapP mapB
+global Dr Ds Dt LIFT Vq Pq Vf
 
 % fluxes
-dp = p(vmapP)-p(vmapM);
-du = u(vmapP)-u(vmapM);
-dv = v(vmapP)-v(vmapM);
-dw = w(vmapP)-w(vmapM);
+
+pf = Vf*p;
+uf = Vf*u;
+vf = Vf*v;
+wf = Vf*w;
+
+dp = pf(mapP)-pf(mapM);
+du = uf(mapP)-uf(mapM);
+dv = vf(mapP)-vf(mapM);
+dw = wf(mapP)-wf(mapM);
 
 dUn = du.*nx + dv.*ny + dw.*nz;
 
 % apply BCs, todo: try p^+ = - p ^ -, which is energy stable
-dp(mapB) = -2*p(vmapB);
+dp(mapB) = -2*pf(mapB);
 dUn(mapB) = 0; 
 
 flux_p = .5*(dp - dUn);
@@ -399,6 +460,8 @@ rhsp = -divU.*J + LIFT*(flux_p.*sJ);
 rhsu = -dpdx.*J + LIFT*(flux_u.*nx.*sJ);
 rhsv = -dpdy.*J + LIFT*(flux_u.*ny.*sJ);
 rhsw = -dpdz.*J + LIFT*(flux_u.*nz.*sJ);
+
+
 
 Jq = Vq*J;
 rhsp = Pq*((Vq*rhsp)./Jq);

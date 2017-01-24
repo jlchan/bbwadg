@@ -1,4 +1,4 @@
-function ElasticityPulse2D
+function ElasticityAcoustic2D
 
 % clear all, clear
 clear -global *
@@ -8,185 +8,160 @@ Globals2D
 K1D = 16;
 N = 5;
 c_flag = 0;
-FinalTime = .25;
+FinalTime = 2;
 
-filename = 'Grid/Other/block2.neu';
-% [Nv, VX, VY, K, EToV] = MeshReaderGambit2D(filename);
-[Nv, VX, VY, K, EToV] = unif_tri_mesh(K1D);
-% VX = (VX+1)/2; 
-% VY = (VY+1)/2;
-% VX = 2*VX;
+global xp yp xq yq
 
+% save acoustic mesh
+[Nv, VX, VY, K, EToV] = unif_tri_mesh(K1D,K1D/2);
+VY = (VY+1)/2;
 StartUp2D;
 
-% BuildPeriodicMaps2D(1,1);
-
-% BCType = zeros(size(EToV));
-% for e = 1:K
-%     BCType(e,EToE(e,:)==e) = 6;
-% end
-% 
-% BuildBCMaps2D;
-% nref = 1;
-% for ref = 1:nref
-%     Refine2D(ones(size(EToV)));
-%     StartUp2D;
-%     BuildBCMaps2D;
-% end
-
-
+% cubature/plotting
 [rp sp] = EquiNodes2D(25); [rp sp] = xytors(rp,sp);
 Vp = Vandermonde2D(N,rp,sp)/V;
-xp = Vp*x; yp = Vp*y;
+xpa = Vp*x; ypa = Vp*y; 
+Ka = K;
 
 Nq = 2*N+1;
 [rq sq wq] = Cubature2D(Nq); % integrate u*v*c
 Vq = Vandermonde2D(N,rq,sq)/V;
 Pq = V*V'*Vq'*diag(wq); % J's cancel out
 Mref = inv(V*V');
+
 xq = Vq*x; yq = Vq*y;
-Jq = Vq*J;
+meshAcoustic = getMesh();
+
+% save elastic mesh
+[Nv, VX, VY, K, EToV] = unif_tri_mesh(K1D,K1D/2);
+VY = (VY+1)/2-1;
+StartUp2D;
+
+xpe = Vp*x; ype = Vp*y; Ke = K;
+xq = Vq*x; yq = Vq*y;
+meshElastic = getMesh();
+
+% unified plotting
+xp(:,1:Ka) = xpa;
+yp(:,1:Ka) = ypa;
+xp(:,(1:Ke)+Ka) = xpe;
+yp(:,(1:Ke)+Ka) = ype;
+
+if 0
+    % check
+    getMesh(meshAcoustic);
+    plot(x,y,'x')
+    
+    hold on
+    getMesh(meshElastic);
+    plot(x,y,'o')
+    return
+end
+
+%% set up mesh coupling
+
+global mapA vmapA mapE vmapE
+
+getMesh(meshAcoustic);
+vmapMA = vmapM;
+mapTmp = reshape(mapM,Nfp*Nfaces,K);
+xf = x(vmapM); yf = y(vmapM);
+off = 1;
+for e = 1:K
+    mapf = reshape(mapTmp(:,e),Nfp,Nfaces);
+    for f = 1:Nfaces
+        if norm(yf(mapf(:,f)))<1e-8
+            mapA(:,off) = mapf(:,f);
+            off = off + 1;
+        end
+    end
+end
+xfa = xf(mapA); yfa = yf(mapA);
+
+getMesh(meshElastic);
+vmapME = vmapM;
+mapTmp = reshape(mapM,Nfp*Nfaces,K);
+xf = x(vmapM); yf = y(vmapM);
+off = 1;
+for e = 1:K
+    mapf = reshape(mapTmp(:,e),Nfp,Nfaces);
+    for f = 1:Nfaces
+        if norm(yf(mapf(:,f)))<1e-8
+            mapE(:,off) = mapf(:,f);
+            off = off + 1;
+        end
+    end
+end
+xfe = xf(mapE); yfe = yf(mapE);
+
+e = ones(1,Nfp);
+for f = 1:size(xfe,2)
+    D = (xfa(:,f)*e - (xfe(:,f)*e)').^2 + (yfa(:,f)*e - (yfe(:,f)*e)').^2;
+    [idi idj] = find(D<1e-8);
+    idM(:,f) = idi + (f-1)*Nfp;
+    idP(:,f) = idj + (f-1)*Nfp;
+end
+
+mapA = mapA(idM);
+mapE = mapE(idP);
+vmapA = vmapMA(mapA);
+vmapE = vmapME(mapE);
 
 %%
-global mapBL vmapBL t0
 
-t0 = .0;
-% t0 = .075;
-t0 = .1;
-
-% find x = 0 faces 
-fbids = reshape(find(vmapP==vmapM),Nfp,nnz(vmapP==vmapM)/Nfp);
-xfb = x(vmapP(fbids));
-bfaces = sum(abs(xfb),1)<1e-8;
-
-fbids = fbids(:,bfaces); 
-fbids = fbids(:);
-
-mapBL = fbids;
-vmapBL = vmapP(mapBL);
-
-%%
-global Nfld mu lambda Vq Pq tau useWADG
+getMesh(meshElastic);
+global Nfld mu lambda Vq Pq tauv taus useWADG
 Nfld = 5; %(u1,u2,sxx,syy,sxy)
 
-mu = 0*ones(size(x));
+mu = ones(size(x));
 lambda = ones(size(x));
-
-mu0 = mu(1);
-lambda0 = lambda(1);
-
-% C = [2*mu0+lambda0       lambda0       0
-%      lambda0       2*mu0+lambda0       0
-%           0       0                mu0];
-
-% mu = 1 + .5*sin(2*pi*x).*sin(2*pi*y);
-% lambda = 1 + .5*sin(2*pi*x).*sin(2*pi*y);
-
-% ids =  mean(y) > .375 & mean(y) < .625 & mean(x) > .5 & mean(x) < .75;
-% ids = mean(y) > .5;
-% mu(:,ids) = .01*mu(:,ids);
-% lambda(:,ids) = .5*lambda(:,ids);
-
-
-global C11 C12 C13 C22 C23 C33
 
 useWADG = 0;
 if useWADG
     mu = Vq*mu;
     lambda = Vq*lambda;
-    
-%     a = .5; b = 4;
-%     mu = 1 + a*sin(b*pi*xq).*sin(b*pi*yq);
-%     lambda = 1 + a*sin(b*pi*xq).*sin(b*pi*yq);
-    %     color_line3(xq,yq,mu,mu,'.');return   
-    
 end
 
 tau0 = 1;
-for fld = 1:5
-    tau{fld} = tau0*ones(size(x));
-    if fld > 2
-%         tau{fld} = tau0./(2*mu+lambda);
-        tau{fld} = tau0*ones(size(x));
-%         tau{fld} = tau0./Cnorm;
-%         tau{fld} = tau0./max(Cnorm(:))*ones(size(x));
-    end
-end
+tauv = tau0*ones(size(x));
+taus = tau0*ones(size(x));
 
+getMesh(meshAcoustic);
+global cq
+cq = ones(size(xq));
 
-%% params setup
+%% initial condition setup
 
-x0 = 0;
-y0 = .1;
-p = exp(-30^2*((x-x0).^2 + (y-y0).^2));
-% p = exp(-50^2*((x-x0).^2));
-u = zeros(Np, K);
+% acoustic
+getMesh(meshAcoustic);
+x0 = 0; y0 = .5;
+pp = exp(-25^2*((x-x0).^2 + (y-y0).^2));
+z = zeros(Np, K);
+Ua{1} = 0*pp;
+Ua{2} = z;
+Ua{3} = z;
 
-U{1} = u;
-U{2} = p;
-U{3} = u;
-U{4} = u;
-U{5} = u;
-
-global rick ptsrc 
-a = 50;
-tD = .1;
-rick = @(t) 1e5*(.5 - (a*(t-tD)).^2).*exp(-(a*(t-tD)).^2);
-ptsrc = exp(-100^2*((xq-x0).^2 + (yq-y0).^2));
-ptsrc = Pq*ptsrc;
-ptsrc = ptsrc/max(abs(ptsrc(:)));
-ptsrc(:) = 0;
-
-% PlotMesh2D;
-% for e = 1:K
-%     hold on
-%     text(mean(VX(EToV(e,:))),mean(VY(EToV(e,:))),num2str(e))
-% end
-% return
-
+% elasticity
+getMesh(meshElastic);
+x0 = 0; y0 = -.5;
+pp = exp(-25^2*((x-x0).^2 + (y-y0).^2));
+z = zeros(Np, K);
+Ue{1} = z;
+Ue{2} = pp;
+Ue{3} = z;
+Ue{4} = z;
+Ue{5} = z;
 
 %%
-if 0
-    
-    t0 = 0;
-    
-    u = zeros(Nfld*Np*K,1);
-    rhs = zeros(Nfld*Np*K,1);
-    A = zeros(Nfld*Np*K);
-    ids = 1:Np*K;
-    for i = 1:Nfld*Np*K
-        u(i) = 1;
-        for fld = 1:Nfld
-            U{fld} = reshape(u(ids + (fld-1)*Np*K),Np,K);
-        end
-        rU = ElasRHS2D(U,0);
-        u(i) = 0;
-        for fld = 1:Nfld
-            rhs(ids + (fld-1)*Np*K) = rU{fld};
-        end
-        A(:,i) = rhs(:);
-        if (mod(i,100)==0)
-            disp(sprintf('on col %d out of %d\n',i,Np*K*Nfld))
-        end
-    end
-    lam = eig(A);
-    
-    plot(lam,'.','markersize',24)
-    hold on
-    title(sprintf('Largest real part = %g\n',max(real(lam))))
-    axis equal
-    %         drawnow
-    max(abs(lam))
-    
-    keyboard
-end
-%%
-
+getMesh(meshAcoustic);
 time = 0;
 
-% Runge-Kutta residual storage
+for fld = 1:3
+    resA{fld} = zeros(Np,K);
+end
+
 for fld = 1:Nfld
-    res{fld} = zeros(Np,K);
+    resE{fld} = zeros(Np,K);
 end
 
 % compute time step size
@@ -199,88 +174,127 @@ tstep = 0;
 M = inv(V*V');
 wqJ = diag(wq)*(Vq*J);
 
-% figure
-% colormap(gray)
-% colormap(hot)
-while (time<FinalTime)   
-            
+while (time<FinalTime)
+    
     if(time+dt>FinalTime), dt = FinalTime-time; end
     
     for INTRK = 1:5
         
         timeloc = time + rk4c(INTRK)*dt;
-        rhs = ElasRHS2D(U,timeloc);
-                        
-        % initiate and increment Runge-Kutta residuals
-        for fld = 1:Nfld
-            res{fld} = rk4a(INTRK)*res{fld} + dt*rhs{fld};
-            U{fld} = U{fld} + rk4b(INTRK)*res{fld};
-        end
         
-    end;
+        getMesh(meshAcoustic);
+        rhsA = AcousRHS2D(Ua,Ue);
+        getMesh(meshElastic);
+        rhsE = ElasRHS2D(Ue,Ua);
+        
+        % update both fields
+        for fld = 1:3
+            resA{fld} = rk4a(INTRK)*resA{fld} + dt*rhsA{fld};
+            Ua{fld} = Ua{fld} + rk4b(INTRK)*resA{fld};
+        end
+        pp(:,1:Ka) = Ua{1};
+        
+        for fld = 1:Nfld
+            resE{fld} = rk4a(INTRK)*resE{fld} + dt*rhsE{fld};
+            Ue{fld} = Ue{fld} + rk4b(INTRK)*resE{fld};
+        end
+        pp(:,(1:Ke)+Ka) = Ue{3}+Ue{4};
+        
+    end
+    
+    
+%     if abs(time-.05)<2*dt
+%         getMesh(meshAcoustic);
+%         p = Ua{1}; u = Ua{2}; v = Ua{3};
+%         nxf = nx(mapA);
+%         nyf = ny(mapA);
+%         Snx = Ue{3}(vmapE).*nxf + Ue{5}(vmapE).*nyf;
+%         Sny = Ue{5}(vmapE).*nxf + Ue{4}(vmapE).*nyf;
+%         % nSn = Snx.*nxf + Sny.*nyf;
+%         dUn = (Ue{1}(vmapE)-u(vmapA)).*nxf + (Ue{2}(vmapE)-v(vmapA)).*nyf;
+%         fluxp(mapA) = dUn;
+%         fluxu(mapA) = (Snx - p(vmapA).*nxf) + 2*p(vmapA).*nxf;
+%         fluxv(mapA) = (Sny - p(vmapA).*nyf) + 2*p(vmapA).*nyf ;        
+%         aflux = fluxp(mapA).*p(vmapA) + ...
+%             fluxu(mapA).*u(vmapA) + ...
+%             fluxv(mapA).*v(vmapA);
+%         
+%         v2f = Ue{2}(vmapE);
+%         pf = p(vmapA);
+%         uf = u(vmapA);
+%         vf = v(vmapA);
+%         aflux2 = (v2f-vf).*nyf.*pf + (Snx + pf.*nxf).*uf + (Sny + pf.*nyf).*vf;
+% %         keyboard
+% 
+%         getMesh(meshElastic);
+%         nxf = nx(mapE);
+%         nyf = ny(mapE);
+%         dUx = (Ua{2}(vmapA) - Ue{1}(vmapE));
+%         dUy = (Ua{3}(vmapA) - Ue{2}(vmapE));
+%         dUn = dUx.*nxf + dUy.*nyf;
+%         pf = Ua{1}(vmapA);
+%         nSx = nxf.*Ue{3}(vmapE) + nyf.*Ue{5}(vmapE);
+%         nSy = nxf.*Ue{5}(vmapE) + nyf.*Ue{4}(vmapE);
+%         
+%         flux{1}(mapE) = (pf.*nxf - nSx) + 2*nSx;
+%         flux{2}(mapE) = (pf.*nyf - nSy) + 2*nSy;
+%         flux{3}(mapE) = dUx.*nxf;
+%         flux{4}(mapE) = dUy.*nyf;
+%         flux{5}(mapE) = dUx.*nyf + dUy.*nxf;
+%         
+%         eflux = flux{1}(mapE).*Ue{1}(vmapE) + ...
+%             flux{2}(mapE).*Ue{2}(vmapE) + ...
+%             flux{3}(mapE).*Ue{3}(vmapE) + ...
+%             flux{4}(mapE).*Ue{4}(vmapE) + ...
+%             flux{5}(mapE).*Ue{5}(vmapE);
+%         
+%         v1f = Ue{1}(vmapE);
+%         v2f = Ue{2}(vmapE);
+%         sxxf = Ue{3}(vmapE);
+%         syyf = Ue{4}(vmapE);
+%         sxyf = Ue{5}(vmapE);
+%         
+%         %aflux2 = (v2f-vf).*nyf.*pf + (Snx + pf.*nxf).*uf + (Sny+pf.*nyf).*vf;
+%         eflux2 = (pf.*nxf + nSx).*v1f + (pf.*nyf + nSy).*v2f + ...
+%             + dUx.*nxf.*sxxf + dUy.*nyf.*syyf + dUx.*nyf.*sxyf        
+%         
+%         keyboard
+%     end
     
     if 1 && mod(tstep,10)==0
         clf
-        
-        p = U{3} + U{4}; % trace(S)        
-%         p = U{1};
-
-        vv = Vp*p;
-%         vv = abs(vv);
-%         vv = max(vv(:))-vv;
+        vv = Vp*pp;
         color_line3(xp,yp,vv,vv,'.');
-        axis tight        
+        axis tight
+        
+        %         Ue = U;
+        %         Snx = Ue{3}(vmapE).*nx(mapA) + Ue{4}(vmapE).*ny(mapA);
+        %         Sny = Ue{4}(vmapE).*nx(mapA) + Ue{5}(vmapE).*ny(mapA);
+        %         nSn = Snx.*nx(mapA) + Sny.*ny(mapA);
+        %         plot(x(vmapA),nSn,'o')
+        %         axis([-1 1 -1 1])
+        
         title(sprintf('time = %f',time));
         colorbar;
-%         view(3); 
         drawnow
-        
-        
     end
     
-    % Increment time
-    time = time+dt; tstep = tstep+1;
+    time = time+dt;
+    tstep = tstep+1;
     
-%     Mu = M*(J.*U{1});
-%     uu = U{1}(:)'*Mu(:);
-%     
-%     Mu = M*(J.*U{2});
-%     uu = uu + U{2}(:)'*Mu(:);
-%     
-%     u1q = Vq*(U{3});
-%     u2q = Vq*(U{4});
-%     u3q = Vq*(U{5});
-%         
-%     Cu1 = iC11.*u1q + iC12.*u2q + iC13.*u3q;
-%     Cu2 = iC12.*u1q + iC22.*u2q + iC23.*u3q;
-%     Cu3 = iC13.*u1q + iC23.*u2q + iC33.*u3q;
-%     uu = uu + sum(sum(wqJ.*(u1q.*Cu1 + u2q.*Cu2 + u3q.*Cu3)));
-%         
-%     unorm2(tstep) = uu;
-%     tvec(tstep) = time;
-    
-    if mod(tstep,100)==0
-        disp(sprintf('On timestep %d out of %d\n',tstep,round(FinalTime/dt)))
-    end
 end
 
-hold on
-plot(tvec,unorm2,'k--','linewidth',2)
-% axis([0, time, 0, 1e-1])
-
-keyboard
+return
 
 
 
-function [rhs] = ElasRHS2D(U,time)
-
-% function [rhsu, rhsv, rhsp] = acousticsRHS2D(u,v,p)
-% Purpose  : Evaluate RHS flux in 2D acoustics TM form
+function [rhs] = ElasRHS2D(U,Ua)
 
 Globals2D;
 
-global Nfld mu lambda Vq Pq tau useWADG
+global Nfld mu lambda Vq Pq tauv taus useWADG
 global C11 C12 C13 C22 C23 C33
+global mapA vmapA mapE vmapE
 
 % Define field differences at faces
 for fld = 1:Nfld
@@ -305,25 +319,19 @@ du12dxy = Ux{2} + Uy{1}; % du2dx + du1dy
 % velocity fluxes
 nSx = nx.*dU{3} + ny.*dU{5};
 nSy = nx.*dU{5} + ny.*dU{4};
- 
+
 opt=1;
 if opt==1 % traction BCs
-    %     global mapBL vmapBL t0
-    %     if time < t0
-    %         dU{1}(mapBL) = 2*(sin(pi*time/t0)*(time<t0) - U{1}(vmapBL));
-    %         dU{2}(mapBL) = -2*U{2}(vmapBL);
-    %     else
     nSx(mapB) = -2*(nx(mapB).*U{3}(vmapB) + ny(mapB).*U{5}(vmapB));
     nSy(mapB) = -2*(nx(mapB).*U{5}(vmapB) + ny(mapB).*U{4}(vmapB));
-    %     end    
 elseif opt==2 % basic ABCs
     nSx(mapB) = -(nx(mapB).*U{3}(vmapB) + ny(mapB).*U{5}(vmapB));
     nSy(mapB) = -(nx(mapB).*U{5}(vmapB) + ny(mapB).*U{4}(vmapB));
     dU{1}(mapB) = -U{1}(vmapB);
-    dU{2}(mapB) = -U{2}(vmapB);    
+    dU{2}(mapB) = -U{2}(vmapB);
 elseif opt==3 % zero velocity
     dU{1}(mapB) = -2*U{1}(vmapB);
-    dU{2}(mapB) = -2*U{2}(vmapB);    
+    dU{2}(mapB) = -2*U{2}(vmapB);
     
 end
 
@@ -346,47 +354,118 @@ fp{3} = fc{1}.*nx;
 fp{4} = fc{2}.*ny;
 fp{5} = fc{2}.*nx + fc{1}.*ny;
 
-
 flux = cell(5,1);
-for fld = 1:Nfld   
+for fld = 1:Nfld
     flux{fld} = zeros(Nfp*Nfaces,K);
-    flux{fld}(:) = fc{fld}(:) + tau{fld}(vmapM).*fp{fld}(:);
+    if fld < 3
+        taufld = tauv(vmapM);
+    else
+        taufld = taus(vmapM);
+    end
+    flux{fld}(:) = fc{fld}(:) + taufld.*fp{fld}(:);
 end
 
-% compute right hand sides of the PDE's
-global rick ptsrc 
-frick = rick(time)*ptsrc;
-rr{1} =  divSx   +  LIFT*(Fscale.*flux{1})/2.0;
-rr{2} =  divSy   +  LIFT*(Fscale.*flux{2})/2.0 + frick;
-rr{3} =  du1dx   +  LIFT*(Fscale.*flux{3})/2.0;
-rr{4} =  du2dy   +  LIFT*(Fscale.*flux{4})/2.0;
-rr{5} =  du12dxy +  LIFT*(Fscale.*flux{5})/2.0;
+% compute acoustic-elastic interface flux (central)
+nxf = nx(mapE);
+nyf = ny(mapE);
+dUx = (Ua{2}(vmapA) - U{1}(vmapE));
+dUy = (Ua{3}(vmapA) - U{2}(vmapE));
+dUn = dUx.*nxf + dUy.*nyf;
+pf = Ua{1}(vmapA);
+nSx = nxf.*U{3}(vmapE) + nyf.*U{5}(vmapE);
+nSy = nxf.*U{5}(vmapE) + nyf.*U{4}(vmapE);
+dSx = (pf.*nxf - nSx);
+dSy = (pf.*nyf - nSy);
 
-% C = [2*mu+lambda       lambda       0
-%      lambda       2*mu+lambda       0
-%           0       0                mu/2]
+% flux{1}(mapE) = dSx;
+% flux{2}(mapE) = dSy;
+% flux{3}(mapE) = dUx.*nxf;
+% flux{4}(mapE) = dUy.*nyf;
+% flux{5}(mapE) = dUx.*nyf + dUy.*nxf;
+
+flux{1}(mapE) = dSx + tauv(mapE).*dUn.*nxf;
+flux{2}(mapE) = dSy + tauv(mapE).*dUn.*nyf;
+flux{3}(mapE) = dUx.*nxf + taus(mapE).*(dSx.*nxf);
+flux{4}(mapE) = dUy.*nyf + taus(mapE).*(dSy.*nyf);
+flux{5}(mapE) = dUx.*nyf + dUy.*nxf + taus(mapE).*(dSx.*nyf+dSy.*nxf);
+
+% compute right hand sides of the PDE's
+rr{1} =  divSx   +  LIFT*(.5*Fscale.*flux{1});
+rr{2} =  divSy   +  LIFT*(.5*Fscale.*flux{2});
+rr{3} =  du1dx   +  LIFT*(.5*Fscale.*flux{3});
+rr{4} =  du2dy   +  LIFT*(.5*Fscale.*flux{4});
+rr{5} =  du12dxy +  LIFT*(.5*Fscale.*flux{5});
+
 if useWADG
     for fld = 3:Nfld
         rr{fld} = Vq*rr{fld};
     end
     rhs{1} = rr{1};
     rhs{2} = rr{2};
-        rhs{3} = Pq*((2*mu+lambda).*rr{3} + lambda.*rr{4});
-        rhs{4} = Pq*(lambda.*rr{3} + (2*mu+lambda).*rr{4});
-        rhs{5} = Pq*((mu) .* rr{5});
-%     rhs{3} = Pq*(C11.*rr{3} + C12.*rr{4} + C13.*rr{5});
-%     rhs{4} = Pq*(C12.*rr{3} + C22.*rr{4} + C23.*rr{5});
-%     rhs{5} = Pq*(C13.*rr{3} + C23.*rr{4} + C33.*rr{5});
+    rhs{3} = Pq*((2*mu+lambda).*rr{3} + lambda.*rr{4});
+    rhs{4} = Pq*(lambda.*rr{3} + (2*mu+lambda).*rr{4});
+    rhs{5} = Pq*((mu) .* rr{5});
 else
     rhs{1} = rr{1};
     rhs{2} = rr{2};
-    rhs{3} = (2*mu+lambda).*rr{3} + lambda.*rr{4};
-    rhs{4} = lambda.*rr{3} + (2*mu+lambda).*rr{4};
+    rhs{3} = ((2*mu+lambda).*rr{3} + lambda.*rr{4});
+    rhs{4} = (lambda.*rr{3} + (2*mu+lambda).*rr{4});
     rhs{5} = (mu) .* rr{5};
 end
 
-
-
-
 return;
+
+
+
+function rhs = AcousRHS2D(U,Ue)
+
+Globals2D;
+global cq Vq Pq
+global mapA vmapA mapE vmapE
+
+p = U{1}; u = U{2}; v = U{3};
+
+% Define field differences at faces
+dp = zeros(Nfp*Nfaces,K); dp(:) = p(vmapP)-p(vmapM);
+du = zeros(Nfp*Nfaces,K); du(:) = u(vmapP)-u(vmapM);
+dv = zeros(Nfp*Nfaces,K); dv(:) = v(vmapP)-v(vmapM);
+
+ndotdU = nx.*du + ny.*dv;
+
+% Impose reflective boundary conditions (p+ = -p-)
+dp(mapB) = -2*p(vmapB);
+ndotdU(mapB) = 0;
+
+tau = 1;
+fluxp = tau*dp + ndotdU;
+fluxu = (tau*ndotdU + dp).*nx;
+fluxv = (tau*ndotdU + dp).*ny;
+
+% compute acoustic-elastic interface flux
+nxf = nx(mapA);
+nyf = ny(mapA);
+Snx = Ue{3}(vmapE).*nxf + Ue{5}(vmapE).*nyf;
+Sny = Ue{5}(vmapE).*nxf + Ue{4}(vmapE).*nyf;
+dUn = (Ue{1}(vmapE)-u(vmapA)).*nxf + (Ue{2}(vmapE)-v(vmapA)).*nyf;
+% fluxp(mapA) = dUn;
+% fluxu(mapA) = (Snx - p(vmapA).*nxf);
+% fluxv(mapA) = (Sny - p(vmapA).*nyf);
+fluxp(mapA) = tau*((Snx.*nxf + Sny.*nyf) - p(vmapA)) + dUn;
+fluxu(mapA) = tau*dUn.*nx(mapA) + (Snx - p(vmapA).*nx(mapA));
+fluxv(mapA) = tau*dUn.*ny(mapA) + (Sny - p(vmapA).*ny(mapA));
+
+pr = Dr*p; ps = Ds*p;
+dpdx = rx.*pr + sx.*ps;
+dpdy = ry.*pr + sy.*ps;
+divU = Dr*(u.*rx + v.*ry) + Ds*(u.*sx + v.*sy);
+
+% compute right hand sides of the PDE's
+rhs{1} =  divU + LIFT*(.5*Fscale.*fluxp);
+rhs{2} =  dpdx + LIFT*(.5*Fscale.*fluxu);
+rhs{3} =  dpdy + LIFT*(.5*Fscale.*fluxv);
+
+rhs{1} = Pq*(cq.*(Vq*rhs{1}));
+
+
+return
 
