@@ -1,12 +1,14 @@
 *~
 matlab/*/*.m~
-docs/*.aux
-docs/*.bbl
-docs/*.blg
-docs/*.log
-docs/*.out
-docs/*.DS_STORE
-docs/*.synctex.gz
+docs/*/*.aux
+docs/*/*.bbl
+docs/*/*.blg
+docs/*/*.log
+docs/*/*.out
+docs/*/*.DS_STORE
+docs/*/*.synctex.gz
+docs/*/*.thm
+docs/*/*.bst
 docs/figs/*eps-converted-to.pdf
 
 *.dSYM/
