@@ -5,7 +5,7 @@ clear -global *
 
 Globals2D
 
-N = 5;
+N = 4;
 K1D = 8;
 c_flag = 0;
 cfun = @(x,y) ones(size(x));
@@ -49,7 +49,7 @@ FinalTime = 2;
 x0 = .1; y0 = 0;
 
 % gaussian pulse
-pex = @(x,y) exp(-5^2*((x-x0).^2 + (y-y0).^2));
+pex = @(x,y) exp(-10^2*((x-x0).^2 + (y-y0).^2));
 % pex = @(x,y) cos(.5*pi*x).*cos(.5*pi*y);
 
 % % smooth annulus
@@ -126,7 +126,7 @@ for i = 1:Nstep
         Ubc{2}(:,NstepRK - id0) = UbcI{2}; 
     end;
     
-%     if 1 && nargin==0 && mod(i,10)==0
+%     if mod(i,10)==0
 %         vv = Vp*p;
 %         clf; color_line3(xp,yp,vv,vv,'.');
 %         axis equal; axis tight; colorbar        
@@ -140,7 +140,7 @@ for i = 1:Nstep
 end
 
 disp('Synthetic data generated. ')
-% pause
+
 
 %% playback : reverse propagate to generate Rm from pressure boundary data
 
@@ -184,7 +184,7 @@ Rm = p;
 % initalize pressure condition
 p0 = Rm;
 
-for iter = 1:50
+for iter = 1:10
     
     p = p0; u = zeros(Np,K); v = zeros(Np,K);
     resp = zeros(Np,K); resu = resp; resv = resp;
@@ -220,15 +220,21 @@ for iter = 1:50
 %         end
     end
     
+%     % compute new auxiliary initial conditions
+%     p = 0*p;
+%     u = 0*u;
+%     v = 0*v;
+    
     % compute backwards propagation
     dt = -dt;
     for i = 1:Nstep
         for INTRK = 1:5
-            id0 = ((i-1)*5+(INTRK-1)); % 1-index
-            UbcI{1} = Ubc{1}(:,id0+1);
-            UbcI{2} = Ubc{2}(:,id0+1);
+%             id0 = ((i-1)*5+(INTRK-1)); % 1-index
+%             UbcI{1} = Ubc{1}(:,id0+1);
+%             UbcI{2} = Ubc{2}(:,id0+1);            
+%             [rhsp, rhsu, rhsv] = acousticsRHS2D(p,u,v,sign(dt)*tau,'rd',UbcI);
+            [rhsp, rhsu, rhsv] = acousticsRHS2D(p,u,v,sign(dt)*tau,'d');
             
-            [rhsp, rhsu, rhsv] = acousticsRHS2D(p,u,v,sign(dt)*tau,'rd',UbcI);
             resp = rk4a(INTRK)*resp + dt*rhsp;
             resu = rk4a(INTRK)*resu + dt*rhsu;
             resv = rk4a(INTRK)*resv + dt*rhsv;
@@ -250,19 +256,21 @@ for iter = 1:50
     end
     
     % update initial condition
-    p0 = (p0-p) + Rm; 
+%     p0 = (p0-p) + Rm; 
+    p0 = p + Rm; 
     
     % plot initial cond
     err = diag(wq)*(Vq*J).*(Vq*p0-pex(xq,yq)).^2;
     L2err(iter) = sqrt(sum(err(:)));   
     uq = diag(wq)*(Vq*J).*pex(xq,yq).^2;    
     Unorm = sqrt(sum(uq(:)));
+    
 %     figure
 %     vv = pex(xp,yp)-Vp*p0;
 %     clf; color_line3(xp,yp,vv,vv,'.');
-%     axis equal; axis tight; colorbar
-%     s = sprintf('iter = %d, reconstruction error = %f',iter,L2err(iter));
-%     title(s)
+%     axis equal; axis tight; colorbar    
+%     title(sprintf('iter = %d, reconstruction error = %f',iter,L2err(iter)))
+    
     disp(['L2 err in recon = ', num2str(L2err/Unorm)])
 %     pause
 end
