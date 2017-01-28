@@ -7,10 +7,10 @@ function burgers1D_wadg
 Globals1D;
 
 % Order of polymomials used for approximation
-N = 1;
+N = 4;
 
 % Generate simple mesh
-K1D = 64;
+K1D = 16;
 [Nv, VX, K, EToV] = MeshGen1D(-1,1,K1D);
 
 % Initialize solver and construct grid and metric
@@ -19,7 +19,7 @@ StartUp1D;
 vmapP(1) = vmapM(end); % make periodic
 vmapP(end) = vmapM(1);
 
-rp = linspace(-1,1,100)';
+rp = linspace(-1,1,50)';
 Vp = Vandermonde1D(N,rp)/V;
 xp=  Vp*x;
 
@@ -34,7 +34,7 @@ xq =  Vq*x;
 d = 100;
 uex = @(x) -1./(1 + exp(-d*(x-1/3))) + 1./(1 + exp(-d*(x+1/3))); % x > -1/3 & x < 1/3;%exp(-25*x.^2);
 % uex = @(x) 1-cos(pi*x);
-% uex = @(x) -sin(pi*x);
+uex = @(x) -sin(pi*x);
 uex = @(x) 1 + (x < (-1+2/K1D));
 % u = limit(uex(x));
 u = uex(x);
@@ -111,7 +111,9 @@ if 0
     %rhsu = -u.*(rx.*(Dr*u)) + LIFT*(Fscale.*(du));
     rhsu = -Pq*((Vq*u).*(Vq*(rx.*(Dr*u)))) + LIFT*(Fscale.*(du));
 else
-    du(:) = (uM-uP).*(nx(:)-(1-alpha)*abs(nx(:)))/2;
+%     aM = uM;
+%     du(:) = (uM-uP).*(aM.*nx(:)-(1-alpha)*abs(aM.*nx(:)))/2;
+    du(:) = (uM-uP).*(sign(uM).*nx(:)-(1-alpha)*abs(sign(uM).*nx(:)))/2;
     rhsu = -(rx.*(Dr*u)) + LIFT*(Fscale.*(du));
     rhsu = Pq*((Vq*rhsu).*(Vq*u));
 %     rhsu = u.*rhsu;

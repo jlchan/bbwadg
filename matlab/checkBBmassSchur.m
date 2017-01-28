@@ -1,13 +1,17 @@
-N = 6;
+N = 3;
 [r s] = Nodes2D(N); [r s] = xytors(r,s);
 Np = length(r);
 [rq sq wq] = Cubature2D(2*N);
+
+[V Vr Vs] = bern_basis_tri(N,r,s);
+Dr = V\Vr;
+Ds = V\Vs;
 
 Vq = bern_basis_tri(N,rq,sq);
 % Vq = Vandermonde2D(N,rq,sq)/Vandermonde2D(N,r,s);
 M = Vq'*diag(wq)*Vq;
 
-plot(r,s,'o'); text(r,s,num2str((1:length(r))'))
+% plot(r,s,'o'); text(r,s,num2str((1:length(r))'))
 
 vids = [1; N+1; Np];
 fids = unique([
@@ -26,6 +30,9 @@ B = M(iids,gids);
 C = M(gids,gids);
 
 S = C - B'*(A\B);
+
+K = Dr'*M*Dr + Ds'*M*Ds;
+% K = K(iids,iids); 
 
 r1D = JacobiGL(0,0,N);
 [r1Dq w1Dq] = JacobiGL(0,0,N);
