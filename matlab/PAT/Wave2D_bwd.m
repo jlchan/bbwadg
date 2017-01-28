@@ -57,9 +57,9 @@ pex = @(x,y) exp(-10^2*((x-x0).^2 + (y-y0).^2));
 % r2 = @(x,y) x.^2 + y.^2;
 % pex = @(x,y) sig((r2(x,y)-.25).^2);
 
-% % boxes overlapping
-% a = 2/K1D;
-% pex = @(x,y) (abs(x+a)<.5 & abs(y)<.5) + (abs(x)<.5 & abs(y-a)<.5) + (abs(x-a)<.5 & abs(y+a)<.5);
+% boxes overlapping
+a = 2/K1D;
+pex = @(x,y) (abs(x+a)<.5 & abs(y)<.5) + (abs(x)<.5 & abs(y-a)<.5) + (abs(x-a)<.5 & abs(y+a)<.5);
 
 % projection
 p = Pq*pex(xq,yq);
@@ -184,7 +184,7 @@ Rm = p;
 % initalize pressure condition
 p0 = Rm;
 
-for iter = 1:10
+for iter = 1:25
     
     p = p0; u = zeros(Np,K); v = zeros(Np,K);
     resp = zeros(Np,K); resu = resp; resv = resp;
@@ -198,14 +198,8 @@ for iter = 1:10
             resu = rk4a(INTRK)*resu + dt*rhsu;
             resv = rk4a(INTRK)*resv + dt*rhsv;
             p = p + rk4b(INTRK)*resp;
-            u = u + rk4b(INTRK)*resu;
-            v = v + rk4b(INTRK)*resv;                        
-            
-            % save traces
-            id0 = ((i-1)*5+(INTRK-1)); % zero index
-            Ubc{1}(:,NstepRK - id0) = UbcI{1};
-            Ubc{2}(:,NstepRK - id0) = UbcI{2};
-
+            u = u + rk4b(INTRK)*resu;  
+            v = v + rk4b(INTRK)*resv;  
         end;
         
         if (mod(i,ceil(Nstep/5))==0)
@@ -229,10 +223,6 @@ for iter = 1:10
     dt = -dt;
     for i = 1:Nstep
         for INTRK = 1:5
-%             id0 = ((i-1)*5+(INTRK-1)); % 1-index
-%             UbcI{1} = Ubc{1}(:,id0+1);
-%             UbcI{2} = Ubc{2}(:,id0+1);            
-%             [rhsp, rhsu, rhsv] = acousticsRHS2D(p,u,v,sign(dt)*tau,'rd',UbcI);
             [rhsp, rhsu, rhsv] = acousticsRHS2D(p,u,v,sign(dt)*tau,'d');
             
             resp = rk4a(INTRK)*resp + dt*rhsp;
@@ -271,7 +261,7 @@ for iter = 1:10
 %     axis equal; axis tight; colorbar    
 %     title(sprintf('iter = %d, reconstruction error = %f',iter,L2err(iter)))
     
-    disp(['L2 err in recon = ', num2str(L2err/Unorm)])
+    disp(['iter ' num2str(iter) ', L2 err in recon = ',num2str(L2err/Unorm)])
 %     pause
 end
 
