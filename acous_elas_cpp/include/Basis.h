@@ -8,6 +8,7 @@ void test_solve();
 void test_basis();
 
 // 1D 
+void JacobiGL(int N, int alpha_int, int beta_int, VectorXd &r);
 void JacobiGQ(int N, int alpha_int, int beta_int, VectorXd &r, VectorXd &w);
 VectorXd JacobiP(VectorXd x, dfloat alpha, dfloat beta, int d);
 VectorXd GradJacobiP(VectorXd x, double alpha, double beta, int p);
@@ -17,6 +18,10 @@ MatrixXd Bern1D(int N, VectorXd r);
 void rstoab(VectorXd r, VectorXd s, VectorXd &a,VectorXd &b);
 VectorXd Simplex2DP(VectorXd a,VectorXd b,int i, int j);
 MatrixXd Vandermonde2D(int N, VectorXd r, VectorXd s); // for face
+void GradSimplex2DP(VectorXd a, VectorXd b, int id, int jd,
+		    VectorXd &dmodedr,VectorXd &dmodeds);
+void GradVandermonde2D(int N, VectorXd r, VectorXd s,
+		       MatrixXd &Vr, MatrixXd &Vs);
 MatrixXd BernTri(int N, VectorXd r, VectorXd s);
 
 // 3D
@@ -52,9 +57,11 @@ MatrixXd sgeofacs3d(VectorXd x,VectorXd y,VectorXd z,
 void Nodes3D(int N, VectorXd &r, VectorXd &s, VectorXd &t);
 void tet_cubature(int N, VectorXd &rq, VectorXd &sq, VectorXd &tq, VectorXd &wq);
 void tri_cubature(int N, VectorXd &rq, VectorXd &sq, VectorXd &wq);
-//void tet_cubature_duffy(int N, VectorXd &a, VectorXd &wa,
-//			VectorXd &b,  VectorXd &wb,
-//			VectorXd &c,  VectorXd &wc);
+
+// wedge stuff
+//void WedgeNodes(int N, VectorXd &r, VectorXd &s, VectorXd &t);
+void WedgeBasis(int N, VectorXd r, VectorXd s, VectorXd t,
+		MatrixXd &V, MatrixXd &Vr, MatrixXd &Vs, MatrixXd &Vt);
 
 // helper routines not present in C++ std lib
 unsigned int factorial(int n);

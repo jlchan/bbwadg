@@ -99,7 +99,6 @@ typedef struct foo {
   MatrixXd rx,ry,rz,sx,sy,sz,tx,ty,tz,J; // geofacs
   MatrixXd nx,ny,nz,sJ; // surface geofacs
 
-
   // DG STUFF (EXPERIMENTAL)
   int *mapM,  *mapP; // face node id of +/- nodes (used in mesh connectivity)
   int *vmapM, *vmapP; // volume id of -/+ ve trace of face node

@@ -186,7 +186,61 @@ MatrixXd Vandermonde2D(int N, VectorXd r, VectorXd s){
     }
   }
   return Vout;
+}
 
+void GradSimplex2DP(VectorXd a, VectorXd b, int id, int jd,
+		    VectorXd &dmodedr,VectorXd &dmodeds){
+
+  VectorXd fa,dfa,gb,dgb;
+  fa = JacobiP(a, 0, 0, id);     dfa = GradJacobiP(a, 0, 0, id);
+  gb = JacobiP(b, 2*id+1,0, jd); dgb = GradJacobiP(b, 2*id+1,0, jd);
+
+  // r-derivative
+  // d/dr = da/dr d/da + db/dr d/db = (2/(1-s)) d/da = (2/(1-b)) d/da
+  VectorXd tmp = (0.5*(1.0-b.array())).pow(id-1);
+  dmodedr = dfa.array()*gb.array();
+  if(id>0){
+    dmodedr = dmodedr.array()*tmp.array();
+  }
+
+  // s-derivative
+  // d/ds = ((1+a)/2)/((1-b)/2) d/da + d/db
+  dmodeds = dfa.array()*(gb.array()*(0.5*(1+a.array())));
+  if(id>0){
+    dmodeds = dmodeds.array()*tmp.array();
+  }
+
+  VectorXd tmp2 = dgb.array()*((0.5*(1.0-b.array())).pow(id)).array();
+  if(id>0){
+    tmp2 = tmp2.array() - 0.5*id*gb.array()*tmp.array();
+  }
+  dmodeds = dmodeds.array() + fa.array()*tmp2.array();
+
+  // Normalize
+  dmodedr = pow(2.0,(id+0.5))*dmodedr.array();
+  dmodeds = pow(2.0,(id+0.5))*dmodeds.array();
+}
+
+void GradVandermonde2D(int N, VectorXd r, VectorXd s,
+		       MatrixXd &Vr, MatrixXd &Vs){
+
+  int Np = (N+1)*(N+2)/2;
+  Vr.resize(r.rows(),Np);
+  Vs.resize(r.rows(),Np);
+
+  VectorXd a,b,c;
+  rstoab(r,s,a,b);
+  
+  int sk = 0;
+  for (int i = 0; i <= N; ++i){
+    for(int j = 0; j <= N - i; ++j){
+      VectorXd Vri, Vsi;
+      GradSimplex2DP(a,b,i,j,Vri,Vsi);
+      Vr.col(sk) = Vri;
+      Vs.col(sk) = Vsi;
+      ++sk;
+    }
+  }
 }
 
 // ========================== 3D ===========================
@@ -745,6 +799,20 @@ void tet_cubature_duffy(int N, VectorXd &a, VectorXd &wa,
 }
 */
 
+void JacobiGL(int N, int alpha_int, int beta_int, VectorXd &r){
+
+  r.resize(N+1);
+  r(0) = -1;
+  r(N) = 1;    
+
+  if (N==1) return;
+
+  VectorXd xint, w;
+  JacobiGQ(N-2,alpha_int+1,beta_int+1,xint,w);
+  r.segment(2,N) = xint;
+       
+}
+
 // requires alpha, beta = integers
 void JacobiGQ(int N, int alpha_int, int beta_int, VectorXd &r, VectorXd &w){
 
@@ -793,8 +861,6 @@ void JacobiGQ(int N, int alpha_int, int beta_int, VectorXd &r, VectorXd &w){
   //  cout << "r = " << r << endl;
   //  cout << "w = " << w << endl;
 }
-
-
 
 void Nodes3D(int N, VectorXd &r, VectorXd &s, VectorXd &t){
   int Np = (N+1)*(N+2)*(N+3)/6;
@@ -946,6 +1012,66 @@ void tri_cubature(int N, VectorXd &rfq, VectorXd &sfq, VectorXd &wfq){
     case 21: loadfq(21); break;
     }
   }
+}
+
+// ===================== wedge ======================
+
+#if 0
+void WedgeNodes(int N, VectorXd &r, VectorXd &s, VectorXd &t){
+
+    int NpTri = (N+1)*(N+2)/2;
+    int Np = (N+1)*NpTri;
+    VectorXd r2,s2,t2;
+    Nodes3D(N,r2,s2,t2);
+    r2 = r2.head(NpTri);
+    s2 = s2.head(NpTri);
+    VectorXd r1D,w1D;
+    //JacobiGQ(N, 0, 0, r1D, w1D);
+    JacobiGL(N, 0, 0, r1D);
+
+    r.resize(Np);
+    s.resize(Np);
+    t.resize(Np);
+    for (int i = 0; i < N+1; ++i){ // assuming first
+      for (int j = 0; j < NpTri; ++j){
+	r(j + i*NpTri) = r2(j);
+	s(j + i*NpTri) = s2(j);
+	t(j + i*NpTri) = r1D(i);	
+      }
+    }
+    //    cout << "r = [" << endl << r << "]" << endl;
+    //    cout << "s = [" << endl << s << "]" << endl;
+    //    cout << "t = [" << endl << t << "]" << endl;
+}
+#endif
+void WedgeBasis(int N, VectorXd r, VectorXd s, VectorXd t,
+		MatrixXd &V, MatrixXd &Vr, MatrixXd &Vs, MatrixXd &Vt){
+  
+  int NpTri = (N+1)*(N+2)/2;
+  int Np = (N+1)*NpTri;
+  MatrixXd VTri = Vandermonde2D(N,r,s);
+  MatrixXd VrTri,VsTri;
+  GradVandermonde2D(N,r,s,VrTri,VsTri);
+
+  V.resize(r.rows(),Np);
+  Vr.resize(r.rows(),Np);
+  Vs.resize(r.rows(),Np);
+  Vt.resize(r.rows(),Np);
+  
+  int sk = 0;
+  for (int i = 0; i < N+1; ++i){
+    MatrixXd Pi = JacobiP(t,0,0,i);
+    MatrixXd dPi = GradJacobiP(t,0,0,i);    
+    for (int j = 0; j < NpTri; ++j){
+      V.col(sk) = VTri.col(j).array() * Pi.array();
+      Vr.col(sk) = VrTri.col(j).array() * Pi.array();
+      Vs.col(sk) = VsTri.col(j).array() * Pi.array();
+      Vt.col(sk) = VTri.col(j).array() * dPi.array();      
+      ++sk;
+    }
+  }
+  
+  
 }
 
 

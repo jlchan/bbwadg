@@ -27,28 +27,10 @@ void SaveMatrix(char *filename, dfloat **A, int Nrows, int Ncols);
 
 // for more general meshes
 Mesh *ReadGmshHybrid(char *filename);
-void *FacePairHybrid(Mesh *mesh);
+void FacePairHybrid(Mesh *mesh);
+//void StartUpHybrid(Mesh *mesh);
+void StartUpWedge(Mesh *mesh);
 
-// compare entries of length 4 array (for general face pairing)
-static int compare4(const void *a, const void *b){
-  int *aI = (int*) a;   int *bI = (int*) b;
-  int a1 = aI[0], a2 = aI[1], a3 = aI[2], a4 = aI[3];
-  int b1 = bI[0], b2 = bI[1], b3 = bI[2], b4 = bI[3];
-
-  if(b4>a4) return -1;
-  if(a4>b4) return 1;
-
-  if(b3>a3) return -1;
-  if(a3>b3) return 1;
-
-  if(b2>a2) return -1;
-  if(a2>b2) return 1;
-
-  if(b1>a1) return -1;
-  if(a1>b1) return 1;
-
-  return 0;
-}
 
 
 /* geometric/mesh functions */

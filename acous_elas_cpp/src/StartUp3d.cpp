@@ -537,18 +537,12 @@ void StartUp3d(Mesh *mesh){
   mesh->rk4c[5] =              1.0;
 
   // map coordinates
-  //mesh->x = BuildMatrix(mesh->K, p_Np);
-  //mesh->y = BuildMatrix(mesh->K, p_Np);
-  //mesh->z = BuildMatrix(mesh->K, p_Np);
   mesh->x.resize(p_Np,mesh->K);
   mesh->y.resize(p_Np,mesh->K);
   mesh->z.resize(p_Np,mesh->K);
 
   for(k=0;k<mesh->K;++k){
     for(n=0;n<p_Np;++n){
-      //dfloat r = mesh->r[n];
-      //dfloat s = mesh->s[n];
-      //dfloat t = mesh->t[n];
       double r = mesh->r(n);
       double s = mesh->s(n);
       double t = mesh->t(n);

@@ -16,7 +16,12 @@ double WaveWeight(double x, double y, double z){
 
 int main(int argc, char **argv){
 
-  //Mesh *mesh1 = ReadGmshHybrid("meshes/pri1.msh");
+  Mesh *mesh1 = ReadGmshHybrid("meshes/pri1.msh");
+  FacePairHybrid(mesh1);
+
+  StartUpWedge(mesh1);
+  
+  return 0;
 
   MatrixXi v(2,4); 
   v << 1,3,4,2,
