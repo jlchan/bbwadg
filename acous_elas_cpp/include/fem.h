@@ -92,8 +92,8 @@ void checkCurvedGeo(Mesh *mesh);
 void RK_step_WADG(Mesh *mesh, dfloat rka, dfloat rkb, dfloat fdt);
 
 void test_RK(Mesh *mesh, int KblkU);
-void setOccaArray(MatrixXd A, occa::memory &B); // assumes matrix is double
-void setOccaIntArray(MatrixXi A, occa::memory &B); // assumes matrix is int
+void setOccaArray(Mesh *mesh,MatrixXd A, occa::memory &B); // assumes matrix is double
+void setOccaIntArray(Mesh *mesh,MatrixXi A, occa::memory &B); // assumes matrix is int
 
 // cruft - can remove, but may be useful in future
 void setupCG(Mesh *mesh);

@@ -70,7 +70,7 @@ typedef struct foo {
   MatrixXd Vq, Vrq, Vsq, Vtq;
 
   int Nfq;
-  VectorXd wfqFace, rfq,sfq,tfq,wfq;
+  VectorXd wfqFace,rfq,sfq,tfq,wfq;
   MatrixXd nxq,nyq,nzq,sJq;
 
   MatrixXd V, Dr, Ds, Dt, LIFT; // Eigen-based matrices: cubature, nodal deriv/lift
@@ -110,13 +110,19 @@ typedef struct foo {
 
   VectorXi KlistCurved, KlistPlanar, KlistCurvedPlusNbrs;
   unsigned int KCurved,KPlanar,KCurvedPlusNbrs;
-
-  // =============== CG data structure ===============
-
+  int hMax;
+  
+  // =============== CG data structure - cruft? ===========
   MatrixXi localToGlobalNodeMap;
   int numGlobalNodes;
 
-  double hMax; // mesh size - computed
+  // ============== OCCA data ================
+
+  occa::device device;
+  occa::kernelInfo dgInfo;
+  std::map<char,occa::kernel> kernels;
+  std::map<char,occa::memory> arrays;  
+
 }Mesh;
 
 

@@ -3,6 +3,7 @@
 #include <iostream>
 #include <fstream>
 
+
 // reads meshes for other types of elements
 int KTet = 0, KHex = 0, KPri = 0, KPyr = 0;
 const int HEX=1,PRI=2,PYR=3,TET=4;
@@ -444,8 +445,8 @@ void StartUpWedge(Mesh *mesh){
   // get tri nodes from tet faces
   VectorXd r2,s2,t2;
   Nodes3D(N,r2,s2,t2);
-  r2 = r2.head(NpTri);
-  s2 = s2.head(NpTri);
+  VectorXd rtri = r2.head(NpTri);
+  VectorXd stri = s2.head(NpTri);
 
   // TP vol nodes
   VectorXd r1D, w1D;
@@ -463,8 +464,8 @@ void StartUpWedge(Mesh *mesh){
   mesh->t.resize(Np);  
   for (int i = 0; i < N+1; ++i){ 
     for (int j = 0; j < NpTri; ++j){
-      mesh->r(j + i*NpTri) = r2(j);
-      mesh->s(j + i*NpTri) = s2(j);
+      mesh->r(j + i*NpTri) = rtri(j);
+      mesh->s(j + i*NpTri) = stri(j);
       mesh->t(j + i*NpTri) = r1D(i);	
     }
   }
@@ -612,6 +613,7 @@ void StartUpWedge(Mesh *mesh){
 #endif
   
   // pair surface nodes
+  MatrixXi mapM(NfpNfaces,mesh->K);
   MatrixXi mapP(NfpNfaces,mesh->K);
 
   for (int e = 0; e < mesh->K; ++e){
@@ -631,6 +633,10 @@ void StartUpWedge(Mesh *mesh){
       int fnbr = mesh->EToF(e,f);
 
       double x1, x2, y1,y2,z1,z2;
+
+      for (int i = 0; i < Nfpts; ++i){
+	mapM(i+NfpSk(f),e) = i + NfpSk(f) + NfpNfaces*e;
+      }
       
       if (e==enbr){
 	for(int i = 0; i < Nfpts; ++i){
@@ -639,15 +645,13 @@ void StartUpWedge(Mesh *mesh){
 	}
       }else{
 
-	MatrixXd xM(Nfpts,3);
-        MatrixXd xP(Nfpts,3);
+	MatrixXd xM(Nfpts,3);  MatrixXd xP(Nfpts,3);
         for(int i = 0; i < Nfpts; ++i){
 	  int id1 = i + NfpSk(f);
 	  x1 = xf(id1,e); y1 = yf(id1,e); z1 = zf(id1,e);
+	  xM(i,0) = x1; xM(i,1) = y1; xM(i,2) = z1;
           int id2 = i + NfpSk(fnbr);
-          x2 = xf(id2,enbr); y2 = yf(id2,enbr); z2 = zf(id2,enbr);
-	  
-          xM(i,0) = x1; xM(i,1) = y1; xM(i,2) = z1;
+          x2 = xf(id2,enbr); y2 = yf(id2,enbr); z2 = zf(id2,enbr);  
           xP(i,0) = x2; xP(i,1) = y2; xP(i,2) = z2;
         }
 
@@ -680,13 +684,49 @@ void StartUpWedge(Mesh *mesh){
             cout << "xP = " << endl << xP << endl;
           }
 	}
-
       }
-
     }
   }
+  //  cout << "mapP = [" << endl << mapP << "];" << endl;
 
-  cout << "mapP = [" << endl << mapP << "];" << endl;
+
+  // initialize tensor product wedge operators
+  MatrixXd VTri = Vandermonde2D(N,rtri,stri);
+  MatrixXd VrTri,VsTri;
+  GradVandermonde2D(N,rtri,stri,VrTri,VsTri);
+  mesh->Dr = mrdivide(VrTri,VTri);
+  mesh->Ds = mrdivide(VsTri,VTri);
+
+  MatrixXd V1D = Vandermonde1D(N,r1D);
+  MatrixXd Vr1D;
+  GradVandermonde1D(N,r1D,Vr1D);  
+  mesh->Dt = mrdivide(Vr1D,V1D); // 1D op
+
+  // quadrature operators
+  VectorXd rqtri,sqtri,wqtri;
+  tri_cubature(N, rqtri, sqtri, wqtri);  
+  MatrixXd VqTri = Vandermonde2D(N,rqtri,sqtri);
+  VqTri = mrdivide(VqTri,VTri); 
+  MatrixXd VrqTri,VsqTri;
+  GradVandermonde2D(N,rqtri,sqtri,VrqTri,VsqTri);
+  
+  MatrixXd V1Dq = Vandermonde1D(N,r1Dq);
+  V1Dq = mrdivide(V1Dq,V1D);
+  MatrixXd Vr1Dq;
+  GradVandermonde1D(N,r1Dq,Vr1Dq);
+  Vr1Dq = mrdivide(Vr1Dq,V1D);
+
+  // cubature projection matrices
+  MatrixXd invMtri = VTri*VTri.transpose();
+  MatrixXd invM1D = V1D*V1D.transpose();
+  MatrixXd PqTri = invMtri*VqTri.transpose()*wqtri.asDiagonal();
+  MatrixXd Pq1D = invM1D*V1Dq.transpose()*w1Dq.asDiagonal();
+
+  // for skew-sym wedges
+  MatrixXd PrqTri = invMtri*VrqTri.transpose()*wqtri.asDiagonal();
+  MatrixXd PsqTri = invMtri*VsqTri.transpose()*wqtri.asDiagonal();  
+  MatrixXd Ptq1D = invM1D*Vr1Dq.transpose()*w1Dq.asDiagonal();    
+
   
   
 }//end startup of wedge

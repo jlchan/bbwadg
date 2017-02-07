@@ -70,12 +70,9 @@ occa::memory c_c12;
 
 // ricker ptsrc
 occa::memory c_fsrc;
-
 occa::kernel rk_volume_elas;
 occa::kernel rk_surface_elas;
 occa::kernel rk_update_elas;
-
-
 
 // curvilinear WADG arrays
 occa::memory c_Pq, c_Prq, c_Psq, c_Ptq, c_Pfq; // V*q'*diag(wq)
@@ -130,7 +127,7 @@ int KblkV, KblkS, KblkU, KblkQ, KblkQf;
 double timeV = 0.0, timeS = 0.0, timeU=0.0, timeQ = 0.0, timeQf = 0.0;
 
 template <typename T>
-void diagnose_array(const char *message, occa::memory &c_a, int N){
+void diagnose_array(Mesh *mesh,const char *message, occa::memory &c_a, int N){
 
   device.finish();
 
@@ -258,16 +255,16 @@ void InitWADG_curved(Mesh *mesh){
 
 
   // reference operators
-  setOccaArray(Vq,c_Vq);
-  setOccaArray(Vrq,c_Vrq);
-  setOccaArray(Vsq,c_Vsq);
-  setOccaArray(Vtq,c_Vtq);
+  setOccaArray(mesh,Vq,c_Vq);
+  setOccaArray(mesh,Vrq,c_Vrq);
+  setOccaArray(mesh,Vsq,c_Vsq);
+  setOccaArray(mesh,Vtq,c_Vtq);
 
 
-  setOccaArray(Pq,c_Pq);
-  setOccaArray(Prq,c_Prq);
-  setOccaArray(Psq,c_Psq);
-  setOccaArray(Ptq,c_Ptq);
+  setOccaArray(mesh,Pq,c_Pq);
+  setOccaArray(mesh,Prq,c_Prq);
+  setOccaArray(mesh,Psq,c_Psq);
+  setOccaArray(mesh,Ptq,c_Ptq);
 
   // float4 packing
   VectorXd Vqvec(Map<VectorXd>(Vq.data(), Vq.cols()*Vq.rows()));
@@ -280,24 +277,24 @@ void InitWADG_curved(Mesh *mesh){
   VectorXd Ptqvec(Map<VectorXd>(Ptq.data(), Pq.cols()*Pq.rows()));
   VectorXd Vskew(4*Vq.cols()*Vq.rows());    Vskew    << Vrqvec,Vsqvec,Vtqvec,Vqvec;
   VectorXd Pskew(4*Pq.cols()*Pq.rows());    Pskew    << Prqvec,Psqvec,Ptqvec,Pqvec;
-  setOccaArray(Vskew,c_Vskew);
-  setOccaArray(Pskew,c_Pskew);
+  setOccaArray(mesh,Vskew,c_Vskew);
+  setOccaArray(mesh,Pskew,c_Pskew);
 
-  setOccaArray(Pfq,c_Pfq);
+  setOccaArray(mesh,Pfq,c_Pfq);
 
   // for face flux points
-  setOccaIntArray(mapPq,c_mapPq);
+  setOccaIntArray(mesh,mapPq,c_mapPq);
   MatrixXd Qf(p_Nfields*Nfq*Nfaces,mesh->K);
-  setOccaArray(Qf,c_Qf);
+  setOccaArray(mesh,Qf,c_Qf);
 
   // save grad p, u,v,w @ quad pts
   MatrixXd Qtmp(6*mesh->Nq,mesh->K);
-  setOccaArray(Qtmp,c_Qtmp);
+  setOccaArray(mesh,Qtmp,c_Qtmp);
 
   // geometric factors
-  setOccaArray(vgeoq,c_vgeoq);
-  setOccaArray(fgeoq,c_fgeoq);
-  setOccaArray(Jq,c_Jq);
+  setOccaArray(mesh,vgeoq,c_vgeoq);
+  setOccaArray(mesh,fgeoq,c_fgeoq);
+  setOccaArray(mesh,Jq,c_Jq);
 
   // specific vol/surface routines for planar elements
   VectorXd Jplanar(mesh->K);
@@ -308,11 +305,11 @@ void InitWADG_curved(Mesh *mesh){
   for (int e = 0; e < mesh->K; ++e){
     KlistAll(e) = e;
   }
-  setOccaArray(Jplanar,c_Jplanar);
-  setOccaIntArray(KlistAll,c_KlistAll);
-  setOccaIntArray(mesh->KlistCurved,c_KlistCurved);
-  setOccaIntArray(mesh->KlistPlanar,c_KlistPlanar);
-  setOccaIntArray(mesh->KlistCurvedPlusNbrs,c_KlistCurvedPlusNbrs);
+  setOccaArray(mesh,Jplanar,c_Jplanar);
+  setOccaIntArray(mesh,KlistAll,c_KlistAll);
+  setOccaIntArray(mesh,mesh->KlistCurved,c_KlistCurved);
+  setOccaIntArray(mesh,mesh->KlistPlanar,c_KlistPlanar);
+  setOccaIntArray(mesh,mesh->KlistCurvedPlusNbrs,c_KlistCurvedPlusNbrs);
 
   // ======= use reduced strength quadrature for WADG update step
 
@@ -362,12 +359,12 @@ void InitWADG_curved(Mesh *mesh){
     }
   }
 #endif
-  //setOccaArray(c2q,c_c2q);
-  setOccaArray(Jq_reduced,c_Jq_reduced);
-  setOccaArray(Pq_reduced,c_Pq_reduced);
-  setOccaArray(Vq_reduced,c_Vq_reduced);
-  setOccaArray(Vfq,c_Vfq);
-  setOccaArray(VfqFace,c_VfqFace);
+  //setOccaArray(mesh,c2q,c_c2q);
+  setOccaArray(mesh,Jq_reduced,c_Jq_reduced);
+  setOccaArray(mesh,Pq_reduced,c_Pq_reduced);
+  setOccaArray(mesh,Vq_reduced,c_Vq_reduced);
+  setOccaArray(mesh,Vfq,c_Vfq);
+  setOccaArray(mesh,VfqFace,c_VfqFace);
 
   // ============ build kernels
 
@@ -524,19 +521,19 @@ void InitWADG_subelem(Mesh *mesh,double(*c2_ptr)(double,double,double)){
   dgInfo.addDefine("p_Nq",mesh->Nq); // vol quadrature
   dgInfo.addDefine("p_Nfq",mesh->Nfq); // surf quadrature for one face
 
-  setOccaArray(rhoq,c_rhoq);
-  setOccaArray(lambdaq,c_lambdaq);
-  setOccaArray(muq,c_muq);
-  setOccaArray(c11,c_c11);
-  setOccaArray(c12,c_c12);
+  setOccaArray(mesh,rhoq,c_rhoq);
+  setOccaArray(mesh,lambdaq,c_lambdaq);
+  setOccaArray(mesh,muq,c_muq);
+  setOccaArray(mesh,c11,c_c11);
+  setOccaArray(mesh,c12,c_c12);
 
   // smoothed ricker src
   fsrcq *= 1.0/fsrcq.array().abs().maxCoeff(); // normalize to 1
   MatrixXd fsrc = Pq_reduced * fsrcq;
-  setOccaArray(fsrc,c_fsrc);
+  setOccaArray(mesh,fsrc,c_fsrc);
 
-  setOccaArray(Pq_reduced,c_Pq_reduced);
-  setOccaArray(Vq_reduced,c_Vq_reduced);
+  setOccaArray(mesh,Pq_reduced,c_Pq_reduced);
+  setOccaArray(mesh,Vq_reduced,c_Vq_reduced);
 
   // ======== build kernels
 
@@ -991,7 +988,7 @@ void checkCurvedGeo(Mesh *mesh){
 
 
 // set occa array:: cast to dfloat.
-void setOccaArray(MatrixXd A, occa::memory &c_A){
+void setOccaArray(Mesh *mesh, MatrixXd A, occa::memory &c_A){
   int r = A.rows();
   int c = A.cols();
   dfloat *f_A = (dfloat*)malloc(r*c*sizeof(dfloat));
@@ -1001,7 +998,7 @@ void setOccaArray(MatrixXd A, occa::memory &c_A){
 }
 
 // set occa array:: cast to dfloat
-void setOccaIntArray(MatrixXi A, occa::memory &c_A){
+void setOccaIntArray(Mesh *mesh,MatrixXi A, occa::memory &c_A){
   int r = A.rows();
   int c = A.cols();
   int *f_A = (int*)malloc(r*c*sizeof(int));
@@ -1119,15 +1116,15 @@ dfloat WaveInitOCCA3d(Mesh *mesh, int KblkVin, int KblkSin,
 
 #if (USE_SLICE_LIFT)  // should use for N > 5 (faster)
   // store reduction matrices for orders 0,...,N
-  setOccaIntArray(mesh->EEL_id_vec,c_EEL_ids);
-  setOccaArray(mesh->EEL_val_vec,c_EEL_vals);
+  setOccaIntArray(mesh,mesh->EEL_id_vec,c_EEL_ids);
+  setOccaArray(mesh,mesh->EEL_val_vec,c_EEL_vals);
 #else
   c_EEL_vals = device.malloc(p_Np*mesh->EEL_nnz*sizeof(dfloat),h_EEL_vals);
   c_EEL_ids = device.malloc(p_Np*mesh->EEL_nnz*sizeof(int),h_EEL_ids);
 #endif
 
   //cout << "cEL = " << endl << mesh->cEL << endl;
-  setOccaArray(mesh->cEL,c_cEL); // for slice-by-slice kernel
+  setOccaArray(mesh,mesh->cEL,c_cEL); // for slice-by-slice kernel
 
   int *h_slice_ids = (int*) malloc(p_Np*4*sizeof(int));
   for (int i = 0; i < p_Np; ++i){
@@ -1136,7 +1133,7 @@ dfloat WaveInitOCCA3d(Mesh *mesh, int KblkVin, int KblkSin,
     h_slice_ids[4*i+2] = mesh->slice_ids(i,2);
     h_slice_ids[4*i+3] = mesh->slice_ids(i,3);
   }
-  //  setOccaIntArray(vol_ids,c_vol_ids); // arranged for int4 storage
+  //  setOccaIntArray(mesh,vol_ids,c_vol_ids); // arranged for int4 storage
   c_slice_ids = device.malloc(p_Np*4*sizeof(int),h_slice_ids);
 
 

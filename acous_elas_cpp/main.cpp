@@ -21,16 +21,17 @@ int main(int argc, char **argv){
 
   StartUpWedge(mesh1);
   
-  return 0;
+  //return 0;
 
+#if 0
   MatrixXi v(2,4); 
   v << 1,3,4,2,
     1,2,3,4;
   cout << "v = " << v << endl;
   std::sort(v.data(), v.data()+v.size());
   cout << "v = " << v << endl;
-
-  //return 0;
+  return 0;
+#endif
 
   
   printf("running heterogeneous subelem main\n");

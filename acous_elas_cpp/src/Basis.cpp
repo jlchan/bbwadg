@@ -172,6 +172,26 @@ VectorXd Simplex2DP(VectorXd a,VectorXd b,int i, int j){
 
 }
 
+MatrixXd Vandermonde1D(int N, VectorXd r){
+  int Np = (N+1);
+  MatrixXd Vout(r.rows(),Np);
+
+  for (int i = 0; i <= N; ++i){    
+    Vout.col(i) = JacobiP(r,0,0,i);
+  }
+  return Vout;
+}
+
+void GradVandermonde1D(int N, VectorXd r, MatrixXd &Vr){
+  int Np = (N+1);
+  Vr.resize(r.rows(),Np);
+
+  for (int i = 0; i <= N; ++i){    
+    Vr.col(i) = GradJacobiP(r,0,0,i);
+  }
+
+}
+
 MatrixXd Vandermonde2D(int N, VectorXd r, VectorXd s){
   int Np = (N+1)*(N+2)/2;
   MatrixXd Vout(r.rows(),Np);

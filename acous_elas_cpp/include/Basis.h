@@ -12,7 +12,11 @@ void JacobiGL(int N, int alpha_int, int beta_int, VectorXd &r);
 void JacobiGQ(int N, int alpha_int, int beta_int, VectorXd &r, VectorXd &w);
 VectorXd JacobiP(VectorXd x, dfloat alpha, dfloat beta, int d);
 VectorXd GradJacobiP(VectorXd x, double alpha, double beta, int p);
+MatrixXd Vandermonde1D(int N, VectorXd r);
+void GradVandermonde1D(int N, VectorXd r,MatrixXd &Vr);
+
 MatrixXd Bern1D(int N, VectorXd r);
+
 
 // 2D
 void rstoab(VectorXd r, VectorXd s, VectorXd &a,VectorXd &b);
