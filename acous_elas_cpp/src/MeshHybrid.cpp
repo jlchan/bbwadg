@@ -2,13 +2,13 @@
 
 #include <iostream>
 #include <fstream>
-
+#include <algorithm>
 
 // reads meshes for other types of elements
 int KTet = 0, KHex = 0, KPri = 0, KPyr = 0;
 const int HEX=1,PRI=2,PYR=3,TET=4;
 int firstElement (const int t){
- switch(t){
+  switch(t){
   case HEX : return 0;
   case PRI : return KHex;
   case PYR : return KHex + KPri;
@@ -48,7 +48,7 @@ int getVertexOnFace (int e, int f, int v, MatrixXi EToV) {
       {1, 4, 3, 2}
     };
     vid = fv[f][v]-1;
-  }else if (EToV(e,6) == -1){  // prism    
+  }else if (EToV(e,6) == -1){  // prism
     static const int fv[5][4] = {
       {1, 3, 2, 0}, {4, 5, 6, 0},
       {1, 2, 5, 4}, {3, 1, 4, 6}, {2, 3, 6, 5}
@@ -56,12 +56,12 @@ int getVertexOnFace (int e, int f, int v, MatrixXi EToV) {
     vid = fv[f][v]-1;
   }else{  // hex
     static int fv[6][4] = {{1,4,3,2},{1,2,6,5},
-			   {2,3,7,6},{3,4,8,7},
-			   {4,1,5,8},{5,6,7,8}};
-    vid = fv[f][v]-1;    
+                           {2,3,7,6},{3,4,8,7},
+                           {4,1,5,8},{5,6,7,8}};
+    vid = fv[f][v]-1;
   }
   return EToV(e,vid);
-    
+
 }
 
 
@@ -76,7 +76,7 @@ Mesh *ReadGmshHybrid(char *filename){
     std::cout << "Mesh reading ERROR: Mesh '" << filename << "' not opened" << std::endl;
     exit(1);
   }
-  
+
   int dummy, allVertices, allElements;
 
   while(meshfile.good()){
@@ -93,22 +93,22 @@ Mesh *ReadGmshHybrid(char *filename){
 
       mesh->VX.resize(allVertices);
       mesh->VY.resize(allVertices);
-      mesh->VZ.resize(allVertices);      
+      mesh->VZ.resize(allVertices);
 
       /// resize vectors for the coordinates of vertices
       //     VX = (double*) calloc(mesh->Nv, sizeof(double));
       //     VY = (double*) calloc(mesh->Nv, sizeof(double));
-      //     VZ = (double*) calloc(mesh->Nv, sizeof(double));     
+      //     VZ = (double*) calloc(mesh->Nv, sizeof(double));
 
       /// scan line of each vertex, ignoring gmsh index of vertex
       for (int v = 0; v < allVertices; ++v){
-	int vx,vy,vz;
-	//meshfile >> dummy >> VX >> VY >> VZ;
-	//printf("VXYZ = [%.4f, %.4f, %.4f]\n",VX,VY,VZ);
-	meshfile >> dummy >> vx >> vy >> vz;
-	mesh->VX(v) = vx;
-	mesh->VY(v) = vy;
-	mesh->VZ(v) = vz;	
+        int vx,vy,vz;
+        //meshfile >> dummy >> VX >> VY >> VZ;
+        //printf("VXYZ = [%.4f, %.4f, %.4f]\n",VX,VY,VZ);
+        meshfile >> dummy >> vx >> vy >> vz;
+        mesh->VX(v) = vx;
+        mesh->VY(v) = vy;
+        mesh->VZ(v) = vz;
       }
 
     }
@@ -129,21 +129,21 @@ Mesh *ReadGmshHybrid(char *filename){
       int KTri = 0, KQua = 0;
       //int KTet = 0, KHex = 0, KPri = 0, KPyr = 0;
       for (int k = 1; k <= allElements; ++k){
-	meshfile >> eGmshNum >> eGeoType;
-	switch(eGeoType){
-	case 2: KTri++; break;
-	case 3: KQua++; break;
-	case 4: KTet++; break;
-	case 5: KHex++; break;
-	case 6: KPri++; break;
-	case 7: KPyr++; break;
-	case 1: break;  /// 2-node line
-	case 15: break; /// 1-node point
-	default:
-	  cout << "HybriDG WARNING: unknow element type read in gmsh file ("
-	       << eGeoType << ")" << endl;
-	}
-	getline(meshfile, line);
+        meshfile >> eGmshNum >> eGeoType;
+        switch(eGeoType){
+        case 2: KTri++; break;
+        case 3: KQua++; break;
+        case 4: KTet++; break;
+        case 5: KHex++; break;
+        case 6: KPri++; break;
+        case 7: KPyr++; break;
+        case 1: break;  /// 2-node line
+        case 15: break; /// 1-node point
+        default:
+          cout << "HybriDG WARNING: unknow element type read in gmsh file ("
+               << eGeoType << ")" << endl;
+        }
+        getline(meshfile, line);
       }
       /// rewind to beginning of element list
       meshfile.seekg(marker);
@@ -172,77 +172,77 @@ Mesh *ReadGmshHybrid(char *filename){
       int iTet = 0;
       int iPyr = 0;
       for (int k = 0; k < mesh->K; ++k) {
-	meshfile >> eGmshNum >> eGeoType >> Ntags;
-	/// Triangle
-	if(eGeoType == 2){
-	  meshfile >> physFType(KFace);           /// save the face group (physical gmsh label)
-	  for(int tag=1; tag<Ntags; tag++)        /// dummy tags
-	    meshfile >> dummy;
-	  for(int v=0; v<3; ++v)
-	    meshfile >> physFToV(v, KFace);       /// save the associated vertices
-	  KFace++;
-	}
-	/// Quad
-	else if(eGeoType == 3){
-	  meshfile >> physFType(KFace);           /// save the face group (physical gmsh label)
-	  for(int tag=1; tag<Ntags; tag++)        /// dummy tags
-	    meshfile >> dummy;
-	  for(int v=0; v<4; ++v)
-	    meshfile >> physFToV(v, KFace);       /// save the associated vertices
-	  KFace++;
-	}
-	
-	/// Tetra
-	else if(eGeoType == 4){
-	  int posK = firstElement(TET) + iTet;
-	  //printf("on elem %d, gmsh num = %d\n",posK,eGmshNum);
-	  ENumGmsh(posK) = eGmshNum;              /// save the gmsh number
-	  ENumGmsh_orig(posK) = eGmshNum;
-	  meshfile >> ETag(posK);                /// save the element group (physical gmsh label)
-	  for(int tag=1; tag<Ntags; tag++)        /// dummy tags
-	    meshfile >> dummy;
-	  for(int v=0; v<4; ++v)
-	    meshfile >> mesh->EToV(posK,v);            /// save the associated vertices
-	  iTet++;
-	}
-	/// Hex
-	else if(eGeoType == 5){
-	  int posK = firstElement(HEX) + iHex;
-	  ENumGmsh(posK) = eGmshNum;              /// save the gmsh number
-	  ENumGmsh_orig(posK,1) = eGmshNum;
-	  meshfile >> ETag(posK);                /// save the element group (physical gmsh label)
-	  for(int tag=1; tag<Ntags; tag++)        /// dummy tags
-	    meshfile >> dummy;
-	  for(int v=0; v<8; ++v)
-	    meshfile >> mesh->EToV(posK,v);            /// save the associated vertices
-	  iHex++;
-	}
-	/// Prism
-	else if(eGeoType == 6){
-	  int posK = firstElement(PRI) + iPri;
-	  //printf("on elem %d, gmsh num = %d\n",posK,eGmshNum);
-	  ENumGmsh(posK,1) = eGmshNum;              /// save the gmsh number
-	  ENumGmsh_orig(posK,1) = eGmshNum;
-	  meshfile >> ETag(posK);                /// save the element group (physical gmsh label)
-	  for(int tag=1; tag<Ntags; tag++)        /// dummy tags
-	    meshfile >> dummy;
-	  for(int v=0; v<6; ++v)
-	    meshfile >> mesh->EToV(posK,v);            /// save the associated vertices
-	  iPri++;
-	}
-	/// Pyramid
-	else if(eGeoType == 7){
-	  int posK = firstElement(PYR) + iPyr;
-	  ENumGmsh(posK) = eGmshNum;              /// save the gmsh number
-	  ENumGmsh_orig(posK,1) = eGmshNum;
-	  meshfile >> ETag(posK);                /// save the element group (physical gmsh label)
-	  for(int tag=1; tag<Ntags; tag++)        /// dummy tags
-	    meshfile >> dummy;
-	  for(int v=0; v<5; ++v)
-	    meshfile >> mesh->EToV(posK,v);            /// save the associated vertices
-	  iPyr++;
-	}
-	getline(meshfile, line);
+        meshfile >> eGmshNum >> eGeoType >> Ntags;
+        /// Triangle
+        if(eGeoType == 2){
+          meshfile >> physFType(KFace);           /// save the face group (physical gmsh label)
+          for(int tag=1; tag<Ntags; tag++)        /// dummy tags
+            meshfile >> dummy;
+          for(int v=0; v<3; ++v)
+            meshfile >> physFToV(v, KFace);       /// save the associated vertices
+          KFace++;
+        }
+        /// Quad
+        else if(eGeoType == 3){
+          meshfile >> physFType(KFace);           /// save the face group (physical gmsh label)
+          for(int tag=1; tag<Ntags; tag++)        /// dummy tags
+            meshfile >> dummy;
+          for(int v=0; v<4; ++v)
+            meshfile >> physFToV(v, KFace);       /// save the associated vertices
+          KFace++;
+        }
+
+        /// Tetra
+        else if(eGeoType == 4){
+          int posK = firstElement(TET) + iTet;
+          //printf("on elem %d, gmsh num = %d\n",posK,eGmshNum);
+          ENumGmsh(posK) = eGmshNum;              /// save the gmsh number
+          ENumGmsh_orig(posK) = eGmshNum;
+          meshfile >> ETag(posK);                /// save the element group (physical gmsh label)
+          for(int tag=1; tag<Ntags; tag++)        /// dummy tags
+            meshfile >> dummy;
+          for(int v=0; v<4; ++v)
+            meshfile >> mesh->EToV(posK,v);            /// save the associated vertices
+          iTet++;
+        }
+        /// Hex
+        else if(eGeoType == 5){
+          int posK = firstElement(HEX) + iHex;
+          ENumGmsh(posK) = eGmshNum;              /// save the gmsh number
+          ENumGmsh_orig(posK,1) = eGmshNum;
+          meshfile >> ETag(posK);                /// save the element group (physical gmsh label)
+          for(int tag=1; tag<Ntags; tag++)        /// dummy tags
+            meshfile >> dummy;
+          for(int v=0; v<8; ++v)
+            meshfile >> mesh->EToV(posK,v);            /// save the associated vertices
+          iHex++;
+        }
+        /// Prism
+        else if(eGeoType == 6){
+          int posK = firstElement(PRI) + iPri;
+          //printf("on elem %d, gmsh num = %d\n",posK,eGmshNum);
+          ENumGmsh(posK,1) = eGmshNum;              /// save the gmsh number
+          ENumGmsh_orig(posK,1) = eGmshNum;
+          meshfile >> ETag(posK);                /// save the element group (physical gmsh label)
+          for(int tag=1; tag<Ntags; tag++)        /// dummy tags
+            meshfile >> dummy;
+          for(int v=0; v<6; ++v)
+            meshfile >> mesh->EToV(posK,v);            /// save the associated vertices
+          iPri++;
+        }
+        /// Pyramid
+        else if(eGeoType == 7){
+          int posK = firstElement(PYR) + iPyr;
+          ENumGmsh(posK) = eGmshNum;              /// save the gmsh number
+          ENumGmsh_orig(posK,1) = eGmshNum;
+          meshfile >> ETag(posK);                /// save the element group (physical gmsh label)
+          for(int tag=1; tag<Ntags; tag++)        /// dummy tags
+            meshfile >> dummy;
+          for(int v=0; v<5; ++v)
+            meshfile >> mesh->EToV(posK,v);            /// save the associated vertices
+          iPyr++;
+        }
+        getline(meshfile, line);
       }
 
       cout << "Hybrid mesh read in: " << allVertices << " vertices and " << mesh->K << " elements in GMSH file " << endl;
@@ -250,29 +250,29 @@ Mesh *ReadGmshHybrid(char *filename){
 
       mesh->GX.resize(mesh->K,Nverts);
       mesh->GY.resize(mesh->K,Nverts);
-      mesh->GZ.resize(mesh->K,Nverts);      
+      mesh->GZ.resize(mesh->K,Nverts);
 
       int sk = 0, v;
       for (int k = 0; k < mesh->K; ++k){
-	
+
         /* correct to 0-index */
         for(v=0; v<Nverts;++v){
-	  if (mesh->EToV(k,v)>0){ // if not initialized to -1 already
-	    --(mesh->EToV(k,v));
-	  }
-	}	
-	
-        for(v=0;v<Nverts;++v){
-	  //          mesh->GX(k,v) = VX[mesh->EToV(k,v)];
-	  //          mesh->GY(k,v) = VY[mesh->EToV(k,v)];
-	  //	  mesh->GZ(k,v) = VZ[mesh->EToV(k,v)];
-	  mesh->GX(k,v) = mesh->VX(mesh->EToV(k,v));
-	  mesh->GY(k,v) = mesh->VY(mesh->EToV(k,v));
-	  mesh->GZ(k,v) = mesh->VZ(mesh->EToV(k,v));	  
+          if (mesh->EToV(k,v)>0){ // if not initialized to -1 already
+            --(mesh->EToV(k,v));
+          }
         }
-	
+
+        for(v=0;v<Nverts;++v){
+          //          mesh->GX(k,v) = VX[mesh->EToV(k,v)];
+          //          mesh->GY(k,v) = VY[mesh->EToV(k,v)];
+          //	  mesh->GZ(k,v) = VZ[mesh->EToV(k,v)];
+          mesh->GX(k,v) = mesh->VX(mesh->EToV(k,v));
+          mesh->GY(k,v) = mesh->VY(mesh->EToV(k,v));
+          mesh->GZ(k,v) = mesh->VZ(mesh->EToV(k,v));
+        }
+
       }
-      
+
     }
   }
 
@@ -281,7 +281,7 @@ Mesh *ReadGmshHybrid(char *filename){
   for (int i = 0; i < mesh->Nv; ++i){
     printf("%f %f %f\n",mesh->VX(i),mesh->VY(i),mesh->VZ(i));
   }
- 
+
   printf("EToV = \n");
   for (int e = 0; e < mesh->K; ++e){
     for (int v = 0; v < 8; ++v){
@@ -323,11 +323,11 @@ static int compare_faces_hybrid(const void *obj1, const void *obj2){
 }
 
 void FacePairHybrid(Mesh *mesh){
-  
+
   /// build a face-to-vertex connectivity array "FToV"
-  int NvertsPerFace = 4; // max # verts per face 
+  int NvertsPerFace = 4; // max # verts per face
   int Nfaces = 6; // max number of faces
- 
+
   MatrixXi FToV(NvertsPerFace+2, Nfaces*mesh->K);
   FToV.fill(-1);
 
@@ -335,20 +335,20 @@ void FacePairHybrid(Mesh *mesh){
   for(int k=0; k < mesh->K; ++k){
 
     int Nf = getNumFaces(k,mesh->EToV);
-    
+
     for(int f = 0; f < Nf; ++f){
-      
+
       int Nv = getNumVertexOnFace(k, f, mesh->EToV);  /// number of vertices on the face
 
       /// raw sort of vertex numbers on this face
-      VectorXi ns(NvertsPerFace); ns.fill(-1);      
+      VectorXi ns(NvertsPerFace); ns.fill(-1);
       for(int i = 0; i < Nv; ++i){
-	ns(i) = getVertexOnFace(k,f,i,mesh->EToV);
+        ns(i) = getVertexOnFace(k,f,i,mesh->EToV);
       }
       std::sort(ns.data(), ns.data()+ns.size()); // sort verts before using
       cout << "face " << counter << ", verts = " << endl << ns.transpose() << endl;
       for(int i=0; i< Nv; ++i){
-	FToV(i, counter) = ns(i);  // vertex numbers
+        FToV(i, counter) = ns(i);  // vertex numbers
       }
       FToV(NvertsPerFace, counter) = k;  // element number
       FToV(NvertsPerFace+1, counter) = f;  /// face number
@@ -357,30 +357,30 @@ void FacePairHybrid(Mesh *mesh){
       ++counter;
     }
   }
- 
+
   /// sort by 1~4 row (forgot column major convention)
   int Ntotalfaces = counter;
   //  printf("Ntotalfaces = %d\n",Ntotalfaces);
   //  cout << "FToV = " << endl << FToV << endl;
-  
+
   // sort to find matches
-  face4 *myfaces = (face4*) calloc(Ntotalfaces, sizeof(face4));  
+  face4 *myfaces = (face4*) calloc(Ntotalfaces, sizeof(face4));
   for(int i = 0; i < Ntotalfaces; ++i){
     for (int v = 0; v < NvertsPerFace; ++v){
       myfaces[i].v[v] = FToV(v,i);
     }
     myfaces[i].e = FToV(NvertsPerFace,i);
-    myfaces[i].f = FToV(NvertsPerFace+1,i);    
+    myfaces[i].f = FToV(NvertsPerFace+1,i);
   }
 
   qsort(myfaces, Ntotalfaces, sizeof(face4), compare_faces_hybrid);
 
-  /// build 'EToE' and 'EToF' connectivity arrays 
+  /// build 'EToE' and 'EToF' connectivity arrays
   mesh->EToE.resize(mesh->K,Nfaces); mesh->EToE.fill(-1);
   mesh->EToF.resize(mesh->K,Nfaces); mesh->EToF.fill(-1);
 
   for(int i = 0; i < Ntotalfaces; ++i){
-    
+
     /// find neighbors
     if(myfaces[i].v[0]==myfaces[i+1].v[0] &&
        myfaces[i].v[1]==myfaces[i+1].v[1] &&
@@ -390,12 +390,12 @@ void FacePairHybrid(Mesh *mesh){
       int v1 = myfaces[i].v[0];
       int v2 = myfaces[i].v[1];
       int v3 = myfaces[i].v[2];
-      int v4 = myfaces[i].v[3];      
+      int v4 = myfaces[i].v[3];
 
       int u1 = myfaces[i+1].v[0];
       int u2 = myfaces[i+1].v[1];
       int u3 = myfaces[i+1].v[2];
-      int u4 = myfaces[i+1].v[3];      
+      int u4 = myfaces[i+1].v[3];
 
       int e1 = myfaces[i].e;
       int f1 = myfaces[i].f;
@@ -404,11 +404,11 @@ void FacePairHybrid(Mesh *mesh){
 
 #if 0
       printf("face %d: v1 = %d,%d,%d,%d, v2 = %d,%d,%d,%d,  e1 = %d, e2 = %d, f1 = %d, f2 = %d\n",
-	     i,v1,v2,v3,v4,
-	     u1,u2,u3,u4,
-	     e1,e2,f1,f2);
+             i,v1,v2,v3,v4,
+             u1,u2,u3,u4,
+             e1,e2,f1,f2);
 #endif
-      
+
       mesh->EToE(e1,f1) = e2;
       mesh->EToE(e2,f2) = e1;
       mesh->EToF(e1,f1) = f2;
@@ -419,17 +419,17 @@ void FacePairHybrid(Mesh *mesh){
   for(int e = 0; e < mesh->K; ++e){
 
     int Nf = getNumFaces(e,mesh->EToV);
-    
+
     for(int f = 0; f < Nf; ++f){
       if (mesh->EToE(e,f)==-1){
-	mesh->EToE(e,f) = e;
-	mesh->EToF(e,f) = f;
+        mesh->EToE(e,f) = e;
+        mesh->EToF(e,f) = f;
       }
     }
   }
 #if 1
   cout << "EToE = " << endl << mesh->EToE << endl;
-  cout << "EToF = " << endl << mesh->EToF << endl;  
+  cout << "EToF = " << endl << mesh->EToF << endl;
 #endif
 }
 
@@ -461,25 +461,25 @@ void StartUpWedge(Mesh *mesh){
   // make wedge volume nodes
   mesh->r.resize(Np);
   mesh->s.resize(Np);
-  mesh->t.resize(Np);  
-  for (int i = 0; i < N+1; ++i){ 
+  mesh->t.resize(Np);
+  for (int i = 0; i < N+1; ++i){
     for (int j = 0; j < NpTri; ++j){
       mesh->r(j + i*NpTri) = rtri(j);
       mesh->s(j + i*NpTri) = stri(j);
-      mesh->t(j + i*NpTri) = r1D(i);	
+      mesh->t(j + i*NpTri) = r1D(i);
     }
   }
 
   // volume VDM matrix
   MatrixXd V,Vr,Vs,Vt;
   WedgeBasis(N,mesh->r,mesh->s,mesh->t,
-	     V,Vr,Vs,Vt);
-  
+             V,Vr,Vs,Vt);
+
   int Nfaces = 5;
 #if 0
   // get reference surface nodes
   mesh->Fmask.resize(NpQuad,Nfaces);
-  mesh->Fmask.fill(-1); 
+  mesh->Fmask.fill(-1);
   int skf[Nfaces];
   for(int f=0; f<Nfaces; ++f){
     skf[f] = 0;
@@ -501,7 +501,7 @@ void StartUpWedge(Mesh *mesh){
       mesh->Fmask(skf[2],2) = i;
       ++skf[2];
     }
-    if (fabs(r+1.0)<NODETOL){      
+    if (fabs(r+1.0)<NODETOL){
       mesh->Fmask(skf[3],3) = i;
       ++skf[3];
     }
@@ -517,7 +517,7 @@ void StartUpWedge(Mesh *mesh){
   VectorXd rf(NfpNfaces);
   VectorXd sf(NfpNfaces);
   VectorXd tf(NfpNfaces);
-  
+
   // t = -1, use triangular nodes
   // (assume they're the first NpTri nodes of wedge)
   int sk = 0;
@@ -532,14 +532,14 @@ void StartUpWedge(Mesh *mesh){
     rf(sk) = mesh->r(i);
     sf(sk) = mesh->s(i);
     tf(sk) = 1.0;
-    ++sk;    
+    ++sk;
   }
   // s = -1
   for (int i = 0; i < N+1; ++i){
     for (int j = 0; j < N+1; ++j){
-      rf(sk) = r1Dq(i); 
-      sf(sk) = -1.0;    
-      tf(sk) = r1Dq(j); 
+      rf(sk) = r1Dq(i);
+      sf(sk) = -1.0;
+      tf(sk) = r1Dq(j);
       ++sk;
     }
   }
@@ -561,43 +561,43 @@ void StartUpWedge(Mesh *mesh){
       ++sk;
     }
   }
-    
-  // map nodes to physical coords  
+
+  // map nodes to physical coords
   VectorXd r1(6),s1(6),t1(6);
   r1 << -1., 1., -1., -1., 1., -1.;
   s1 << -1., -1., 1., -1., -1., 1.;
   t1 << -1., -1., -1., 1., 1., 1.;
   MatrixXd V1,V1r,V1s,V1t;
   WedgeBasis(1,r1,s1,t1,
-	     V1,V1r,V1s,V1t);
+             V1,V1r,V1s,V1t);
 
   MatrixXd V1Ntmp,V1Nr,V1Ns,V1Nt;
   WedgeBasis(1,mesh->r,mesh->s,mesh->t,
-	     V1Ntmp,V1Nr,V1Ns,V1Nt);
+             V1Ntmp,V1Nr,V1Ns,V1Nt);
   MatrixXd V1N = mrdivide(V1Ntmp,V1);
 
   // make volume nodes
   mesh->x.resize(Np,mesh->K);
   mesh->y.resize(Np,mesh->K);
-  mesh->z.resize(Np,mesh->K);  
+  mesh->z.resize(Np,mesh->K);
   for(int e = 0; e < mesh->K; ++e){
     MatrixXd vxyz(6,3);
     for(int v = 0; v < 6; ++v){
       int vid = mesh->EToV(e,v);
       vxyz(v,0) = mesh->VX(vid);
       vxyz(v,1) = mesh->VY(vid);
-      vxyz(v,2) = mesh->VZ(vid);      
+      vxyz(v,2) = mesh->VZ(vid);
     }
     MatrixXd xyz = V1N*vxyz;
     mesh->x.col(e) = xyz.col(0);
     mesh->y.col(e) = xyz.col(1);
-    mesh->z.col(e) = xyz.col(2);    
+    mesh->z.col(e) = xyz.col(2);
   }
 
   // make surface nodes
   MatrixXd Vf,Vrf,Vsf,Vtf;
   WedgeBasis(N,rf,sf,tf,
-	     Vf,Vrf,Vsf,Vtf);  
+             Vf,Vrf,Vsf,Vtf);
   mesh->Vfq = mrdivide(Vf,V);
   MatrixXd xf = mesh->Vfq * mesh->x;
   MatrixXd yf = mesh->Vfq * mesh->y;
@@ -606,12 +606,12 @@ void StartUpWedge(Mesh *mesh){
 #if 0
   cout << "x = [" << endl << mesh->x << "];"<<endl;
   cout << "y = [" << endl << mesh->y << "];"<<endl;
-  cout << "z = [" << endl << mesh->z << "];"<<endl;  
+  cout << "z = [" << endl << mesh->z << "];"<<endl;
   cout << "xf = [" << endl << xf << "];"<<endl;
   cout << "yf = [" << endl << yf << "];"<<endl;
-  cout << "zf = [" << endl << zf << "];"<<endl;  
+  cout << "zf = [" << endl << zf << "];"<<endl;
 #endif
-  
+
   // pair surface nodes
   MatrixXi mapM(NfpNfaces,mesh->K);
   MatrixXi mapP(NfpNfaces,mesh->K);
@@ -621,13 +621,13 @@ void StartUpWedge(Mesh *mesh){
     // face node offsets
     VectorXi NfpSk(5);
     NfpSk << 0, NpTri, 2*NpTri, 2*NpTri+NpQuad,2*NpTri+2*NpQuad;
-    
+
     int skf = 0;
-    
+
     for (int f = 0; f < Nfaces; ++f){
 
       int Nfpts = (f < 2) ? NpTri : NpQuad;
-      
+
       // find nbr
       int enbr = mesh->EToE(e,f);
       int fnbr = mesh->EToF(e,f);
@@ -635,55 +635,55 @@ void StartUpWedge(Mesh *mesh){
       double x1, x2, y1,y2,z1,z2;
 
       for (int i = 0; i < Nfpts; ++i){
-	mapM(i+NfpSk(f),e) = i + NfpSk(f) + NfpNfaces*e;
+        mapM(i+NfpSk(f),e) = i + NfpSk(f) + NfpNfaces*e;
       }
-      
+
       if (e==enbr){
-	for(int i = 0; i < Nfpts; ++i){
-	  mapP(i + NfpSk(f),e) = i + NfpSk(f) + NfpNfaces*e;
-	  ++skf;
-	}
+        for(int i = 0; i < Nfpts; ++i){
+          mapP(i + NfpSk(f),e) = i + NfpSk(f) + NfpNfaces*e;
+          ++skf;
+        }
       }else{
 
-	MatrixXd xM(Nfpts,3);  MatrixXd xP(Nfpts,3);
+        MatrixXd xM(Nfpts,3);  MatrixXd xP(Nfpts,3);
         for(int i = 0; i < Nfpts; ++i){
-	  int id1 = i + NfpSk(f);
-	  x1 = xf(id1,e); y1 = yf(id1,e); z1 = zf(id1,e);
-	  xM(i,0) = x1; xM(i,1) = y1; xM(i,2) = z1;
+          int id1 = i + NfpSk(f);
+          x1 = xf(id1,e); y1 = yf(id1,e); z1 = zf(id1,e);
+          xM(i,0) = x1; xM(i,1) = y1; xM(i,2) = z1;
           int id2 = i + NfpSk(fnbr);
-          x2 = xf(id2,enbr); y2 = yf(id2,enbr); z2 = zf(id2,enbr);  
+          x2 = xf(id2,enbr); y2 = yf(id2,enbr); z2 = zf(id2,enbr);
           xP(i,0) = x2; xP(i,1) = y2; xP(i,2) = z2;
         }
 
 
-	for(int i = 0; i < Nfpts; ++i){
-	  
-	  double minDist = 1000.0;
-	  
-	  int id1 = i + NfpSk(f);
-	  x1 = xf(id1,e); y1 = yf(id1,e); z1 = zf(id1,e);
-	  
+        for(int i = 0; i < Nfpts; ++i){
+
+          double minDist = 1000.0;
+
+          int id1 = i + NfpSk(f);
+          x1 = xf(id1,e); y1 = yf(id1,e); z1 = zf(id1,e);
+
           bool node_found = false;
-	  for(int j = 0; j < Nfpts; ++j){
-	    
-	    int id2 = j + NfpSk(fnbr);
-	    x2 = xf(id2,enbr); y2 = yf(id2,enbr); z2 = zf(id2,enbr);
-	    
-	    // find distance between these nodes
-	    int d12 = (x1-x2)*(x1-x2) + (y1-y2)*(y1-y2) + (z1-z2)*(z1-z2);
-	    minDist = min(minDist,d12);
-	    if (d12<NODETOL){
-	      mapP(id1,e) = id2 + NfpNfaces*enbr;
-	      node_found = true;
-	      break;
-	    }
-	  }
+          for(int j = 0; j < Nfpts; ++j){
+
+            int id2 = j + NfpSk(fnbr);
+            x2 = xf(id2,enbr); y2 = yf(id2,enbr); z2 = zf(id2,enbr);
+
+            // find distance between these nodes
+            int d12 = (x1-x2)*(x1-x2) + (y1-y2)*(y1-y2) + (z1-z2)*(z1-z2);
+            minDist = std::min(minDist, (double) d12);
+            if (d12<NODETOL){
+              mapP(id1,e) = id2 + NfpNfaces*enbr;
+              node_found = true;
+              break;
+            }
+          }
           if(!node_found){
             printf("Lost node %d on elem %d, face %d. min dist = %g\n",i,e,f,minDist);
             cout << "xM = " << endl << xM << endl;
             cout << "xP = " << endl << xP << endl;
           }
-	}
+        }
       }
     }
   }
@@ -699,17 +699,17 @@ void StartUpWedge(Mesh *mesh){
 
   MatrixXd V1D = Vandermonde1D(N,r1D);
   MatrixXd Vr1D;
-  GradVandermonde1D(N,r1D,Vr1D);  
+  GradVandermonde1D(N,r1D,Vr1D);
   mesh->Dt = mrdivide(Vr1D,V1D); // 1D op
 
   // quadrature operators
   VectorXd rqtri,sqtri,wqtri;
-  tri_cubature(N, rqtri, sqtri, wqtri);  
+  tri_cubature(N, rqtri, sqtri, wqtri);
   MatrixXd VqTri = Vandermonde2D(N,rqtri,sqtri);
-  VqTri = mrdivide(VqTri,VTri); 
+  VqTri = mrdivide(VqTri,VTri);
   MatrixXd VrqTri,VsqTri;
   GradVandermonde2D(N,rqtri,sqtri,VrqTri,VsqTri);
-  
+
   MatrixXd V1Dq = Vandermonde1D(N,r1Dq);
   V1Dq = mrdivide(V1Dq,V1D);
   MatrixXd Vr1Dq;
@@ -724,17 +724,17 @@ void StartUpWedge(Mesh *mesh){
 
   // for skew-sym wedges
   MatrixXd PrqTri = invMtri*VrqTri.transpose()*wqtri.asDiagonal();
-  MatrixXd PsqTri = invMtri*VsqTri.transpose()*wqtri.asDiagonal();  
-  MatrixXd Ptq1D = invM1D*Vr1Dq.transpose()*w1Dq.asDiagonal();    
+  MatrixXd PsqTri = invMtri*VsqTri.transpose()*wqtri.asDiagonal();
+  MatrixXd Ptq1D = invM1D*Vr1Dq.transpose()*w1Dq.asDiagonal();
 
-  
-  
+
+
 }//end startup of wedge
 
 #if 0
 MatrixXd GeometricFactorsHybrid(Mesh *mesh, int e,
-				MatrixXd Dr, MatrixXd Ds, MatrixXd Dt){
-  
+                                MatrixXd Dr, MatrixXd Ds, MatrixXd Dt){
+
   double x1 = mesh->GX(e,0), y1 =  mesh->GY(e,0), z1 =  mesh->GZ(e,0);
   double x2 = mesh->GX(e,1), y2 =  mesh->GY(e,1), z2 =  mesh->GZ(e,1);
   double x3 = mesh->GX(e,2), y3 =  mesh->GY(e,2), z3 =  mesh->GZ(e,2);
@@ -753,9 +753,9 @@ MatrixXd GeometricFactorsHybrid(Mesh *mesh, int e,
   MatrixXd Dxyzt = Dt*xyz;
 
   VectorXd dxdr=Dxyzr.col(0);  VectorXd dydr=Dxyzr.col(1);  VectorXd dzdr=Dxyzr.col(2);
-  VectorXd dxds=Dxyzs.col(0);  VectorXd dyds=Dxyzs.col(1);  VectorXd dzds=Dxyzs.col(2);  
-  VectorXd dxdt=Dxyzt.col(0);  VectorXd dydt=Dxyzt.col(1);  VectorXd dzdt=Dxyzt.col(2);  
-  
+  VectorXd dxds=Dxyzs.col(0);  VectorXd dyds=Dxyzs.col(1);  VectorXd dzds=Dxyzs.col(2);
+  VectorXd dxdt=Dxyzt.col(0);  VectorXd dydt=Dxyzt.col(1);  VectorXd dzdt=Dxyzt.col(2);
+
   VectorXd J =
     dxdr.array()*(dyds.array()*dzdt.array()-dzds.array()*dydt.array())
     -dydr.array()*(dxds.array()*dzdt.array()-dzds.array()*dxdt.array())
@@ -774,15 +774,15 @@ MatrixXd GeometricFactorsHybrid(Mesh *mesh, int e,
   VectorXd dtdz =  (dxdr.array()*dyds.array() - dydr.array()*dxds.array())/J.array();
 
   MatrixXd vgeo(Dr.rows(),10);
-  vgeo.col(0) = drdx;  vgeo.col(1) = drdy;  vgeo.col(2) = drdz;  
-  vgeo.col(3) = dsdx;  vgeo.col(4) = dsdy;  vgeo.col(5) = dsdz;  
+  vgeo.col(0) = drdx;  vgeo.col(1) = drdy;  vgeo.col(2) = drdz;
+  vgeo.col(3) = dsdx;  vgeo.col(4) = dsdy;  vgeo.col(5) = dsdz;
   vgeo.col(6) = dtdx;  vgeo.col(7) = dtdy;  vgeo.col(8) = dtdz;
   vgeo.col(9) = J;
-  
+
 }
 
 MatrixXd sgeo NormalsHybrid(Mesh *mesh, int e,
-			    MatrixXd Dr, MatrixXd Ds, MatrixXd Dt){
+                            MatrixXd Dr, MatrixXd Ds, MatrixXd Dt){
 
   MatrixXd vgeo;
   GeometricFactorsHybrid(mesh,e,Dr,Ds,Dt,vgeo);
@@ -794,28 +794,28 @@ MatrixXd sgeo NormalsHybrid(Mesh *mesh, int e,
   VectorXd dsdx = vgeo.col(3); VectorXd dsdy = vgeo.col(4); VectorXd dsdz = vgeo.col(5);
   VectorXd dtdx = vgeo.col(6); VectorXd dtdy = vgeo.col(7); VectorXd dtdz = vgeo.col(8);
   VectorXd J = vgeo.col(9);
- 
+
   if (Nf==4){ // tet
     printf("Nf = %d\n",Nf);
   }else if (Nf==5 && Nv==5){ // pyramid
     printf("Nf = %d\n",Nf);
   }else if (Nf==5 && Nv==6){ // prism
-    
-    int fid = 0;
-    
 
-    
+    int fid = 0;
+
+
+
   }else{ // hex
     printf("Nf = %d\n",Nf);
   }
-  
+
   MatrixXd sgeo(Dr.rows(),4);
   //  sgeo.col(0) = nx;
 }
 
 // general: input nodes, get map back
 void BuildFaceMapsWedge(Mesh *mesh, MatrixXd xf, MatrixXd yf, MatrixXd zf,
-			MatrixXi &mapP){
+                        MatrixXi &mapP){
 
   int K       = mesh->K;
   int Nfaces  = mesh->Nfaces;
@@ -843,16 +843,16 @@ void BuildFaceMapsWedge(Mesh *mesh, MatrixXd xf, MatrixXd yf, MatrixXd zf,
       f2 = mesh->EToF(k1,f1);
 
       if(k1==k2){
-	for(int i = 0; i < Nfpts; ++i){
-	  mapP(i + f1*Nfpts,k1) = i + f1*Nfpts + xf.rows()*k1;
-	}
+        for(int i = 0; i < Nfpts; ++i){
+          mapP(i + f1*Nfpts,k1) = i + f1*Nfpts + xf.rows()*k1;
+        }
       }else{
 
         MatrixXd xM(Nfpts,3);
         MatrixXd xP(Nfpts,3);
         for(int i = 0; i < Nfpts; ++i){
-	  int id1 = i + Nfpts * f1;
-	  x1 = xf(id1,k1); y1 = yf(id1,k1); z1 = zf(id1,k1);
+          int id1 = i + Nfpts * f1;
+          x1 = xf(id1,k1); y1 = yf(id1,k1); z1 = zf(id1,k1);
           int id2 = i + Nfpts * f2;
           x2 = xf(id2,k2); y2 = yf(id2,k2); z2 = zf(id2,k2);
 
@@ -860,33 +860,33 @@ void BuildFaceMapsWedge(Mesh *mesh, MatrixXd xf, MatrixXd yf, MatrixXd zf,
           xP(i,0) = x2; xP(i,1) = y2; xP(i,2) = z2;
         }
 
-	for(int i = 0; i < Nfpts; ++i){
+        for(int i = 0; i < Nfpts; ++i){
 
-	  double minDist = 1000.0;
+          double minDist = 1000.0;
 
-	  int id1 = i + Nfpts * f1;
-	  x1 = xf(id1,k1); y1 = yf(id1,k1); z1 = zf(id1,k1);
+          int id1 = i + Nfpts * f1;
+          x1 = xf(id1,k1); y1 = yf(id1,k1); z1 = zf(id1,k1);
           bool node_found = false;
-	  for(int j = 0; j < Nfpts; ++j){
+          for(int j = 0; j < Nfpts; ++j){
 
-	    int id2 = j + Nfpts * f2;
-	    x2 = xf(id2,k2); y2 = yf(id2,k2); z2 = zf(id2,k2);
+            int id2 = j + Nfpts * f2;
+            x2 = xf(id2,k2); y2 = yf(id2,k2); z2 = zf(id2,k2);
 
-	    // find distance between these nodes
-	    d12 = (x1-x2)*(x1-x2) + (y1-y2)*(y1-y2) + (z1-z2)*(z1-z2);
-	    minDist = min(minDist,d12);
-	    if (d12<NODETOL){
-	      mapP(id1,k1) = id2 + xf.rows()*k2;
-	      node_found = true;
-	      break;
-	    }
-	  }
+            // find distance between these nodes
+            d12 = (x1-x2)*(x1-x2) + (y1-y2)*(y1-y2) + (z1-z2)*(z1-z2);
+            minDist = std::min(minDist, (double) d12);
+            if (d12<NODETOL){
+              mapP(id1,k1) = id2 + xf.rows()*k2;
+              node_found = true;
+              break;
+            }
+          }
           if(!node_found){
             printf("BuildFaceNodeMaps: lost node %d on elems %d, %d. min dist = %g\n",i,k1,k2,minDist);
             cout << "xM = " << endl << xM << endl;
             cout << "xP = " << endl << xP << endl;
           }
-	}
+        }
       }
 
     }// faces
@@ -898,4 +898,3 @@ void BuildFaceMapsWedge(Mesh *mesh, MatrixXd xf, MatrixXd yf, MatrixXd zf,
 }
 
 #endif
-

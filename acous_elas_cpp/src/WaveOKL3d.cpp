@@ -1,7 +1,9 @@
+#include <algorithm>
 #include <stdio.h>
 #include "fem.h"
 
-#include <occa.hpp>
+#include "Mesh.h"
+#include "Timer.h"
 
 // switches b/w nodal and bernstein bases
 #define USE_SKEW 1
@@ -11,7 +13,7 @@ int ngeo, nvgeo, nfgeo; // number of geometric factors
 
 // OCCA device
 occa::device device;
-occa::kernelInfo dgInfo;
+occa::properties dgInfo;
 
 // OCCA array for geometric factors
 occa::memory c_vgeo;
@@ -228,29 +230,31 @@ void InitWADG_curved(Mesh *mesh){
   MatrixXd Ptq  = invM*Vtq.transpose()*mesh->wq.asDiagonal();
   MatrixXd Pfq  = invM*Vfq.transpose()*mesh->wfq.asDiagonal();
 
-  dgInfo.addDefine("p_Nq",mesh->Nq); // vol quadrature
-  dgInfo.addDefine("p_Nfq",mesh->Nfq); // surf quadrature for one face
-  dgInfo.addDefine("p_NfqNfaces",mesh->Nfq * Nfaces); // surf quadrature
+  dgInfo["defines/p_Nq"] = mesh->Nq; // vol quadrature
+  dgInfo["defines/p_Nfq"] = mesh->Nfq; // surf quadrature for one face
+  dgInfo["defines/p_NfqNfaces"] = mesh->Nfq * Nfaces; // surf quadrature
 
   if(!strcmp(device.mode().c_str(), "CUDA")){
     cout << " Adding CUDA optimization " << endl;
-    dgInfo.addCompilerFlag("--ftz=true");
-    dgInfo.addCompilerFlag("--prec-div=false");
-    dgInfo.addCompilerFlag("--prec-sqrt=false");
-    dgInfo.addCompilerFlag("--use_fast_math");
-    dgInfo.addCompilerFlag("--fmad=true"); // compiler option for cuda
-    dgInfo.addCompilerFlag("-Xptxas --def-store-cache=cs");
-    dgInfo.addCompilerFlag("-Xptxas --force-store-cache=cs");
+    dgInfo["compilerFlags"] +=
+      " --ftz=true"
+      " --prec-div=false"
+      " --prec-sqrt=false"
+      " --use_fast_math"
+      " --fmad=true" // compiler option for cuda
+      " -Xptxas --def-store-cache=cs"
+      " -Xptxas --force-store-cache=cs";
   }
 
   if(!strcmp(device.mode().c_str(), "OpenCL")){
     cout << " Adding OpenCL optimization " << endl;
-    dgInfo.addCompilerFlag("-cl-strict-aliasing");
-    dgInfo.addCompilerFlag("-cl-mad-enable");
-    dgInfo.addCompilerFlag("-cl-no-signed-zeros");
-    dgInfo.addCompilerFlag("-cl-unsafe-math-optimizations");
-    dgInfo.addCompilerFlag("-cl-finite-math-only");
-    dgInfo.addCompilerFlag("-cl-fast-relaxed-math");
+    dgInfo["compilerFlags"] +=
+      " -cl-strict-aliasing"
+      " -cl-mad-enable"
+      " -cl-no-signed-zeros"
+      " -cl-unsafe-math-optimizations"
+      " -cl-finite-math-only"
+      " -cl-fast-relaxed-math";
   }
 
 
@@ -314,10 +318,10 @@ void InitWADG_curved(Mesh *mesh){
   // ======= use reduced strength quadrature for WADG update step
 
   VectorXd rq,sq,tq,wq;
-  tet_cubature(min(21,2*p_N+1),rq,sq,tq,wq); // 21 = max quadrature degree
+  tet_cubature(std::min(21,2*p_N+1),rq,sq,tq,wq); // 21 = max quadrature degree
   MatrixXd Vqtmp = Vandermonde3D(p_N,rq,sq,tq);
   MatrixXd Vq_reduced = mrdivide(Vqtmp,mesh->V);
-  dgInfo.addDefine("p_Nq_reduced",Vq_reduced.rows()); // vol quadrature
+  dgInfo["defines/p_Nq_reduced"] = (uint64_t) Vq_reduced.rows(); // vol quadrature
 
   MatrixXd Vrqtmp,Vsqtmp,Vtqtmp;
   GradVandermonde3D(p_N,rq,sq,tq,Vrqtmp,Vsqtmp,Vtqtmp);
@@ -335,9 +339,9 @@ void InitWADG_curved(Mesh *mesh){
   MatrixXd Jq_reduced(Vq_reduced.rows(),mesh->K);
   for (int e = 0; e < mesh->K; ++e){
     MatrixXd vgeo = vgeofacs3d(mesh->x.col(e),
-			       mesh->y.col(e),
-			       mesh->z.col(e),
-			       Vrq_reduced,Vsq_reduced,Vtq_reduced);
+                               mesh->y.col(e),
+                               mesh->z.col(e),
+                               Vrq_reduced,Vsq_reduced,Vtq_reduced);
     Jq_reduced.col(e)  = vgeo.col(9);
   }
 
@@ -372,32 +376,32 @@ void InitWADG_curved(Mesh *mesh){
   printf("Building WADG kernels from %s\n",src.c_str());
 
   // strong form curved kernels
-  rk_volume_WADG  = device.buildKernelFromSource(src.c_str(), "rk_volume_WADG", dgInfo);
-  rk_surface_WADG = device.buildKernelFromSource(src.c_str(), "rk_surface_WADG", dgInfo);
-  rk_update_WADG  = device.buildKernelFromSource(src.c_str(), "rk_update_WADG", dgInfo);
-  //rk_update_WADG  = device.buildKernelFromSource(src.c_str(), "rk_update_WADG_block", dgInfo);
-  //rk_update_WADG  = device.buildKernelFromSource(src.c_str(), "rk_update_WADG_old", dgInfo);
+  rk_volume_WADG  = device.buildKernel(src.c_str(), "rk_volume_WADG", dgInfo);
+  rk_surface_WADG = device.buildKernel(src.c_str(), "rk_surface_WADG", dgInfo);
+  rk_update_WADG  = device.buildKernel(src.c_str(), "rk_update_WADG", dgInfo);
+  //rk_update_WADG  = device.buildKernel(src.c_str(), "rk_update_WADG_block", dgInfo);
+  //rk_update_WADG  = device.buildKernel(src.c_str(), "rk_update_WADG_old", dgInfo);
 
   // variants for strong form
-  kernel_write_vol_quad4 = device.buildKernelFromSource(src.c_str(), "kernel_write_vol_quad4", dgInfo);
-  rk_volume_WADG_Qtmp = device.buildKernelFromSource(src.c_str(), "rk_volume_WADG_Qtmp", dgInfo);
-  rk_surface_WADG_Qf = device.buildKernelFromSource(src.c_str(), "rk_surface_WADG_Qf", dgInfo);
-  kernel_write_surf_quad = device.buildKernelFromSource(src.c_str(), "kernel_write_surf_quad", dgInfo);
-  rk_surface_WADG_face = device.buildKernelFromSource(src.c_str(), "rk_surface_WADG_face", dgInfo);
+  kernel_write_vol_quad4 = device.buildKernel(src.c_str(), "kernel_write_vol_quad4", dgInfo);
+  rk_volume_WADG_Qtmp = device.buildKernel(src.c_str(), "rk_volume_WADG_Qtmp", dgInfo);
+  rk_surface_WADG_Qf = device.buildKernel(src.c_str(), "rk_surface_WADG_Qf", dgInfo);
+  kernel_write_surf_quad = device.buildKernel(src.c_str(), "kernel_write_surf_quad", dgInfo);
+  rk_surface_WADG_face = device.buildKernel(src.c_str(), "rk_surface_WADG_face", dgInfo);
 
   // build strong-weak form kernels: split form
-  kernel_write_quad_pts = device.buildKernelFromSource(src.c_str(), "kernel_write_quad_pts", dgInfo);
-  kernel_write_vol_quad6 = device.buildKernelFromSource(src.c_str(), "kernel_write_vol_quad6", dgInfo);
-  rk_volume_WADG_skew = device.buildKernelFromSource(src.c_str(), "rk_volume_WADG_skew", dgInfo);
-  rk_surface_WADG_skew = device.buildKernelFromSource(src.c_str(), "rk_surface_WADG_skew", dgInfo);
+  kernel_write_quad_pts = device.buildKernel(src.c_str(), "kernel_write_quad_pts", dgInfo);
+  kernel_write_vol_quad6 = device.buildKernel(src.c_str(), "kernel_write_vol_quad6", dgInfo);
+  rk_volume_WADG_skew = device.buildKernel(src.c_str(), "rk_volume_WADG_skew", dgInfo);
+  rk_surface_WADG_skew = device.buildKernel(src.c_str(), "rk_surface_WADG_skew", dgInfo);
 
   // monolithic strong-weak kernels
-  rk_volume_WADG_skew_combine = device.buildKernelFromSource(src.c_str(), "rk_volume_WADG_skew_combine", dgInfo);
-    rk_surface_WADG_skew_combine = device.buildKernelFromSource(src.c_str(), "rk_surface_WADG_skew_combine", dgInfo);
+  rk_volume_WADG_skew_combine = device.buildKernel(src.c_str(), "rk_volume_WADG_skew_combine", dgInfo);
+  rk_surface_WADG_skew_combine = device.buildKernel(src.c_str(), "rk_surface_WADG_skew_combine", dgInfo);
 
   // ================================= planar kernels
-  rk_volume_planar  = device.buildKernelFromSource(src.c_str(), "rk_volume_planar", dgInfo);
-  rk_surface_planar = device.buildKernelFromSource(src.c_str(), "rk_surface_planar", dgInfo);
+  rk_volume_planar  = device.buildKernel(src.c_str(), "rk_volume_planar", dgInfo);
+  rk_surface_planar = device.buildKernel(src.c_str(), "rk_surface_planar", dgInfo);
 
   printf("initialized WADG for curvilinear + heterogeneous media.\n");
 }
@@ -415,7 +419,7 @@ void InitWADG_subelem(Mesh *mesh,double(*c2_ptr)(double,double,double)){
   VectorXd rq,sq,tq,wq;
   //  if (0){
   if (2*p_N+1 <= 15){
-    tet_cubature(min(21,2*p_N+1),rq,sq,tq,wq); // 21 = max quadrature degree
+    tet_cubature(std::min(21,2*p_N+1),rq,sq,tq,wq); // 21 = max quadrature degree
   }else{
 
     // default to TP quadrature for now
@@ -429,7 +433,7 @@ void InitWADG_subelem(Mesh *mesh,double(*c2_ptr)(double,double,double)){
       for (int i = 0; i < Nq1D; ++i){
         for (int j = 0; j < Nq1D; ++j){
           rq(sk) = a1D(i); sq(sk) = a1D(j);
-	  tq(sk) = c1D(k); wq(sk) = wa(i)*wa(j)*wc(k);
+          tq(sk) = c1D(k); wq(sk) = wa(i)*wa(j)*wc(k);
           ++sk;
         }
       }
@@ -470,8 +474,8 @@ void InitWADG_subelem(Mesh *mesh,double(*c2_ptr)(double,double,double)){
       c11(i,e) = A + weight;
       c12(i,e) = B + weight;
       if (zq(i) > 0){ // vertical part
-	c11(i,e) *= 1.0/3.0; // 2*mu + lambda
-	c12(i,e) *= 0.5;
+        c11(i,e) *= 1.0/3.0; // 2*mu + lambda
+        c12(i,e) *= 0.5;
       }
 #else
       // isotropic but discontinuous
@@ -508,18 +512,18 @@ void InitWADG_subelem(Mesh *mesh,double(*c2_ptr)(double,double,double)){
   //  cout << "mu" << endl  << muq.col(0) << endl;
   //  cout << "lambda" << endl  << lambdaq.col(0) << endl;
 
-  dgInfo.addDefine("p_tau_v",1.0); // velocity penalty
-  dgInfo.addDefine("p_tau_s",1.0);
+  dgInfo["defines/p_tau_v"] = 1.0; // velocity penalty
+  dgInfo["defines/p_tau_s"] = 1.0;
 
   MatrixXd invM = mesh->V*mesh->V.transpose();
   MatrixXd Pq_reduced = invM*Vq_reduced.transpose()*wq.asDiagonal();
 
-  dgInfo.addDefine("p_Nq_reduced",Vq_reduced.rows()); // for update step quadrature
+  dgInfo["defines/p_Nq_reduced"] = (uint64_t) Vq_reduced.rows(); // for update step quadrature
 
   // not used in WADG subelem - just to compile other kernels
-  dgInfo.addDefine("p_NfqNfaces",mesh->Nfq * p_Nfaces); // surf quadrature
-  dgInfo.addDefine("p_Nq",mesh->Nq); // vol quadrature
-  dgInfo.addDefine("p_Nfq",mesh->Nfq); // surf quadrature for one face
+  dgInfo["defines/p_NfqNfaces"] = mesh->Nfq * p_Nfaces; // surf quadrature
+  dgInfo["defines/p_Nq"] = mesh->Nq; // vol quadrature
+  dgInfo["defines/p_Nfq"] = mesh->Nfq; // surf quadrature for one face
 
   setOccaArray(mesh,rhoq,c_rhoq);
   setOccaArray(mesh,lambdaq,c_lambdaq);
@@ -539,9 +543,9 @@ void InitWADG_subelem(Mesh *mesh,double(*c2_ptr)(double,double,double)){
 
   std::string src = "okl/ElasKernelsWADG.okl";
   printf("Building heterogeneous wave propagation WADG kernel from %s\n",src.c_str());
-  rk_update_elas  = device.buildKernelFromSource(src.c_str(), "rk_update_elas", dgInfo);
-  rk_volume_elas  = device.buildKernelFromSource(src.c_str(), "rk_volume_elas", dgInfo);
-  rk_surface_elas = device.buildKernelFromSource(src.c_str(), "rk_surface_elas", dgInfo);
+  rk_update_elas  = device.buildKernel(src.c_str(), "rk_update_elas", dgInfo);
+  rk_volume_elas  = device.buildKernel(src.c_str(), "rk_volume_elas", dgInfo);
+  rk_surface_elas = device.buildKernel(src.c_str(), "rk_surface_elas", dgInfo);
 
 }
 
@@ -613,7 +617,7 @@ void GordonHallSphere(Mesh *mesh){
     }
   }
 
-  int NpFace = max(0,(p_N-1)*(p_N-2)/2); // interior face dofs
+  int NpFace = std::max(0,(p_N-1)*(p_N-2)/2); // interior face dofs
   MatrixXi fids(NpFace,p_Nfaces); fids.fill(0);
   int fsk1 = 0,fsk2 = 0, fsk3 = 0, fsk4 = 0;
   int sk = 0;
@@ -621,20 +625,20 @@ void GordonHallSphere(Mesh *mesh){
     for (int j = 0; j <= p_N-k; ++j){
       for (int i = 0; i <= p_N-j-k; ++i){
 
-	// save interior face ids
-	if (k==0 && i > 0 && j > 0 && i+j<p_N){
-	  fids(fsk1,0) = sk; ++fsk1;
-	}
-	if (j==0 && i > 0 && k > 0 && i+k<p_N){
-	  fids(fsk2,1) = sk; ++fsk2;
-	}
-	if (i+j+k==p_N && i > 0 && j > 0 && i+j<p_N){
-	  fids(fsk3,2) = sk; ++fsk3;
-	}
-	if (i==0 && k > 0 && j > 0 && j+k < p_N){
-	  fids(fsk4,3) = sk; ++fsk4;
-	}
-	++sk;
+        // save interior face ids
+        if (k==0 && i > 0 && j > 0 && i+j<p_N){
+          fids(fsk1,0) = sk; ++fsk1;
+        }
+        if (j==0 && i > 0 && k > 0 && i+k<p_N){
+          fids(fsk2,1) = sk; ++fsk2;
+        }
+        if (i+j+k==p_N && i > 0 && j > 0 && i+j<p_N){
+          fids(fsk3,2) = sk; ++fsk3;
+        }
+        if (i==0 && k > 0 && j > 0 && j+k < p_N){
+          fids(fsk4,3) = sk; ++fsk4;
+        }
+        ++sk;
 
       }
     }
@@ -645,7 +649,7 @@ void GordonHallSphere(Mesh *mesh){
   // hier-modal basis
   MatrixXd vertVfull, edgeVfull, faceVfull;
   VandermondeHier(p_N,mesh->r,mesh->s,mesh->t,
-		  vertVfull,edgeVfull,faceVfull);
+                  vertVfull,edgeVfull,faceVfull);
   MatrixXd vertV, edgeV, faceV;
   edgeV.resize(edgeVfull.cols(),edgeVfull.cols());
   faceV.resize(faceVfull.cols(),faceVfull.cols());
@@ -700,20 +704,20 @@ void GordonHallSphere(Mesh *mesh){
       VectorXd radiu = r2.array().sqrt();
       VectorXd rerr = (radiu.array() - 1.0).array().abs();
       if (rerr.maxCoeff() < tol){ // if edge is on sphere
-	edgeCurvedElems(e) = 1;
+        edgeCurvedElems(e) = 1;
 
-	for (int i = 0; i < p_N + 1; ++i){
-	  int eid = eids(i,edge);
-	  double xb = mesh->x(eid,e);
-	  double yb = mesh->y(eid,e);
-	  double zb = mesh->z(eid,e);
-	  double rb = sqrt(xb*xb + yb*yb + zb*zb);
+        for (int i = 0; i < p_N + 1; ++i){
+          int eid = eids(i,edge);
+          double xb = mesh->x(eid,e);
+          double yb = mesh->y(eid,e);
+          double zb = mesh->z(eid,e);
+          double rb = sqrt(xb*xb + yb*yb + zb*zb);
 
-	  // snap nodes to unit radius sphere
-	  xc(eid,e) = xb/rb;
-	  yc(eid,e) = yb/rb;
-	  zc(eid,e) = zb/rb;
-	}
+          // snap nodes to unit radius sphere
+          xc(eid,e) = xb/rb;
+          yc(eid,e) = yb/rb;
+          zc(eid,e) = zb/rb;
+        }
 
       }//if on sphere
 
@@ -721,7 +725,7 @@ void GordonHallSphere(Mesh *mesh){
   }// e
 
   // blend edge displacements
-  int NpIntEdge = max(p_N-1,0);
+  int NpIntEdge = std::max(p_N-1,0);
   for (int e = 0; e < mesh->K; ++e){
     if (edgeCurvedElems(e)==1){
       // blend displacements into interior of elements
@@ -730,13 +734,13 @@ void GordonHallSphere(Mesh *mesh){
       VectorXd dz(NpIntEdge*6);
       int sk = 0;
       for (int edge = 0; edge < 6; ++edge){
-	for (int i = 0; i < NpIntEdge; ++i){
-	  int eid = eids(i+1,edge); // skip first/last edge id
-	  dx(sk) = xc(eid,e) - mesh->x(eid,e);
-	  dy(sk) = yc(eid,e) - mesh->y(eid,e);
-	  dz(sk) = zc(eid,e) - mesh->z(eid,e);
-	  ++sk;
-	}
+        for (int i = 0; i < NpIntEdge; ++i){
+          int eid = eids(i+1,edge); // skip first/last edge id
+          dx(sk) = xc(eid,e) - mesh->x(eid,e);
+          dy(sk) = yc(eid,e) - mesh->y(eid,e);
+          dz(sk) = zc(eid,e) - mesh->z(eid,e);
+          ++sk;
+        }
       }
 
       //printf("edgeBlend size = %d, %d, dx size = %d\n", edgeBlend.rows(),edgeBlend.cols(),dx.rows());
@@ -761,30 +765,30 @@ void GordonHallSphere(Mesh *mesh){
     // snap face nodes to sphere
     for (int e = 0; e < mesh->K; ++e){
       for (int face = 0; face < p_Nfaces; ++face){
-	VectorXi ev(3);
-	ev(0) = mesh->Fmask(0,face); ev(1) = mesh->Fmask(p_N,face); ev(2) = mesh->Fmask(p_Nfp-1,face);
-	VectorXd xb(3),yb(3),zb(3);
-	xb(0) = mesh->x(ev(0),e);  xb(1) = mesh->x(ev(1),e);  xb(2) = mesh->x(ev(2),e);
-	yb(0) = mesh->y(ev(0),e);  yb(1) = mesh->y(ev(1),e);  yb(2) = mesh->y(ev(2),e);
-	zb(0) = mesh->z(ev(0),e);  zb(1) = mesh->z(ev(1),e);  zb(2) = mesh->z(ev(2),e);
-	VectorXd r2 = xb.array()*xb.array() +  yb.array()*yb.array() +  zb.array()*zb.array();
-	VectorXd radiu = r2.array().sqrt();
-	VectorXd rerr = (radiu.array() - 1.0).array().abs();
-	if (rerr.maxCoeff() < tol){ // if face lies on sphere
-	  faceCurvedElems(e) = 1;
-	  for (int i = 0; i < p_Nfp; ++i){
-	    int fid = mesh->Fmask(i,face);
-	    double xb = mesh->x(fid,e);
-	    double yb = mesh->y(fid,e);
-	    double zb = mesh->z(fid,e);
-	    double rb = sqrt(xb*xb + yb*yb + zb*zb);
+        VectorXi ev(3);
+        ev(0) = mesh->Fmask(0,face); ev(1) = mesh->Fmask(p_N,face); ev(2) = mesh->Fmask(p_Nfp-1,face);
+        VectorXd xb(3),yb(3),zb(3);
+        xb(0) = mesh->x(ev(0),e);  xb(1) = mesh->x(ev(1),e);  xb(2) = mesh->x(ev(2),e);
+        yb(0) = mesh->y(ev(0),e);  yb(1) = mesh->y(ev(1),e);  yb(2) = mesh->y(ev(2),e);
+        zb(0) = mesh->z(ev(0),e);  zb(1) = mesh->z(ev(1),e);  zb(2) = mesh->z(ev(2),e);
+        VectorXd r2 = xb.array()*xb.array() +  yb.array()*yb.array() +  zb.array()*zb.array();
+        VectorXd radiu = r2.array().sqrt();
+        VectorXd rerr = (radiu.array() - 1.0).array().abs();
+        if (rerr.maxCoeff() < tol){ // if face lies on sphere
+          faceCurvedElems(e) = 1;
+          for (int i = 0; i < p_Nfp; ++i){
+            int fid = mesh->Fmask(i,face);
+            double xb = mesh->x(fid,e);
+            double yb = mesh->y(fid,e);
+            double zb = mesh->z(fid,e);
+            double rb = sqrt(xb*xb + yb*yb + zb*zb);
 
-	    // snap nodes to unit sphere
-	    xc(fid,e) = xb/rb;
-	    yc(fid,e) = yb/rb;
-	    zc(fid,e) = zb/rb;
-	  }
-	}
+            // snap nodes to unit sphere
+            xc(fid,e) = xb/rb;
+            yc(fid,e) = yb/rb;
+            zc(fid,e) = zb/rb;
+          }
+        }
 
       }
     }
@@ -793,42 +797,42 @@ void GordonHallSphere(Mesh *mesh){
     int NpIntFace = fids.rows();
     for (int e = 0; e < mesh->K; ++e){
       if (faceCurvedElems(e)==1){
-	// blend displacements into interior of elements
-	VectorXd dx(NpIntFace * p_Nfaces);
-	VectorXd dy(NpIntFace * p_Nfaces);
-	VectorXd dz(NpIntFace * p_Nfaces);
+        // blend displacements into interior of elements
+        VectorXd dx(NpIntFace * p_Nfaces);
+        VectorXd dy(NpIntFace * p_Nfaces);
+        VectorXd dz(NpIntFace * p_Nfaces);
 
-	int sk = 0;
-	for (int f = 0; f < p_Nfaces; ++f){
-	  for (int i = 0; i < fids.rows(); ++i){
-	    int fid = fids(i,f);
-	    dx(sk) = xc(fid,e) - mesh->x(fid,e);
-	    dy(sk) = yc(fid,e) - mesh->y(fid,e);
-	    dz(sk) = zc(fid,e) - mesh->z(fid,e);
-	    ++sk;
-	  }
-	}
+        int sk = 0;
+        for (int f = 0; f < p_Nfaces; ++f){
+          for (int i = 0; i < fids.rows(); ++i){
+            int fid = fids(i,f);
+            dx(sk) = xc(fid,e) - mesh->x(fid,e);
+            dy(sk) = yc(fid,e) - mesh->y(fid,e);
+            dz(sk) = zc(fid,e) - mesh->z(fid,e);
+            ++sk;
+          }
+        }
 
-	// apply zero BCs to non-boundary face displacements
-	sk = 0;
-	for (int f = 0; f < p_Nfaces; ++f){
-	  for (int i = 0; i < fids.rows(); ++i){
-	    // if not boundary, don't displace nodes after edge blend
-	    if (mesh->EToF(e,f)!=f){
-	      dx(sk) = 0.0;
-	      dy(sk) = 0.0;
-	      dz(sk) = 0.0;
-	    }
-	    ++sk;
-	  }
-	}
+        // apply zero BCs to non-boundary face displacements
+        sk = 0;
+        for (int f = 0; f < p_Nfaces; ++f){
+          for (int i = 0; i < fids.rows(); ++i){
+            // if not boundary, don't displace nodes after edge blend
+            if (mesh->EToF(e,f)!=f){
+              dx(sk) = 0.0;
+              dy(sk) = 0.0;
+              dz(sk) = 0.0;
+            }
+            ++sk;
+          }
+        }
 
-	VectorXd newx = mesh->x.col(e) + faceBlend * dx;
-	VectorXd newy = mesh->y.col(e) + faceBlend * dy;
-	VectorXd newz = mesh->z.col(e) + faceBlend * dz;
-	mesh->x.col(e) = newx;
-	mesh->y.col(e) = newy;
-	mesh->z.col(e) = newz;
+        VectorXd newx = mesh->x.col(e) + faceBlend * dx;
+        VectorXd newy = mesh->y.col(e) + faceBlend * dy;
+        VectorXd newz = mesh->z.col(e) + faceBlend * dz;
+        mesh->x.col(e) = newx;
+        mesh->y.col(e) = newy;
+        mesh->z.col(e) = newz;
       }
     }
   }
@@ -854,9 +858,9 @@ void GordonHallSphere(Mesh *mesh){
   mesh->KPlanar = KPlanar;
   mesh->KCurvedPlusNbrs = KCurvedPlusNbrs;
 
-  VectorXi KlistCurved(max(1,KCurved)); KlistCurved.fill(0);
-  VectorXi KlistPlanar(max(1,KPlanar)); KlistPlanar.fill(0);
-  VectorXi KlistCurvedPlusNbrs(max(1,KCurvedPlusNbrs)); KlistCurvedPlusNbrs.fill(0);
+  VectorXi KlistCurved(std::max((unsigned int) 1, KCurved)); KlistCurved.fill(0);
+  VectorXi KlistPlanar(std::max((unsigned int) 1, KPlanar)); KlistPlanar.fill(0);
+  VectorXi KlistCurvedPlusNbrs(std::max((unsigned int) 1, KCurvedPlusNbrs)); KlistCurvedPlusNbrs.fill(0);
   int sknc = 0, skc = 0, skcnbrs = 0;
   for (int e = 0; e < mesh->K; ++e){
     if (isCurved(e)){
@@ -872,7 +876,7 @@ void GordonHallSphere(Mesh *mesh){
     }
   }
   printf("%d curved elems, %d curved + nbrs, %d planar elems, %d total elems\n",
-	 KCurved,KCurvedPlusNbrs,KPlanar,mesh->K);
+         KCurved,KCurvedPlusNbrs,KPlanar,mesh->K);
 
   mesh->KlistCurved = KlistCurved;
   mesh->KlistPlanar = KlistPlanar;
@@ -963,21 +967,21 @@ void checkCurvedGeo(Mesh *mesh){
       int fnbr = mesh->EToF(e,f);
 
       for (int i = 0; i < p_Nfp; ++i){
-	double mindist = 100.0;
-	int fid1 = mesh->Fmask(i,f);
-	for (int j = 0; j < p_Nfp; ++j){
-	  int fid2 = mesh->Fmask(j,fnbr);
-	  double dx = x(fid1,e) - x(fid2,enbr);
-	  double dy = y(fid1,e) - y(fid2,enbr);
-	  double dz = z(fid1,e) - z(fid2,enbr);
+        double mindist = 100.0;
+        int fid1 = mesh->Fmask(i,f);
+        for (int j = 0; j < p_Nfp; ++j){
+          int fid2 = mesh->Fmask(j,fnbr);
+          double dx = x(fid1,e) - x(fid2,enbr);
+          double dy = y(fid1,e) - y(fid2,enbr);
+          double dz = z(fid1,e) - z(fid2,enbr);
 
-	  double dist = sqrt(dx*dx + dy*dy + dz*dz);
-	  mindist = min(mindist,dist);
-	}
-	if (max(maxMinDist,mindist) > maxMinDist){
-	  emax = e; fmax = f;
-	}
-	maxMinDist = max(maxMinDist,mindist);
+          double dist = sqrt(dx*dx + dy*dy + dz*dz);
+          mindist = std::min(mindist,dist);
+        }
+        if (std::max(maxMinDist,mindist) > maxMinDist){
+          emax = e; fmax = f;
+        }
+        maxMinDist = std::max(maxMinDist,mindist);
 
       }
     }
@@ -1009,7 +1013,7 @@ void setOccaIntArray(Mesh *mesh,MatrixXi A, occa::memory &c_A){
 
 
 dfloat WaveInitOCCA3d(Mesh *mesh, int KblkVin, int KblkSin,
-		      int KblkUin, int KblkQin, int KblkQfin){
+                      int KblkUin, int KblkQin, int KblkQfin){
 
   KblkV = KblkVin;
   KblkS = KblkSin;
@@ -1017,7 +1021,7 @@ dfloat WaveInitOCCA3d(Mesh *mesh, int KblkVin, int KblkSin,
   KblkQ = KblkQin;
   KblkQf = KblkQfin;
 
-  occa::printAvailableDevices();
+  occa::printModeInfo();
 
   //device.setup("mode = OpenCL, platformID = 0, deviceID = 0");
   //device.setup("mode = OpenMP, platformID = 0, deviceID = 0");
@@ -1027,7 +1031,7 @@ dfloat WaveInitOCCA3d(Mesh *mesh, int KblkVin, int KblkSin,
   //device.setCompiler("nvcc"); device.setCompilerFlags("--use_fast_math"); device.setCompilerFlags("--fmad=true");
 
   printf("KblkV = %d, KblkS = %d, KblkU = %d, KblkQ (skew only) = %d\n",
-	 KblkV,KblkS,KblkU,KblkQ);
+         KblkV,KblkS,KblkU,KblkQ);
 
   int K = mesh->K;
   int NpK = K*p_Np;
@@ -1100,7 +1104,7 @@ dfloat WaveInitOCCA3d(Mesh *mesh, int KblkVin, int KblkSin,
     }
   }
 
-  int L0_nnz = min(p_Nfp,7);
+  int L0_nnz = std::min(p_Nfp,7);
   mesh->L0_nnz = L0_nnz;
   dfloat *h_L0_vals = (dfloat*) malloc(p_Nfp*L0_nnz*sizeof(dfloat));
   int *h_L0_ids = (int*) malloc(p_Nfp*L0_nnz*sizeof(int));
@@ -1163,9 +1167,9 @@ dfloat WaveInitOCCA3d(Mesh *mesh, int KblkVin, int KblkSin,
   for(int k=0;k<mesh->K;++k){
 
     GeometricFactors3d(mesh, k,
-		       &drdx, &dsdx, &dtdx,
-		       &drdy, &dsdy, &dtdy,
-		       &drdz, &dsdz, &dtdz, &J);
+                       &drdx, &dsdx, &dtdx,
+                       &drdy, &dsdy, &dtdy,
+                       &drdz, &dsdz, &dtdz, &J);
 
     Normals3d(mesh, k, nxk, nyk, nzk, sJk);
 
@@ -1190,7 +1194,7 @@ dfloat WaveInitOCCA3d(Mesh *mesh, int KblkVin, int KblkSin,
       dfloat nz = nzk[f];
 
       // for dt
-      FscaleMax = max(FscaleMax,Fscale);
+      FscaleMax = std::max(FscaleMax,Fscale);
 
       fgeo[k*nfgeo*p_Nfaces + f*nfgeo + 0] = Fscale; // Fscale
       fgeo[k*nfgeo*p_Nfaces + f*nfgeo + 1] = nx;
@@ -1226,40 +1230,36 @@ dfloat WaveInitOCCA3d(Mesh *mesh, int KblkVin, int KblkSin,
   c_vmapP  = device.malloc(p_Nfp*p_Nfaces*mesh->K*sizeof(int),h_vmapP);
 
   // build kernels
-  if (sizeof(dfloat)==8){
-    dgInfo.addDefine("USE_DOUBLE", 1);
-  }else{
-    dgInfo.addDefine("USE_DOUBLE", 0);
-  }
+  dgInfo["defines/USE_DOUBLE"] = sizeof(dfloat) == 8;
 
-  dgInfo.addDefine("p_EEL_size",mesh->EEL_val_vec.rows());
-  dgInfo.addDefine("p_EEL_nnz",mesh->EEL_nnz);
-  dgInfo.addDefine("p_L0_nnz",min(p_Nfp,7)); // max 7 nnz with L0 matrix
+  dgInfo["defines/p_EEL_size"] = (uint64_t) mesh->EEL_val_vec.rows();
+  dgInfo["defines/p_EEL_nnz"] = mesh->EEL_nnz;
+  dgInfo["defines/p_L0_nnz"] = std::min(p_Nfp,7); // max 7 nnz with L0 matrix
 
   printf("p_Nfields = %d\n",p_Nfields);
-  dgInfo.addDefine("p_Nfields",      p_Nfields); // wave equation
+  dgInfo["defines/p_Nfields"] = p_Nfields; // wave equation
 
-  dgInfo.addDefine("p_N",      p_N);
-  dgInfo.addDefine("p_KblkV",  KblkV);
-  dgInfo.addDefine("p_KblkS",  KblkS);
-  dgInfo.addDefine("p_KblkU",  KblkU);
-  dgInfo.addDefine("p_KblkQ",  KblkQ);
-  dgInfo.addDefine("p_KblkQf",  KblkQf);
+  dgInfo["defines/p_N"]      = p_N;
+  dgInfo["defines/p_KblkV"]  = KblkV;
+  dgInfo["defines/p_KblkS"]  = KblkS;
+  dgInfo["defines/p_KblkU"]  = KblkU;
+  dgInfo["defines/p_KblkQ"]  = KblkQ;
+  dgInfo["defines/p_KblkQf"] = KblkQf;
 
-  dgInfo.addDefine("p_Np",      p_Np);
-  dgInfo.addDefine("p_Nfp",     p_Nfp);
-  dgInfo.addDefine("p_Nfaces",  p_Nfaces);
-  dgInfo.addDefine("p_NfpNfaces",     p_Nfp*p_Nfaces);
+  dgInfo["defines/p_Np"]        = p_Np;
+  dgInfo["defines/p_Nfp"]       = p_Nfp;
+  dgInfo["defines/p_Nfaces"]    = p_Nfaces;
+  dgInfo["defines/p_NfpNfaces"] = p_Nfp*p_Nfaces;
 
   // [JC] max threads
-  dgInfo.addDefine("p_ceilNq",min(512,mesh->Nq));
-  int T = max(p_Np,p_Nfp*p_Nfaces);
-  dgInfo.addDefine("p_T",T);
-  int Tq = max(p_Np,mesh->Nfq*p_Nfaces);
-  dgInfo.addDefine("p_Tq",Tq);
+  dgInfo["defines/p_ceilNq"] = std::min(512,mesh->Nq);
+  int T = std::max(p_Np,p_Nfp*p_Nfaces);
+  dgInfo["defines/p_T"] = T;
+  int Tq = std::max(p_Np,mesh->Nfq*p_Nfaces);
+  dgInfo["defines/p_Tq"] = Tq;
 
-  dgInfo.addDefine("p_Nvgeo",nvgeo);
-  dgInfo.addDefine("p_Nfgeo",nfgeo);
+  dgInfo["defines/p_Nvgeo"] = nvgeo;
+  dgInfo["defines/p_Nfgeo"] = nfgeo;
 
 
   std::string src = "okl/WaveKernels.okl";
@@ -1268,24 +1268,24 @@ dfloat WaveInitOCCA3d(Mesh *mesh, int KblkVin, int KblkSin,
 #if USE_BERN
   printf("Building Bernstein kernels from %s\n",src.c_str());
   // bernstein kernels
-  rk_volume_bern  = device.buildKernelFromSource(src.c_str(), "rk_volume_bern", dgInfo);
+  rk_volume_bern  = device.buildKernel(src.c_str(), "rk_volume_bern", dgInfo);
 
   printf("building rk_surface_bern from %s\n",src.c_str());
 
 #if USE_SLICE_LIFT
-  rk_surface_bern = device.buildKernelFromSource(src.c_str(), "rk_surface_bern_slice", dgInfo);
-  //rk_surface_bern = device.buildKernelFromSource(src.c_str(), "rk_surface_bern_slice_loads", dgInfo);
-  //rk_surface_bern = device.buildKernelFromSource(src.c_str(), "rk_surface_bern_slice_square", dgInfo);
+  rk_surface_bern = device.buildKernel(src.c_str(), "rk_surface_bern_slice", dgInfo);
+  //rk_surface_bern = device.buildKernel(src.c_str(), "rk_surface_bern_slice_loads", dgInfo);
+  //rk_surface_bern = device.buildKernel(src.c_str(), "rk_surface_bern_slice_square", dgInfo);
   printf("using slice-by-slice bern surface kernel; more efficient for N > 6\n");
 #else
   printf("using non-optimal bern surface kernel; more efficient for N < 6\n");
-  rk_surface_bern = device.buildKernelFromSource(src.c_str(), "rk_surface_bern", dgInfo);
+  rk_surface_bern = device.buildKernel(src.c_str(), "rk_surface_bern", dgInfo);
 #endif
 #endif
   // nodal kernels
-  rk_volume  = device.buildKernelFromSource(src.c_str(), "rk_volume", dgInfo);
-  rk_surface = device.buildKernelFromSource(src.c_str(), "rk_surface", dgInfo);
-  rk_update  = device.buildKernelFromSource(src.c_str(), "rk_update", dgInfo);
+  rk_volume  = device.buildKernel(src.c_str(), "rk_volume", dgInfo);
+  rk_surface = device.buildKernel(src.c_str(), "rk_surface", dgInfo);
+  rk_update  = device.buildKernel(src.c_str(), "rk_update", dgInfo);
 
   // estimate dt. may wish to replace with trace inequality constant
   dfloat CN = (p_N+1)*(p_N+3)/3.0;
@@ -1296,13 +1296,13 @@ dfloat WaveInitOCCA3d(Mesh *mesh, int KblkVin, int KblkSin,
 
 // compute quadrature nodes + error
 void compute_error(Mesh *mesh, double time, dfloat *Q,
-		   double(*uexptr)(double,double,double,double),
-		   double &L2err, double &relL2err){
+                   double(*uexptr)(double,double,double,double),
+                   double &L2err, double &relL2err){
 
   // compute error
   L2err = 0.0;
   double L2norm = 0.0;
-  int kChunk = max(mesh->K/10,1);
+  int kChunk = std::max(mesh->K/10,1);
   for(int k=0;k<mesh->K;++k){
 
     //double J = mesh->J(0,k); // assuming J = constant (planar tet)
@@ -1310,16 +1310,16 @@ void compute_error(Mesh *mesh, double time, dfloat *Q,
 
       double J;
       if (mesh->Jq.rows()>0){ // if wadg quadrature initialized
-	J= mesh->Jq(i,k);
+        J= mesh->Jq(i,k);
       }else{
-	J = mesh->J(0,k);
+        J = mesh->J(0,k);
       }
 
       // interp to cubature nodes
       double x = 0.0; double y = 0.0; double z = 0.0; double uq = 0.0;
       for(int j=0;j<p_Np;++j){
 
-	double Vq = mesh->Vq(i,j);
+        double Vq = mesh->Vq(i,j);
         x += Vq*mesh->x(j,k);
         y += Vq*mesh->y(j,k);
         z += Vq*mesh->z(j,k);
@@ -1542,7 +1542,7 @@ void Wave_RK_sample_error(Mesh *mesh, dfloat FinalTime, dfloat dt,
   int    INTRK, tstep=0;
 
   int totalSteps = (int)floor(FinalTime/dt);
-  int tchunk = max(totalSteps/10,1);
+  int tchunk = std::max(totalSteps/10,1);
 
   int tsample = 2*(p_N+1)*(p_N+1); // sample at every (*) timesteps
   int num_samples = totalSteps/tsample + 1;
@@ -1603,7 +1603,7 @@ void Wave_RK(Mesh *mesh, dfloat FinalTime, dfloat dt, int useWADG){
   int    INTRK, tstep=0;
 
   int totalSteps = (int)floor(FinalTime/dt);
-  int tchunk = max(totalSteps/10,1);
+  int tchunk = std::max(totalSteps/10,1);
 
   int tsample = 2*(p_N+1)*(p_N+1); // sample at every (*) timesteps
   int num_samples = totalSteps/tsample + 1;
@@ -1641,20 +1641,20 @@ void Wave_RK(Mesh *mesh, dfloat FinalTime, dfloat dt, int useWADG){
       const dfloat fb = (float)mesh->rk4b[INTRK-1];
 
       if (useWADG==0){
-	if (tstep==0 && INTRK==1){
-	  printf("running regular kernel\n\n");
-	}
-	RK_step(mesh, fa, fb, fdt);
+        if (tstep==0 && INTRK==1){
+          printf("running regular kernel\n\n");
+        }
+        RK_step(mesh, fa, fb, fdt);
       }else if (useWADG==1){
-	if (tstep==0 && INTRK==1){
-	  printf("running planar + subelem WADG kernel\n");
-	}
-	RK_step_WADG_subelem(mesh, fa, fb, fdt, time);
+        if (tstep==0 && INTRK==1){
+          printf("running planar + subelem WADG kernel\n");
+        }
+        RK_step_WADG_subelem(mesh, fa, fb, fdt, time);
       }else if (useWADG==2){
-	if (tstep==0 && INTRK==1){
-	  printf("running curvilinear WADG kernels\n");
-	}
-	RK_step_WADG(mesh, fa, fb, fdt);
+        if (tstep==0 && INTRK==1){
+          printf("running curvilinear WADG kernels\n");
+        }
+        RK_step_WADG(mesh, fa, fb, fdt);
       }
 
     }
@@ -1679,10 +1679,10 @@ void RK_step_WADG_subelem(Mesh *mesh, dfloat rka, dfloat rkb, dfloat fdt, dfloat
   rk_volume_elas(mesh->K, c_vgeo, c_Dr, c_Ds, c_Dt, c_Q, c_rhsQ);
   rk_surface_elas(mesh->K, c_fgeo, c_Fmask, c_vmapP, c_LIFT, c_Q, c_rhsQ);
   rk_update_elas(mesh->K, c_Vq_reduced, c_Pq_reduced,
-  		 c_rhoq, c_lambdaq, c_muq, c_c11, c_c12,
-		 ftime, c_fsrc,
-		 rka, rkb, fdt,
-  		 c_rhsQ, c_resQ, c_Q);
+                 c_rhoq, c_lambdaq, c_muq, c_c11, c_c12,
+                 ftime, c_fsrc,
+                 rka, rkb, fdt,
+                 c_rhsQ, c_resQ, c_Q);
   device.finish();
 
 }
@@ -1701,35 +1701,35 @@ void RK_step_WADG(Mesh *mesh, dfloat rka, dfloat rkb, dfloat fdt){
                               c_Q, c_rhsQ);
 
   rk_surface_WADG_skew_combine(mesh->KCurved, c_KlistCurved,
-			       c_fgeo,c_fgeoq,c_VfqFace,c_Pfq,c_Fmask,c_vmapP,
-			       c_Q, c_rhsQ);
+                               c_fgeo,c_fgeoq,c_VfqFace,c_Pfq,c_Fmask,c_vmapP,
+                               c_Q, c_rhsQ);
 
 
 #else // if use strong form with increased quadrature strength
 
   rk_volume_WADG(mesh->KCurved, c_KlistCurved,
-      		 c_vgeoq, c_Jq, c_Vrq, c_Vsq, c_Vtq, c_Pq,
-      		 c_Q, c_rhsQ);
+                 c_vgeoq, c_Jq, c_Vrq, c_Vsq, c_Vtq, c_Pq,
+                 c_Q, c_rhsQ);
 
   rk_surface_WADG(mesh->KCurved, c_KlistCurved,
-		  c_fgeo,c_fgeoq,c_VfqFace,c_Pfq,c_Fmask,c_vmapP,
-		  c_Q, c_rhsQ);
+                  c_fgeo,c_fgeoq,c_VfqFace,c_Pfq,c_Fmask,c_vmapP,
+                  c_Q, c_rhsQ);
 
 
 #endif
 
   // == run planar elements separately
   rk_volume_planar(mesh->KPlanar, c_KlistPlanar,
-      		   c_vgeo, c_Jplanar, c_Dr, c_Ds, c_Dt, c_Q, c_rhsQ);
+                   c_vgeo, c_Jplanar, c_Dr, c_Ds, c_Dt, c_Q, c_rhsQ);
   rk_surface_planar(mesh->KPlanar, c_KlistPlanar,
-  		    c_fgeo, c_Jplanar, c_Fmask, c_vmapP, c_LIFT, c_Q, c_rhsQ);
+                    c_fgeo, c_Jplanar, c_Fmask, c_vmapP, c_LIFT, c_Q, c_rhsQ);
 
 
   rk_update_WADG(mesh->K,
-		 c_Vq_reduced, c_Pq_reduced,
+                 c_Vq_reduced, c_Pq_reduced,
                  c_Jq_reduced,
                  rka, rkb, fdt,
-		 c_rhsQ, c_resQ, c_Q);
+                 c_rhsQ, c_resQ, c_Q);
 
 }
 
@@ -1743,15 +1743,15 @@ void RK_step(Mesh *mesh, dfloat rka, dfloat rkb, dfloat fdt){
 #if USE_BERN
   //printf("using bernstein kernels\n");
   rk_volume_bern(mesh->K, c_vgeo,
-		 c_D_ids1, c_D_ids2, c_D_ids3, c_D_ids4, c_Dvals4,
-		 c_Q, c_rhsQ);
+                 c_D_ids1, c_D_ids2, c_D_ids3, c_D_ids4, c_Dvals4,
+                 c_Q, c_rhsQ);
 
   rk_surface_bern(mesh->K, c_fgeo, c_Fmask, c_vmapP,
-		  c_slice_ids,
-		  c_EEL_ids, c_EEL_vals,
-   		  c_L0_ids, c_L0_vals,
-		  c_cEL,
-      		  c_Q, c_rhsQ);
+                  c_slice_ids,
+                  c_EEL_ids, c_EEL_vals,
+                  c_L0_ids, c_L0_vals,
+                  c_cEL,
+                  c_Q, c_rhsQ);
 #else
   //printf("Using nodal kernels\n");
   rk_volume(mesh->K, c_vgeo, c_Dr, c_Ds, c_Dt, c_Q, c_rhsQ);
@@ -1772,7 +1772,7 @@ void RK_step(Mesh *mesh, dfloat rka, dfloat rkb, dfloat fdt){
     for(int i = 0; i < p_Np; ++i){
       //      for(int e = 0; e < mesh->K; ++e){
       for(int e = 0; e < 1; ++e){
-	printf("%f ",f_Q[i + fld*p_Np + e*p_Nfields*p_Np]);
+        printf("%f ",f_Q[i + fld*p_Np + e*p_Nfields*p_Np]);
       }
       printf("\n");
     }
@@ -1787,7 +1787,7 @@ void RK_step(Mesh *mesh, dfloat rka, dfloat rkb, dfloat fdt){
 
 // set initial condition
 void WaveSetU0(Mesh *mesh, dfloat *Q, dfloat time, int field,
-	       double(*uexptr)(double,double,double,double)){
+               double(*uexptr)(double,double,double,double)){
 
   // write out field = fields 2-4 = 0 (velocity)
   for(int k = 0; k < mesh->K; ++k){
@@ -1807,8 +1807,8 @@ void WaveSetU0(Mesh *mesh, dfloat *Q, dfloat time, int field,
     for (int i = 0; i < p_Np; ++i){
       Qtmp[i] = 0.f;
       for (int j = 0; j < p_Np; ++j){
-	//Qtmp[i] += mesh->invVB[i][j]*Qloc[j];
-	Qtmp[i] += mesh->invVB(i,j)*Qloc[j];
+        //Qtmp[i] += mesh->invVB[i][j]*Qloc[j];
+        Qtmp[i] += mesh->invVB(i,j)*Qloc[j];
       }
     }
     for (int i = 0; i < p_Np; ++i){
@@ -1829,7 +1829,7 @@ void WaveSetU0(Mesh *mesh, dfloat *Q, dfloat time, int field,
 
 // set initial condition
 void WaveProjectU0(Mesh *mesh, dfloat *Q, dfloat time,int field,
-		   double(*uexptr)(double,double,double,double)){
+                   double(*uexptr)(double,double,double,double)){
 
   int Nq = mesh->Nq;
   VectorXd wq = mesh->wq;
@@ -1898,15 +1898,15 @@ void WaveGetData3d(Mesh *mesh, dfloat *Q){//dfloat *d_p, dfloat *d_fp, dfloat *d
   for (int fld = 0; fld < p_Nfields; fld++){
     for (int e = 0; e < mesh->K; ++e){
       for (int i = 0; i < p_Np; ++i){
-	Qtmp[i] = 0.f;
-	for (int j = 0; j < p_Np; ++j){
-	  int id = j + fld*p_Np + e*p_Nfields*p_Np;
-	  Qtmp[i] += mesh->VB(i,j)*Q[id];
-	}
+        Qtmp[i] = 0.f;
+        for (int j = 0; j < p_Np; ++j){
+          int id = j + fld*p_Np + e*p_Nfields*p_Np;
+          Qtmp[i] += mesh->VB(i,j)*Q[id];
+        }
       }
       for (int i = 0; i < p_Np; ++i){
-	int id = i + fld*p_Np + e*p_Nfields*p_Np;
-	Q[id] = Qtmp[i];
+        int id = i + fld*p_Np + e*p_Nfields*p_Np;
+        Q[id] = Qtmp[i];
       }
     }
   }
@@ -1928,12 +1928,12 @@ void writeVisToGMSH(string fileName, Mesh *mesh,dfloat *Q, int iField, int Nfiel
   for(int i=0, n=0; i<=N; i++){
     for(int j=0; j<=N; j++){
       for(int k=0; k<=N; k++){
-	if(i+j+k <= N){
-	  monom(n,0) = i;
-	  monom(n,1) = j;
-	  monom(n,2) = k;
-	  n++;
-	}
+        if(i+j+k <= N){
+          monom(n,0) = i;
+          monom(n,1) = j;
+          monom(n,2) = k;
+          n++;
+        }
       }
     }
   }
@@ -1943,7 +1943,7 @@ void writeVisToGMSH(string fileName, Mesh *mesh,dfloat *Q, int iField, int Nfiel
       double s = mesh->s(n);
       double t = mesh->t(n);
       vdm(m,n) = pow((r+1)/2.,monom(m,0)) *
-	pow((s+1)/2.,monom(m,1)) * pow((t+1)/2.,monom(m,2));
+        pow((s+1)/2.,monom(m,1)) * pow((t+1)/2.,monom(m,2));
     }
   }
   MatrixXd coeff = vdm.inverse();

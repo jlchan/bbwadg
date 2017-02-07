@@ -23,20 +23,20 @@ endif
 
 
 #---[ COMPILATION ]-------------------------------
-headers = $(wildcard $(iPath)/*.hpp) $(wildcard $(iPath)/*.tpp)
-sources = $(wildcard $(sPath)/*.cpp)
+headers = $(wildcard $(incPath)/*.hpp) $(wildcard $(incPath)/*.tpp)
+sources = $(wildcard $(srcPath)/*.cpp)
 
-objects  = $(subst $(sPath)/,$(oPath)/,$(sources:.cpp=.o))
+objects  = $(subst $(srcPath)/,$(objPath)/,$(sources:.cpp=.o))
 
 # curved elements with WADG (can also add heterogeneous)
 main: $(objects) $(headers) main.cpp
 	$(compiler) $(compilerFlags) -o main $(flags) $(objects) main.cpp $(paths) $(links)
 
-$(oPath)/%.o:$(sPath)/%.cpp $(wildcard $(subst $(sPath)/,$(iPath)/,$(<:.cpp=.hpp))) $(wildcard $(subst $(sPath)/,$(iPath)/,$(<:.cpp=.tpp)))
+$(objPath)/%.o:$(srcPath)/%.cpp $(wildcard $(subst $(srcPath)/,$(incPath)/,$(<:.cpp=.hpp))) $(wildcard $(subst $(srcPath)/,$(incPath)/,$(<:.cpp=.tpp)))
 	$(compiler) $(compilerFlags) -o $@ $(flags) -c $(paths) $<
 
 clean:
-	rm -f $(oPath)/*.o;
+	rm -f $(objPath)/*.o;
 	rm -f main;
 	rm -f main_planar;
 	rm -f main_subelem;

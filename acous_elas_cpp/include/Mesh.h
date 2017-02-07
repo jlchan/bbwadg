@@ -43,7 +43,7 @@ typedef struct foo {
   MatrixXi EToV;
   MatrixXi EToE;
   MatrixXi EToF;
-  
+
   VectorXi EToGmshE;
 
   int *bcflag; /* vector. entry n is 1 if vertex n is on a boundary */
@@ -111,7 +111,7 @@ typedef struct foo {
   VectorXi KlistCurved, KlistPlanar, KlistCurvedPlusNbrs;
   unsigned int KCurved,KPlanar,KCurvedPlusNbrs;
   int hMax;
-  
+
   // =============== CG data structure - cruft? ===========
   MatrixXi localToGlobalNodeMap;
   int numGlobalNodes;
@@ -119,9 +119,9 @@ typedef struct foo {
   // ============== OCCA data ================
 
   occa::device device;
-  occa::kernelInfo dgInfo;
+  occa::properties dgInfo;
   std::map<char,occa::kernel> kernels;
-  std::map<char,occa::memory> arrays;  
+  std::map<char,occa::memory> arrays;
 
 }Mesh;
 
