@@ -10,8 +10,8 @@
 int ngeo, nvgeo, nfgeo; // number of geometric factors
 
 // OCCA device
-occa::device device;
-occa::kernelInfo dgInfo;
+//occa::device device;
+//occa::kernelInfo dgInfo;
 
 // OCCA array for geometric factors
 occa::memory c_vgeo;
@@ -129,7 +129,7 @@ double timeV = 0.0, timeS = 0.0, timeU=0.0, timeQ = 0.0, timeQf = 0.0;
 template <typename T>
 void diagnose_array(Mesh *mesh,const char *message, occa::memory &c_a, int N){
 
-  device.finish();
+  mesh->device.finish();
 
   T *h_a = (T*) calloc(N, sizeof(T));
 
@@ -228,31 +228,31 @@ void InitWADG_curved(Mesh *mesh){
   MatrixXd Ptq  = invM*Vtq.transpose()*mesh->wq.asDiagonal();
   MatrixXd Pfq  = invM*Vfq.transpose()*mesh->wfq.asDiagonal();
 
-  dgInfo.addDefine("p_Nq",mesh->Nq); // vol quadrature
-  dgInfo.addDefine("p_Nfq",mesh->Nfq); // surf quadrature for one face
-  dgInfo.addDefine("p_NfqNfaces",mesh->Nfq * Nfaces); // surf quadrature
+  mesh->dgInfo.addDefine("p_Nq",mesh->Nq); // vol quadrature
+  mesh->dgInfo.addDefine("p_Nfq",mesh->Nfq); // surf quadrature for one face
+  mesh->dgInfo.addDefine("p_NfqNfaces",mesh->Nfq * Nfaces); // surf quadrature
 
-  if(!strcmp(device.mode().c_str(), "CUDA")){
+  /*
+  if(!strcmp(mesh->device.mode().c_str(), "CUDA")){
     cout << " Adding CUDA optimization " << endl;
-    dgInfo.addCompilerFlag("--ftz=true");
-    dgInfo.addCompilerFlag("--prec-div=false");
-    dgInfo.addCompilerFlag("--prec-sqrt=false");
-    dgInfo.addCompilerFlag("--use_fast_math");
-    dgInfo.addCompilerFlag("--fmad=true"); // compiler option for cuda
-    dgInfo.addCompilerFlag("-Xptxas --def-store-cache=cs");
-    dgInfo.addCompilerFlag("-Xptxas --force-store-cache=cs");
+    mesh->dgInfo.addCompilerFlag("--ftz=true");
+    mesh->dgInfo.addCompilerFlag("--prec-div=false");
+    mesh->dgInfo.addCompilerFlag("--prec-sqrt=false");
+    mesh->dgInfo.addCompilerFlag("--use_fast_math");
+    mesh->dgInfo.addCompilerFlag("--fmad=true"); // compiler option for cuda
+    mesh->dgInfo.addCompilerFlag("-Xptxas --def-store-cache=cs");
+    mesh->dgInfo.addCompilerFlag("-Xptxas --force-store-cache=cs");
   }
-
-  if(!strcmp(device.mode().c_str(), "OpenCL")){
+  if(!strcmp(mesh->device.mode().c_str(), "OpenCL")){
     cout << " Adding OpenCL optimization " << endl;
-    dgInfo.addCompilerFlag("-cl-strict-aliasing");
-    dgInfo.addCompilerFlag("-cl-mad-enable");
-    dgInfo.addCompilerFlag("-cl-no-signed-zeros");
-    dgInfo.addCompilerFlag("-cl-unsafe-math-optimizations");
-    dgInfo.addCompilerFlag("-cl-finite-math-only");
-    dgInfo.addCompilerFlag("-cl-fast-relaxed-math");
+    mesh->dgInfo.addCompilerFlag("-cl-strict-aliasing");
+    mesh->dgInfo.addCompilerFlag("-cl-mad-enable");
+    mesh->dgInfo.addCompilerFlag("-cl-no-signed-zeros");
+    mesh->dgInfo.addCompilerFlag("-cl-unsafe-math-optimizations");
+    mesh->dgInfo.addCompilerFlag("-cl-finite-math-only");
+    mesh->dgInfo.addCompilerFlag("-cl-fast-relaxed-math");
   }
-
+  */
 
   // reference operators
   setOccaArray(mesh,Vq,c_Vq);
@@ -317,7 +317,7 @@ void InitWADG_curved(Mesh *mesh){
   tet_cubature(min(21,2*p_N+1),rq,sq,tq,wq); // 21 = max quadrature degree
   MatrixXd Vqtmp = Vandermonde3D(p_N,rq,sq,tq);
   MatrixXd Vq_reduced = mrdivide(Vqtmp,mesh->V);
-  dgInfo.addDefine("p_Nq_reduced",Vq_reduced.rows()); // vol quadrature
+  mesh->dgInfo.addDefine("p_Nq_reduced",Vq_reduced.rows()); // vol quadrature
 
   MatrixXd Vrqtmp,Vsqtmp,Vtqtmp;
   GradVandermonde3D(p_N,rq,sq,tq,Vrqtmp,Vsqtmp,Vtqtmp);
@@ -372,32 +372,32 @@ void InitWADG_curved(Mesh *mesh){
   printf("Building WADG kernels from %s\n",src.c_str());
 
   // strong form curved kernels
-  rk_volume_WADG  = device.buildKernelFromSource(src.c_str(), "rk_volume_WADG", dgInfo);
-  rk_surface_WADG = device.buildKernelFromSource(src.c_str(), "rk_surface_WADG", dgInfo);
-  rk_update_WADG  = device.buildKernelFromSource(src.c_str(), "rk_update_WADG", dgInfo);
-  //rk_update_WADG  = device.buildKernelFromSource(src.c_str(), "rk_update_WADG_block", dgInfo);
-  //rk_update_WADG  = device.buildKernelFromSource(src.c_str(), "rk_update_WADG_old", dgInfo);
+  rk_volume_WADG  = mesh->device.buildKernelFromSource(src.c_str(), "rk_volume_WADG", mesh->dgInfo);
+  rk_surface_WADG = mesh->device.buildKernelFromSource(src.c_str(), "rk_surface_WADG", mesh->dgInfo);
+  rk_update_WADG  = mesh->device.buildKernelFromSource(src.c_str(), "rk_update_WADG", mesh->dgInfo);
+  //rk_update_WADG  = mesh->device.buildKernelFromSource(src.c_str(), "rk_update_WADG_block", mesh->dgInfo);
+  //rk_update_WADG  = mesh->device.buildKernelFromSource(src.c_str(), "rk_update_WADG_old", mesh->dgInfo);
 
   // variants for strong form
-  kernel_write_vol_quad4 = device.buildKernelFromSource(src.c_str(), "kernel_write_vol_quad4", dgInfo);
-  rk_volume_WADG_Qtmp = device.buildKernelFromSource(src.c_str(), "rk_volume_WADG_Qtmp", dgInfo);
-  rk_surface_WADG_Qf = device.buildKernelFromSource(src.c_str(), "rk_surface_WADG_Qf", dgInfo);
-  kernel_write_surf_quad = device.buildKernelFromSource(src.c_str(), "kernel_write_surf_quad", dgInfo);
-  rk_surface_WADG_face = device.buildKernelFromSource(src.c_str(), "rk_surface_WADG_face", dgInfo);
+  kernel_write_vol_quad4 = mesh->device.buildKernelFromSource(src.c_str(), "kernel_write_vol_quad4", mesh->dgInfo);
+  rk_volume_WADG_Qtmp = mesh->device.buildKernelFromSource(src.c_str(), "rk_volume_WADG_Qtmp", mesh->dgInfo);
+  rk_surface_WADG_Qf = mesh->device.buildKernelFromSource(src.c_str(), "rk_surface_WADG_Qf", mesh->dgInfo);
+  kernel_write_surf_quad = mesh->device.buildKernelFromSource(src.c_str(), "kernel_write_surf_quad", mesh->dgInfo);
+  rk_surface_WADG_face = mesh->device.buildKernelFromSource(src.c_str(), "rk_surface_WADG_face", mesh->dgInfo);
 
   // build strong-weak form kernels: split form
-  kernel_write_quad_pts = device.buildKernelFromSource(src.c_str(), "kernel_write_quad_pts", dgInfo);
-  kernel_write_vol_quad6 = device.buildKernelFromSource(src.c_str(), "kernel_write_vol_quad6", dgInfo);
-  rk_volume_WADG_skew = device.buildKernelFromSource(src.c_str(), "rk_volume_WADG_skew", dgInfo);
-  rk_surface_WADG_skew = device.buildKernelFromSource(src.c_str(), "rk_surface_WADG_skew", dgInfo);
+  kernel_write_quad_pts = mesh->device.buildKernelFromSource(src.c_str(), "kernel_write_quad_pts", mesh->dgInfo);
+  kernel_write_vol_quad6 = mesh->device.buildKernelFromSource(src.c_str(), "kernel_write_vol_quad6", mesh->dgInfo);
+  rk_volume_WADG_skew = mesh->device.buildKernelFromSource(src.c_str(), "rk_volume_WADG_skew", mesh->dgInfo);
+  rk_surface_WADG_skew = mesh->device.buildKernelFromSource(src.c_str(), "rk_surface_WADG_skew", mesh->dgInfo);
 
   // monolithic strong-weak kernels
-  rk_volume_WADG_skew_combine = device.buildKernelFromSource(src.c_str(), "rk_volume_WADG_skew_combine", dgInfo);
-    rk_surface_WADG_skew_combine = device.buildKernelFromSource(src.c_str(), "rk_surface_WADG_skew_combine", dgInfo);
+  rk_volume_WADG_skew_combine = mesh->device.buildKernelFromSource(src.c_str(), "rk_volume_WADG_skew_combine", mesh->dgInfo);
+    rk_surface_WADG_skew_combine = mesh->device.buildKernelFromSource(src.c_str(), "rk_surface_WADG_skew_combine", mesh->dgInfo);
 
   // ================================= planar kernels
-  rk_volume_planar  = device.buildKernelFromSource(src.c_str(), "rk_volume_planar", dgInfo);
-  rk_surface_planar = device.buildKernelFromSource(src.c_str(), "rk_surface_planar", dgInfo);
+  rk_volume_planar  = mesh->device.buildKernelFromSource(src.c_str(), "rk_volume_planar", mesh->dgInfo);
+  rk_surface_planar = mesh->device.buildKernelFromSource(src.c_str(), "rk_surface_planar", mesh->dgInfo);
 
   printf("initialized WADG for curvilinear + heterogeneous media.\n");
 }
@@ -508,18 +508,18 @@ void InitWADG_subelem(Mesh *mesh,double(*c2_ptr)(double,double,double)){
   //  cout << "mu" << endl  << muq.col(0) << endl;
   //  cout << "lambda" << endl  << lambdaq.col(0) << endl;
 
-  dgInfo.addDefine("p_tau_v",1.0); // velocity penalty
-  dgInfo.addDefine("p_tau_s",1.0);
+  mesh->dgInfo.addDefine("p_tau_v",1.0); // velocity penalty
+  mesh->dgInfo.addDefine("p_tau_s",1.0);
 
   MatrixXd invM = mesh->V*mesh->V.transpose();
   MatrixXd Pq_reduced = invM*Vq_reduced.transpose()*wq.asDiagonal();
 
-  dgInfo.addDefine("p_Nq_reduced",Vq_reduced.rows()); // for update step quadrature
+  mesh->dgInfo.addDefine("p_Nq_reduced",Vq_reduced.rows()); // for update step quadrature
 
   // not used in WADG subelem - just to compile other kernels
-  dgInfo.addDefine("p_NfqNfaces",mesh->Nfq * p_Nfaces); // surf quadrature
-  dgInfo.addDefine("p_Nq",mesh->Nq); // vol quadrature
-  dgInfo.addDefine("p_Nfq",mesh->Nfq); // surf quadrature for one face
+  mesh->dgInfo.addDefine("p_NfqNfaces",mesh->Nfq * p_Nfaces); // surf quadrature
+  mesh->dgInfo.addDefine("p_Nq",mesh->Nq); // vol quadrature
+  mesh->dgInfo.addDefine("p_Nfq",mesh->Nfq); // surf quadrature for one face
 
   setOccaArray(mesh,rhoq,c_rhoq);
   setOccaArray(mesh,lambdaq,c_lambdaq);
@@ -539,9 +539,9 @@ void InitWADG_subelem(Mesh *mesh,double(*c2_ptr)(double,double,double)){
 
   std::string src = "okl/ElasKernelsWADG.okl";
   printf("Building heterogeneous wave propagation WADG kernel from %s\n",src.c_str());
-  rk_update_elas  = device.buildKernelFromSource(src.c_str(), "rk_update_elas", dgInfo);
-  rk_volume_elas  = device.buildKernelFromSource(src.c_str(), "rk_volume_elas", dgInfo);
-  rk_surface_elas = device.buildKernelFromSource(src.c_str(), "rk_surface_elas", dgInfo);
+  rk_update_elas  = mesh->device.buildKernelFromSource(src.c_str(), "rk_update_elas", mesh->dgInfo);
+  rk_volume_elas  = mesh->device.buildKernelFromSource(src.c_str(), "rk_volume_elas", mesh->dgInfo);
+  rk_surface_elas = mesh->device.buildKernelFromSource(src.c_str(), "rk_surface_elas", mesh->dgInfo);
 
 }
 
@@ -993,7 +993,7 @@ void setOccaArray(Mesh *mesh, MatrixXd A, occa::memory &c_A){
   int c = A.cols();
   dfloat *f_A = (dfloat*)malloc(r*c*sizeof(dfloat));
   Map<MatrixXdf >(f_A,r,c) = A.cast<dfloat>();
-  c_A = device.malloc(r*c*sizeof(dfloat),f_A);
+  c_A = mesh->device.malloc(r*c*sizeof(dfloat),f_A);
   free(f_A);
 }
 
@@ -1003,7 +1003,7 @@ void setOccaIntArray(Mesh *mesh,MatrixXi A, occa::memory &c_A){
   int c = A.cols();
   int *f_A = (int*)malloc(r*c*sizeof(int));
   Map<MatrixXi >(f_A,r,c) = A;
-  c_A = device.malloc(r*c*sizeof(int),f_A);
+  c_A = mesh->device.malloc(r*c*sizeof(int),f_A);
   free(f_A);
 }
 
@@ -1019,12 +1019,12 @@ dfloat WaveInitOCCA3d(Mesh *mesh, int KblkVin, int KblkSin,
 
   occa::printAvailableDevices();
 
-  //device.setup("mode = OpenCL, platformID = 0, deviceID = 0");
-  //device.setup("mode = OpenMP, platformID = 0, deviceID = 0");
-  device.setup("mode = Serial");
-  //device.setup("mode = CUDA, platformID = 0, deviceID = 2");
+  //mesh->device.setup("mode = OpenCL, platformID = 0, deviceID = 0");
+  //mesh->device.setup("mode = OpenMP, platformID = 0, deviceID = 0");
+  mesh->device.setup("mode = Serial");
+  //mesh->device.setup("mode = CUDA, platformID = 0, deviceID = 2");
 
-  //device.setCompiler("nvcc"); device.setCompilerFlags("--use_fast_math"); device.setCompilerFlags("--fmad=true");
+  //mesh->device.setCompiler("nvcc"); mesh->device.setCompilerFlags("--use_fast_math"); mesh->device.setCompilerFlags("--fmad=true");
 
   printf("KblkV = %d, KblkS = %d, KblkU = %d, KblkQ (skew only) = %d\n",
 	 KblkV,KblkS,KblkU,KblkQ);
@@ -1046,18 +1046,18 @@ dfloat WaveInitOCCA3d(Mesh *mesh, int KblkVin, int KblkSin,
   Map<MatrixXdf >(f_Ds,p_Np,p_Np) = mesh->Ds.cast<dfloat>();
   Map<MatrixXdf >(f_Dt,p_Np,p_Np) = mesh->Dt.cast<dfloat>();
   Map<MatrixXdf >(f_LIFT,p_Np,p_Nfp*p_Nfaces) = mesh->LIFT.cast<dfloat>();
-  c_Dr = device.malloc(sz,f_Dr);
-  c_Ds = device.malloc(sz,f_Ds);
-  c_Dt = device.malloc(sz,f_Dt);
-  c_LIFT = device.malloc(p_Np*p_Nfp*p_Nfaces*sizeof(dfloat),f_LIFT);
+  c_Dr = mesh->device.malloc(sz,f_Dr);
+  c_Ds = mesh->device.malloc(sz,f_Ds);
+  c_Dt = mesh->device.malloc(sz,f_Dt);
+  c_LIFT = mesh->device.malloc(p_Np*p_Nfp*p_Nfaces*sizeof(dfloat),f_LIFT);
 
-  c_Fmask = device.malloc(p_Nfp*p_Nfaces*sizeof(int),mesh->FmaskC[0]);
+  c_Fmask = mesh->device.malloc(p_Nfp*p_Nfaces*sizeof(int),mesh->FmaskC[0]);
 
   // ==================== BERNSTEIN STUFF ==========================
 
   // bernstein Dmatrices (4 entries per row)
   sz = 4*p_Np*sizeof(int);
-  c_Dvals4 = device.malloc(4*p_Np*sizeof(dfloat), mesh->D_vals[0]);
+  c_Dvals4 = mesh->device.malloc(4*p_Np*sizeof(dfloat), mesh->D_vals[0]);
 
   // barycentric deriv indices organized for ILP
   int *D_ids1 = (int*) malloc(p_Np*4*sizeof(int));
@@ -1085,10 +1085,10 @@ dfloat WaveInitOCCA3d(Mesh *mesh, int KblkVin, int KblkSin,
     D_ids4[4*i + 2] = mesh->D3_ids[i][3];
     D_ids4[4*i + 3] = mesh->D4_ids[i][3];
   }
-  c_D_ids1 = device.malloc(sz,D_ids1);
-  c_D_ids2 = device.malloc(sz,D_ids2);
-  c_D_ids3 = device.malloc(sz,D_ids3);
-  c_D_ids4 = device.malloc(sz,D_ids4);
+  c_D_ids1 = mesh->device.malloc(sz,D_ids1);
+  c_D_ids2 = mesh->device.malloc(sz,D_ids2);
+  c_D_ids3 = mesh->device.malloc(sz,D_ids3);
+  c_D_ids4 = mesh->device.malloc(sz,D_ids4);
 
 
   dfloat *h_EEL_vals = (dfloat*) malloc(p_Np*mesh->EEL_nnz*sizeof(dfloat));
@@ -1111,16 +1111,16 @@ dfloat WaveInitOCCA3d(Mesh *mesh, int KblkVin, int KblkSin,
     }
   }
 
-  c_L0_vals = device.malloc(p_Nfp*L0_nnz*sizeof(dfloat),h_L0_vals);
-  c_L0_ids = device.malloc(p_Nfp*L0_nnz*sizeof(int),h_L0_ids);
+  c_L0_vals = mesh->device.malloc(p_Nfp*L0_nnz*sizeof(dfloat),h_L0_vals);
+  c_L0_ids = mesh->device.malloc(p_Nfp*L0_nnz*sizeof(int),h_L0_ids);
 
 #if (USE_SLICE_LIFT)  // should use for N > 5 (faster)
   // store reduction matrices for orders 0,...,N
   setOccaIntArray(mesh,mesh->EEL_id_vec,c_EEL_ids);
   setOccaArray(mesh,mesh->EEL_val_vec,c_EEL_vals);
 #else
-  c_EEL_vals = device.malloc(p_Np*mesh->EEL_nnz*sizeof(dfloat),h_EEL_vals);
-  c_EEL_ids = device.malloc(p_Np*mesh->EEL_nnz*sizeof(int),h_EEL_ids);
+  c_EEL_vals = mesh->device.malloc(p_Np*mesh->EEL_nnz*sizeof(dfloat),h_EEL_vals);
+  c_EEL_ids = mesh->device.malloc(p_Np*mesh->EEL_nnz*sizeof(int),h_EEL_ids);
 #endif
 
   //cout << "cEL = " << endl << mesh->cEL << endl;
@@ -1134,7 +1134,7 @@ dfloat WaveInitOCCA3d(Mesh *mesh, int KblkVin, int KblkSin,
     h_slice_ids[4*i+3] = mesh->slice_ids(i,3);
   }
   //  setOccaIntArray(mesh,vol_ids,c_vol_ids); // arranged for int4 storage
-  c_slice_ids = device.malloc(p_Np*4*sizeof(int),h_slice_ids);
+  c_slice_ids = mesh->device.malloc(p_Np*4*sizeof(int),h_slice_ids);
 
 
 
@@ -1217,49 +1217,49 @@ dfloat WaveInitOCCA3d(Mesh *mesh, int KblkVin, int KblkSin,
   dfloat *f_Q    = (dfloat*) calloc(mesh->K*p_Nfields*p_Np, sizeof(dfloat));
   dfloat *f_resQ = (dfloat*) calloc(mesh->K*p_Nfields*p_Np, sizeof(dfloat));
   dfloat *f_rhsQ = (dfloat*) calloc(mesh->K*p_Nfields*p_Np, sizeof(dfloat));
-  c_Q    = device.malloc(sizeof(dfloat)*mesh->K*p_Np*p_Nfields, f_Q);
-  c_resQ = device.malloc(sizeof(dfloat)*mesh->K*p_Np*p_Nfields, f_resQ);
-  c_rhsQ = device.malloc(sizeof(dfloat)*mesh->K*p_Np*p_Nfields, f_rhsQ);
+  c_Q    = mesh->device.malloc(sizeof(dfloat)*mesh->K*p_Np*p_Nfields, f_Q);
+  c_resQ = mesh->device.malloc(sizeof(dfloat)*mesh->K*p_Np*p_Nfields, f_resQ);
+  c_rhsQ = mesh->device.malloc(sizeof(dfloat)*mesh->K*p_Np*p_Nfields, f_rhsQ);
 
-  c_vgeo = device.malloc(mesh->K*nvgeo*sizeof(dfloat), vgeo);
-  c_fgeo = device.malloc(mesh->K*nfgeo*p_Nfaces*sizeof(dfloat), fgeo);
-  c_vmapP  = device.malloc(p_Nfp*p_Nfaces*mesh->K*sizeof(int),h_vmapP);
+  c_vgeo = mesh->device.malloc(mesh->K*nvgeo*sizeof(dfloat), vgeo);
+  c_fgeo = mesh->device.malloc(mesh->K*nfgeo*p_Nfaces*sizeof(dfloat), fgeo);
+  c_vmapP  = mesh->device.malloc(p_Nfp*p_Nfaces*mesh->K*sizeof(int),h_vmapP);
 
   // build kernels
   if (sizeof(dfloat)==8){
-    dgInfo.addDefine("USE_DOUBLE", 1);
+    mesh->dgInfo.addDefine("USE_DOUBLE", 1);
   }else{
-    dgInfo.addDefine("USE_DOUBLE", 0);
+    mesh->dgInfo.addDefine("USE_DOUBLE", 0);
   }
 
-  dgInfo.addDefine("p_EEL_size",mesh->EEL_val_vec.rows());
-  dgInfo.addDefine("p_EEL_nnz",mesh->EEL_nnz);
-  dgInfo.addDefine("p_L0_nnz",min(p_Nfp,7)); // max 7 nnz with L0 matrix
+  mesh->dgInfo.addDefine("p_EEL_size",mesh->EEL_val_vec.rows());
+  mesh->dgInfo.addDefine("p_EEL_nnz",mesh->EEL_nnz);
+  mesh->dgInfo.addDefine("p_L0_nnz",min(p_Nfp,7)); // max 7 nnz with L0 matrix
 
   printf("p_Nfields = %d\n",p_Nfields);
-  dgInfo.addDefine("p_Nfields",      p_Nfields); // wave equation
+  mesh->dgInfo.addDefine("p_Nfields",      p_Nfields); // wave equation
 
-  dgInfo.addDefine("p_N",      p_N);
-  dgInfo.addDefine("p_KblkV",  KblkV);
-  dgInfo.addDefine("p_KblkS",  KblkS);
-  dgInfo.addDefine("p_KblkU",  KblkU);
-  dgInfo.addDefine("p_KblkQ",  KblkQ);
-  dgInfo.addDefine("p_KblkQf",  KblkQf);
+  mesh->dgInfo.addDefine("p_N",      p_N);
+  mesh->dgInfo.addDefine("p_KblkV",  KblkV);
+  mesh->dgInfo.addDefine("p_KblkS",  KblkS);
+  mesh->dgInfo.addDefine("p_KblkU",  KblkU);
+  mesh->dgInfo.addDefine("p_KblkQ",  KblkQ);
+  mesh->dgInfo.addDefine("p_KblkQf",  KblkQf);
 
-  dgInfo.addDefine("p_Np",      p_Np);
-  dgInfo.addDefine("p_Nfp",     p_Nfp);
-  dgInfo.addDefine("p_Nfaces",  p_Nfaces);
-  dgInfo.addDefine("p_NfpNfaces",     p_Nfp*p_Nfaces);
+  mesh->dgInfo.addDefine("p_Np",      p_Np);
+  mesh->dgInfo.addDefine("p_Nfp",     p_Nfp);
+  mesh->dgInfo.addDefine("p_Nfaces",  p_Nfaces);
+  mesh->dgInfo.addDefine("p_NfpNfaces",     p_Nfp*p_Nfaces);
 
   // [JC] max threads
-  dgInfo.addDefine("p_ceilNq",min(512,mesh->Nq));
+  mesh->dgInfo.addDefine("p_ceilNq",min(512,mesh->Nq));
   int T = max(p_Np,p_Nfp*p_Nfaces);
-  dgInfo.addDefine("p_T",T);
+  mesh->dgInfo.addDefine("p_T",T);
   int Tq = max(p_Np,mesh->Nfq*p_Nfaces);
-  dgInfo.addDefine("p_Tq",Tq);
+  mesh->dgInfo.addDefine("p_Tq",Tq);
 
-  dgInfo.addDefine("p_Nvgeo",nvgeo);
-  dgInfo.addDefine("p_Nfgeo",nfgeo);
+  mesh->dgInfo.addDefine("p_Nvgeo",nvgeo);
+  mesh->dgInfo.addDefine("p_Nfgeo",nfgeo);
 
 
   std::string src = "okl/WaveKernels.okl";
@@ -1268,24 +1268,29 @@ dfloat WaveInitOCCA3d(Mesh *mesh, int KblkVin, int KblkSin,
 #if USE_BERN
   printf("Building Bernstein kernels from %s\n",src.c_str());
   // bernstein kernels
-  rk_volume_bern  = device.buildKernelFromSource(src.c_str(), "rk_volume_bern", dgInfo);
+  rk_volume_bern  = mesh->device.buildKernelFromSource(src.c_str(), "rk_volume_bern", mesh->dgInfo);
 
   printf("building rk_surface_bern from %s\n",src.c_str());
 
 #if USE_SLICE_LIFT
-  rk_surface_bern = device.buildKernelFromSource(src.c_str(), "rk_surface_bern_slice", dgInfo);
-  //rk_surface_bern = device.buildKernelFromSource(src.c_str(), "rk_surface_bern_slice_loads", dgInfo);
-  //rk_surface_bern = device.buildKernelFromSource(src.c_str(), "rk_surface_bern_slice_square", dgInfo);
+  rk_surface_bern = mesh->device.buildKernelFromSource(src.c_str(), "rk_surface_bern_slice", mesh->dgInfo);
+  //rk_surface_bern = mesh->device.buildKernelFromSource(src.c_str(), "rk_surface_bern_slice_loads", mesh->dgInfo);
+  //rk_surface_bern = mesh->device.buildKernelFromSource(src.c_str(), "rk_surface_bern_slice_square", mesh->dgInfo);
   printf("using slice-by-slice bern surface kernel; more efficient for N > 6\n");
 #else
   printf("using non-optimal bern surface kernel; more efficient for N < 6\n");
-  rk_surface_bern = device.buildKernelFromSource(src.c_str(), "rk_surface_bern", dgInfo);
+  rk_surface_bern = mesh->device.buildKernelFromSource(src.c_str(), "rk_surface_bern", mesh->dgInfo);
 #endif
 #endif
+
+  cout << mesh->dgInfo.header << endl;
+  cout << mesh->dgInfo.flags << endl;
+  
   // nodal kernels
-  rk_volume  = device.buildKernelFromSource(src.c_str(), "rk_volume", dgInfo);
-  rk_surface = device.buildKernelFromSource(src.c_str(), "rk_surface", dgInfo);
-  rk_update  = device.buildKernelFromSource(src.c_str(), "rk_update", dgInfo);
+  occa::kernelInfo dgInfo = mesh->dgInfo;
+  rk_volume  = mesh->device.buildKernelFromSource(src.c_str(), "rk_volume", dgInfo);
+  rk_surface = mesh->device.buildKernelFromSource(src.c_str(), "rk_surface", mesh->dgInfo);
+  rk_update  = mesh->device.buildKernelFromSource(src.c_str(), "rk_update", dgInfo);
 
   // estimate dt. may wish to replace with trace inequality constant
   dfloat CN = (p_N+1)*(p_N+3)/3.0;
@@ -1348,7 +1353,7 @@ void time_kernels(Mesh *mesh){
   double bw = 0.0;
 
   FILE *timingFile = fopen ("blockTimings.txt","a");
-  occa::initTimer(device);
+  occa::initTimer(mesh->device);
 
   // nodal kernels
   for (int step = 0; step < 10; ++step){
@@ -1356,17 +1361,17 @@ void time_kernels(Mesh *mesh){
 
     occa::tic("volume (nodal)");
     rk_volume(mesh->K, c_vgeo, c_Dr, c_Ds, c_Dt, c_Q, c_rhsQ);
-    device.finish();
+    mesh->device.finish();
     dfloat elapsedV = occa::toc("volume (nodal)",rk_volume, gflops, bw * sizeof(dfloat));
 
     occa::tic("surface (nodal))");
     rk_surface(mesh->K, c_fgeo, c_Fmask, c_vmapP, c_LIFT, c_Q, c_rhsQ);
-    device.finish();
+    mesh->device.finish();
     dfloat elapsedS = occa::toc("surface (nodal)",rk_surface, gflops, bw * sizeof(dfloat));
 
     occa::tic("update (nodal)");
     rk_update(mesh->K, rka, rkb, fdt, c_rhsQ, c_resQ, c_Q);
-    device.finish();
+    mesh->device.finish();
     dfloat elapsedU = occa::toc("update (nodal)",rk_update, gflops, bw * sizeof(dfloat));
 
     timeV+=elapsedV;
@@ -1392,14 +1397,14 @@ void time_kernels(Mesh *mesh){
                    c_D_ids1, c_D_ids2, c_D_ids3, c_D_ids4, c_Dvals4,
                    c_Q, c_rhsQ);
 
-    device.finish();
+    mesh->device.finish();
     dfloat elapsedV = occa::toc("volume (bern)",rk_volume_bern, gflops, bw * sizeof(dfloat));
 
     occa::tic("surface (bern)");
     rk_surface_bern(mesh->K, c_fgeo, c_Fmask, c_vmapP,
                     c_slice_ids,c_EEL_ids, c_EEL_vals, c_L0_ids, c_L0_vals, c_cEL,
                     c_Q, c_rhsQ);
-    device.finish();
+    mesh->device.finish();
     dfloat elapsedS = occa::toc("surface (bern)",rk_surface_bern, gflops, bw * sizeof(dfloat));
 
     timeV+=elapsedV;
@@ -1431,7 +1436,7 @@ void time_curved_kernels(Mesh *mesh,int nsteps){
   dfloat elapsedQ = 0.f;
   dfloat elapsedQf = 0.f;
 
-  occa::initTimer(device);
+  occa::initTimer(mesh->device);
   for (int step = 0; step < nsteps; ++step){
     dfloat fdt = 1.f;
     dfloat rka = 1.f;
@@ -1447,7 +1452,7 @@ void time_curved_kernels(Mesh *mesh,int nsteps){
                                 c_Vskew,c_Pskew,
                                 c_Q, c_rhsQ);
 
-    device.finish();
+    mesh->device.finish();
     dfloat elapsedV = occa::toc("volume (nodal WADG skew)",rk_volume_WADG_skew, gflops, bw * sizeof(dfloat));
 
     // dfloat elapsedV = occa::toc("volume (nodal WADG skew combined)",rk_volume_WADG_skew_combine, gflops, bw * sizeof(dfloat));
@@ -1457,7 +1462,7 @@ void time_curved_kernels(Mesh *mesh,int nsteps){
     kernel_write_surf_quad(mesh->K, c_KlistAll,
                            c_Fmask, c_VfqFace, c_Vfq,
                            c_Q, c_Qf);
-    device.finish();
+    mesh->device.finish();
     elapsedQf = occa::toc("write_surf_quad (nodal WADG skew)", kernel_write_surf_quad, gflops, bw * sizeof(dfloat));
 
 
@@ -1474,7 +1479,7 @@ void time_curved_kernels(Mesh *mesh,int nsteps){
     rk_volume_WADG(mesh->K, c_KlistAll,
                    c_vgeoq, c_Jq, c_Vrq, c_Vsq, c_Vtq, c_Pq,
                    c_Q, c_rhsQ);
-    device.finish();
+    mesh->device.finish();
     dfloat elapsedV = occa::toc("volume (nodal)",rk_volume_WADG, gflops, bw * sizeof(dfloat));
 
     dfloat elapsedS = 0.f;
@@ -1482,7 +1487,7 @@ void time_curved_kernels(Mesh *mesh,int nsteps){
     rk_surface_WADG(mesh->K, c_KlistAll,
                     c_fgeo,c_fgeoq,c_VfqFace,c_Pfq,c_Fmask,c_vmapP,
                     c_Q, c_rhsQ);
-    device.finish();
+    mesh->device.finish();
     elapsedS = occa::toc("surface (nodal)",rk_surface_WADG, gflops, bw * sizeof(dfloat));
 
 #endif
@@ -1492,7 +1497,7 @@ void time_curved_kernels(Mesh *mesh,int nsteps){
                    c_Vq_reduced, c_Pq_reduced, c_Jq_reduced,
                    rka, rkb, fdt,
                    c_rhsQ, c_resQ, c_Q);
-    device.finish();
+    mesh->device.finish();
     dfloat elapsedU = occa::toc("update",rk_update_WADG, gflops,bw*sizeof(dfloat));
 
     timeV+=elapsedV;
@@ -1683,7 +1688,7 @@ void RK_step_WADG_subelem(Mesh *mesh, dfloat rka, dfloat rkb, dfloat fdt, dfloat
 		 ftime, c_fsrc,
 		 rka, rkb, fdt,
   		 c_rhsQ, c_resQ, c_Q);
-  device.finish();
+  mesh->device.finish();
 
 }
 

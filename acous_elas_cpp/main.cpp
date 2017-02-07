@@ -15,33 +15,20 @@ double WaveWeight(double x, double y, double z){
 
 
 int main(int argc, char **argv){
-
+  
   Mesh *mesh1 = ReadGmshHybrid("meshes/pri1.msh");
   FacePairHybrid(mesh1);
 
   StartUpWedge(mesh1);
   
   //return 0;
-
-#if 0
-  MatrixXi v(2,4); 
-  v << 1,3,4,2,
-    1,2,3,4;
-  cout << "v = " << v << endl;
-  std::sort(v.data(), v.data()+v.size());
-  cout << "v = " << v << endl;
-  return 0;
-#endif
-
   
-  printf("running heterogeneous subelem main\n");
-
   Mesh *mesh;
   int k,n, sk=0;
 
   // read GMSH file
-  mesh = ReadGmsh3d(argv[1]);
-
+  mesh = ReadGmsh3d(argv[1]);  
+  
   int KblkV = 1, KblkS = 1, KblkU = 1, KblkQ = 1, KblkQf = 1;
   if(argc >= 8){
     KblkV = atoi(argv[3]);
