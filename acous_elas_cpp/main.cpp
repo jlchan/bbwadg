@@ -16,15 +16,15 @@ double WaveWeight(double x, double y, double z){
 
 int main(int argc, char **argv){
 
-  Mesh *mesh1 = ReadGmshHybrid("meshes/pri1.msh");
-  FacePairHybrid(mesh1);
+  // Mesh *mesh1 = ReadGmshHybrid("meshes/pri1.msh");
+  // FacePairHybrid(mesh1);
 
-  StartUpWedge(mesh1);
-  
+  // StartUpWedge(mesh1);
+
   //return 0;
 
 #if 0
-  MatrixXi v(2,4); 
+  MatrixXi v(2,4);
   v << 1,3,4,2,
     1,2,3,4;
   cout << "v = " << v << endl;
@@ -33,7 +33,7 @@ int main(int argc, char **argv){
   return 0;
 #endif
 
-  
+
   printf("running heterogeneous subelem main\n");
 
   Mesh *mesh;
