@@ -2,11 +2,12 @@ clear
 
 Globals1D;
 
-% N = 4;
-K1D = 4;
+% for K1D = [2 4 8 16];
 sk = 1;
-% Generate simple mesh
-for N = 4
+Nvec = 1:6;
+for N = Nvec
+    K1D = N;
+    % Generate simple mesh
     [Nv, VX, K, EToV] = MeshGen1D(-1,1,K1D);
     
     %     a = 0;
@@ -17,55 +18,66 @@ for N = 4
     % Initialize solver and construct grid and metric
     StartUp1D;
     
-    vmapP(1) = vmapM(end); % make periodic
-    vmapP(end) = vmapM(1);
+    Dx = kron(diag(rx(1,:)),Dr);
     
     rp = linspace(-1,1,100)';
     [rq wq] = JacobiGQ(0,0,N);
-        
+    
     Vp = Vandermonde1D(N,rp)/V; xp = Vp*x;
-        
+    
     Vq = Vandermonde1D(N,rq)/V;
     Vrq = GradVandermonde1D(N,rq)/V;
     xq = Vq*x;
     wqJ = repmat(wq,1,K).*(Vq*J); %wqJ = wqJ(:);
+    V = eye(Np);
     
-    % wrt BB
-    [VB] = bern_basis_1D(N,r);    
+    [VB] = bern_basis_1D(N,r);
     [Vq Vrq] = bern_basis_1D(N,rq);
+    
     Dr = (Vq'*diag(wq)*Vq)\(Vq'*diag(wq)*Vrq);
     
     % BB mass/deriv matrices
     M = kron(diag(J(1,:)),Vq'*diag(wq)*Vq);
-    S = kron(diag(J(1,:).*rx(1,:)),Vq'*diag(wq)*Vrq);
+    S = kron(diag(rx(1,:)),Vrq'*diag(wq)*Vrq);
     %     Dx = M\S;
-    Dx = kron(diag(rx(1,:)),Dr);
     
     t = [VX(1)*ones(1,N) VX VX(end)*ones(1,N)];
     % t = sort(cos(t*pi));
     B = bspline_basismatrix(N+1,t,x(:));
     
-%     R = kron(eye(K),V)\B;
     R = kron(eye(K),VB)\B;
     
-    dnormDG(sk) = max(abs(eig(Dx))); % block dmat matrix over [-1,1]: DG basis
     MB = (R'*M*R);
-    dnormB(sk)= max(abs(eig(MB\(R'*S*R))));
-    sk = sk + 1;
+    if 0
+        f = @(x) sin(pi*x);
+        
+        b = Vq'*(wqJ.*f(xq));
+        u = R*(MB\(R'*b(:)));
+        % u = R*(B\f(x(:)));
+        u = reshape(u,N+1,K);
+        % plot(xp,Vp*VB*u,'--','linewidth',2)
+        % hold on
+        % plot(xp,f(xp),'-','linewidth',2)
+        % hold on;plot(t,ones(size(t)),'o')
+        
+        err = wqJ.*(f(xq)-Vq*u).^2;
+        L2err = sqrt(sum(err(:)));
+        L2err * size(R,2)
+        % kron(speye(K),Vp)*B)
+    end
+    e = zeros(size(MB,2));
+    e(1,1) = 1;    
+    e(end,end) = 1;
+    lam = eig(e,MB);
+    CT(sk) = max(lam)/K1D;
     
-    plot(xp(:),kron(speye(K),Vp)*B)
-    hold on;plot(t,ones(size(t)),'o')
+    lam = eig(R'*S*R,MB);
+    CM(sk) = sqrt(max(lam))/K1D;
+    sk = sk + 1
 end
 
-
-
-% kron(speye(K),Vp)*B)
-
-return
-figure;
-plot(dnormDG,'*--')
+C = max(CT,CM);
+plot(Nvec,C,'o--')
 hold on
-plot(dnormB,'o--')
-% C = polyfit(1:N,dnormB,1);
-% plot((1:N)*C(1),'rx--')
-
+NN = 1:N;
+plot(NN,(NN+1).*(NN+2)/2,'x--')
