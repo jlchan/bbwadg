@@ -27,9 +27,9 @@ hold on
 
 clear
 sk = 1;
-for NB = 3:9
+for NB = 2:9
     K1D = 7; Ksub = 1; % DG
-%     K1D = 3; Ksub = NB; % DG-IGA
+    K1D = 3; Ksub = NB; % DG-IGA
     if Ksub==1
         dt = .5 / (NB^2*K1D);
     else
@@ -53,7 +53,7 @@ for NB = 3:9
 end
 'done'
 
-loglog(work,L2err,'x--','linewidth',2)
+loglog(dofs,L2err,'x--','linewidth',2)
 xlabel('Total work','fontsize',14)
 ylabel('L2 error','fontsize',14)
 hold on

@@ -3,7 +3,7 @@ function compute_IGA_quadrature
 
 global reflect f NT tt DBr t NB Vq wq
 
-NB = 4;
+NB = 3;
 Ksub = NB;
 N = NB+Ksub-1;
 [Nv, VX, Ksub, EToV] = MeshGen1D(-1,1,Ksub);
@@ -29,7 +29,7 @@ M(abs(M)<1e-8) = 0;
 
 %% compute quad rules
 
-NT = 2*NB; % target order - for GQ, 2*NB, for GLL 2*NB-1
+NT = 2*NB-1; % target order - for GQ, 2*NB, for GLL 2*NB-1
 tt = sort([VX(1)*ones(1,NT+1) repmat(VX(2:end-1),1,NB+1) VX(end)*ones(1,NT+1)]); % product of splines
 % tt = sort([t t]);
 Bq = bspline_basismatrix(NT+1,tt,rq);
@@ -56,12 +56,13 @@ end
 f = Bq'*wq; % exact integrals
 Nq = ceil(size(Bq,2)/2)-1;
 
-if 0    
-    rprev = spline_quadrature(NB-1);
-    reprev = linspace(-1,1,length(rprev));
-    
-    % bootstrap up
-    rq0 = (Vandermonde1D(N,linspace(-1,1,Nq+1))/Vandermonde1D(N,reprev))*rprev;
+if 1   
+%     rprev = spline_quadrature(NB-1);
+%     reprev = linspace(-1,1,length(rprev));
+%     
+%     % bootstrap up
+%     rq0 = (Vandermonde1D(N,linspace(-1,1,Nq+1))/Vandermonde1D(N,reprev))*rprev;
+rq0 = JacobiGQ(0,0,Nq);
     
     if mod(length(rq0),2)==0 % if #pts even, reflect
         reflect = @(x) sort([-x(:); x(:)]); % reflects points, map [0,1] to [-1,1]
@@ -75,14 +76,16 @@ if 0
     opt = optimoptions('fsolve','FunctionTolerance',tol,'StepTolerance',tol,'OptimalityTolerance',tol); %,'SpecifyObjectiveGradient',true);
     rq0reflect = rq0((ceil(length(rq0)/2)+1):end);
     r = reflect(fsolve(@(x) residual(reflect(x)),rq0reflect,opt));
-end
-
-% just use predefined points
-for i = 1:N+1
-    r(i) = mean(t((i+1):(i+NB))); % greville
-end
-% r = JacobiGL(0,0,N);
+else
+    
+    % just use predefined points
+    for i = 1:N+1
+        r(i) = mean(t((i+1):(i+NB))); % greville
+    end
+    % r = JacobiGL(0,0,N);
 % r = JacobiGQ(0,0,N);
+
+end
 
 % recover weights
 Vq = bspline_basismatrix(NT+1,tt,r);

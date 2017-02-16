@@ -22,8 +22,8 @@ StartUpQuad2D;
 % hold on
 % plot(x(vmapP),y(vmapP),'x')
 
-global M invM 
-global rxJ sxJ ryJ syJ sJ J
+global rxJ sxJ ryJ syJ nxJ nyJ J 
+global Vq Vfq Vrq Vsq Pq Prq Psq Pfq
 
 a = .0;
 x = x + a*cos(.5*3*pi*y).*(1-x).*(1+x);
@@ -43,9 +43,9 @@ yp = Vp*y;
 
 %% initialize TP operators
 
-[r1D w1D] = JacobiGL(0,0,N);
-[rq1D wq1D] = JacobiGQ(0,0,N+4);
+[rq1D wq1D] = JacobiGQ(0,0,N+1);
 
+[r1D w1D] = JacobiGL(0,0,N);
 VX = linspace(-1,1,Ksub+1);
 t = [VX(1)*ones(1,NB) VX VX(end)*ones(1,NB)]; % open knot vec
 for i = 1:N+1
@@ -53,6 +53,7 @@ for i = 1:N+1
 end
 
 % switch to new nodal points (assumes boundary points still!)
+[r s] = meshgrid(r1D); r = r(:); s = s(:);
 Vnodal = Vandermonde1D(N,r1D)/Vandermonde1D(N,JacobiGL(0,0,N));
 Vnodal = kron(Vnodal,Vnodal);
 x = Vnodal*x;
@@ -85,7 +86,7 @@ else
     Vq1D = bsplineVDM(NB,Ksub,rq1D);
     
     % if collocating, change basis
-    if 1
+    if 0
         M1D = inv(BVDM)'*M1D*inv(BVDM);
         Dr1D = BVDM*(Dr1D/BVDM);
         Vp1D = Vp1D/BVDM;
@@ -99,10 +100,7 @@ else
     end
     invM1D = inv(M1D);
     Vp = kron(Vp1D,Vp1D);
-    Vq = kron(Vq1D,Vq1D);
-%     plot(rp1D,Vp1D)
-%     keyboard
-
+    
 end
 
 Dr = kron(eye(N+1),Dr1D);
@@ -116,10 +114,26 @@ for f = 1:4
 end
 LIFT = invM * Mf;
 
-rxJ = rx.*J;
-sxJ = sx.*J;
-ryJ = ry.*J;
-syJ = sy.*J;
+global Vq Vfq Vrq Vsq Pq Prq Psq Pfq
+Vq = kron(Vq1D,Vq1D);
+Vfq = blkdiag(Vq1D,Vq1D,Vq1D,Vq1D); 
+Vrq1D = Vq1D*Dr1D;
+Vrq = kron(Vrq1D,Vq1D);
+Vsq = kron(Vq1D,Vrq1D);
+
+Pq = invM*Vq'*diag(wq);
+Prq = invM*Vrq'*diag(wq);
+Psq = invM*Vsq'*diag(wq);
+Pfq = invM*Vfq'*diag(wfq);
+
+rxJ = Vq*(rx.*J);
+sxJ = Vq*(sx.*J);
+ryJ = Vq*(ry.*J);
+syJ = Vq*(sy.*J);
+J = Vq*J;
+nxJ = Vfq*(nx.*sJ);
+nyJ = Vfq*(ny.*sJ);
+
 
 %% check eigs
 
@@ -148,7 +162,7 @@ end
 
 x0 = 0; y0 = .1;
 pex = @(x,y,t) exp(-10^2*((x-x0).^2 + (y-y0).^2));
-k = 3;
+k = 7;
 pex = @(x,y,t) cos(k*pi*x/2).*cos(k*pi*y/2).*cos(sqrt(2)*.5*k*pi*t);
 
 p = VDM\pex(x,y,0);
@@ -210,6 +224,9 @@ function [rhsp, rhsu, rhsv] = acousticsRHS2D(p,u,v)
 
 Globals2D;
 
+global rxJ sxJ ryJ syJ nxJ nyJ J 
+global Vq Vfq Vrq Vsq Pq Prq Psq Pfq
+
 % Define field differences at faces
 dp = zeros(Nfp*Nfaces,K); dp(:) = p(vmapP)-p(vmapM);
 du = zeros(Nfp*Nfaces,K); du(:) = u(vmapP)-u(vmapM);
@@ -220,27 +237,30 @@ vavg = zeros(Nfp*Nfaces,K); vavg(:) = v(vmapP)+v(vmapM);
 ndotUavg = nx.*uavg + ny.*vavg;
 ndotUavg(mapB) = 2*(u(vmapB).*nx(mapB) +  v(vmapB).*ny(mapB));
 
+dp = Vfq*dp;
+du = Vfq*du;
+dv = Vfq*dv;
+
 % Impose reflective boundary conditions (p+ = -p-)
 ndotdU = nx.*du + ny.*dv;
 ndotdU(mapB) = 0;
 dp(mapB) = -2*p(vmapB);
 
 tau = 1;
-fluxp =  tau*dp - ndotUavg;
-% fluxp =  tau*dp - ndotdU;
+% fluxp =  tau*dp - ndotUavg;
+fluxp =  tau*dp - ndotdU;
 fluxu =  (tau*ndotdU - dp).*nx;
 fluxv =  (tau*ndotdU - dp).*ny;
-
-global M invM 
-global rxJ sxJ ryJ syJ sJ J
 
 pr = Dr*p; ps = Ds*p;
 dpdx = rxJ.*pr + sxJ.*ps;
 dpdy = ryJ.*pr + syJ.*ps;
-% dudx = rxJ.*(Dr*u) + sxJ.*(Ds*u);
-% dvdy = ryJ.*(Dr*v) + syJ.*(Ds*v);
-% divU = dudx + dvdy;
-divU = -invM*(Dr'*(rxJ.*(M*u) + ryJ.*(M*v)) + Ds'*(sxJ.*(M*u) + syJ.*(M*v)));
+dudx = rxJ.*(Dr*u) + sxJ.*(Ds*u);
+dvdy = ryJ.*(Dr*v) + syJ.*(Ds*v);
+divU = dudx + dvdy;
+
+% uq = Vq*u; vq = Vq*v;
+% divU = -( Prq*(rxJ.*(uq) + ryJ.*(vq)) + Psq*(sxJ.*(uq) + syJ.*(vq)));
 
 % compute right hand sides of the PDE's
 rhsp =  -divU + LIFT*(sJ.*fluxp)/2.0;
@@ -250,6 +270,10 @@ rhsv =  -dpdy + LIFT*(sJ.*fluxv)/2.0;
 rhsp = rhsp./J;
 rhsu = rhsu./J;
 rhsv = rhsv./J;
+
+% rhsp = Pq*((Vq*rhsp)./J);
+% rhsu = Pq*((Vq*rhsu)./J);
+% rhsv = Pq*((Vq*rhsv)./J);
 return;
 
 
