@@ -7,9 +7,9 @@ function Euler1D
 Globals1D;
 
 % Order of polymomials used for approximation
-N = 2;
-K1D = 32;
-FinalTime = 25;
+N = 4;
+K1D = 16;
+FinalTime = 5;
 
 % Generate simple mesh
 [Nv, VX, K, EToV] = MeshGen1D(0,10,K1D);
@@ -150,12 +150,12 @@ x0 = 5;
 % m = rho.*u;
 % E = p/(gamma-1) + .5*rho.*u.^2;
 
-rho = 1+exp(-(x-x0).^2); 
-% rho = 1 + (x > x0);
-p = rho.^gamma;
-u = 0*rho;
-E = p/(gamma-1) + .5*rho.*u.^2;
-m = rho.*u;
+% rho = 1+exp(-(x-x0).^2); 
+% % rho = 1 + (x > x0);
+% p = rho.^gamma;
+% u = 0*rho;
+% E = p/(gamma-1) + .5*rho.*u.^2;
+% m = rho.*u;
 
 % % steady sine solution
 % rho = 1+.2*sin(pi*x); p = ones(size(rho)); 
@@ -163,12 +163,12 @@ m = rho.*u;
 % E = p/(gamma-1) + .5*rho.*u.^2;
 % m = rho.*u;
 
-% % sine solution
-% rho = 2 + sin(pi*x);
-% u = ones(size(x));
-% p = ones(size(x));
-% m = rho;
-% E = p/(gamma-1) + .5*rho.*u.^2;
+% sine solution
+rho = 2 + sin(pi*x);
+u = ones(size(x));
+p = ones(size(x));
+m = rho;
+E = p/(gamma-1) + .5*rho.*u.^2;
 
 
 
