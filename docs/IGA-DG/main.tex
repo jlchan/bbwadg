@@ -304,7 +304,7 @@ legend style={font=\small}
 
 \newcommand{\diag}[1]{{\rm diag}\LRp{#1}}
 
-\newcommand{\half}{1/2}
+\newcommand{\Ksub}{K_{\rm sub}}
 
 \newcolumntype{C}[1]{>{\centering\let\newline\\\arraybackslash\hspace{0pt}}m{#1}}
 
@@ -318,53 +318,120 @@ legend style={font=\small}
 
 \date{}
 \author{Jesse Chan, John Evans}
-\title{B-spline DG notes}
+\title{Time-domain multi-patch discontinuous Galerkin methods}
 
 \begin{document}
 
 \maketitle
 
 \begin{abstract}
-Achieve extra $h$-resolution for the same CFL condition by using high order B-splines as a local approximation space on tensor product elements.  
 
-Achieve a spectral element-type implementation using quadrature nodes for B-splines. 
+Achieve extra $h$-resolution for the same CFL condition by using high order B-splines as a local approximation space on tensor product elements.  Alternatively, achieve an $O(h_N/N)$ CFL with respect to the fine-grid mesh size $h_N = h/N$.  
+
+
+
+
 \end{abstract}
 
 \tableofcontents
 
 \section{Introduction}
 
-\section{Stable timestep restrictions for high order DG methods}
+
+
+Original IGA paper \cite{hughes2005isogeometric}
+
+The ``value of continuity'' for direct solvers \cite{garcia2016value} is to decrease the number of degrees of freedom while maintaining a comparable resolution.  
+
+DG on tets using exact geometry \cite{michoski2015foundations}
+
+Multi-patch IGA \cite{langer2015multipatch,langer2016discontinuous}.  
+
+%Exploiting tensor product \cite{mantzaflaris2016low}.  
+
+Can improve work estimates \cite{chan2015bbdg}, but not CFL.  
+
+Improving CFL: Dual-grid filter \cite{warburton2008taming}.  Adding conservation constraints \cite{xu2010conservation,xu2014new}, increasing coupling between elements.  Central DG \cite{reyna2014operator}.  
+
+Hermite methods \cite{goodrich2006hermite,vargas2015variations}.  
+
+The work here more closely resembles the recently introduced Galerkin difference methods \cite{banks2016galerkin}, which constructs extended-support basis functions from .  
+
+\section{Stable timestep restrictions for time-domain DG methods}
+
+Under the method of lines, a PDE is transformed to a system of ordinary differential equations (ODEs) 
+\[
+\td{\bm{U}}{t} = \bm{A}_h \bm{U}
+\]
+by discretizing in space.  This system may then be solved using an explicit time stepping, which avoids the inversion of a global matrix.  Since such a scheme requires only matrix-vector products, the storage of a global matrix may also be avoided through a matrix-free implementation.  Under explicit time stepping, the eigenvalues of $\bm{A}_h$ must lie within the stability region of the chosen scheme.  
+
+Bounds on real and imaginary parts of eigenvalues can be estimated using theorems of Bendixson and Hirsch \cite{marcus1992survey}, as is done in \cite{chan2015gpu}.  
 
 We illustrate this using the advection equation.  
 \begin{align*}
 V^T A_h U &= \sum_{k} \LRp{\beta\cdot\Grad u,v}_{\Lk} + \LRa{f^*(u),v}_{\Ldk} \\
 &\leq \nor{\beta}_{L^\infty}\sum_{k} \nor{\Grad u}\nor{v} + \nor{f^*(u)}_{\Ldk}\nor{v}_{\Ldk}\\
-&\lesssim \nor{\beta}_{L^\infty}\sum_{k} \LRp{C_I \nor{J\bm{G}}_{L^\infty\LRp{\Dhat}}  + C_N^2 \nor{J^f}_{L^\infty\LRp{\Dhat}}}\nor{1/J}_{L^\infty\LRp{\Dhat}}\nor{u}_{\Lk}\nor{v}_{\Lk}
+&\lesssim \nor{\beta}_{L^\infty}\sum_{k} \LRp{C_I \nor{J\bm{G}}_{L^\infty\LRp{\Dhat}}  + C_N^2 \nor{J^f}_{L^\infty\LRp{\Dhat}}}\nor{1/J}_{L^\infty\LRp{\Dhat}}\nor{u}_{\Lk}\nor{v}_{\Lk}.  
 \end{align*}
 The CFL condition is then determined by mesh-dependent geometric factors of $O(h)$ and order-dependent constants in the inverse and trace inequalities $C_I, C_N$.  
 
+For shape regular meshes, the ratio between volume and surface area is proportional to $h$, so 
+\[
+\nor{J^f}_{\LinfDk} \nor{J^{-1}}_{\LinfDk} = O(h).
+\]
+
+For polynomials, it can be shown that $C_I,C_N$ both depend quadratically on the degree $N$ (see, for example \cite{warburton2003constants, ozisik2010constants}).  Thus, for DG methods based on locally polynomial approximation spaces, the spectral radius can be bounded by the mesh size, polynomial order, and maximum wavespeed
+\[
+\rho\LRp{\bm{A}_h} = O\LRp{\frac{\beta_{\max} N^2}{h}}.  
+\]
+The quadratic dependence of $\rho\LRp{\bm{A}_h}$ on $N$ results in small timesteps if $N$ is large, making the use of high polynomial degrees computationally intractable.  
+
 \subsection{Explicit constants in trace and inverse inequalities for polynomial and B-spline approximations}
 
-For polynomials, $C_I, C_N = O(N^2)$ on the reference element (see, for example \cite{warburton2003constants, ozisik2010constants, chan2015gpu}).  
+
+
+
+For polynomials, $C_I, C_N = O(N^2)$ on the reference element .  
 
 For B-splines with $K_{\rm sub} = N$, $C_N = O(N)$ instead of $O(N^2)$.  
 
-For sufficiently regular solutions, convergence is in $L^2$ as $C (h/N)^{N+1}$ while still maintaining an $O(h/N^2)$ CFL.  Or, if we measure by $h_N = h/N$, CFL is $O(h_N/N)$.  This results from interpolation estimates for one-dimensional B-splines \cite{bazilevs2006isogeometric}
+For sufficiently regular solutions, convergence is in $L^2$ as $C (h/N)^{N+1}$ while still maintaining an $O(h/N^2)$ CFL.  Or, if we measure by $h_N = h/N$, CFL is $O(h_N/N)$.  This results from interpolation estimates for one-dimensional B-splines \cite{bazilevs2006isogeometric}.  
+
+Show plots of lift functions for polynomials vs for B-spline bases - less oscillation for B-splines.  
+
+\begin{figure}
+\centering
+\subfloat[$N_P = N+\Ksub$]{\includegraphics[width=.4\textwidth]{figs/lift1.png}}
+\subfloat[Zoom in]{\includegraphics[width=.4\textwidth]{figs/liftZoom1.png}}\\
+\subfloat[$N_P = N$]{\includegraphics[width=.4\textwidth]{figs/lift2.png}}
+\subfloat[Zoom in]{\includegraphics[width=.4\textwidth]{figs/liftZoom2.png}}
+\caption{Comparison of lift functions for a degree $N_P$ polynomial space and spline space with degree $N = 7$ and $\Ksub = N$ elements.  Degree $N_P$ Gauss-Radau quadrature points are also shown for comparison.  }
+\end{figure}
+
+\section{DG formulation}
+
+Skew-symmetric form is energy stable for acoustic, electromagnetic, and elastic wave propagation.  Disadvantage of IGA-DG vs SEM is a lack of equivalence with strong and weak formulations \cite{kopriva2010quadrature}
+
+Penalty fluxes \cite{chan2016short} for dissipation.  
+
+Avoid mass matrix inversion using weight-adjusted DG \cite{chan2016weight1,chan2016weight2}.  Especially important for IGA-DG since it decouples the inversion of the mass matrix into a Kronecker structure.  
 
 \section{Quadrature }
 
 Reduce dimension of the search space by treating the weights as dependent variables and assuming symmetry of the rule.  Initialize guess for quadrature rule using the previous order's rule to generate a polynomial interpolant from equispaced nodes to quadrature nodes \cite{warburton2006explicit,chan2015comparison}.  
 
-We note that these rules are generated by choosing the number of points $N_q$ such that ${\rm dim}(S_{\rm target}) \leq 2N_q$, and may not be optimal.  
+We note that these rules are generated by choosing the number of points $N_q$ such that ${\rm dim}(S_{\rm target}) \leq 2N_q$, and may not be optimal.  The problem is that, to exactly integrate the target space, $N_q = O(N^2)$.  Reduced quadratures are thus necessary.  
 
-\subsection{Reduced quadrature using Gauss-Legendre-Lobatto rules}
+\subsection{Reduced quadrature rules}
 
-Can cast into collocation style using skew-symmetric formulation by using a degree $N + K_{\rm sub} - 1$ Gauss-Legendre or Gauss-Lobatto rule.  Show plots of GLL nodal bases for polynomials vs for B-spline bases - less oscillation for basis functions at nodes on/near the boundary.  
+The derivative of a spline does not map into the same spline space; instead, it decreases both the order and continuity.  The derivative operator then satisfies $\pd{}{x} : S^N_{N-1}\rightarrow S^{N-1}_{N-2}$.  To define a derivative operator which maps from $S^N_{N-1}$ to itself, we use an $L^2$ projection.  
+\[
+\int_{D^k} a(x)\pd{u}{x} v = \int_{\widehat{D}} a(x)\pd{r}{x}J\pd{u}{r} v = \int_{\widehat{D}} a(x)\LRp{\pd{r}{x}J} \Pi_N\LRp{\pd{u}{r}} v.  
+\]
+
+Can cast into collocation style using skew-symmetric formulation by using a degree $N + K_{\rm sub} - 1$ Gauss-Legendre or Gauss-Lobatto rule.  
 
 Problems here - high order accuracy is preserved if the mass matrix is under-integrated, but not if an isoparametric mapping is used.  
-
-
 
 
 \section{Future work}
