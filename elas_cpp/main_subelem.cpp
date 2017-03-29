@@ -15,7 +15,7 @@ double WaveWeight(double x, double y, double z){
 
 
 int main(int argc, char **argv){
-
+  
   printf("running heterogeneous subelem main\n");
 
   Mesh *mesh;

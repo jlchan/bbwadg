@@ -2,7 +2,7 @@
 #define _MESH_HEADER
 
 #include <occa.hpp>
-
+#include <string>
 #include "Basis.h"
 
 // default order
@@ -37,9 +37,6 @@ typedef struct foo {
 
   int Nv;     /* number of mesh vertices */
   int K;      /* number of mesh elements */
-  //int **EToV; /* element to global vertex list  */
-  //int **EToE; /* element to neighbor element (elements numbered by their proc) */
-  //int **EToF; /* element to neighbor face    (element local number 0,1,2) */
   MatrixXi EToV;
   MatrixXi EToE;
   MatrixXi EToF;
@@ -48,34 +45,33 @@ typedef struct foo {
 
   int *bcflag; /* vector. entry n is 1 if vertex n is on a boundary */
 
-  //dfloat **GX; /* x-coordinates of element vertices */
-  //dfloat **GY; /* y-coordinates of element vertices */
-  //dfloat **GZ; /* z-coordinates of element vertices (3d) */
   VectorXd VX,VY,VZ;
   MatrixXd GX,GY,GZ; // local elem vertices
 
   // =============== reference elem stuff ===================
 
   /* high order node info */
-  //MatrixXi Fmask;
   int   **FmaskC; /* face node numbers in element volume data */
   MatrixXi Fmask;
-  MatrixXi faceVolPerm  ; // permutation of f=0 lift matrix rows for f = 1,2,3
   VectorXd r,s,t;
+  // VDM, nodal deriv/lift
+  MatrixXd V,Dr,Ds,Dt,LIFT; 
 
   int Nq;
-  VectorXd wq, rq, sq, tq;
+  VectorXd wq,rq,sq,tq;
   MatrixXd xq,yq,zq;
   MatrixXd rxq,ryq,rzq,sxq,syq,szq,txq,tyq,tzq,Jq;
-  MatrixXd Vq, Vrq, Vsq, Vtq;
+  MatrixXd Vq,Vrq,Vsq,Vtq;
 
   int Nfq;
   VectorXd wfqFace,rfq,sfq,tfq,wfq;
   MatrixXd nxq,nyq,nzq,sJq;
 
-  MatrixXd V, Dr, Ds, Dt, LIFT; // Eigen-based matrices: cubature, nodal deriv/lift
   MatrixXd VfqFace, Vfq;
-  MatrixXd VB, invVB; // Bernstein conversion
+
+  // =========== Bernstein stuff ==============
+  
+  MatrixXd VB, invVB; 
 
   // sparse bernstein arrays
   int **D1_ids, **D2_ids, **D3_ids, **D4_ids;
@@ -113,6 +109,7 @@ typedef struct foo {
   int hMax;
   
   // =============== CG data structure - cruft? ===========
+
   MatrixXi localToGlobalNodeMap;
   int numGlobalNodes;
 
@@ -120,8 +117,8 @@ typedef struct foo {
 
   occa::device device;
   occa::kernelInfo dgInfo;
-  std::map<char,occa::kernel> kernels;
-  std::map<char,occa::memory> arrays;  
+  std::map<std::string,occa::kernel> kernel;
+  std::map<std::string,occa::memory> memory;
 
 }Mesh;
 

@@ -289,8 +289,6 @@ kernel void rk_update_elas(const int K,
 			   const dfloat * restrict rhoq,
 			   const dfloat * restrict lambdaq,
 			   const dfloat * restrict muq,
-			   const dfloat * restrict c11q,
-			   const dfloat * restrict c12q,
 			   const dfloat ftime,
 			   const dfloat * restrict fsrc,
 			   const dfloat fa,
@@ -370,18 +368,6 @@ kernel void rk_update_elas(const int K,
 	  sQ[k2][1][i] = rho*rv2;
 	  sQ[k2][2][i] = rho*rv3;
 
-#if 0
-	  const dfloat c11 = c11q[id];
-	  const dfloat c12 = c12q[id];
-
-	  // transversely isotropic media
-	  sQ[k2][3][i] = c11*rsxx + c12*rsyy + lambda*rszz;
-	  sQ[k2][4][i] = c11*rsyy + c12*rsxx + lambda*rszz;
-	  sQ[k2][5][i] = (2.f*mu+lambda)*rszz + lambda*rsxx + lambda*rsyy;
-	  sQ[k2][6][i] = mu*rsyz;
-	  sQ[k2][7][i] = mu*rsxz;
-	  sQ[k2][8][i] = .5f*(c11-c12)*rsxy;
-#else
           const dfloat A = 2.f*mu+lambda;
 	  sQ[k2][3][i] = A*rsxx + lambda*rsyy + lambda*rszz;
 	  sQ[k2][4][i] = A*rsyy + lambda*rsxx + lambda*rszz;
@@ -389,7 +375,7 @@ kernel void rk_update_elas(const int K,
 	  sQ[k2][6][i] = mu*rsyz;
 	  sQ[k2][7][i] = mu*rsxz;
 	  sQ[k2][8][i] = mu*rsxy;
-#endif
+
 	}
       } // inner0
     } // inner1

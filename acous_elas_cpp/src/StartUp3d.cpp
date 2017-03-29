@@ -351,8 +351,7 @@ void StartUp3d(Mesh *mesh){
     off += p_Nfp;
   }
   //cout << "rowperm = " << endl << rowperm << endl;
-  mesh->faceVolPerm = rowperm;
-
+  
   // make full lift reduction
   MatrixXd EEL(p_Np,p_Nfaces*p_Nfp);
   EEL.leftCols(p_Nfp) = EEL1;

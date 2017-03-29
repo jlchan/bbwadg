@@ -89,8 +89,14 @@ int main(int argc, char **argv){
   printf("Unloading data from GPU\n");
   WaveGetData3d(mesh, Q);  // unload data from GPU
 
-  printf("Writing data to GMSH\n");
-  writeVisToGMSH("meshes/p.msh",mesh,Q,0,p_Nfields);
+  //  for(int i = 0; i < mesh->K*p_Np; ++i){
+  for(int i = 0; i < 5; ++i){  
+    printf("Q(%d) = %f\n",i,Q[i]);
+  }
+
+
+  //  printf("Writing data to GMSH\n");
+  //  writeVisToGMSH("meshes/p.msh",mesh,Q,0,p_Nfields);
 
   //compute_error(mesh, FinalTime, Q,
   //                uexptr, L2err, relL2err);
@@ -98,7 +104,4 @@ int main(int argc, char **argv){
   //	 p_N,mesh->hMax,mesh->K*p_Np,FinalTime,L2err);
 
   return 0;
-
-  /* end game */
-  exit(0);
 }

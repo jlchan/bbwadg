@@ -7,7 +7,8 @@ double *VX, *VY, *VZ;
 
 Mesh *ReadGmsh3d(char *filename){
   
-  Mesh *mesh = (Mesh*) calloc(1, sizeof(Mesh));
+  //Mesh *mesh = (Mesh*) calloc(1, sizeof(Mesh));
+  Mesh *mesh = new Mesh();
 
   std::ifstream meshfile(filename);
   if(!meshfile.is_open()){
