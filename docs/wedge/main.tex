@@ -324,7 +324,7 @@ legend style={font=\small}
 \maketitle
 
 \begin{abstract}
-Three main contributions: stable DG formulations for general vertex-mapped wedges, and energy stable DG schemes for acoustic-elastic coupling in the presence of arbitrary heterogeneous media.  
+Two main contributions: stable DG formulations for general vertex-mapped wedges, and energy stable DG schemes for acoustic-elastic coupling in the presence of arbitrary heterogeneous media.  
 \end{abstract}
 
 \tableofcontents
@@ -333,21 +333,25 @@ Three main contributions: stable DG formulations for general vertex-mapped wedge
 
 \section{Vertex-mapped wedges}
 
-Properties: 
+\begin{lemma}
+Let $D^k$ be a vertex-mapped wedge.  Then, the following properties hold:
 \begin{enumerate}
-\item $\pd{r}{xyz} J, \pd{t}{xyz} J \in P^1(\triangle) \otimes P^1([-1,1])$.  
+\item $\pd{r}{xyz} J, \pd{t}{xyz} J \in P^1(\triangle) \otimes P^1([-1,1])$
 \item $\pd{s}{xyz} J \in P^0(\triangle) \otimes P^2([-1,1])$.  
 \item On triangular faces, $\bm{n} J^f \in P^0(\triangle)$.  
-\item On quadrilateral faces, $\bm{n} J^f \in P^1(\triangle)$.  
+\item On quadrilateral faces, $\bm{n} J^f \in P^1([-1,1]^2)$.  
 \end{enumerate}
+\end{lemma}
 
 Since $\pd{}{r},\pd{}{t}: P^N(\triangle)\otimes P^N([-1,1]) \rightarrow P^{N-1}(\triangle)\otimes P^N([-1,1])$, this implies nodal collocation can be used to apply geometric factors.  
 
 Curvilinear wedges treated using quadrature-based skew-symmetric formulation; only need to interpolate over triangles.  
 
+
+
 \section{Nodal elements}
 
-Important note: GQ nodes in the extruded direction.  
+Important note: for general vertex-mapped wedges, we require GQ nodes in the extruded direction.  For vertically mapped wedges, GLL nodes can be used in the extruded direction.  
 
 Metric identities are satisfied for low order mappings of wedges; i.e. 
 \[
@@ -377,6 +381,7 @@ Elastic wave equation (velocity-stress formulation)
 \bm{C}^{-1}\pd{\bm{\sigma}}{t} + \Div\bm{v} &= 0\\
 \rho\pd{\bm{v}}{t} + {\rm sym}\LRp{\Grad \sigma} &= 0.
 \end{align*}
+where, for isotropic media, $\bm{C}$ depends on $\mu,\lambda$.
 
 Assuming $\mu = 0$, reduction to the acoustic wave equation with $p = {\rm tr}(\bm{S})$ and wavespeed $c = \sqrt{\frac{\lambda}{\rho}}$.
 \begin{align*}
@@ -394,15 +399,15 @@ We define the numerical flux $\bm{f}^*$ as the sum of a central flux term (invol
 
 On the acoustic side of the interface, this flux is
 \[
-\LRa{\LRp{\bm{A}_n^T\bm{\sigma}-p\bm{n}} - \tau_u\LRp{\LRp{\bm{v}-\bm{u}}\cdot\bm{n}}\bm{n},\bm{\tau}}_{\Ldk}
+\LRa{\LRp{\bm{A}_n^T\bm{\sigma}-p\bm{n}} - \tau_1\LRp{\LRp{\bm{v}-\bm{u}}\cdot\bm{n}}\bm{n},\bm{\tau}}_{\Ldk}
 +
-\LRa{\LRp{\bm{v}-\bm{u}}\cdot\bm{n} - \tau_p\bm{n}\cdot\LRp{\bm{A}_n^T\bm{\sigma}-p\bm{n}},v}_{\Ldk}
+\LRa{\LRp{\bm{v}-\bm{u}}\cdot\bm{n} - \tau_2\bm{n}\cdot\LRp{\bm{A}_n^T\bm{\sigma}-p\bm{n}},v}_{\Ldk}
 \]
 On the elastic side of the interface, the flux is
 \[
-\LRa{\LRp{p\bm{n}-\bm{A}_n^T\bm{\sigma}} - \tau_v \LRp{\LRp{\bm{u}-\bm{v}}\cdot\bm{n}}\bm{n},\bm{w}}_{\Ldk}
+\LRa{\LRp{p\bm{n}-\bm{A}_n^T\bm{\sigma}} - \tau_1 \LRp{\LRp{\bm{u}-\bm{v}}\cdot\bm{n}}\bm{n},\bm{w}}_{\Ldk}
 +
-\LRa{\bm{A}_n\LRp{\bm{u}-\bm{v}} - \tau_{\sigma}\bm{A}_n\LRp{p\bm{n}-\bm{A}_n^T\bm{\sigma}},\bm{q}}_{\Ldk}
+\LRa{\bm{A}_n\LRp{\bm{u}-\bm{v}} - \tau_{2}\bm{A}_n\LRp{p\bm{n}-\bm{A}_n^T\bm{\sigma}},\bm{q}}_{\Ldk}
 \]
 After integrating by parts the $v$ and $\bm{w}$ equations, taking $(v,\bm{\tau}) = (p,\bm{u})$ and $(\bm{w},\bm{q})=(\bm{v},\bm{\sigma})$ yields flux terms which cancel.  
 
@@ -425,14 +430,13 @@ Dissipative penalization terms can then be added to provide a stabilization.  Fo
 \LRa{\bm{n}^T\bm{S}\bm{n} - p, p}_{\Ldk}, \qquad \LRa{ \bm{v}-\bm{u},\bm{u}}_{\Ldk}
 \]
 
-
-Note: penalization does not require exact integration.  It shouldn't even require explicit quadrature...
+Note: the penalization terms are not integrated exactly; however, exact integration (or even require explicit quadrature) is not required for a dissipative effect.  
 
 \section{Numerical experiments}
 
-Test wedges, tets, wedge-tet hybrid meshes with other waves for due diligence.
+Test wedges, tets, wedge-tet hybrid meshes with other waves for due diligence.  
 
-\subsection{Stoneley wave}
+\subsection{Scholte wave}
 
 Test acoustic-elastic coupling.
 
