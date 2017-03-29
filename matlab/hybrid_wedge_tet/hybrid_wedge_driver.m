@@ -23,6 +23,8 @@ global TESTING
 wedge_mesh2
 VZ(18) = VZ(18) + .25; % make wedge_mesh non-affine - match wedge_mesh2_perturb.msh
 
+p = [4 5 6 1 2 3]; EToV(:,1:6) = EToV(:,p); % permute for wedges and jacobian > 0
+
 % tet_wedge % FIX TOP BOUNDARY
 %tet_wedge_flat
 % gmsh_simple

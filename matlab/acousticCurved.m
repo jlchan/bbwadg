@@ -5,17 +5,18 @@ function  Wave2D_curved
 
 Globals2D;
 
-N = 7;
+N = 3;
 nref = 0;
 useJprojection = 1;
+FinalTime = 5;
 
 Nq = 2*N+1;
 
 filename = 'Grid/Other/circA01.neu';
 [Nv, VX, VY, K, EToV, BCType] = MeshReaderGambitBC2D(filename);
 
-K1D = 2;
-[Nv, VX, VY, K, EToV] = unif_tri_mesh(K1D);
+% K1D = 2;
+% [Nv, VX, VY, K, EToV] = unif_tri_mesh(K1D);
 
 % This builds the nodal DG stuff
 StartUp2D;
@@ -59,7 +60,7 @@ global rxq sxq ryq syq Jq Jfq nxq nyq sJq
 global Pq Pfq
 
 
-[rp sp] = EquiNodes2D(25); [rp sp] = xytors(rp,sp);
+[rp sp] = EquiNodes2D(35); [rp sp] = xytors(rp,sp);
 Vp = Vandermonde2D(N,rp,sp)/V;
 xp = Vp*x; yp = Vp*y;
 
@@ -174,12 +175,10 @@ alpha0 = alpha(2); rad = sqrt(x.^2+y.^2);
 
 p = besselj(0, alpha0*rad);
 
-d = 25; x0 = -1/3; y0 = 1/3;
-p = exp(-d*sqrt((x-x0).^2 + (y-y0).^2)) + exp(-10*sqrt((x+x0).^2 + (y+y0).^2));
+% d = 25; x0 = -1/3; y0 = 1/3;
+% p = exp(-d*sqrt((x-x0).^2 + (y-y0).^2)) + exp(-10*sqrt((x+x0).^2 + (y+y0).^2));
 
 u = zeros(Np, K); v = zeros(Np, K);
-
-FinalTime = 2;
 
 % setup
 resu = zeros(Np,K); resv = zeros(Np,K); resp = zeros(Np,K);
@@ -400,16 +399,9 @@ rhsu =  Pq*(-dpdx.*Jq) + Pfq*(fluxu.*sJq/2.0);
 rhsv =  Pq*(-dpdy.*Jq) + Pfq*(fluxv.*sJq/2.0);
 
 % apply inverse mass matrix
-if 1
-    rhsp = Pq*((Vq*rhsp)./Jq);
-    rhsu = Pq*((Vq*rhsu)./Jq);
-    rhsv = Pq*((Vq*rhsv)./Jq);
-else
-    rhsp = rhsp./J;
-    rhsu = rhsu./J;
-    rhsv = rhsv./J;
-    
-end
+rhsp = Pq*((Vq*rhsp)./Jq);
+rhsu = Pq*((Vq*rhsu)./Jq);
+rhsv = Pq*((Vq*rhsv)./Jq);
 
 return;
 

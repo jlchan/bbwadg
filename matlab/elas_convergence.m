@@ -35,18 +35,21 @@ for N=1:6
 end
 %%
 
-Kvec2 = [4 8];
-muvec = [1 .1 .01 .001 .0001];
+Kvec2 = 4;
+% Kvec2 = [4 8];
+muvec = [1 .1 .01 .001 .0001]; lambdavec = ones(size(muvec));
+% lambdavec = [1 2 4 8 16]; muvec = ones(size(muvec)); % other approach
+
 for N = 2:4
     for i = 1:length(Kvec2);
         for j = 1:length(muvec)
             mu = muvec(j);
+            lambda = lambdavec(j);
             K1D = Kvec2(i);
-            disp(sprintf('======== on N = %d, K1D = %d, mu = %f\n',N,K1D,mu));
-            [l2err errU errS] = Elasticity2D_RayleighWave(N,K1D,mu); % mu = 1
+            disp(sprintf('======== on N = %d, K1D = %d, mu = %f, lam = %f\n',N,K1D,mu,lambda));
+            [l2err errU errS] = Elasticity2D_RayleighWave(N,K1D,mu,lambda); % mu = 1
             rayleigh_incomp_errU{i}(N,j) = errU;
-            rayleigh_incomp_errS{i}(N,j) = errS;
-            
+            rayleigh_incomp_errS{i}(N,j) = errS;            
         end
     end
 end

@@ -5,16 +5,16 @@ clear -global *
 
 Globals2D
 
-K1D = 8;
-N = 7;
+K1D = 64;
+N = 5;
 c_flag = 0;
-FinalTime = .4
+FinalTime = .5;
 
 [Nv, VX, VY, K, EToV] = unif_tri_mesh(K1D);
 
 StartUp2D;
 
-[rp sp] = EquiNodes2D(50); [rp sp] = xytors(rp,sp);
+[rp sp] = EquiNodes2D(15); [rp sp] = xytors(rp,sp);
 Vp = Vandermonde2D(N,rp,sp)/V;
 xp = Vp*x; yp = Vp*y;
 
@@ -78,22 +78,38 @@ if ~isempty(Ke) && ~isempty(Ka)
 end
 
 %%
-global Nfld mu lambda Vq Pq tau 
+global Nfld mu lambda Vq Pq tau c2
 Nfld = 5; %(u1,u2,sxx,syy,sxy)
 
-mu = 1;
-lambda = 1;
+mu = ones(size(xq));
+lambda = ones(size(xq));
+c2 = ones(size(xq));
 
-% mu(:,Ka) = 0;
+k = 3;
+mu = 1 + .5*cos(k*pi*xq).*cos(k*pi*yq);
+c2 = 1 + .5*cos(k*pi*xq).*cos(k*pi*yq);
+
+mu = V\(Pq*mu); 
+c2 = V\(Pq*c2);
+mu = repmat(mu(1,:),length(wq),1)/sqrt(2);
+c2 = repmat(c2(1,:),length(wq),1)/sqrt(2);
+
+% vv = Vp*Pq*c2; color_line3(xp,yp,vv,vv,'.');return
+keyboard
 
 tau = 1;
 
 %% params setup
 
 x0 = 0; 
-y0 = .25;
-p = exp(-10^2*((x-x0).^2 + (y-y0).^2));
+y0 = .1;
+pp = exp(-100^2*((x-x0).^2 + (y-y0).^2));
 
+f0 = 10;
+t0 = 1/f0;
+
+global fsrc
+fsrc = @(t) (t < t0).*(1-2*(pi*f0*(t-t0))^2)*exp(-(pi*f0*(t-t0)^2)).* (Pq * exp(-100^2*((xq-x0).^2 + (yq-y0).^2)));
 % y0 = -.25;
 % p = p + exp(-10^2*((x-x0).^2 + (y-y0).^2));
 
@@ -101,96 +117,9 @@ u = zeros(Np, K);
 
 U{1} = u;
 U{2} = u;
-U{3} = p;
-U{4} = p;
+U{3} = u;
+U{4} = u;
 U{5} = u;
-
-%% exact sol scholte
-
-if 1
-    mu1 = 0; % acoustic
-    mu2 = mu; % elastic
-    
-    c1p = sqrt(2*mu1+lambda); % rho = 1
-    c2p = sqrt(2*mu2+lambda);
-    c2s = sqrt(mu2);
-    
-    c = 0.7110017230197;
-    w = 2;
-    k = w/c;
-    B1 =  -1i*0.3594499773037;
-    B2 =  -1i*0.8194642725978;
-    B3 = 1;
-    b1p = sqrt(1-c^2/c1p^2);
-    b2p = sqrt(1-c^2/c2p^2);
-    b2s = sqrt(1-c^2/c2s^2);
-    
-    global v1a v2a v1b v2b 
-    v1a = @(x,y,t) real(B1.*k.*w.*exp(-b1p.*k.*y).*exp(k.*x.*1i - t.*w.*1i));
-    v2a = @(x,y,t) real(B1.*b1p.*k.*w.*exp(-b1p.*k.*y).*exp(k.*x.*1i - t.*w.*1i).*1i);
-    v1b = @(x,y,t) real(-k.*w.*exp(k.*x.*1i - t.*w.*1i).*(B2.*exp(b2p.*k.*y).*1i - B3.*b2s.*exp(b2s.*k.*y)).*1i);
-    v2b = @(x,y,t) real(-k.*w.*exp(k.*x.*1i - t.*w.*1i).*(B2.*b2p.*exp(b2p.*k.*y) + B3.*exp(b2s.*k.*y).*1i).*1i);
-    u1ax = @(x,y,t) real(-B1.*k^2.*exp(-b1p.*k.*y).*exp(k.*x.*1i - t.*w.*1i));
-    u2ay = @(x,y,t) real(B1.*b1p^2.*k^2.*exp(-b1p.*k.*y).*exp(k.*x.*1i - t.*w.*1i));
-    u12axy = @(x,y,t) real(-B1.*b1p.*k^2.*exp(-b1p.*k.*y).*exp(k.*x.*1i - t.*w.*1i).*2i);
-    u1bx = @(x,y,t) real(k^2.*exp(k.*x.*1i - t.*w.*1i).*(B2.*exp(b2p.*k.*y).*1i - B3.*b2s.*exp(b2s.*k.*y)).*1i);
-    u2by = @(x,y,t) real(k^2.*exp(k.*x.*1i - t.*w.*1i).*(B2.*b2p^2.*exp(b2p.*k.*y) + B3.*b2s.*exp(b2s.*k.*y).*1i));
-    u12bxy = @(x,y,t) real(-exp(k.*x.*1i - t.*w.*1i).*(B3.*b2s^2.*k^2.*exp(b2s.*k.*y) - B2.*b2p.*k^2.*exp(b2p.*k.*y).*1i) + k.*exp(k.*x.*1i - t.*w.*1i).*(B2.*b2p.*k.*exp(b2p.*k.*y) + B3.*k.*exp(b2s.*k.*y).*1i).*1i);
-    
-    v1 = @(x,y,t) v1a(x,y,t).*(y > 0) + v1b(x,y,t).*(y < 0);
-    v2 = @(x,y,t) v2a(x,y,t).*(y > 0) + v2b(x,y,t).*(y < 0);
-    U{1} = Pq*v1(xq,yq,0);
-    U{2} = Pq*v2(xq,yq,0);
-    
-    ids1 = mean(y) > 0;
-    U{3}(:,ids1) = Pq*(u1ax(xq,yq,0) + u2ay(xq,yq,0))/2; % p = sxx = syy?    
-    ids2 = mean(y) < 0; 
-    U{3}(:,ids2) = Pq*((2*mu2+lambda) .* u1bx(xq,yq,0) + lambda.*u2by(xq,yq,0));
-    U{4}(:,ids2) = Pq*(lambda.*u1bx(xq,yq,0) + (2*mu2+lambda) .* u2by(xq,yq,0));
-    U{5}(:,ids2) = Pq*(mu2 .* u12bxy(xq,yq,0));
-    
-    if 0
-        figure
-        pp(:,1:Ka) = Ua{1};
-        pp(:,(1:Ke)+Ka) = Ue{3};
-        vv = Vp*pp;
-        color_line3(xp,yp,vv,vv,'.');
-        colorbar
-        %             return
-        
-        % check flux condition
-        t = 0;
-        nxx = 0; nyy = 1;
-        xx = -1:.1:1;
-        Sxx = (2*mu2+lambda) .* u1bx(xx,0,t) + lambda.*u2by(xx,0,t);
-        Syy = lambda.*u1bx(xx,0,t) + (2*mu2+lambda) .* u2by(xx,0,t);
-        Sxy = mu2 * u12bxy(xx,0,t);
-        Snx = nxx*Sxx + nyy*Sxy;
-        Sny = nxx*Sxy + nyy*Syy;
-        v1 = v1b(xx,0,t);
-        v2 = v2b(xx,0,t);
-        p = u1ax(xx,0,t) + u2ay(xx,0,t);
-        u = v1a(xx,0,t);
-        v = v2a(xx,0,t);
-        norm(Snx - p*nxx)
-        norm(Sny - p*nyy)
-        norm((v1 - u)*nxx)
-        norm((v2 - v)*nyy)
-        
-        keyboard
-        
-        
-        for t = 0:.1:.25
-            vv(:,1:Ka) = u1ax(xpa,ypa,t) + u2ay(xpa,ypa,t);
-            vv(:,(1:Ke)+Ka) = (2*mu2+lambda) .* u1bx(xpe,ype,t) + lambda.*u2by(xpe,ype,t);
-            clf
-            color_line3(xp,yp,vv,vv,'.');
-            colorbar
-            drawnow
-        end
-        return
-    end
-end
 
 %%
 if Nfld*Np*K < 2500
@@ -304,7 +233,9 @@ for tstep = 1:Nsteps
 end
 
 % keyboard
-
+set(gca,'fontsize',14)
+title('')
+axis tight
 
 
 function [rhs] = ElasRHS2D(U,time)
@@ -417,11 +348,20 @@ rr{3} =  du1dx   +  LIFT*(Fscale.*flux{3})/2.0;
 rr{4} =  du2dy   +  LIFT*(Fscale.*flux{4})/2.0;
 rr{5} =  du12dxy +  LIFT*(Fscale.*flux{5})/2.0;
 
-rhs{1} = rr{1};
-rhs{2} = rr{2};
-rhs{3} = (2*mu+lambda).*rr{3} + lambda.*rr{4};
-rhs{4} = lambda.*rr{3} + (2*mu+lambda).*rr{4};
-rhs{5} = (mu) .* rr{5};
+if 0
+    rhs{1} = rr{1};
+    rhs{2} = rr{2};
+    rhs{3} = (2*mu+lambda).*rr{3} + lambda.*rr{4};
+    rhs{4} = lambda.*rr{3} + (2*mu+lambda).*rr{4};
+    rhs{5} = (mu) .* rr{5};
+else
+    global Pq Vq
+    rhs{1} = rr{1};
+    rhs{2} = rr{2};
+    rhs{3} = Pq*((2*mu+lambda).*(Vq*rr{3}) + lambda.*(Vq*rr{4}));
+    rhs{4} = Pq*(lambda.*(Vq*rr{3}) + (2*mu+lambda).*(Vq*rr{4}));
+    rhs{5} = Pq*(mu .* (Vq*rr{5}));
+end
 
 % global Ka
 % for fld = 1:5
@@ -485,4 +425,11 @@ divU = Dr*(u.*rx + v.*ry) + Ds*(u.*sx + v.*sy);
 rhs{1} = dpdx + LIFT*(Fscale.*fluxu)/2.0;
 rhs{2} = dpdy + LIFT*(Fscale.*fluxv)/2.0;
 rhs{3} = divU + LIFT*(Fscale.*fluxp)/2.0;
+
+global c2 Pq Vq
+
+global fsrc 
+rhs{3} = rhs{3} + fsrc(time);
+
+rhs{3} = Pq*(c2.*(Vq*rhs{3}));
 

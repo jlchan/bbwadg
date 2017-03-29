@@ -5,21 +5,21 @@ global bx by Vq Pq Vfq Pfq Vrq Vsq Prq Psq
 
 
 % Polynomial order used for approximation
-N = 3;
+N = 1;
 
 % Read in Mesh
 % [Nv, VX, VY, K, EToV] = MeshReaderGambit2D('Grid/Other/squarereg.neu');
 % [Nv, VX, VY, K, EToV] = MeshReaderGambit2D('Grid/Other/squareireg.neu');
 % [Nv, VX, VY, K, EToV] = MeshReaderGambit2D('Grid/Other/block2.neu');
 
-K1D = 2;
+K1D = 1;
 [Nv, VX, VY, K, EToV] = unif_tri_mesh(K1D);
 
 % Initialize solver and construct grid and metric
 StartUp2D;
 
 % % rebuild maps for periodic
-% BuildPeriodicMaps2D(2,2);
+BuildPeriodicMaps2D(2,2);
 
 [re se] = EquiNodes2D(N); [re se] = xytors(re,se);
 Ve = Vandermonde2D(N,re,se)/V;
@@ -66,7 +66,7 @@ dtscale = dtscale2D; dt = min(dtscale)*rmin*2/3
 if 1
     e = zeros(3*Np*K,1);
     A = zeros(3*Np*K);
-    for tau = [10]
+    for tau = [0]
         for i = 1:3*Np*K
             e(i) = 1;
             ids = 1:Np*K;
@@ -89,10 +89,12 @@ if 1
         axis equal
 %         xlim([-100 1])
         %axis([-100 1 -50 50])
+        M = kron(diag(J(1,:)),inv(V*V'));
         hold on
         title(sprintf('tau = %d\n',tau))
         drawnow
     end
+    
     keyboard
     ids = find(abs(real(d)) < 1);
     d = d(ids);
@@ -224,9 +226,9 @@ dp = zeros(Nfp*Nfaces,K); dp(:) = p(vmapP)-p(vmapM);
 du = zeros(Nfp*Nfaces,K); du(:) = u(vmapP)-u(vmapM);
 dv = zeros(Nfp*Nfaces,K); dv(:) = v(vmapP)-v(vmapM);
 
-% Impose reflective boundary conditions (p+ = -p-)
-du(mapB) = 0; dv(mapB) = 0;
-dp(mapB) = -2*p(vmapB);
+% % Impose reflective boundary conditions (p+ = -p-)
+% du(mapB) = 0; dv(mapB) = 0;
+% dp(mapB) = -2*p(vmapB);
 
 % evaluate upwind fluxes
 ndotdU = nx.*du + ny.*dv;

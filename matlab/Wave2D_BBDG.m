@@ -3,20 +3,12 @@ function Wave2D
 
 Globals2D
 
-N = 4;
-K1D = 16;
+N = 7;
+K1D = 8;
 c_flag = 0;
 FinalTime = .5;
-cfun = @(x,y) ones(size(x));
-%     cfun = @(x,y) 1 + .5*sin(pi*x).*sin(pi*y); % smooth velocity
-% cfun = @(x,y) (1 + .5*sin(2*pi*x).*sin(2*pi*y) + (y > 0)); % piecewise smooth velocity
 
-% filename = 'Grid/Other/block2.neu';
-% filename = 'Grid/Maxwell2D/Maxwell05.neu';
-% [Nv, VX, VY, K, EToV] = MeshReaderGambit2D(filename);
 [Nv, VX, VY, K, EToV] = unif_tri_mesh(K1D);
-% VX = (VX + 1)/2;
-% VY = (VY + 1)/2;
 StartUp2D;
 
 % BuildPeriodicMaps2D(1,1);
@@ -27,91 +19,64 @@ StartUp2D;
 Vp = Vandermonde2D(N,rp,sp)/V;
 xp = Vp*x; yp = Vp*y;
 
-Nq = 2*N+1;
-[rq sq wq] = Cubature2D(Nq); % integrate u*v*c
-Vq = Vandermonde2D(N,rq,sq)/V;
-Pq = V*V'*Vq'*diag(wq); % J's cancel out
-Mref = inv(V*V');
-xq = Vq*x; yq = Vq*y;
-Jq = Vq*J;
+%% init cond setup
 
-%%
-global Pq cq Vq
-cq = cfun(xq,yq);
-
-%%
-
-global mapBx vmapBx
-
-% find x = 0 faces
-fbids = reshape(find(vmapP==vmapM),Nfp,nnz(vmapP==vmapM)/Nfp);
-xfb = x(vmapP(fbids));
-bfaces = sum(abs(xfb),1)<1e-8;
-
-fbids = fbids(:,bfaces);
-fbids = fbids(:);
-
-mapBx = fbids;
-vmapBx = vmapP(mapBx);
-
-
-%% params setup
-
-global t0
-t0 = .1;
-
-k = 1; % frequency of solution
-W = (2*k-1)/2*pi;
-% p = cos(W*x).*cos(W*y);
 x0 = 0; y0 = .1;
-% p = exp(-200*((x-x0).^2 + (y-y0).^2));
-p = zeros(Np, K); 
+p = exp(-200*((x-x0).^2 + (y-y0).^2));
 u = zeros(Np, K); 
 v = zeros(Np, K);
 
-v = -exp(-30^2*((x-x0).^2 + (y-y0).^2));
+%% using BB basis
 
-x0 = 0;
-y0 = -.25;
-v = -exp(-10^2*((x-x0).^2 + (y-y0).^2));
-% p = exp(-50^2*((x-x0).^2));
-% u = zeros(Np, K);
-
-
-%%
-x0 = -.1; y0 = 0;
-for e = 1:K
-    cx(e) = mean(VX(EToV(e,:)));
-    cy(e) = mean(VY(EToV(e,:)));    
+if 1 % set to 1 to use BB
+    
+    [V Vr Vs V1 V2 V3] = bern_basis_tri(N,r,s);
+    Dr = V\Vr;
+    Ds = V\Vs;
+    
+    % plotting interp matrix
+    Vp = bern_basis_tri(N,rp,sp);
+    
+    % map nodal coeffs to BB coeffs
+    p = V\p;
+    u = V\u;
+    v = V\v;
+    
+    % transform lift
+    r1D = JacobiGL(0,0,N);
+    V1D = bern_basis_1D(N,r1D); % assume GLL nodes on edge
+    LIFT = V\(LIFT*blkdiag(V1D,V1D,V1D));
+    
+    % ======= alternative construction of LIFT        
+    
+    % degree elev from deg N to N+1
+    ENp1 = bern_basis_1D(N+1,JacobiGL(0,0,N+1)) \ bern_basis_1D(N,JacobiGL(0,0,N+1));  
+    
+    % lift reduction
+    EL1 = [];
+    for j = 0:N;
+        cj = (-1)^j * nchoosek(N,j)/(1+j);
+        
+        Ej = bern_basis_1D(N,r1D)\bern_basis_1D(N-j,r1D);
+        EL1 = [EL1; cj*Ej'];
+    end
+    L0 = ENp1'*ENp1 * (N+1)^2/2;
+    
+    % compute block cols of LIFT by symmetry of simplex
+    pids = cell(Nfaces,1); % permutation ids
+    ids = 1:Nfp;
+    for f = 1:Nfaces
+        for i = 1:Np
+            Lrow = LIFT(i,ids + (f-1)*Nfp);
+            diff = LIFT(:,ids)-repmat(Lrow,Np,1);
+            [~,rowid] = min(sum(abs(diff),2));
+            pids{f}(i) = rowid;
+        end
+    end
+    EL = [EL1 EL1(pids{2},:) EL1(pids{3},:)];
+    LIFT = EL * blkdiag(L0,L0,L0);    
+    
 end
-
-[~,emin] = min(abs(cx - x0) + abs(cy-y0));
-x0 = cx(emin); y0 = cy(emin);
-
-global rick ptsrc 
-f0 = 170;
-f0 = 100;
-tR = 1/f0;
-rick = @(t) 1e6*(1 - 2*(pi*f0*(t-tR)).^2).*exp(-(pi*f0*(t-tR)).^2).*(t < tR);
-% tt = 0:.0001:.1; plot(tt,rick(tt));return
-ptsrc = @(x,y) exp(-(200)^2*((x-x0).^2 + (y-y0).^2));
-
-if 1
-    [rq2 sq2 wq2] = Cubature2D(4*N+2);
-    Vq2 = Vandermonde2D(N,rq2,sq2)/V;
-    Pq2 = (V*V') * Vq2'*diag(wq2);
-    xq2 = Vq2*x; yq2 = Vq2*y;
-    ptsrc = ptsrc(xq2,yq2);
-    err = max(max(abs(ptsrc - Vq2*Pq2*ptsrc)))
-    ptsrc = Pq2*ptsrc;
-    ptsrc = ptsrc/max(abs(ptsrc(:)));
-else % interp
-    err = max(max(abs(Vp*ptsrc(x,y) - ptsrc(xp,yp))))
-    ptsrc = ptsrc(x,y);    
-end
-
-ptsrc(:) = 0; 
-% ptsrc(:,emin) = (V*V')*(Vandermonde2D(N,mean([-1 -1 1]), mean([-1 -1 1]))/V)'; % ptwise evaluation
 
 %%
 
@@ -155,14 +120,10 @@ while (time<FinalTime)
         clf
         pp = p;
         vv = Vp*pp;
-        %         vv = abs(vv);
         color_line3(xp,yp,vv,vv,'.');
         axis equal
         axis tight
         colorbar
-%         caxis([-.1 .2])
-%         axis([0 1 0 1 -10 10])
-        %         PlotField2D(N+1, x, y, pp); view(2)
         title(sprintf('time = %f',time))
         drawnow
     end
@@ -198,24 +159,15 @@ dp(mapB) = -2*p(vmapB);
 % ndotdU(mapB) = -2*(nx(mapB).*u(vmapM(mapB)) + ny(mapB).*v(vmapM(mapB)));
 % dp(mapB) = 0;
 
-% left wall bcs
-global mapBx vmapBx t0
-% if (time < t0)
-%     dp(mapBx) = 2*(sin(pi*time/t0)*(time<t0) - p(vmapBx));
-%     ndotdU(mapBx(:)) = 0;
-% end
-
 % % basic ABCs
 % fluxp(mapB) = (nx(mapB).*u(vmapM(mapB)) + ny(mapB).*v(vmapM(mapB)));
 % fluxu(mapB) = p(vmapM(mapB)).*nx(mapB);
 % fluxv(mapB) = p(vmapM(mapB)).*ny(mapB);
 
-
 tau = 1;
 fluxp =  tau*dp - ndotdU;
 fluxu =  (tau*ndotdU - dp).*nx;
 fluxv =  (tau*ndotdU - dp).*ny;
-
 
 pr = Dr*p; ps = Ds*p;
 dpdx = rx.*pr + sx.*ps;
@@ -223,13 +175,10 @@ dpdy = ry.*pr + sy.*ps;
 divU = Dr*(u.*rx + v.*ry) + Ds*(u.*sx + v.*sy);
 
 % compute right hand sides of the PDE's
-global rick ptsrc 
-rhsp =  -divU + LIFT*(Fscale.*fluxp)/2.0 + rick(time)*ptsrc;
+rhsp =  -divU + LIFT*(Fscale.*fluxp)/2.0;
 rhsu =  -dpdx + LIFT*(Fscale.*fluxu)/2.0;
 rhsv =  -dpdy + LIFT*(Fscale.*fluxv)/2.0;
 
-global Pq cq Vq
-rhsp = Pq*(cq.*(Vq*rhsp));
 
 
 

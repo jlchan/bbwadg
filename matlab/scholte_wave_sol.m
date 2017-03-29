@@ -6,11 +6,13 @@ u2a = (-k*b1p*B1*exp(-k*b1p*y)*exp(1i*(k*x-w*t)));
 u1e = (1i*k*B2*exp(k*b2p*y) - k*b2s*B3*exp(k*b2s*y)) * exp(1i*(k*x-w*t));
 u2e = (k*b2p*B2*exp(k*b2p*y) + 1i*k*B3*exp(k*b2s*y)) * exp(1i*(k*x-w*t));
 
+% velocity
 v1a = simplify(diff(u1a,t))
 v2a = simplify(diff(u2a,t))
 v1b = simplify(diff(u1e,t))
 v2b = simplify(diff(u2e,t))
 
+% strain = .5*(grad(U)+grad(U)^T)
 u1ax = simplify(diff(u1a,x))
 u2ay = simplify(diff(u2a,y))
 u12axy = simplify(diff(u1a,y) + diff(u2a,x))

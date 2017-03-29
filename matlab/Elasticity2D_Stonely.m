@@ -10,13 +10,13 @@ if nargin==0
     N = 4;
 end
 c_flag = 0;
-FinalTime = 10;
+FinalTime = .5;
 
 % filename = 'Grid/Other/block2.neu';
 % [Nv, VX, VY, K, EToV] = MeshReaderGambit2D(filename);
 aa = 5;
 % [Nv, VX, VY, K, EToV] = unif_tri_mesh(aa*K1D,K1D);
-[Nv, VX, VY, K, EToV] = unif_tri_mesh(3*K1D,aa*K1D+1);
+[Nv, VX, VY, K, EToV] = unif_tri_mesh(3*K1D,aa*K1D);
 VY = aa*VY;
 VX = pi*VX;
 
@@ -92,6 +92,9 @@ Nfld = 5; %(u1,u2,sxx,syy,sxy)
 
 lambda1 = 3; mu1 = 3; rho1 = 10;
 lambda2 = 1; mu2 = 1; rho2 = 1;
+
+% lambda1 = 6; mu1 = 6; rho1 = 20;
+% lambda2 = 2; mu2 = 2; rho2 = 2;
 
 rho = rho2*ones(size(x));
 lambda = lambda2*ones(size(x));
@@ -326,8 +329,8 @@ while (time<FinalTime)
     
     if nargin==0 && mod(tstep,10)==0
         clf
-        p = U{3}+U{4}; % trace(S)
-        %         p = U{1};
+%         p = U{3}+U{4}; % trace(S)
+        p = U{5};
         vp1 = Vp*p;
         color_line3(xp,yp,vp1,vp1,'.');
         axis equal

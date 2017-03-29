@@ -1,4 +1,4 @@
-function [L2err errU errS] = Elasticity2D_RayleighWave(N,K1D,mu)
+function [L2err errU errS errSx errSy errSxy] = Elasticity2D_RayleighWave(N,K1D,muin,lambdain)
 
 % clear all, clear
 clear -global *
@@ -11,8 +11,10 @@ if nargin==0
     N = 3;
 end
 
-lambda = 1;
-FinalTime = .25*sqrt(1/mu);
+global Nfld mu lambda Vq Pq tau useWADG
+mu = muin;
+lambda = lambdain;
+FinalTime = .25*sqrt(lambda/mu);
 
 
 % filename = 'Grid/Other/block2.neu';
@@ -80,7 +82,6 @@ if 0
     return
 end
 %%
-global Nfld mu lambda Vq Pq tau useWADG
 Nfld = 5; 
 
 rho = 1;
@@ -239,6 +240,18 @@ serr = (Vq*U{3} - sxx(xq,yq,FinalTime)).^2 + (Vq*U{4} - syy(xq,yq,FinalTime)).^2
 sq = sxx(xq,yq,FinalTime).^2 + syy(xq,yq,FinalTime).^2 + sxy(xq,yq,FinalTime).^2;
 errS = sqrt(sum(wqJ(:).*serr(:)))/sqrt(sum(wqJ(:).*sq(:)));
 
+serr = (Vq*U{3} - sxx(xq,yq,FinalTime)).^2;
+sq = sxx(xq,yq,FinalTime).^2;
+errSx = sqrt(sum(wqJ(:).*serr(:)))/sqrt(sum(wqJ(:).*sq(:)));
+
+serr = (Vq*U{4} - syy(xq,yq,FinalTime)).^2;
+sq = syy(xq,yq,FinalTime).^2;
+errSy = sqrt(sum(wqJ(:).*serr(:)))/sqrt(sum(wqJ(:).*sq(:)));
+
+sq = sxy(xq,yq,FinalTime).^2;
+serr = (Vq*U{5} - sxy(xq,yq,FinalTime)).^2;
+errSxy = sqrt(sum(wqJ(:).*serr(:)))/sqrt(sum(wqJ(:).*sq(:)));
+
 if nargin==0
     figure
     pterr = abs(Vp*U{1} - v1(xp,yp,FinalTime)) + abs(Vp*U{2} - v2(xp,yp,FinalTime));
@@ -252,8 +265,8 @@ if nargin==0
 end
 
 L2err = sqrt(sum(wqJ(:).*(err(:)+serr(:))))/sqrt(sum(wqJ(:).*(uq(:)+sq(:))))
-errU
-errS
+% errU
+% errS
 
 
 

@@ -13,10 +13,9 @@ VZ = VZ+a*randn(length(VX),1);
 % VY(1) = VY(1)+.5;
 % plot3(VX,VY,VZ,'o-');return
 
-
 % tensor product wedge nodes
 [rtri stri] = Nodes2D(N); [rtri stri] = xytors(rtri,stri);
-r1D = JacobiGL(0,0,N);
+r1D = JacobiGQ(0,0,N);
 [r1Dq w1Dq] = JacobiGQ(0,0,N);
 
 [~,r] = meshgrid(r1D,rtri); 
@@ -33,7 +32,6 @@ Nfp = (N+1)^2*3 + (N+1)*(N+2);
 [sq,tq] = meshgrid(r1Dq,sqtri);
 [wsq,wrtq] = meshgrid(w1Dq,wqtri);
 rq = rq(:); sq = sq(:); tq = tq(:);  wq = wsq(:).*wrtq(:);
-
 
 [rfq tfq sfq wfq fids] = wedge_surface_cubature(N);
 wfq = wfq(:);
@@ -63,6 +61,10 @@ Vq = Vq/V; Vrq = Vrq/V; Vsq = Vsq/V; Vtq = Vtq/V;
 
 Vfq = wedge_basis(N,rfq,sfq,tfq)/V;
 
+xf = Vfq*x;
+yf = Vfq*y;
+zf = Vfq*z;
+
 % vol/surf geofacs
 [xq,yq,zq,rxq,sxq,txq,ryq,syq,tyq,rzq,szq,tzq,Jq] = wedge_geom_factors(VX,VY,VZ,rq,sq,tq);
 [xfq,yfq,zfq,rxf,sxf,txf,ryf,syf,tyf,rzf,szf,tzf,Jf] = wedge_geom_factors(VX,VY,VZ,rfq,sfq,tfq);
@@ -78,12 +80,16 @@ sJ = sqrt(nx.^2 + ny.^2 + nz.^2);
 nx = nx./sJ; ny = ny./sJ; nz = nz./sJ;
 sJ = sJ.*Jf;
 
+nxJ = nx.*sJ;
+nyJ = ny.*sJ;
+nzJ = nz.*sJ;
+
 % plot3(xfq,yfq,zfq,'o')
 % hold on
 % quiver3(xfq,yfq,zfq,nx,ny,nz)
 
 Dr = Vr/V; Ds = Vs/V; Dt = Vt/V; 
-f = @(x,y,z) x.^N + y.^N + z.^N;
+% f = @(x,y,z) x.^N + y.^N + z.^N;
 % dfdx = @(x,y,z) N*x.^(N-1);
 % dfdy = @(x,y,z) N*y.^(N-1);
 % dfdz = @(x,y,z) N*z.^(N-1);
@@ -102,8 +108,7 @@ LHSnodal = Mref*(J.*(rx.*(Dr*f) + sx.*(Ds*f) + tx.*(Dt*f)));
 
 LHS = Vq'*(Jq.*wq.*(rxq.*(Vrq*f) + sxq.*(Vsq*f) + txq.*(Vtq*f)));
 
-LHSIBP = (Vrq'*(rxq.*Jq.*wq.*(Vq*f)) + Vsq'*(sxq.*Jq.*wq.*(Vq*f)) + Vtq'*(txq.*Jq.*wq.*(Vq*f)));
-LHSIBP = Vfq'*(wfq.*nx.*sJ.*(Vfq*f)) - LHSIBP;
+LHSIBP = Vfq'*(wfq.*nx.*sJ.*(Vfq*f)) - (Vrq'*(rxq.*Jq.*wq.*(Vq*f)) + Vsq'*(sxq.*Jq.*wq.*(Vq*f)) + Vtq'*(txq.*Jq.*wq.*(Vq*f)));
 
 disp(sprintf('diff b/w nodal collocation and quadrature RHS: %g\n',norm(LHSnodal-LHS)))
 disp(sprintf('diff b/w quadrature and IBP RHS: %g\n',norm(LHS-LHSIBP)))
@@ -143,7 +148,7 @@ Ltri(abs(Ltri)<1e-8) = 0;
 
 % quadrilateral face t = -1
 [rquad squad] = meshgrid(r1Dq,r1D); rquad = rquad(:); squad = squad(:);
-plot(rquad,squad,'o');text(rquad(:),squad(:),num2str((1:length(rquad(:)))'));return
+% plot(rquad,squad,'o');text(rquad(:),squad(:),num2str((1:length(rquad(:)))'));return
 rf = rquad; sf = squad; tf = -ones(size(rquad));
 Vfq = wedge_basis(N,rf,sf,tf)/V;
 Vquad = Vandermonde2DQuad(N,rquad,squad); 
@@ -152,6 +157,7 @@ Mq = inv(Vquad*Vquad'); % exact mass matrices
 Lquad = M\(Vfq'*Mq);
 Lquad(abs(Lquad)<1e-8) = 0;
 
+return
 % check metric identities
 norm(Dr*rxJ(:) + Ds*sxJ(:) + Dt*txJ(:))
 norm(Dr*ryJ(:) + Ds*syJ(:) + Dt*tyJ(:))

@@ -1,4 +1,4 @@
-function ElasticityPulse2D
+function ElasticityScholte2D
 
 % clear all, clear
 clear -global *
@@ -6,13 +6,33 @@ clear -global *
 Globals2D
 
 K1D = 8;
-N = 3;
+N = 5;
 c_flag = 0;
 FinalTime = .4;
 
+% filename = 'Grid/Other/block2.neu';
+% [Nv, VX, VY, K, EToV] = MeshReaderGambit2D(filename);
 [Nv, VX, VY, K, EToV] = unif_tri_mesh(K1D);
+% VX = (VX+1)/2;
+% VY = (VY+1)/2;
+% VX = 2*VX;
 
 StartUp2D;
+
+BuildPeriodicMaps2D(2,0);
+
+% BCType = zeros(size(EToV));
+% for e = 1:K
+%     BCType(e,EToE(e,:)==e) = 6;
+% end
+%
+% BuildBCMaps2D;
+% nref = 1;
+% for ref = 1:nref
+%     Refine2D(ones(size(EToV)));
+%     StartUp2D;
+%     BuildBCMaps2D;
+% end
 
 
 [rp sp] = EquiNodes2D(25); [rp sp] = xytors(rp,sp);
@@ -27,6 +47,23 @@ Mref = inv(V*V');
 xq = Vq*x; yq = Vq*y;
 Jq = Vq*J;
 
+%%
+global mapBL vmapBL t0
+
+t0 = .0;
+% t0 = .075;
+t0 = .1;
+
+% find x = 0 faces
+fbids = reshape(find(vmapP==vmapM),Nfp,nnz(vmapP==vmapM)/Nfp);
+xfb = x(vmapP(fbids));
+bfaces = sum(abs(xfb),1)<1e-8;
+
+fbids = fbids(:,bfaces);
+fbids = fbids(:);
+
+mapBL = fbids;
+vmapBL = vmapP(mapBL);
 
 %%
 global Nfld mu lambda Vq Pq tau useWADG
@@ -56,17 +93,23 @@ global C11 C12 C13 C22 C23 C33
 useWADG = 0;
 if useWADG
     mu = Vq*mu;
-    lambda = Vq*lambda;   
+    lambda = Vq*lambda;
+    
+    %     a = .5; b = 4;
+    %     mu = 1 + a*sin(b*pi*xq).*sin(b*pi*yq);
+    %     lambda = 1 + a*sin(b*pi*xq).*sin(b*pi*yq);
+    %     color_line3(xq,yq,mu,mu,'.');return
+    
 end
 
 tau0 = 1;
 for fld = 1:5
     tau{fld} = tau0*ones(size(x));
     if fld > 2
-%         tau{fld} = tau0./(2*mu+lambda);
+        %         tau{fld} = tau0./(2*mu+lambda);
         tau{fld} = tau0*ones(size(x));
-%         tau{fld} = tau0./Cnorm;
-%         tau{fld} = tau0./max(Cnorm(:))*ones(size(x));
+        %         tau{fld} = tau0./Cnorm;
+        %         tau{fld} = tau0./max(Cnorm(:))*ones(size(x));
     end
 end
 
@@ -85,6 +128,64 @@ U{2} = u;
 U{3} = p;
 U{4} = p;
 U{5} = u;
+
+
+% PlotMesh2D;
+% for e = 1:K
+%     hold on
+%     text(mean(VX(EToV(e,:))),mean(VY(EToV(e,:))),num2str(e))
+% end
+% return
+
+%% exact sol scholte
+
+if 1
+    mu1 = 0; % acoustic
+    mu2 = 1; % elastic
+    
+    c1p = sqrt(2*mu1+lambda(1)); % rho = 1
+    c2p = sqrt(2*mu2+lambda(1));
+    c2s = sqrt(mu2);
+    
+    c = 0.7110017230197;
+    w = 1;
+    k = w/c;
+    B1 =  -1i*0.3594499773037;
+    B2 =  -1i*0.8194642725978;
+    B3 = 1;
+    b1p = sqrt(1-c^2/c1p^2);
+    b2p = sqrt(1-c^2/c2p^2);
+    b2s = sqrt(1-c^2/c2s^2);
+    
+    global v1a v2a v1b v2b
+    v1a = @(x,y,t) real(B1.*k.*w.*exp(-b1p.*k.*y).*exp(k.*x.*1i - t.*w.*1i));
+    v2a = @(x,y,t) real(B1.*b1p.*k.*w.*exp(-b1p.*k.*y).*exp(k.*x.*1i - t.*w.*1i).*1i);
+    v1b = @(x,y,t) real(-k.*w.*exp(k.*x.*1i - t.*w.*1i).*(B2.*exp(b2p.*k.*y).*1i - B3.*b2s.*exp(b2s.*k.*y)).*1i);
+    v2b = @(x,y,t) real(-k.*w.*exp(k.*x.*1i - t.*w.*1i).*(B2.*b2p.*exp(b2p.*k.*y) + B3.*exp(b2s.*k.*y).*1i).*1i);
+    u1ax = @(x,y,t) real(-B1.*k^2.*exp(-b1p.*k.*y).*exp(k.*x.*1i - t.*w.*1i));
+    u2ay = @(x,y,t) real(B1.*b1p^2.*k^2.*exp(-b1p.*k.*y).*exp(k.*x.*1i - t.*w.*1i));
+    u12axy = @(x,y,t) real(-B1.*b1p.*k^2.*exp(-b1p.*k.*y).*exp(k.*x.*1i - t.*w.*1i).*2i);
+    u1bx = @(x,y,t) real(k^2.*exp(k.*x.*1i - t.*w.*1i).*(B2.*exp(b2p.*k.*y).*1i - B3.*b2s.*exp(b2s.*k.*y)).*1i);
+    u2by = @(x,y,t) real(k^2.*exp(k.*x.*1i - t.*w.*1i).*(B2.*b2p^2.*exp(b2p.*k.*y) + B3.*b2s.*exp(b2s.*k.*y).*1i));
+    u12bxy = @(x,y,t) real(-exp(k.*x.*1i - t.*w.*1i).*(B3.*b2s^2.*k^2.*exp(b2s.*k.*y) - B2.*b2p.*k^2.*exp(b2p.*k.*y).*1i) + k.*exp(k.*x.*1i - t.*w.*1i).*(B2.*b2p.*k.*exp(b2p.*k.*y) + B3.*k.*exp(b2s.*k.*y).*1i).*1i);
+    
+%     vv = Vq*mu;     color_line3(xq,yq,vv,vv,'.');    return
+
+    global v1 v2
+    v1 = @(x,y,t) v1a(x,y,t).*(y>0) + v1b(x,y,t).*(y<0);
+    v2 = @(x,y,t) v2a(x,y,t).*(y>0) + v2b(x,y,t).*(y<0);
+    u1x = @(x,y,t) u1ax(x,y,t).*(y>0) + u1bx(x,y,t).*(y<0);
+    u2y = @(x,y,t) u2ay(x,y,t).*(y>0) + u2by(x,y,t).*(y<0);
+    u12xy = @(x,y,t) u12axy(x,y,t).*(y>0) + u12bxy(x,y,t).*(y<0);
+    U{1} = Pq*v1(xq,yq,0);
+    U{2} = Pq*v2(xq,yq,0);
+    U{3} = (2*mu2+lambda).*(Pq*u1x(xq,yq,0)) + lambda.*(Pq*u2y(xq,yq,0));
+    U{4} = lambda.*(Pq*u1x(xq,yq,0)) + (2*mu2+lambda) .* (Pq*u2y(xq,yq,0));
+    U{5} = mu2 .* (Pq*u12xy(xq,yq,0));
+    
+    vv = Vp*(U{3});
+    color_line3(xp,yp,vv,vv,'.');    return
+end
 
 %%
 if 0
@@ -143,15 +244,15 @@ wqJ = diag(wq)*(Vq*J);
 % figure
 % colormap(gray)
 % colormap(hot)
-while (time<FinalTime)   
-            
+while (time<FinalTime)
+    
     if(time+dt>FinalTime), dt = FinalTime-time; end
     
     for INTRK = 1:5
         
         timeloc = time + rk4c(INTRK)*dt;
         rhs = ElasRHS2D(U,timeloc);
-                        
+        
         % initiate and increment Runge-Kutta residuals
         for fld = 1:Nfld
             res{fld} = rk4a(INTRK)*res{fld} + dt*rhs{fld};
@@ -163,13 +264,17 @@ while (time<FinalTime)
     if 1 && mod(tstep,10)==0
         clf
         
-        p = (U{3} + U{4})/2; % trace(S)        
+        p = (U{3} + U{4})/2; % trace(S)
+        %         p = U{2};
+        
         vv = Vp*p;
+        %         vv = abs(vv);
+        %         vv = max(vv(:))-vv;
         color_line3(xp,yp,vv,vv,'.');
-        axis tight        
+        axis tight
         title(sprintf('time = %f',time));
         colorbar;
-
+        %         view(3);
         drawnow
         
         
@@ -178,18 +283,32 @@ while (time<FinalTime)
     % Increment time
     time = time+dt; tstep = tstep+1;
     
+    %     Mu = M*(J.*U{1});
+    %     uu = U{1}(:)'*Mu(:);
+    %
+    %     Mu = M*(J.*U{2});
+    %     uu = uu + U{2}(:)'*Mu(:);
+    %
+    %     u1q = Vq*(U{3});
+    %     u2q = Vq*(U{4});
+    %     u3q = Vq*(U{5});
+    %
+    %     Cu1 = iC11.*u1q + iC12.*u2q + iC13.*u3q;
+    %     Cu2 = iC12.*u1q + iC22.*u2q + iC23.*u3q;
+    %     Cu3 = iC13.*u1q + iC23.*u2q + iC33.*u3q;
+    %     uu = uu + sum(sum(wqJ.*(u1q.*Cu1 + u2q.*Cu2 + u3q.*Cu3)));
+    %
+    %     unorm2(tstep) = uu;
+    %     tvec(tstep) = time;
+    
     if mod(tstep,100)==0
         disp(sprintf('On timestep %d out of %d\n',tstep,round(FinalTime/dt)))
     end
 end
 
-clf
-p = (U{3} + U{4})/2; % trace(S)
-vv = Vp*p;
-color_line3(xp,yp,vv,vv,'.');
-axis tight
-title(sprintf('time = %f',time));
-colorbar;
+hold on
+plot(tvec,unorm2,'k--','linewidth',2)
+% axis([0, time, 0, 1e-1])
 
 keyboard
 
@@ -228,8 +347,10 @@ du12dxy = Ux{2} + Uy{1}; % du2dx + du1dy
 % velocity fluxes
 nSx = nx.*dU{3} + ny.*dU{5};
 nSy = nx.*dU{5} + ny.*dU{4};
- 
-opt=1;
+
+
+
+opt=3;
 if opt==1 % traction BCs
     %     global mapBL vmapBL t0
     %     if time < t0
@@ -238,15 +359,16 @@ if opt==1 % traction BCs
     %     else
     nSx(mapB) = -2*(nx(mapB).*U{3}(vmapB) + ny(mapB).*U{5}(vmapB));
     nSy(mapB) = -2*(nx(mapB).*U{5}(vmapB) + ny(mapB).*U{4}(vmapB));
-    %     end    
+    %     end
 elseif opt==2 % basic ABCs
     nSx(mapB) = -(nx(mapB).*U{3}(vmapB) + ny(mapB).*U{5}(vmapB));
     nSy(mapB) = -(nx(mapB).*U{5}(vmapB) + ny(mapB).*U{4}(vmapB));
     dU{1}(mapB) = -U{1}(vmapB);
-    dU{2}(mapB) = -U{2}(vmapB);    
-elseif opt==3 % zero velocity
-    dU{1}(mapB) = -2*U{1}(vmapB);
-    dU{2}(mapB) = -2*U{2}(vmapB);    
+    dU{2}(mapB) = -U{2}(vmapB);
+elseif opt==3 % impose velocity
+    global v1 v2
+    dU{1}(mapB) = 2*(v1(x(vmapB),y(vmapB),time)-U{1}(vmapB));
+    dU{2}(mapB) = 2*(v2(x(vmapB),y(vmapB),time)-U{2}(vmapB));
     
 end
 
@@ -271,7 +393,7 @@ fp{5} = fc{2}.*nx + fc{1}.*ny;
 
 
 flux = cell(5,1);
-for fld = 1:Nfld   
+for fld = 1:Nfld
     flux{fld} = zeros(Nfp*Nfaces,K);
     flux{fld}(:) = fc{fld}(:) + tau{fld}(vmapM).*fp{fld}(:);
 end
@@ -292,12 +414,12 @@ if useWADG
     end
     rhs{1} = rr{1};
     rhs{2} = rr{2};
-        rhs{3} = Pq*((2*mu+lambda).*rr{3} + lambda.*rr{4});
-        rhs{4} = Pq*(lambda.*rr{3} + (2*mu+lambda).*rr{4});
-        rhs{5} = Pq*((mu) .* rr{5});
-%     rhs{3} = Pq*(C11.*rr{3} + C12.*rr{4} + C13.*rr{5});
-%     rhs{4} = Pq*(C12.*rr{3} + C22.*rr{4} + C23.*rr{5});
-%     rhs{5} = Pq*(C13.*rr{3} + C23.*rr{4} + C33.*rr{5});
+    rhs{3} = Pq*((2*mu+lambda).*rr{3} + lambda.*rr{4});
+    rhs{4} = Pq*(lambda.*rr{3} + (2*mu+lambda).*rr{4});
+    rhs{5} = Pq*((mu) .* rr{5});
+    %     rhs{3} = Pq*(C11.*rr{3} + C12.*rr{4} + C13.*rr{5});
+    %     rhs{4} = Pq*(C12.*rr{3} + C22.*rr{4} + C23.*rr{5});
+    %     rhs{5} = Pq*(C13.*rr{3} + C23.*rr{4} + C33.*rr{5});
 else
     rhs{1} = rr{1};
     rhs{2} = rr{2};

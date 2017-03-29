@@ -8,17 +8,17 @@ hybridgGlobalFlags
 
 % make mesh
 wedge_mesh; K = size(EToV,1);
-p = [4 5 6 1 2 3]; EToV(:,1:6) = EToV(:,p); % permute for wedges and jacobian > 0
+p = [4 5 6 1 2 3]; EToV(:,1:6) = EToV(:,p); % permute wedges so jacobian > 0
 
-ids = abs(abs(VX)-1)>1e-8 & abs(abs(VY)-1)>1e-8 & abs(abs(VZ)-1)>1e-8; % perturb interior verts
-% VZ(ids) = VZ(ids) + .5;
+% ids = abs(abs(VX)-1)>1e-8 & abs(abs(VY)-1)>1e-8 & abs(abs(VZ)-1)>1e-8; % perturb interior verts
+% VZ(ids) = VZ(ids) + .1;
 
-a = .25;
+a = .2;
 VX = VX + a*randn(size(VX));
 VY = VY + a*randn(size(VX));
 VZ = VZ + a*randn(size(VX));
 
-N = 2;
+N = 3;
 hybridgStartUp
 
 global rx ry rz sx sy sz tx ty tz J nx ny nz sJ
@@ -42,23 +42,15 @@ NODETOL=1e-6;
 
 % tensor product wedge nodes
 [rtri stri] = Nodes2D(N); [rtri stri] = xytors(rtri,stri);
-r1D = JacobiGL(0,0,N);
+r1D = JacobiGQ(0,0,N);
 [rquad squad] = meshgrid(r1D,r1D); 
 rquad = rquad(:); squad = squad(:);
-
 [~,r] = meshgrid(r1D,rtri); [s,t] = meshgrid(r1D,stri);
 r = r(:); s = s(:); t = t(:);
 
+keyboard
+plot3(r,s,t,'o');return
 Np = length(r);
-
-% Fmask{1} = find(abs(s-1)<NODETOL);
-% Fmask{2} = find(abs(s+1)<NODETOL);
-% Fmask{3} = find(abs(t+1)<NODETOL);
-% Fmask{4} = find(abs(r+1)<NODETOL);
-% Fmask{5} = find(abs(r+t)<NODETOL);
-% rf = r(vertcat(Fmask{:}));
-% sf = s(vertcat(Fmask{:}));
-% tf = t(vertcat(Fmask{:}));
 
 offset = 0;
 fids{1} = (1:Nptri) + offset; offset = offset + Nptri;
@@ -163,10 +155,10 @@ if min(J(:)) < 1e-12
     return
 end
 
-% surface nodes
+% interp to surface nodes
 Vf = [];
 for f = 1:5
-    Vf = [Vf;wedge_basis(N,rf(fids{f}),sf(fids{f}),tf(fids{f}))/wedge_basis(N,r,s,t)];
+    Vf = [Vf ; wedge_basis(N,rf(fids{f}),sf(fids{f}),tf(fids{f}))/wedge_basis(N,r,s,t)];
 end
 
 % make surface nodes
@@ -322,7 +314,7 @@ if 1
 end
 %% for plotting
 
-[rp tp sp] = wedge_equi_nodes(10);
+[rp tp sp] = wedge_equi_nodes(20);
 Vp = wedge_basis(N,rp,sp,tp)/V;
 xp = Vp*x; 
 yp = Vp*y; 
@@ -460,8 +452,6 @@ rhsp = -divU.*J + LIFT*(flux_p.*sJ);
 rhsu = -dpdx.*J + LIFT*(flux_u.*nx.*sJ);
 rhsv = -dpdy.*J + LIFT*(flux_u.*ny.*sJ);
 rhsw = -dpdz.*J + LIFT*(flux_u.*nz.*sJ);
-
-
 
 Jq = Vq*J;
 rhsp = Pq*((Vq*rhsp)./Jq);
