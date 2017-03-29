@@ -2,21 +2,19 @@ function Wave2D_simple
 
 Globals2D
 
+N = 4;
+
 % generate triangle
-yt = 13.243323833946539;
-VX = [14.9071 35.3 -10]; 
-VY = [0 yt yt];
-K = 1; EToV = 1:3;
-N = 5;
-
+nref = 4;
+yt = 13.243323833946539; 
+VX = [14.9071 35.3 -10]; VY = [0 yt yt]; K = 1; EToV = 1:3;
 StartUp2D
-
 BCType = ones(size(EToV));
-nref = 3;
 for ref = 1:nref
     Refine2D(ones(size(EToV)));
     StartUp2D
 end
+
 % PlotMesh2D;return
 
 % fine-mesh nodes for plotting
@@ -73,6 +71,7 @@ dt = 2/CNh; % cfl condition of 2
 %% run simulation 
 
 FinalTime = 12.20;
+FinalTime = FinalTime/2; % try to recover just flat hair
 
 Nstep = ceil(FinalTime/dt)
 dt = FinalTime/Nstep
@@ -115,15 +114,16 @@ for tstep = 1:Nstep
     trace(:,tstep) = p(vmapB_top);
 end
 
-% %%
-% figure
-% hold on
-% for i = 1:Nstep;    
-%     vv = trace(:,i);
-%     color_line3(x(vmapB_top),i*dt*ones(size(vv)),vv,vv,'.');
-% end
 %%
-% keyboard
+figure
+hold on
+for i = 1:Nstep;    
+    vv = trace(:,i);
+    color_line3(x(vmapB_top),i*dt*ones(size(vv)),vv,vv,'.');
+end
+
+%%
+keyboard
 
 
 

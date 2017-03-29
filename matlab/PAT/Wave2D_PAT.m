@@ -5,7 +5,7 @@ clear -global *
 
 Globals2D
 
-N = 2;
+N = 4;
 global Pq cq Vq c2
 c2 = 1.5^2;
 cfun = @(x,y) c2*ones(size(x));
@@ -14,10 +14,12 @@ cfun = @(x,y) c2*ones(size(x));
 % cfun = @(x,y) (1 + .25*sin(2*pi*x).*sin(2*pi*y) + (y > 0)); % piecewise smooth velocity
 
 FinalTime = 12.2;
+% FinalTime = 15;
 
 % generate triangle
 nref = 6;
 yt = 13.243323833946539;
+% yt = 12.5 - (yt - 12.5)
 VX = [14.9071 35.3 -10]; VY = [0 yt yt]; 
 % VX = [14.9071,55.6929,-34.9070]; VY = [-yt,yt,yt]; % bigger tri?
 K = 1; EToV = 1:3;
@@ -86,9 +88,10 @@ pex = @(x,y) exp(-1^2*((x-x0).^2 + (y-y0).^2));
 % pex = @(x,y) cos(.5*pi*x).*cos(.5*pi*y);
 
 % smooth annulus
-sig = @(x) 1-1./(1+exp(-100*x));
+sig = @(x) 1-1./(1+exp(-1e2*x));
 r2 = @(x,y) x.^2 + y.^2;
 pex = @(x,y) sig((.025*r2(x-x0,y-y0)-.25).^2);
+% pex = @(x,y) abs(y-5.5)<.2; 
 
 % projection
 p = Pq*pex(xq,yq);
@@ -139,7 +142,7 @@ NstepRK = Nstep*5;
 Ubc{1} = zeros(length(mapB_top(:)),NstepRK);
 Ubc{2} = zeros(length(mapB_top(:)),NstepRK);
 
-if 0
+if 1
     for i = 1:Nstep
         for INTRK = 1:5
             [rhsp, rhsu, rhsv,UbcI] = acousticsRHS2D(p,u,v,tau,'abc');
@@ -152,8 +155,9 @@ if 0
             
             % save traces
             id0 = ((i-1)*5+(INTRK-1)); % zero index
-            Ubc{1}(:,NstepRK - id0) = UbcI{1};
-            Ubc{2}(:,NstepRK - id0) = UbcI{2};
+            a = 1e-1; % noise threshhold
+            Ubc{1}(:,NstepRK - id0) = UbcI{1} + a*randn(size(UbcI{1}));
+            Ubc{2}(:,NstepRK - id0) = UbcI{2} + a*randn(size(UbcI{1}));
         end;
         
         if plotFlag && mod(i,10)==0
@@ -177,6 +181,7 @@ else
     tRK = tRK(:);
     load PAT/TripleHair_Param.mat
     load PAT/TripleHair_Data.mat
+
     dt_data = 12.2 / size(PA_data,1);
     xn = xn + x0_shift;
     tt = 0:dt_data:12.2-dt_data;
@@ -235,17 +240,22 @@ else
             end
         end
     end
-    %     for i = 1:NstepRK
-    %         clf
-    %         plot(x(vmapB_top),Ubc{1}(:,i),'o')
-    % %                 clf
-    % %         plot(x(vmapB_top),tmp(:),'o')
-    % %         hold on
-    % %         plot(xx,yy,'-')
-    %         axis([-10 35 -550 550])
-    %         pause(.01)
-    %     end
-    % Ubc{1} = Ubc{1}/ max(abs(Ubc{1}(:))); % normalize
+%     for i = 1:size(Ubc{1},2)
+%         Ubc{1}(1:startid-1,i) = Ubc{1}(startid,i)*ones(startid-1,1);
+%         keyboard
+%         Ubc{1}(endid+1:size(Ubc{1},2),i) = Ubc{1}(endid,i)*ones(size(Ubc{1},2)-endid-1,1);
+%     end
+%         for i = 1:NstepRK
+%             clf
+%             plot(x(vmapB_top),Ubc{1}(:,i),'o')
+% %                     clf
+% %             plot(x(vmapB_top),tmp(:),'o')
+% %             hold on
+% %             plot(xx,yy,'-')
+%             axis([-10 35 -550 550])
+%             pause(.01)
+%         end
+%     Ubc{1} = Ubc{1}/ max(abs(Ubc{1}(:))); % normalize
     
     keyboard
     
@@ -379,7 +389,7 @@ for iter = 1:10
     title(sprintf('iter = %d, reconstruction error = %f',iter,L2err(iter)))
     
     disp(['iter ' num2str(iter) ', L2 err in recon = ',num2str(L2err/Unorm)])
-    keyboard
+%     keyboard
 end
 
 keyboard

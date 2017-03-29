@@ -44,7 +44,8 @@ plot(x,p0(x))
 
 
 %%
-N = 200;
+
+N = 500;
 [x y] = meshgrid(linspace(-1,1,N));
 h = 2/N;
 dt = .5*h;

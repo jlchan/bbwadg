@@ -1,74 +1,144 @@
-function Wave2D
+function PAT_breast
 
-% clear all, clear
-clear -global *
+load PAT/PAT_breast_boundary.mat
+load PAT/PAT_setup.mat
+% hmin = .25;
+hmin = .2;
+hmin = .175;
+
+tb = linspace(min(t),max(t)-hmin,ceil((max(t)-min(t))/hmin));
+xB = interp1(t,xb,tb);
+yB = interp1(t,yb,tb);
+tb = [tb tb(1)]; 
+xB = [xB xB(1)]; 
+yB = [yB yB(1)]; 
+
+node = [xB(:) yB(:)];
+hdata.fun = @(x,y) hmin*ones(size(x));
+hdata.hmax = .025*hmin;
+[p,tri] = mesh2d(node,[],hdata);
+
+d1 = size(speed,1); d2 = size(speed,2);
+scale = .2*.001; % .2mm per pixel * millimeters to meters factor
+a = d1*scale;
+b = d2*scale;
+[xm ym] = meshgrid(linspace(0,a,d1),linspace(0,b,d2));
+pcolor(xm,ym,speed');shading interp
+hold on
+
+plot(xB,yB,'ko--','markersize',16);
+plot(p(:,1),p(:,2),'ro','markersize',8)
+hold on;
+triplot(tri,p(:,1),p(:,2),'k','linewidth',2)
+axis on
+
+%% produce model of c2
 
 Globals2D
+N = 5;
+FinalTime = 1e-4;
 
-N = 4;
-K1D = 8;
-c_flag = 0;
-cfun = @(x,y) ones(size(x));
-% cfun = @(x,y) 1 + (x > 0);
-% cfun = @(x,y) 1 + .25*sin(2*pi*x).*sin(2*pi*y); % smooth velocity
-% cfun = @(x,y) (1 + .25*sin(2*pi*x).*sin(2*pi*y) + (y > 0)); % piecewise smooth velocity
+% make mesh
+VX = p(:,1); VX = VX(:)';
+VY = p(:,2); VY = VY(:)'; 
+EToV = tri;
+K = size(EToV,1);
+StartUp2D
 
-% filename = 'Grid/Other/block2.neu';
-% filename = 'Grid/Maxwell2D/Maxwell05.neu';
-% [Nv, VX, VY, K, EToV] = MeshReaderGambit2D(filename);
-[Nv, VX, VY, K, EToV] = unif_tri_mesh(K1D);
-StartUp2D;
+% move extra vertices to boundary
+fids = {[1 2],[2 3],[3 1]};
+for e = 1:K
+    ev = EToV(e,:);
+    for f = 1:Nfaces
+        if EToE(e,f)==e
+            vxb = VX(ev(fids{f}));
+            vyb = VY(ev(fids{f}));
+            for i = 1:2
+                [val id] = min(abs(xB - vxb(i)) + abs(yB - vyb(i)));
+                if val > 1e-8                                       
+                    newt = atan2(vyb(i)-mean(yb),vxb(i)-mean(xb));
+                    newx = interp1(t,xb,newt);
+                    newy = interp1(t,yb,newt);
+                    VX(ev(fids{f}(i))) = newx;
+                    VY(ev(fids{f}(i))) = newy;                    
+                end                    
+            end
+        end
+    end
+end
+StartUp2D
 
-global Pq cq Vq
-
-% PlotMesh2D; return
-
-[rp sp] = EquiNodes2D(25); [rp sp] = xytors(rp,sp);
-Vp = Vandermonde2D(N,rp,sp)/V;
-xp = Vp*x; yp = Vp*y;
-
-Nq = 2*N+1;
-[rq sq wq] = Cubature2D(Nq); % integrate u*v*c
+% set up cubature/plotting
+global Pq Vq cq rho
+[rq sq wq] = Cubature2D(2*N);
 Vq = Vandermonde2D(N,rq,sq)/V;
-Pq = V*V'*Vq'*diag(wq); % J's cancel out
-Mref = inv(V*V');
-xq = Vq*x; yq = Vq*y;
+Pq = V*V' * Vq'*diag(wq);
+xq = Vq*x;
+yq = Vq*y;
 Jq = Vq*J;
 
-%%
-cq = cfun(xq,yq);
+[rp sp] = EquiNodes2D(50); [rp sp] = xytors(rp,sp);
+Vp = Vandermonde2D(N,rp,sp)/V;
+xp = Vp*x;
+yp = Vp*y;
 
-% clf; vv = Vp*Pq*cq; color_line3(xp,yp,vv,vv,'.');axis equal;axis tight;return
+% smooth velocity model
+for iter = 1:5
+    savg = speed;
+    for i = 2:d1-1
+        for j = 2:d2-1
+            sij = speed(i,j) + ...
+                speed(i+1,j) + speed(i-1,j) + speed(i,j+1) + speed(i,j-1) + ...
+                speed(i+1,j+1) + speed(i-1,j+1) + speed(i+1,j-1) + speed(i-1,j-1);
+            savg(i,j) = sij/9;
+        end
+    end
+    speed = savg;
+end
 
-% FinalTime = 2/min(cq(:));
-FinalTime = 2;
+cq = interp2(xm,ym,speed',xq,yq);
+rho = interp2(xm,ym,density',xq,yq);
 
-%% params setup
+% clf
+% vv = cq;
+% color_line3(xq,yq,vv,vv,'.')
+% % vv = Vp*c2; color_line3(xp,yp,vv,vv,'.')
+% hold on
+% axis on
+% c2 = Pq*cq;
+% plot3(x(Fmask(:),:),y(Fmask(:),:),c2(Fmask(:),:)*1.05,'k-','linewidth',2)
+% colorbar
+% return
 
-x0 = .1; y0 = 0;
 
-% gaussian pulse
-pex = @(x,y) exp(-10^2*((x-x0).^2 + (y-y0).^2));
-% pex = @(x,y) cos(.5*pi*x).*cos(.5*pi*y);
+%% init cond
 
-% % smooth annulus
-% sig = @(x) 1-1./(1+exp(-100*x));
-% r2 = @(x,y) x.^2 + y.^2;
-% pex = @(x,y) sig((r2(x,y)-.25).^2);
+% smooth absorption initial cond
+for iter = 1:5
+    savg = absorption;
+    for i = 2:d1-1
+        for j = 2:d2-1
+            sij = absorption(i,j) + ...
+                absorption(i+1,j) + absorption(i-1,j) + absorption(i,j+1) + absorption(i,j-1) + ...
+                absorption(i+1,j+1) + absorption(i-1,j+1) + absorption(i+1,j-1) + absorption(i-1,j-1);
+            savg(i,j) = sij/9;
+        end
+    end
+    absorption = savg;
+end
 
-% boxes overlapping
-a = 2/K1D;
-pex = @(x,y) (abs(x+a)<.5 & abs(y)<.5) + (abs(x)<.5 & abs(y-a)<.5) + (abs(x-a)<.5 & abs(y+a)<.5);
+pex = @(x,y) interp2(xm,ym,absorption',x,y);
 
 % projection
 p = Pq*pex(xq,yq);
 u = zeros(Np, K);
 v = zeros(Np, K);
 
-% vv = Vp*p; color_line3(xp,yp,vv,vv,'.'); axis equal; axis tight; return
+% keyboard
+% vv = Vp*p; color_line3(xp,yp,vv,vv,'.'); axis equal; axis tight; colorbar
+% return
 
 %% check eigs
-
 if 0 & 3*Np*K < 4000
     U = zeros(Np*K,3); A = zeros(3*Np*K);
     for i = 1:3*Np*K
@@ -93,7 +163,7 @@ resu = zeros(Np,K); resv = zeros(Np,K); resp = zeros(Np,K);
 % compute time step size
 CN = (N+1)^2/2; % guessing...
 %dt = 1/(CN*max(abs(sJ(:)))*max(abs(1./J(:))));
-CNh = max(CN*max(Fscale(:)));
+CNh = max(max(cq)*CN*max(Fscale(:)));
 dt = 2/CNh;
 
 Nstep = ceil(FinalTime/dt);
@@ -125,18 +195,20 @@ for i = 1:Nstep
         Ubc{2}(:,NstepRK - id0) = UbcI{2};
     end;
     
-    %     if mod(i,10)==0
-    %         vv = Vp*p;
-    %         clf; color_line3(xp,yp,vv,vv,'.');
-    %         axis equal; axis tight; colorbar
-    %         title(sprintf('time = %f, max solution val = %f',time,max(abs(vv(:)))))
-    %         drawnow
-    %     end
+    if mod(i,10)==0
+        vv = Vp*p;
+        clf; color_line3(xp,yp,vv,vv,'.');
+        axis equal; axis tight; colorbar
+        title(sprintf('time = %f, max solution val = %f',time,max(abs(vv(:)))))
+        drawnow
+    end
     time = i * dt;
     if (mod(i,ceil(Nstep/10))==0)
         disp(sprintf('generating synthetic data: tstep %d out of %d\n',i,Nstep))
     end
 end
+
+return
 
 disp('Synthetic data generated. ')
 
@@ -261,7 +333,9 @@ end
 keyboard
 
 figure
-vv = pex(xp,yp)-Vp*p0;
+% vv = pex(xp,yp)-Vp*p0;
+% vv = Vp*p0;
+vv = pex(xp,yp);
 clf; color_line3(xp,yp,vv,vv,'.');
 axis equal; axis tight; colorbar
 title(sprintf('iter = %d, reconstruction error = %f',iter,L2err(iter)))
@@ -309,7 +383,6 @@ UbcO{2} = ndotdU(mapB);
 fluxp =  tau*dp - ndotdU;
 fluxu =  (tau*ndotdU - dp);
 
-
 pr = Dr*p; ps = Ds*p;
 dpdx = rx.*pr + sx.*ps;
 dpdy = ry.*pr + sy.*ps;
@@ -320,9 +393,10 @@ rhsp =  -divU + LIFT*(Fscale.*fluxp)/2.0;
 rhsu =  -dpdx + LIFT*(Fscale.*fluxu.*nx)/2.0;
 rhsv =  -dpdy + LIFT*(Fscale.*fluxu.*ny)/2.0;
 
-global Pq cq Vq
+global Pq Vq cq rho
 rhsp = Pq*(cq.*(Vq*rhsp));
-
+rhsu = Pq*(rho.*(Vq*rhsu));
+rhsv = Pq*(rho.*(Vq*rhsv));
 
 return;
 

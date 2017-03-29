@@ -1,5 +1,5 @@
 load PAT/TripleHair_Param
-% load PAT/TripleHair_Data
+load PAT/TripleHair_Data
 load PAT/TripleHair_Recon
 
 xn = xn + x0_shift;
@@ -18,24 +18,28 @@ text(ym_left+2,-2,sprintf('left mirror \n "intercept"'))
 plot(ym_right,0,'k*')
 text(ym_right+2,-2,sprintf('right mirror \n "intercept"'))
 
+yintercept=0;
 
 % left mirror line y = ax+b, 
 a = -1/tan(pi/2-alpha);
-b = yt-a*ym_left; x = linspace(-75,25,1000);
+b = yintercept-a*ym_left; x = linspace(-75,25,1000);
 plot(x,a*x+b,'k-')
 
 % right mirror line y = ax+b, 
+yintercept=ym_left;
 a = 1/tan(pi/2-beta);
-b = yt-a*ym_right; x = linspace(-25,75,1000);
+b = yintercept-a*ym_right; x = linspace(-25,75,1000);
 plot(x,a*x+b,'k-')
 
 a = 75;
 axis([-a a -a/2 a/2])
 plot(linspace(-a,a,25),yt*ones(1,25),'r--')
 
+plot(14.9071,0,'bs')
+plot(35.3,yt,'rs')
 plot(-10,yt,'ks')
-plot(35.3,yt,'ks')
-plot(14.9071,0,'ks')
 
-
+plot(14.9071,-13.2433,'bs')
+plot(55.6929,13.2433,'rs')
+plot(-34.9070,13.2433,'ks')
 
