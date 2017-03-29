@@ -3,13 +3,18 @@ function [L2err] = advec1D_IGA(NB,Ksub,K1D,dt)
 Globals1D;
 
 if nargin==0    
-    NB = 7;
+    NB = 4;
     Ksub = 4; %ceil(N/2);
-    K1D = 16; 
-    dt = .5/(NB*Ksub*K1D);
+    K1D = 4; 
+    if Ksub==1
+        dt = 2/((NB+1)^2*K1D);
+    else
+        dt = 2/((NB+1)*Ksub*K1D);
+    end
+    smoothKnots = 1;
 end
 
-FinalTime = .7;
+FinalTime = 1;
 
 N = NB+Ksub-1; % number of sub-mesh splines
 
@@ -21,7 +26,12 @@ ndofs = K*(N+1) % total # dofs
 % Initialize solver and construct grid and metric
 StartUp1D;
 
-rp = linspace(-1,1,50)';
+vmapP(end) = vmapM(1);
+vmapP(1) = vmapM(end); % make periodic
+% assume uniform mesh for simplicity
+rx = rx(1);
+
+rp = linspace(-1,1,100)';
 Vp = Vandermonde1D(N,rp)/V;
 xp = Vp*x;
 
@@ -30,36 +40,37 @@ xp = Vp*x;
 rB = JacobiGL(0,0,N);
 xB = Vandermonde1D(N,rB)/V * x;
 
-[BVDM M Dr] = bsplineVDM(NB,Ksub,rB); % VDM for interp, mass, M\S
+[BVDM M Dr] = bsplineVDM(NB,Ksub,rB,smoothKnots); % VDM for interp, mass, M\S
 
 [rq wq] = JacobiGQ(0,0,N);
-[Bq] = bsplineVDM(NB,Ksub,rq); % VDM for interp, mass, M\S
-M = Bq'*diag(wq)*Bq; % under-integrate mass matrix
+[Bq] = bsplineVDM(NB,Ksub,rq,smoothKnots); % VDM for interp, mass, M\S
+% M = Bq'*diag(wq)*Bq; % under-integrate mass matrix
+
+Vq = Vandermonde1D(N,rq)/V;
+xq = Vq*x;
 
 Mf = zeros(N+1,2);
 Mf(1,1) = 1;
 Mf(N+1,2) = 1;
 LIFT = M\Mf;
 
-[Vp] = bsplineVDM(NB,Ksub,rp);
-vmapP(end) = vmapM(1);
-vmapP(1) = vmapM(end); % make periodic
-
-% assume uniform mesh for simplicity
-rx = rx(1);
+[Vp] = bsplineVDM(NB,Ksub,rp,smoothKnots);
 
 % Set initial conditions
-% uex = @(x) exp(-10*sin(pi*x).^2);
-uex = @(x) sin(8*pi*x);
+% uex = @(x) exp(-10*sin(2*pi*x).^2);
+uex = @(x) sin(9*pi*x);
+uex = @(x) (x>-.75).*(x<-.25);
 % u = uex(x);
-u = BVDM\uex(xB); % initialize w/lsq fit
+% u = BVDM\uex(xB); % initialize w/lsq fit
+u = M\(Bq'*diag(wq)*uex(xq));
 
+% plot(xp,uex(xp));return
 %% check eigs
 
 if 0
-    A = zeros((NB+1)*K);
-    u = zeros(NB+1,K);
-    for i = 1:(NB+1)*K
+    A = zeros((N+1)*K);
+    u = zeros(N+1,K);
+    for i = 1:(N+1)*K
         u(i) = 1;
         rhsu = AdvecRHS1D(u);
         A(:,i) = rhsu(:);
@@ -69,8 +80,9 @@ if 0
     hold on
     plot(lam,'x')
     NB,max(abs(lam))
-    return
-    % keyboard
+    max(real(lam))
+%     return
+    keyboard
 end
 
 %%  Solve Problem
@@ -99,11 +111,11 @@ for tstep=1:Nsteps
     % Increment time
     time = time+dt;
     
-    if nargin==0 && mod(tstep,10)==0
+    if nargin==0 && mod(tstep,10)==0 || tstep==Nsteps
         
         plot(xp,Vp*u,'-')
         hold on;
-%         plot(x,u,'o')
+        plot(x,u,'o')
         plot(xp,uex(xp-time),'--');
         hold off
         axis([-1 1 -1 3])
@@ -117,7 +129,7 @@ end;
 [rq wq] = JacobiGQ(0,0,N+4);
 Vq = Vandermonde1D(N,rq)/V;
 xq = Vq*x;
-[Bq] = bsplineVDM(NB,Ksub,rq);
+[Bq] = bsplineVDM(NB,Ksub,rq,smoothKnots);
 L2err = diag(wq)*abs(Bq*u-uex(xq-FinalTime)).^2*diag(J(1,:));
 L2err = sqrt(sum(L2err(:)))
 
@@ -132,9 +144,9 @@ Globals1D;
 % form field differences at faces
 alpha = 0;
 du = zeros(Nfp*Nfaces,K);
-du(:) = (u(vmapM)-u(vmapP)).*(nx(:)-(1-alpha)*abs(nx(:)))/2;
+du(:) = (u(vmapP)-u(vmapM)).*(nx(:)-(1-alpha)*abs(nx(:)))/2;
 
 % compute right hand sides of the semi-discrete PDE
-rhsu = -rx.*(Dr*u) + LIFT*(Fscale.*(du));
+rhsu = -rx.*(Dr*u) - LIFT*(Fscale.*(du));
 return
 
