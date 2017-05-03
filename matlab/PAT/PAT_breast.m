@@ -2,9 +2,9 @@ function PAT_breast
 
 load PAT/PAT_breast_boundary.mat
 load PAT/PAT_setup.mat
-% hmin = .25;
-hmin = .2;
-hmin = .175;
+hmin = .25;
+% hmin = .2;
+% hmin = .175;
 
 tb = linspace(min(t),max(t)-hmin,ceil((max(t)-min(t))/hmin));
 xB = interp1(t,xb,tb);
@@ -35,7 +35,7 @@ axis on
 %% produce model of c2
 
 Globals2D
-N = 5;
+N = 2;
 FinalTime = 1e-4;
 
 % make mesh
@@ -208,7 +208,6 @@ for i = 1:Nstep
     end
 end
 
-return
 
 disp('Synthetic data generated. ')
 
@@ -237,13 +236,13 @@ for i = 1:Nstep
     if (mod(i,ceil(Nstep/5))==0)
         disp(sprintf('first backwards prop: tstep %d out of %d',i,Nstep))
     end
-    %     if mod(i,10)==0
-    %         vv = Vp*p;
-    %         clf; color_line3(xp,yp,vv,vv,'.');
-    %         axis equal; axis tight; colorbar
-    %         title(sprintf('first reversal time = %f, max solution val = %f',time,max(abs(vv(:)))))
-    %         drawnow
-    %     end
+    if mod(i,10)==0
+        vv = Vp*p;
+        clf; color_line3(xp,yp,vv,vv,'.');
+        axis equal; axis tight; colorbar
+        title(sprintf('first reversal time = %f, max solution val = %f',time,max(abs(vv(:)))))
+        drawnow
+    end
 end
 
 % save reversed data
@@ -334,8 +333,8 @@ keyboard
 
 figure
 % vv = pex(xp,yp)-Vp*p0;
-% vv = Vp*p0;
-vv = pex(xp,yp);
+vv = Vp*p0;
+% vv = pex(xp,yp);
 clf; color_line3(xp,yp,vv,vv,'.');
 axis equal; axis tight; colorbar
 title(sprintf('iter = %d, reconstruction error = %f',iter,L2err(iter)))

@@ -387,8 +387,8 @@ legend style={font=\small}
 \date{}
 \author{Jesse Chan}
 %\title{Nodal discontinuous Galerkin methods on vertically mapped wedges}
-\title{Efficient $L^2$ projection on simplices using Bernstein polynomials}
-%\title{Weight-adjusted Bernstein-Bezier Discontinuous Galerkin methods}
+%\title{Efficient $L^2$ projection on simplices using Bernstein polynomials}
+\title{Weight-adjusted Bernstein-Bezier Discontinuous Galerkin methods}
 
 \begin{document}
 
@@ -396,14 +396,13 @@ legend style={font=\small}
 \tableofcontents
 
 \begin{abstract}
-Alternative formula for mass inversion.  GPU-accelerated versions of Ainsworth and Kirby Duffy transforms.  Additional polynomial multiplication-based approach.  
+Alternative formula for mass inversion.  GPU-accelerated versions of Ainsworth and Kirby Duffy transforms.  Comparison to polynomial multiplication-based approach.  
 \end{abstract}
 
 \section{Introduction}
 
 
 \cite{chan2015bbdg}
-
 
 
 \section{Bernstein-Bezier bases}
@@ -460,17 +459,18 @@ This can also be used to apply the inverse mass matrix since it is diagonal unde
 \section{Numerical experiments}
 
 \subsection{Expansion kernels}
+
 \subsubsection{Polynomial multiplication}
+
 \subsubsection{Collapsed-coordinate quadrature}
 
 \subsection{Mass matrix inversion kernel}
 
-\subsection{Monolithic kernel}
-
+%\subsection{Monolithic kernel}
 
 \section{Application to Weight-adjusted Discontinuous Galerkin (WADG) methods}
 
-Numerical experiment: time to solution for order 7 and 8 using both NDG-WADG and BB-WADG.  
+Numerical experiment: time to solution for high orders using both NDG-WADG and BB-WADG.  
 
 \cite{chan2016weight1,chan2016weight2}
 

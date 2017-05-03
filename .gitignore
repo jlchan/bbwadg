@@ -8,8 +8,24 @@ docs/*/*.out
 docs/*/*.DS_STORE
 docs/*/*.synctex.gz
 docs/*/*.thm
+docs/*/*.toc
 docs/*/*.bst
 docs/figs/*eps-converted-to.pdf
+
+talks/*/*.aux
+talks/*/*.bbl
+talks/*/*.blg
+talks/*/*.log
+talks/*/*.out
+talks/*/*.DS_STORE
+talks/*/*.synctex.gz
+talks/*/*.thm
+talks/*/*.toc
+talks/*/*.bst
+talks/*/*.nav
+talks/*/*.snm
+talks/figs/*eps-converted-to.pdf
+
 
 *.dSYM/
 */*/*.DS_Store

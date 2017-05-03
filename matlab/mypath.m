@@ -17,9 +17,10 @@ addpath([pw,'/tet']);
 addpath([pw,'/hybrid']);
 addpath([pw,'/hybrid_wedge_tet']);
 addpath([pw,'/scratch']);
-addpath([pw,'/bern']);
-addpath([pw,'/bspline']);
-addpath([pw,'/bsplinequad']);
-addpath([pw]);
-
 addpath([pw,'/PAT'])
+
+addpath([pw,'/bern']);
+
+addpath([pw,'/IGA_DG/']);
+addpath([pw,'/IGA_DG/bspline/']);
+

@@ -336,15 +336,19 @@ where $L$ is the lift operator.
 
 The DG divergence operator is similarly defined as
 \[
+\sum_{D^k} \LRp{\Grad_h \cdot \bm{u}, v}_{\LK} \coloneqq \sum_{D^k} \LRp{-\bm{u}, \Grad v}_{\LK} + \LRa{\avg{\bm{u}}\cdot\bm{n},v}_{\LdK}.
+\]
+and
+\[
 \Grad_h \cdot u = \Grad\cdot u + \frac{1}{2}L\LRp{\jump{\bm{u}}\cdot\bm{n}}
 \]
 and it can be shown that, for a periodic mesh,
 \[
 \LRp{\Grad_h u, \bm{v}} = \LRp{-u, \Grad_h \cdot \bm{v}}.
 \]
-Need to incorporate boundary conditions.  
+We will incorporate boundary conditions in a stable way in the following sections.  
 
-We also have that, for interior elements,
+When the support of $v$ is limited to a single element, we have
 \[
 \LRp{\Grad_h\cdot \bm{u},v\bbm{1}_{D^k}} = \LRp{\bm{u}, \Grad\cdot v\bbm{1}_{D^k}}  + \LRa{\avg{\bm{u}}\cdot\bm{n},v}_{\partial D^k}.
 \]
@@ -388,19 +392,114 @@ through integration by parts and an assumption that $\bm{\beta}\cdot \bm{n}$ is 
 \]
 which is a discrete version of the continuous statement of local conservation.
 
-\section{Penalization}
-
 Penalization can be added by adding any positive-definite stabilization term (upwind, penalty, Lax-Friedrichs) through the regular divergence flux.  
+
+It's probably better to formulate this using continuous DG derivatives, recover flux terms, then discretize that - the flux terms \textit{should} still cancel out after discretization, right?
+
+
+\section{Discrete DG derivatives}
+
+Methods based on discrete DG derivatives also work.  
+
+The discrete DG derivative-based method is not consistent in the sense that Galerkin orthogonality does not hold exactly.  The difference lies in the flux terms.  Assume $\Div \bm{\beta} = 0$, then
+\[
+\LRp{\pd{u}{t},v} + \frac{1}{2}\LRp{-{ \bm{\beta}u},\Grad_h v} + \frac{1}{2}\LRp{\bm{\beta}\cdot\Grad_h u,v} = 0.
+\]
+\begin{align*}
+\LRp{\Grad_h\cdot \Pi_N\LRp{ \bm{\beta}u},v} &= \sum_{D^k} \LRp{-\bm{\beta}u, \Grad v}_{\LK} + \LRa{\avg{\Pi_N\LRp{\bm{\beta} u}}\cdot \bm{n},v}_{\LdK}\\
+\LRp{\Grad_h u,\bm{\beta}v} &= \sum_{D^k} \LRp{-u, \Grad \cdot \LRp{\bm{\beta}v}}_{\LK} + \LRa{\bm{\beta}\cdot\bm{n}\avg{u},v}_{\LdK}.
+\end{align*}
+The latter term is consistent; the former is not due to the presence of $\avg{\Pi_N\LRp{\bm{\beta} u}}\cdot \bm{n}$ in the flux term.  The consistency error should then be $O(h^{N+1/2})$ using a trace inequality for $L^2$ projections.  
+
+Can also write the inconsistent term as 
+\[
+\LRp{-{ \bm{\beta}u},\Grad_h v} %= -\LRp{\Grad_h v,\bm{\beta}u} = \sum_{D^k} \LRp{ v,\Grad\cdot \LRp{\bm{\beta}u}}_{D^k} - \LRa{\avg{v},\bm{\beta}\cdot \bm{n} u}
+\]
+but this results in the same inconsistent flux term due to the fact that $\Grad_h$ is only defined for test functions in the polynomial space.  
+
+Note: can also use interpolants in a stable manner if using $D_h$.  Unlike SEM, this still requires an extra matvec per RHS evaluation because of the lack of diagonality of the mass matrix.  Reduces number of steps by one (no interpolation to quadrature points) but does not reduce number of total matvecs.  
+
+For curvilinear coordinates, 
+
+
 
 \section{Extension to other hyperbolic problems}
 
-Example: acoustic wave equation, simply discretize by replacing $\Grad, \Grad\cdot$ with the DG versions.  Automatically skew symmetric and energy stable.  
+Example: acoustic wave equation, simply discretize by replacing $\Grad, \Grad\cdot$ with discrete versions.  Automatically skew symmetric and energy stable via integration by parts.  Also, can show why WADG works: discretize based on discrete divergence, then test with $T_{c^2}^{-1}p$ and use identities.  Note - I think this requires the use of the strictly discrete version.  
 
 Example: Burgers' equation
 
-Example: Entropy splitting of Buckley-Leverett.  
+Example: Kinetic energy preserving splitting of Euler (assumes exact time discretization).  Doesn't seem to help much without extra viscosity?  
 
+Example: Entropy splitting of Buckley-Leverett?
 
+Example: Entropy splitting of Euler (note - cannot extend to Navier-Stokes in an entropy-stable fashion due to fact that heat flux matrix is not symmetrizable w.r.t.\ homogeneous flux function, though viscous terms are.  This impacts only boundary conditions.) 
+
+\section{Standard entropy stability estimates}
+
+Given a nonlinear conservation law
+\begin{align*}
+\pd{u}{t} + \pd{f(u)}{x} = 0
+\end{align*}
+DG formulation is usually
+\[
+\LRp{\pd{u}{t},v} + \LRp{D_h f,v} = 0.
+\]
+Taking $v = u$ gives
+\[
+\frac{1}{2}\nor{u}^2 + \int_{D^k}{u D_h f} = 0.
+\]
+Continuous entropy stability relies on the introduction of $F,G$ such that
+\[
+\pd{F}{u} = u\pd{f}{u}, \qquad \pd{G}{u} = f, \qquad F = uf - G.
+\]
+Then, relying on product and chain rules
+\[
+\int_{D^k}{u \pd{f}{x}} = \int_{D^k}{\pd{(uf)}{x} - f\pd{u}{x}} = \int_{D^k}{\pd{(uf)}{x} - \pd{G}{u}\pd{u}{x}} =  \int_{D^k}{\pd{\LRp{uf-G}}{x}} = \int_{D^k}{\pd{F}{x}} = \int_{\partial D^k} F.
+\]
+These boundary terms can be made to cancel with appropriately defined numerical fluxes, resulting in entropy conservative schemes.  The challenge in reproducing this in the discrete case is the lack of a product and chain rule for inexact quadratures.  Jameson deals with this by introducing an integrated flux
+\[
+G = \frac{1}{2}\int_{-1}^1 f \LRp{ \avg{u} + \theta \jump{u}} \diff \theta.
+\]
+for which finite volume schemes satisfy (in a rough sense)
+\[
+\jump{G} = \avg{G} \jump{u}.
+\]
+Fischer and Carpenter (also Gassner and co-workers) use a similar idea but combine a symmetric two-point flux approximation with properties of SBP matrices to get 
+\[
+2\LRp{W,DF} = \LRp{W,DF} - \LRp{DW,F} + \LRa{W,F} =  \sum_i \sum_j (W_i-W_j) (MD)_{ij} F(U_i,U_j) + \LRa{W,F}.
+\]
+
+\section{Entropy splitting}
+
+It's currently unclear how to extend the symmetric two-point flux approximation to quadrature-based DG methods.  
+
+%Sandham and Yee use the entropy splitting 
+%\[
+%\eta(U) =  -\beta p^*, \qquad p^* = - \LRp{\frac{p}{\rho^\gamma}}^{\frac{1}{\beta(1-\gamma)}},
+%\]
+%which generates the entropy variables
+%\[
+%W(U) = p^*\LRp{\begin{array}{ccc}
+%\frac{E}{p} - C, &\frac{-\rho u}{p}, &\frac{\rho}{p}
+%\end{array}}, \qquad C = \frac{2}{\gamma-1} + (1+\beta).
+%\]
+%Unfortunately, the inverse mapping $U(W)$ is not explicitly known, which will greatly hamper computational efforts.  For example, this implies we cannot evolve the entropy variables explicitly, which would yield an energy estimate.  
+%The Jacobian
+%\[
+%\pd{U}{W} = \LRs{
+%d
+%}, 
+%\qquad \pd{W}{U} = \pd{U}{W}^{-1} = \LRs{
+%}
+%\]
+%The flux Jacobian
+%\[
+%\pd{F}{U} = \LRs{\begin{array}{ccc}
+%0 & u \frac{(\gamma-3)}{2} & \\
+%1 & -u(\gamma-3) & 
+%\end{array}}
+%\]
 
 \bibliographystyle{unsrt}
 \bibliography{dgpenalty}
