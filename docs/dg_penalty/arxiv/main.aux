@@ -1,0 +1,115 @@
+\relax 
+\emailauthor{Jesse.Chan@caam.rice.edu}{Jesse Chan\corref {cor1}}
+\emailauthor{tcew@vt.edu}{T. Warburton}
+\citation{warburton2013low,ye2016discontinuous}
+\Newlabel{cor1}{1}
+\citation{riviere2008discontinuous,hesthaven2007nodal}
+\citation{riviere2008discontinuous}
+\citation{Warburton20063205}
+\citation{fezoui2005convergence}
+\citation{Warburton20063205}
+\Newlabel{rice}{a}
+\Newlabel{vt}{b}
+\@writefile{toc}{\contentsline {section}{\numberline {1}Introduction}{1}}
+\citation{chan2016weight1}
+\citation{de2008interior,wilcox2010high,ye2016discontinuous}
+\citation{hesthaven2002nodal,grote2007interior,warburton2013low}
+\@writefile{toc}{\contentsline {section}{\numberline {2}Semi-discrete discontinuous Galerkin formulation}{2}}
+\newlabel{eq:cons}{{1}{2}}
+\newlabel{eq:formulation}{{2}{2}}
+\newlabel{eq:consA}{{3}{2}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.1}Penalization terms in numerical fluxes}{2}}
+\citation{ye2016discontinuous}
+\citation{chan2016weight1}
+\citation{ye2016discontinuous}
+\@writefile{toc}{\contentsline {section}{\numberline {3}Dependence of spectra on the penalty parameter}{3}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.1}Conforming and non-conforming approximation spaces}{3}}
+\newlabel{eq:conf}{{4}{3}}
+\citation{brezzi1985two,boffi2013mixed}
+\citation{kirby2004algorithm}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.2}Scalar advection and acoustic wave propagation}{4}}
+\newlabel{sec:confexamples}{{3.2}{4}}
+\citation{Warburton20063205}
+\citation{warburton2013low,chan2015gpu,chan2016weight2,kopriva2014energy}
+\citation{Warburton20063205}
+\citation{horn2012matrix}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.3}Behavior as $\tau \rightarrow \infty $}{5}}
+\newlabel{eq:block}{{5}{5}}
+\citation{simpletracker}
+\citation{ainsworth2014dispersive}
+\citation{hughes2014finite}
+\newlabel{lemma:eig}{{3.1}{6}}
+\@writefile{toc}{\contentsline {section}{\numberline {4}Numerical experiments}{6}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.1}1D experiments}{6}}
+\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces Eigenvalue paths for DG advection with $\tau \in [0,4]$ on a mesh of 8 elements of degree $N=3$. Eigenvalues are overlaid on these paths for $\tau = 0$, $\tau = 1$, and $\tau = 4$. The zoomed in view near the imaginary axis shows the return of spurious modes to the imaginary axis for $\tau $ sufficiently large. \relax }}{7}}
+\providecommand*\caption@xref[2]{\@setref\relax\@undefined{#1}}
+\newlabel{fig:track1D}{{1}{7}}
+\@writefile{lof}{\contentsline {subfigure}{\numberline{(a)}{\ignorespaces {Paths of eigenvalues as $\tau $ increases}}}{7}}
+\@writefile{lof}{\contentsline {subfigure}{\numberline{(b)}{\ignorespaces {Zoom of eigenvalues near imaginary axis}}}{7}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.2}2D experiments}{7}}
+\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces Behavior of a mode for the advection equation corresponding to a divergent eigenvalue (indicated by the red star) as $\tau $ increases. The order of approximation is $N=3$ on a mesh of 4 elements.\relax }}{8}}
+\newlabel{fig:trackmodes1D}{{2}{8}}
+\@writefile{lof}{\contentsline {subfigure}{\numberline{(d)}{\ignorespaces {$\tau = 0$}}}{8}}
+\@writefile{lof}{\contentsline {subfigure}{\numberline{(e)}{\ignorespaces {$\tau = 1$}}}{8}}
+\@writefile{lof}{\contentsline {subfigure}{\numberline{(f)}{\ignorespaces {$\tau = 10$}}}{8}}
+\bibstyle{unsrt}
+\bibdata{dgpenalty}
+\bibcite{warburton2013low}{{1}{}{{}}{{}}}
+\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces Return behavior of DG advection eigenvalues for sufficiently large $\tau $. For $\tau = 1$ certain eigenvalues have negative real part, and the corresponding eigenmodes are damped. For $\tau \gg 1$, certain eigenvalues return to the imaginary axis as spurious modes in conforming discretizations. \relax }}{9}}
+\newlabel{fig:spurious}{{3}{9}}
+\@writefile{lof}{\contentsline {subfigure}{\numberline{(d)}{\ignorespaces {$\tau = 0$}}}{9}}
+\@writefile{lof}{\contentsline {subfigure}{\numberline{(e)}{\ignorespaces {$\tau = 1$}}}{9}}
+\@writefile{lof}{\contentsline {subfigure}{\numberline{(f)}{\ignorespaces {$\tau = 10$}}}{9}}
+\@writefile{toc}{\contentsline {section}{\numberline {5}Conclusions}{9}}
+\bibcite{ye2016discontinuous}{{2}{}{{}}{{}}}
+\bibcite{grote2006discontinuous}{{3}{}{{}}{{}}}
+\bibcite{hesthaven2007nodal}{{4}{}{{}}{{}}}
+\bibcite{riviere2008discontinuous}{{5}{}{{}}{{}}}
+\@writefile{lof}{\contentsline {figure}{\numberline {4}{\ignorespaces Coefficients $c^0_j$ and $c^{100}_j$ of the spurious mode in Figure\nobreakspace  {}3\hbox {} when expanded in the modes of $\bm  {K}$ for $\tau =1$. Coefficients with magnitude less than $10^{-13}$ are not shown. The negative real parts of the corresponding eigenvalues ${\rm  Re}(\lambda ^1_j)$, which determine the magnitude of damping applied to the $j$th component, are overlaid. \relax }}{10}}
+\newlabel{fig:cmodes}{{4}{10}}
+\@writefile{lof}{\contentsline {subfigure}{\numberline{(a)}{\ignorespaces {$c_j^0$ (coefficients of a spurious mode for $\tau = 0$)}}}{10}}
+\@writefile{lof}{\contentsline {subfigure}{\numberline{(b)}{\ignorespaces {$c_j^{100}$ (coefficients of a spurious mode for $\tau = 100$)}}}{10}}
+\@writefile{lof}{\contentsline {figure}{\numberline {5}{\ignorespaces Behavior of eigenvalues for the acoustic wave equation in two dimensions. Note the changing scale of the real axis.\relax }}{10}}
+\newlabel{fig:waveeigs}{{5}{10}}
+\@writefile{lof}{\contentsline {subfigure}{\numberline{(a)}{\ignorespaces {$\tau = 1$}}}{10}}
+\@writefile{lof}{\contentsline {subfigure}{\numberline{(b)}{\ignorespaces {$\tau = 10$}}}{10}}
+\@writefile{lof}{\contentsline {subfigure}{\numberline{(c)}{\ignorespaces {$\tau = 100$}}}{10}}
+\bibcite{Warburton20063205}{{6}{}{{}}{{}}}
+\bibcite{fezoui2005convergence}{{7}{}{{}}{{}}}
+\bibcite{chan2016weight1}{{8}{}{{}}{{}}}
+\bibcite{de2008interior}{{9}{}{{}}{{}}}
+\bibcite{wilcox2010high}{{10}{}{{}}{{}}}
+\newlabel{subfig:big}{{6a}{11}}
+\newlabel{sub@subfig:big}{{(a)}{a}}
+\newlabel{subfig:box}{{6b}{11}}
+\newlabel{sub@subfig:box}{{(b)}{b}}
+\@writefile{lof}{\contentsline {figure}{\numberline {6}{\ignorespaces Behavior of eigenvalues for the acoustic wave equation in two dimensions. Figure\nobreakspace  {}6b\hbox {} shows a zoom of the boxed region in Figure\nobreakspace  {}6a\hbox {}, with overlaid eigenvalue paths as $\tau $ increases. Divergent eigenvalues in the far left half plane are not shown. \relax }}{11}}
+\newlabel{fig:trackEigsWave}{{6}{11}}
+\@writefile{lof}{\contentsline {subfigure}{\numberline{(a)}{\ignorespaces {$\tau = 0,1, 50$, zoomed in view}}}{11}}
+\@writefile{lof}{\contentsline {subfigure}{\numberline{(b)}{\ignorespaces {$\tau = 0,1,50$, returning eigenvalue paths}}}{11}}
+\@writefile{lof}{\contentsline {figure}{\numberline {7}{\ignorespaces Behavior of a spurious eigenmode for the acoustic wave equation in two dimensions. The real part of the pressure component is shown for different values of $\tau $.\relax }}{11}}
+\newlabel{fig:trackModesWave}{{7}{11}}
+\@writefile{lof}{\contentsline {subfigure}{\numberline{(a)}{\ignorespaces {$\tau = .1$, $\lambda = -0.2379 + 8.7528i$}}}{11}}
+\@writefile{lof}{\contentsline {subfigure}{\numberline{(b)}{\ignorespaces {$\tau = 1$, $\lambda = -1.0145 + 8.9270i$}}}{11}}
+\@writefile{lof}{\contentsline {subfigure}{\numberline{(c)}{\ignorespaces {$\tau = 100$, $\lambda = -0.0437 + 7.6167i$}}}{11}}
+\bibcite{hesthaven2002nodal}{{11}{}{{}}{{}}}
+\bibcite{hesthaven2004high}{{12}{}{{}}{{}}}
+\bibcite{grote2007interior}{{13}{}{{}}{{}}}
+\bibcite{brezzi1985two}{{14}{}{{}}{{}}}
+\@writefile{lof}{\contentsline {figure}{\numberline {8}{\ignorespaces Eigenvalue paths for the DG discretization of advection as $\tau $ increases. Divergent eigenvalues in the far left half plane are not shown. \relax }}{12}}
+\newlabel{fig:trackModesAdvec}{{8}{12}}
+\@writefile{lof}{\contentsline {figure}{\numberline {9}{\ignorespaces Behavior of a spurious eigenmode for the advection equation with $\beta = (1,0)$. The real part of the eigenmode is shown for different values of $\tau $.\relax }}{12}}
+\newlabel{fig:trackModesAdvecU}{{9}{12}}
+\@writefile{lof}{\contentsline {subfigure}{\numberline{(a)}{\ignorespaces {$\tau = 0$, $\lambda = 0 + 7.9246i$}}}{12}}
+\@writefile{lof}{\contentsline {subfigure}{\numberline{(b)}{\ignorespaces {$\tau = 1$, $\lambda = -0.8278 + 6.7831i$}}}{12}}
+\@writefile{lof}{\contentsline {subfigure}{\numberline{(c)}{\ignorespaces {$\tau = 100$, $\lambda = -0.0239 + 5.9282i$}}}{12}}
+\bibcite{boffi2013mixed}{{15}{}{{}}{{}}}
+\bibcite{kirby2004algorithm}{{16}{}{{}}{{}}}
+\bibcite{chan2015gpu}{{17}{}{{}}{{}}}
+\bibcite{chan2016weight2}{{18}{}{{}}{{}}}
+\bibcite{kopriva2014energy}{{19}{}{{}}{{}}}
+\bibcite{horn2012matrix}{{20}{}{{}}{{}}}
+\bibcite{simpletracker}{{21}{}{{}}{{}}}
+\bibcite{ainsworth2014dispersive}{{22}{}{{}}{{}}}
+\bibcite{hughes2014finite}{{23}{}{{}}{{}}}
+\providecommand\NAT@force@numbers{}\NAT@force@numbers

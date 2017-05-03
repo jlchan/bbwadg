@@ -1,0 +1,278 @@
+%&pdflatex
+
+%\documentclass[preprint,10pt]{elsarticle}
+\documentclass[10pt]{article}
+\usepackage{fullpage}
+\usepackage{hyperref}
+\let\proof\relax
+\let\endproof\relax
+\usepackage{amsmath,amssymb,amsfonts,mathrsfs,amsthm}
+\usepackage[titletoc,toc,title]{appendix}
+
+%\usepackage{lineno}
+\usepackage{array}
+\usepackage[utf8]{inputenc}
+\usepackage{listings}
+\usepackage{mathtools}
+\usepackage{pdfpages}
+\usepackage[textsize=footnotesize,color=green]{todonotes}
+\usepackage{bm}
+%\usepackage{tikz}
+\usepackage[normalem]{ulem}
+\usepackage{hhline}
+\usepackage{csquotes}
+\usepackage{algorithm}
+\usepackage[noend]{algpseudocode}
+\usepackage{algorithmicx}
+
+\usepackage{graphicx}
+%\usepackage{subfigure}
+\usepackage{subfig}
+
+\usepackage{color}
+
+\renewcommand{\topfraction}{0.85}
+\renewcommand{\textfraction}{0.1}
+\renewcommand{\floatpagefraction}{0.75}
+
+\newcommand{\vect}[1]{\ensuremath\boldsymbol{#1}}
+\newcommand{\tensor}[1]{\underline{\bm{#1}}}
+\newcommand{\del}{\triangle}
+\newcommand{\curl}{\grad \times}
+\renewcommand{\div}{\grad \cdot}
+\newcommand{\td}[2]{\frac{{\rm d}#1}{{\rm d}#2}}
+\newcommand{\pd}[2]{\frac{\partial#1}{\partial#2}}
+\newcommand{\pdd}[2]{\frac{\partial^2#1}{\partial#2^2}}
+
+\newcommand{\bs}[1]{\boldsymbol{#1}}
+
+\newcommand{\equaldef}{\stackrel{\mathrm{def}}{=}}
+
+\newcommand{\tablab}[1]{\label{tab:#1}}
+\newcommand{\tabref}[1]{Table~\ref{tab:#1}}
+
+\newcommand{\theolab}[1]{\label{theo:#1}}
+\newcommand{\theoref}[1]{\ref{theo:#1}}
+\newcommand{\eqnlab}[1]{\label{eq:#1}}
+\newcommand{\eqnref}[1]{\eqref{eq:#1}}
+\newcommand{\seclab}[1]{\label{sec:#1}}
+\newcommand{\secref}[1]{\ref{sec:#1}}
+\newcommand{\lemlab}[1]{\label{lem:#1}}
+\newcommand{\lemref}[1]{\ref{lem:#1}}
+
+\newcommand{\mb}[1]{\mathbf{#1}}
+\newcommand{\mbb}[1]{\mathbb{#1}}
+\newcommand{\mc}[1]{\mathcal{#1}}
+\newcommand{\nor}[1]{\left\| #1 \right\|}
+\newcommand{\snor}[1]{\left| #1 \right|}
+\newcommand{\LRp}[1]{\left( #1 \right)}
+\newcommand{\LRs}[1]{\left[ #1 \right]}
+\newcommand{\LRa}[1]{\left\langle #1 \right\rangle}
+\newcommand{\LRb}[1]{\left| #1 \right|}
+\newcommand{\LRc}[1]{\left\{ #1 \right\}}
+
+\newcommand{\Grad} {\ensuremath{\nabla}}
+\newcommand{\Div} {\ensuremath{\nabla\cdot}}
+\newcommand{\Nel} {\ensuremath{{N^\text{el}}}}
+\newcommand{\jump}[1] {\ensuremath{\LRs{\![#1]\!}}}
+\newcommand{\avg}[1] {\ensuremath{\LRc{\!\{#1\}\!}}}
+\newcommand{\uh}{\widehat{u}}
+\newcommand{\Bh}{\widehat{B}}
+\newcommand{\fnh}{\widehat{f}_n}
+\renewcommand{\L}{L^2\LRp{\Omega}}
+\newcommand{\pO}{\partial\Omega}
+\newcommand{\Gh}{\Gamma_h}
+\newcommand{\Gm}{\Gamma_{-}}
+\newcommand{\Gp}{\Gamma_{+}}
+\newcommand{\Go}{\Gamma_0}
+\newcommand{\Oh}{\Omega_h}
+
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+
+\newenvironment{definition}[1][Definition]{\begin{trivlist}
+\item[\hskip \labelsep {\bfseries #1}]}{\end{trivlist}}
+\newenvironment{example}[1][Example]{\begin{trivlist}
+\item[\hskip \labelsep {\bfseries #1}]}{\end{trivlist}}
+
+\newcommand{\eval}[2][\right]{\relax
+  \ifx#1\right\relax \left.\fi#2#1\rvert}
+
+\def\etal{{\it et al.~}}
+
+
+\def\arr#1#2#3#4{\left[
+\begin{array}{cc}
+#1 & #2\\
+#3 & #4\\
+\end{array}
+\right]}
+\def\vectwo#1#2{\left[
+\begin{array}{c}
+#1\\
+#2\\
+\end{array}
+\right]}
+\def\vecthree#1#2#3{\left[
+\begin{array}{c}
+#1\\
+#2\\
+#3\\
+\end{array}
+\right]}
+\def\vectfour#1#2#3#4{\left[
+\begin{array}{c}
+#1\\
+#2\\
+#3\\
+#4\\
+\end{array}
+\right]}
+
+\newcommand{\G} {\Gamma}
+\newcommand{\Gin} {\Gamma_{in}}
+\newcommand{\Gout} {\Gamma_{out}}
+
+\newcommand{\note}[1]{{\color{blue}#1}}
+\newcommand{\remark}[1]{\textbf{\color{red}#1}}
+
+\newcommand{\tri}{{\rm tri}}
+\newcommand{\sqr}{{\rm quad}}
+
+\newcommand{\refhex}{\widehat{\mathcal{H}}}
+\newcommand{\reftet}{\widehat{\mathcal{T}}}
+\newcommand{\refwedg}{\widehat{\mathcal{W}}}
+
+\newcommand{\refpyr}{\widehat{\mathcal{P}}}
+\newcommand{\refpyrf}{\widehat{\mathcal{P}}^f}
+\newcommand{\refpyrfq}{\widehat{\mathcal{P}}^{\sqr}}
+\newcommand{\refpyrft}{\widehat{\mathcal{P}}^{\tri}}
+
+
+\newcommand{\hex}{{\mathcal{H}}}
+\newcommand{\tet}{{\mathcal{T}}}
+\newcommand{\wedg}{{\mathcal{W}}}
+
+\newcommand{\pyr}{{\mathcal{P}}}
+\newcommand{\pyrf}{{\mathcal{P}}^f}
+\newcommand{\pyrfq}{{\mathcal{P}}^{\sqr}}
+\newcommand{\pyrft}{{\mathcal{P}}^{\tri}}
+
+\newcommand{\half}{1/2}
+
+\newcolumntype{C}[1]{>{\centering\let\newline\\\arraybackslash\hspace{0pt}}m{#1}}
+
+%% d in integrand
+\newcommand*\diff[1]{\mathop{}\!{\mathrm{d}#1}}
+
+\makeatletter
+\renewcommand\d[1]{\mspace{6mu}\mathrm{d}#1\@ifnextchar\d{\mspace{-3mu}}{}}
+\makeatother
+
+\newcommand{\squareface}{[-1,1]^2}
+
+%\journal{Journal of Computational Physics (JCP)}
+
+\date{}
+\author{Jesse Chan, T. Warburton}
+\title{Response to reviewers: ``A short note on the penalty flux parameter for first order discontinuous Galerkin formulations''}
+
+\begin{document}
+
+\maketitle
+
+\note{We thank both Reviewers 1 and 2 for their feedback.  We describe steps taken to address reviewer comments and suggestions, which are described in the following response.  Revisions in the manuscript are also colored in blue for ease of identification.  We hope these revisions improve the readability of this paper and its suitability for the audience of CAMWA.}
+
+\section{Referee 1}
+
+The authors characterize (theoretically and numerically) the spectral behavior of DG schemes for hyperbolic PDEs with penalty fluxes in terms of conforming and nonconforming parts of the approximation space.  The theoretical work in this paper is a minor modification of reference [5] to hyperbolic problems. The numerical study of the behavior of the spectral behavior appears novel. The paper does not explicitly state its claimed novelty.  The exposition is clear, easy to understand, and if the issues below are addressed, suitable for publication.
+
+\begin{itemize}
+%\item The paper consistently uses the plural form "spectra" where the singular ``spectrum'' would be appropriate. This should be fixed.  
+%\note{We have  this.}
+%\item References 8 and 18 appear to be identical. One copy should be removed.
+%\note{This has been corrected.}
+\item In the reviewer's recollection, the derivation of upwind fluxes involves Rankine-Hugoniot conditions for the construction of the numerical flux/Riemann solver after the hyperbolic system is diagonalized. The author's derivation does not reflect this fact and does not cite any sources. The authors should either cite a source outlining the correctness of the used approach or more completely justify that their derivation of the upwind fluxes is correct.  
+\note{We agree with the reviewer, and have added citations and additional discussion for the statement on the formulation of upwind fluxes in terms of the diagonalization of $\bm{A}_n$. }
+%\item The authors should emphasize that a \emph{joint} diagonalization of $A_n$ is required (p.3 above Sec. 3) which may not be available.
+\item (p.3 above Sec. 3) The comment about the CFL restriction should be removed or justified further.
+\note{We agree, and have added a justification for the CFL restriction.  We have also corrected an error in the scaling of $\tau$.}
+%\item The grammar at the beginning of 2.1 should be checked.  
+\item p.1: The statement $\tau=O(1)$ is difficult to understand without saying what specific dependencies/scalings do *not* exist. ($h,p$?)
+\note{We apologize for the confusion.  We have added an additional statement explaining that $\tau$ does not need to be chosen with respect to discretization parameters, and have replaced $\tau = O(1)$ with the specific case of $\tau = 1$.  We also mention that, while it may be advantageous to scale $\tau$ with problem parameters, taking $\tau = 1$ is a reasonable choice for the problems considered.}
+\item Equation (2) appears to be missing a derivative in the second term.
+\note{We apologize: summation notation was used, but not specified.  This has been remedied in the revision.}
+%\item This reviewer finds the nation $D^{k,-}$ to be a confusing mixture of global and local indexing--a true global indexing scheme would include a face index.  
+\item Section 2.1 seems inconsistent in its use of $V^{-1}$ vs $V^T$.  \note{This has been corrected, and  $V^{-1}$ is now used everywhere.}
+\item p.6: The notation surrounding $W^C$ and $W^{NC}$ is poor and should be checked.  This reviewer was unable to tell what the resulting shape of WC and WNC would be.
+\note{We agree, and have added expanded descriptions of $\bm{W}^C, \bm{W}^{NC}$ to the revised manuscript, including explicit dimensions.  We hope these revisions adequately address these notational problems.}
+\item p.6 top: If $WC, WNC$ genuinely is a matrix (the reviewer was unable to tell), then the RHS of the equation at the top of p.6 should read $(WC, WNC) \Lambda_C$ (i.e. the order is reversed--to scale the columns, the eigenvalues should come second).  
+\note{We thank the reviewer for pointing out this error; we have corrected this in the revised version.}
+\end{itemize}
+
+\section{Referee 2}
+
+The focus of this paper is to analyze and numerically demonstrate how the spectra of a DG discretization for first order linear system depends on a penalty parameter in penalty flux. The topic is interesting, yet there are some important technical details which need to be further clarified or revised.
+
+\begin{itemize}
+\item The reviewer finds the conclusion, both in introduction and in the text, regarding the behavior of the spectra as $\tau->\infty$ contradicts.
+
+ \begin{quotation}
+``The first set of eigenvalues correspond to the eigenvalues of a conforming discretization, while the second set of eigenvalues have real parts approaching $-\infty$ as $\tau-> \infty$ and correspond to damped spurious modes. Numerical experiments verify these results for the advection and acoustic wave equations in one and two dimensions. Numerical experiments also show that, while increasing $\tau$ pushes most eigenvalues further left of the imaginary axis, the real parts of certain eigenvalues converge to zero as $\tau-> \infty$.''
+ \end{quotation}
+
+\begin{enumerate}
+\item are all the spurious modes in the second set, or some are in the first set? In other words, will the numerical spectra of conforming discretization all be non-spurious? In fact, based on Lemma 3.1 on page 6, it seems all in the first set are non-spurious.  
+\note{We apologize for this confusion, and have clarified in the revised manuscript that conforming discretizations contain spurious modes as well.  This illustrates that DG methods with upwind or penalty fluxes address both \textit{non-conforming} and \textit{conforming} spurious modes which are otherwise present both for central fluxes ($\tau = 0$) and conforming discretizations (or equivalently, for large penalty parameters $\tau\rightarrow \infty$). }
+%\item If it is yes for the previous question, that is if Lemma 3.1 is true, then there is contradiction in "while the second set of eigenvalues have real parts approaching $-\infty$ as $\tau-> \infty$" and in "the real parts of certain eigenvalues converge to zero as  $\tau->\infty."$  That is, the conclusion in Lemma 3.1 is flawed.  
+\item page 6: the authors on one hand wrote: ``under normalization of $W^{C}, W^{NC}$'', on the other hand, conclude $W^{NC}\rightarrow 0$ as $\tau->\infty$, the argument contradicts.  
+\note{We apologize for this typo.  The normalization should be applied to $\bm{W}$, such that the component $\bm{W}^{NC}\rightarrow 0$ as $\tau \rightarrow \infty$.  This has been corrected in the revised manuscript.}
+\item page 6: it seems $S$ is only semi-negative. If so, $\lambda_{\min}^{NC}$ can be zero, and the argument right above Lemma 3.1 may not go through. The authors would want to revisit or clarify.
+\note{We agree that if $S$ was constructed with respect to the entire DG space, it would be only negative semi-definite.  However, $\bm{S}$ is constructed by evaluating flux terms only for elements of $V^{NC}$, and is thus negative definite.  We have added a short section clarifying and explaining this claim.}
+\end{enumerate}
+\item The authors mentioned several times ``for problems with continuous coefficients''
+\begin{enumerate}
+\item If the coefficients are discontinuous, how is the numerical flux defined? How is $A_n$ defined at mesh interface? 
+\note{We have restructured the manuscript to include more general $\bm{A}_i$, including $\bm{A}_n$ which are discontinuous across interfaces.  If coefficients are discontinuous, one can replace the penalty flux penalization term $\bm{A}_n^T\bm{A}_n\jump{\bm{U}}$ with $\bm{A}_n^T\jump{\bm{A}_n\bm{U}}$, where
+\[
+\jump{\bm{A}_n\bm{U}} = \bm{A}_n^+\bm{U}^+ - \bm{A}_n^-\bm{U}^-, \qquad \bm{A}_n^{\pm} = \sum_{i=1}^d \bm{n}_i \bm{A}_i^{\pm}.
+\]
+We have added a detailed discussion to the revised manuscript.  }
+\item The authors would want to clarify the precise meaning of ``continuous coefficients'', namely for which models coefficients, the continuity is referred to in the discussions and various claims. (See page 3). Such clarification should be stated initially when ``continuous coefficients'' is first mentioned.  
+\note{We agree, and have added a clarification on page 2.  In the restructured manuscript, we also begin with more general $\bm{A}_i$, and mention when specific assumptions on $\bm{A}_n$ are required.  }
+\end{enumerate}
+\item In the definition and discussion of numerical flux: 
+\begin{enumerate}
+\item If $A_n$ is symmetric, what is the need to use $A_n^T$, which is indeed $A_n$? That is, one can use $A_n^2$, instead of $A_n^TA_n$.  
+\note{We have restructured the manuscript such that we do not begin with the assumption that $\bm{A}_n = \bm{A}_n^T$.  We hope this addresses the reviewer's concerns and makes it more clear that the penalty flux using $\bm{A}_n^T\bm{A}_n$ can be applied to the case when $\bm{A}_n$ is non-symmetric to yield a stabilizing contribution. }
+\item Even though mathematically it is correct for symmetric matrix, when one states about eigenvalue decomposition, it is more fundamental to have $A = V\Lambda V^{-1}$, instead of $V \Lambda V^{T}$. Surely one can have $V^{-1}=V^{T}$ when $A$ is symmetric. The authors should revisit all $V^{T}$ in the text, either replace it by $V^{-1}$, or explicitly stated that $V^{-1}=V^{T} $is true in the current setting.  
+\note{We agree with the reviewers assessment.  To address this, we have removed all mentions of $V^T$ within the text, and have replaced them with $V^{-1}$ instead.}
+\item 7 lines above section 3, there is a typo in the symbol of pseudo-inverse. The authors may also want to include the explicit expression of pseudo-inverse.
+\note{We have revised this to include a citation for the pseudo-inverse.  However, we could not find the typo within the symbol of the pseudo-inverse (we are using the ``dagger'' symbol in \LaTeX).  }
+\item 1 line above section 3: it is too strong to state "CFL restrictions ... will be identical..'' unless the authors have a mathematical proof for this.
+\note{We agree, and have added a justification for the CFL restriction in the revised manuscript.  We have also corrected an error in the scaling of $\tau$.}
+\end{enumerate}
+\item More related to flux
+\begin{enumerate}
+\item In (4), note that $A_n^TA_n$ and $A_n$ might have different null spaces, the authors would want to revisit, whether they want to have $[u]$ belong to the null space of $A_n^TA_n$ or $A_n$.  They also want to check the consistency in discussion, see 5 lines below (4).
+\note{We have added the following clarification to the revised manuscript to explain why the null spaces of $\bm{A}_n^T\bm{A}_n$ and $\bm{A}_n$ are identical: the null space of $\bm{A}_n^T\bm{A}_n$ contains the null space of $\bm{A}_n$.  However, if $\bm{A}_n^T\bm{A}_n\bm{U} = 0$, then $\bm{U}^T\bm{A}_n^T\bm{A}_n\bm{U} = \nor{\bm{A}_n\bm{U}}^2 = 0$ as well, implying that the null space of $\bm{A}_n^T\bm{A}_n$ is also contained within the null space of $\bm{A}_n$. 
+}
+\item page 4: see penalty flux in line 6, and the penalty terms does not seem to be the same as the general definition $(A_n^T A_n)$
+\note{We have clarified this in the revised manuscript using the above discussion.}
+\end{enumerate}
+\item page 5: Explain how come there is no boundary integral in $A_{mn}$, note some $\phi$ is only continuous on normal direction.
+\note{We have clarified in the revised manuscript that flux terms vanish due to the definition of the conforming space.  We have also rearranged the DG formulation to make these properties clearer. }
+\item page 4: ``this implies that $V_u^V$ is the H(div)-conforming Brezzi-Douglas-Marini finite element space''. The authors would want to check the definition of BDM elements, which differ greatly for rectangular or triangular meshes. On rectangular, they are not related to what the authors are using as discrete space.  
+\note{We thank the reviewer for pointing this out, and have specified in the revised manuscript that this equivalence holds only for simplicial elements.}
+\item Title: the meaning of "first order discontinuous Galerkin formulations" is not very clear. The authors can consider to rephrase the title.
+\note{We have rearranged the title to specify the paper is on discontinuous Galerkin formulations for first order hyperbolic systems.}
+\item If in (2) the summation convention is used, state this.
+\note{We apologize: summation notation was used, but not specified.  We have switched to explicit sums in the revised version.}
+%\item 3rd line in section 2.1, switch jump and average
+%\note{These definitions have been rearranged.}
+%\item In definition of $V$ on page 3: state which set $D^k$ belongs to.
+%\note{This has been added.}
+\end{itemize}
+\end{document}

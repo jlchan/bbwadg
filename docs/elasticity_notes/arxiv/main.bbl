@@ -1,0 +1,248 @@
+\begin{thebibliography}{10}
+
+\bibitem{chan2016weight1}
+Jesse Chan, Russell~J Hewett, and T~Warburton.
+\newblock {Weight-adjusted discontinuous Galerkin methods: wave propagation in
+  heterogeneous media}.
+\newblock {\em arXiv preprint arXiv:1608.01944}, 2016.
+
+\bibitem{chan2016weight2}
+Jesse Chan, Russell~J Hewett, and T~Warburton.
+\newblock {Weight-adjusted discontinuous Galerkin methods: curvilinear meshes}.
+\newblock {\em arXiv preprint arXiv:1608.03836}, 2016.
+
+\bibitem{virieux1986p}
+Jean Virieux.
+\newblock {P-SV wave propagation in heterogeneous media: Velocity-stress
+  finite-difference method}.
+\newblock {\em Geophysics}, 51(4):889--901, 1986.
+
+\bibitem{komatitsch1998spectral}
+Dimitri Komatitsch and Jean-Pierre Vilotte.
+\newblock The spectral element method: an efficient tool to simulate the
+  seismic response of {2D and 3D} geological structures.
+\newblock {\em Bulletin of the seismological society of America},
+  88(2):368--392, 1998.
+
+\bibitem{kaser2006arbitrary}
+Martin K{\"a}ser and Michael Dumbser.
+\newblock {An arbitrary high-order discontinuous Galerkin method for elastic
+  waves on unstructured meshes - I. The two-dimensional isotropic case with
+  external source terms}.
+\newblock {\em Geophysical Journal International}, 166(2):855--877, 2006.
+
+\bibitem{dumbser2006arbitrary}
+Michael Dumbser and Martin K{\"a}ser.
+\newblock An arbitrary high-order discontinuous {Galerkin} method for elastic
+  waves on unstructured meshes - {II}. the three-dimensional isotropic case.
+\newblock {\em Geophysical Journal International}, 167(1):319--336, 2006.
+
+\bibitem{de2007arbitrary}
+Josep de~la Puente, Martin K{\"a}ser, Michael Dumbser, and Heiner Igel.
+\newblock {An arbitrary high-order discontinuous Galerkin method for elastic
+  waves on unstructured meshes-IV. Anisotropy}.
+\newblock {\em Geophysical Journal International}, 169(3):1210--1228, 2007.
+
+\bibitem{delcourte2009high}
+Sarah Delcourte, Loula Fezoui, and Nathalie Glinsky-Olivier.
+\newblock {A high-order discontinuous Galerkin method for the seismic wave
+  propagation}.
+\newblock In {\em ESAIM: Proceedings}, volume~27, pages 70--89. EDP Sciences,
+  2009.
+
+\bibitem{delcourte2015analysis}
+Sarah Delcourte and Nathalie Glinsky.
+\newblock {Analysis of a high-order space and time discontinuous Galerkin
+  method for elastodynamic equations. Application to 3D wave propagation}.
+\newblock {\em ESAIM: Mathematical Modelling and Numerical Analysis},
+  49(4):1085--1126, 2015.
+
+\bibitem{ye2016discontinuous}
+Ruichao Ye, Maarten~V de~Hoop, Christopher~L Petrovitch, Laura~J Pyrak-Nolte,
+  and Lucas~C Wilcox.
+\newblock {A discontinuous Galerkin method with a modified penalty flux for the
+  propagation and scattering of acousto-elastic waves}.
+\newblock {\em Geophysical Journal International}, 205(2):1267--1289, 2016.
+
+\bibitem{klockner2009nodal}
+Andreas Kl{\"o}ckner, Tim Warburton, Jeff Bridge, and Jan~S Hesthaven.
+\newblock Nodal discontinuous {Galerkin} methods on graphics processors.
+\newblock {\em Journal of Computational Physics}, 228(21):7863--7882, 2009.
+
+\bibitem{modave2015nodal}
+A~Modave, A~St-Cyr, WA~Mulder, and T~Warburton.
+\newblock {A nodal discontinuous Galerkin method for reverse-time migration on
+  GPU clusters}.
+\newblock {\em Geophysical Journal International}, 203(2):1419--1435, 2015.
+
+\bibitem{modave2016gpu}
+Axel Modave, Amik St-Cyr, and Tim Warburton.
+\newblock {GPU performance analysis of a nodal discontinuous Galerkin method
+  for acoustic and elastic models}.
+\newblock {\em Computers \& Geosciences}, 91:64--76, 2016.
+
+\bibitem{chan2015gpu}
+Jesse Chan, Zheng Wang, Axel Modave, Jean-Francois Remacle, and T~Warburton.
+\newblock {GPU-accelerated discontinuous Galerkin methods on hybrid meshes}.
+\newblock {\em Journal of Computational Physics}, 318:142--168, 2016.
+
+\bibitem{castro2010seismic}
+Crist{\'o}bal~E Castro, Martin K{\"a}ser, and Gilbert~B Brietzke.
+\newblock Seismic waves in heterogeneous material: subcell resolution of the
+  discontinuous {Galerkin} method.
+\newblock {\em Geophysical Journal International}, 182(1):250--264, 2010.
+
+\bibitem{mercerat2015nodal}
+E~Diego Mercerat and Nathalie Glinsky.
+\newblock A nodal high-order discontinuous {Galerkin} method for elastic wave
+  propagation in arbitrary heterogeneous media.
+\newblock {\em Geophysical Journal International}, 201(2):1101--1118, 2015.
+
+\bibitem{bencomo2015discontinuous}
+Mario~Javier Bencomo.
+\newblock {Discontinuous Galerkin and Finite Difference Methods for the
+  Acoustic Equations with Smooth Coefficients}.
+\newblock Master's thesis, Rice University, 2015.
+
+\bibitem{warburton2013low}
+T.~Warburton.
+\newblock A low-storage curvilinear discontinuous {G}alerkin method for wave
+  problems.
+\newblock {\em SIAM Journal on Scientific Computing}, 35(4):A1987--A2012, 2013.
+
+\bibitem{hughes1978classical}
+Thomas~JR Hughes and Jerrold~E Marsden.
+\newblock Classical elastodynamics as a linear symmetric hyperbolic system.
+\newblock {\em Journal of Elasticity}, 8(1):97--110, 1978.
+
+\bibitem{chan2016short}
+Jesse Chan and T~Warburton.
+\newblock {A short note on the penalty flux parameter for first order
+  discontinuous Galerkin formulations}.
+\newblock {\em arXiv preprint arXiv:1611.00102}, 2016.
+
+\bibitem{chan2015bbdg}
+Jesse Chan and T~Warburton.
+\newblock {GPU}-accelerated {Bernstein-Bezier} discontinuous {Galerkin} methods
+  for wave problems.
+\newblock {\em arXiv preprint arXiv:1512.06025}, 2015.
+
+\bibitem{leveque2002finite}
+Randall~J LeVeque.
+\newblock {\em Finite volume methods for hyperbolic problems}, volume~31.
+\newblock Cambridge university press, 2002.
+
+\bibitem{wilcox2010high}
+Lucas~C Wilcox, Georg Stadler, Carsten Burstedde, and Omar Ghattas.
+\newblock A high-order discontinuous {Galerkin} method for wave propagation
+  through coupled elastic--acoustic media.
+\newblock {\em Journal of Computational Physics}, 229(24):9373--9396, 2010.
+
+\bibitem{berenger1994perfectly}
+Jean-Pierre Berenger.
+\newblock A perfectly matched layer for the absorption of electromagnetic
+  waves.
+\newblock {\em Journal of computational physics}, 114(2):185--200, 1994.
+
+\bibitem{hagstrom2004new}
+Thomas Hagstrom and Timothy Warburton.
+\newblock A new auxiliary variable formulation of high-order local radiation
+  boundary conditions: corner compatibility conditions and extensions to
+  first-order systems.
+\newblock {\em Wave motion}, 39(4):327--338, 2004.
+
+\bibitem{modave2016high}
+Axel Modave, Andreas Atle, Jesse Chan, and Tim Warburton.
+\newblock {High-order absorbing boundary conditions with corner/edge
+  compatibility for GPU-accelerated discontinuous Galerkin wave simulations}.
+\newblock {\em arXiv preprint arXiv:1610.05023}, 2016.
+
+\bibitem{etienne2010hp}
+V~Etienne, E~Chaljub, J~Virieux, and N~Glinsky.
+\newblock An hp-adaptive discontinuous {Galerkin} finite-element method for
+  {3-D} elastic wave modelling.
+\newblock {\em Geophysical Journal International}, 183(2):941--962, 2010.
+
+\bibitem{engvall2016isogeometric}
+Luke Engvall and John~A Evans.
+\newblock {Isogeometric triangular Bernstein--B{\'e}zier discretizations:
+  Automatic mesh generation and geometrically exact finite element analysis}.
+\newblock {\em Computer Methods in Applied Mechanics and Engineering},
+  304:378--407, 2016.
+
+\bibitem{michoski2015foundations}
+C.~Michoski, J.~Chan, L.~Engvall, and J.A. Evans.
+\newblock Foundations of the blended isogeometric discontinuous {Galerkin
+  (BIDG)} method.
+\newblock {\em Computer Methods in Applied Mechanics and Engineering}, 305:658
+  -- 681, 2016.
+
+\bibitem{houston2002discontinuous}
+Paul Houston, Christoph Schwab, and Endre S{\"u}li.
+\newblock Discontinuous $hp$-finite element methods for
+  advection-diffusion-reaction problems.
+\newblock {\em SIAM Journal on Numerical Analysis}, 39(6):2133--2163, 2002.
+
+\bibitem{warburton2003constants}
+T~Warburton and Jan~S Hesthaven.
+\newblock On the constants in $hp$-finite element trace inverse inequalities.
+\newblock {\em Computer methods in applied mechanics and engineering},
+  192(25):2765--2773, 2003.
+
+\bibitem{dolejvsi2015discontinuous}
+V{\'\i}t Dolej{\v{s}}{\'\i} and Miloslav Feistauer.
+\newblock {\em {Discontinuous Galerkin Method: Analysis and Applications to
+  Compressible Flow}}, volume~48.
+\newblock Springer, 2015.
+
+\bibitem{xiao2010quadrature}
+H~Xiao and Zydrunas Gimbutas.
+\newblock A numerical algorithm for the construction of efficient quadrature
+  rules in two and higher dimensions.
+\newblock {\em Comput. Math. Appl.}, 59:663--676, 2010.
+
+\bibitem{carpenter1994fourth}
+Mark~H Carpenter and Christopher~A Kennedy.
+\newblock Fourth-order $2n$-storage {R}unge-{K}utta schemes.
+\newblock Technical Report NASA-TM-109112, NAS 1.15:109112, NASA Langley
+  Research Center, 1994.
+
+\bibitem{johnson1986analysis}
+Claes Johnson and Juhani Pitk{\"a}ranta.
+\newblock An analysis of the discontinuous {Galerkin} method for a scalar
+  hyperbolic equation.
+\newblock {\em Mathematics of computation}, 46(173):1--26, 1986.
+
+\bibitem{sjogreen2012fourth}
+Bj{\"o}rn Sj{\"o}green and N~Anders Petersson.
+\newblock A fourth order accurate finite difference scheme for the elastic wave
+  equation in second order formulation.
+\newblock {\em Journal of Scientific Computing}, 52(1):17--48, 2012.
+
+\bibitem{appelo2015energy}
+Daniel Appelo and Thomas Hagstrom.
+\newblock {An energy-based discontinuous Galerkin discretization of the elastic
+  wave equation in second order form}.
+\newblock 2015.
+\newblock Submitted to CMAME.
+
+\bibitem{stoneley1924elastic}
+Robert Stoneley.
+\newblock Elastic waves at the surface of separation of two solids.
+\newblock {\em Proceedings of the Royal Society of London. Series A, Containing
+  Papers of a Mathematical and Physical Character}, 106(738):416--428, 1924.
+
+\bibitem{carcione1988wave}
+Juse~M Carcione, Dan Kosloff, and Ronnie Kosloff.
+\newblock Wave-propagation simulation in an elastic anisotropic (transversely
+  isotropic) solid.
+\newblock {\em The Quarterly Journal of Mechanics and Applied Mathematics},
+  41(3):319--346, 1988.
+
+\bibitem{komatitsch2000simulation}
+Dimitri Komatitsch, Christophe Barnes, and Jeroen Tromp.
+\newblock Simulation of anisotropic wave propagation based upon a spectral
+  element method.
+\newblock {\em Geophysics}, 65(4):1251--1260, 2000.
+
+\end{thebibliography}

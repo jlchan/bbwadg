@@ -1,0 +1,46 @@
+This is BibTeX, Version 0.99d (TeX Live 2016)
+Capacity: max_strings=35307, hash_size=35307, hash_prime=30011
+The top-level auxiliary file: main.aux
+The style file: unsrt.bst
+Database file #1: dgpenalty.bib
+You've used 22 entries,
+            1791 wiz_defined-function locations,
+            584 strings with 7788 characters,
+and the built_in function-call counts, 5067 in all, are:
+= -- 468
+> -- 207
+< -- 2
++ -- 78
+- -- 56
+* -- 380
+:= -- 803
+add.period$ -- 66
+call.type$ -- 22
+change.case$ -- 18
+chr.to.int$ -- 0
+cite$ -- 22
+duplicate$ -- 197
+empty$ -- 505
+format.name$ -- 56
+if$ -- 1101
+int.to.chr$ -- 0
+int.to.str$ -- 22
+missing$ -- 25
+newline$ -- 113
+num.names$ -- 21
+pop$ -- 53
+preamble$ -- 1
+purify$ -- 0
+quote$ -- 0
+skip$ -- 69
+stack$ -- 0
+substring$ -- 441
+swap$ -- 24
+text.length$ -- 2
+text.prefix$ -- 0
+top$ -- 0
+type$ -- 0
+warning$ -- 0
+while$ -- 52
+width$ -- 24
+write$ -- 239
