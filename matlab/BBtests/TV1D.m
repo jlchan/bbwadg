@@ -1,6 +1,6 @@
-function TV = TV1D(u)
+function TV = TV1D(N,u)
 
-Globals1D
+% Globals1D
 
 TV = 0;
 for i = 1:N
