@@ -1,16 +1,25 @@
 % wave
 
-function rho = Wave1D_IGA(NB,Ksub,K1D)
+function [L2err dofs] = Wave1D_IGA(NBin,Ksubin,K1Din,smoothKnotsin)
 
 % Driver script for solving the 1D advection equations
 Globals1D;
 
 if nargin==0
-    N = 5;
-    K1D = 32;
+    NB = 3;
+    Ksub = 16;
+    K1D = 2;
+    smoothKnots = 0;
 else
     
+    NB = NBin;
+    Ksub = Ksubin;
+    K1D = K1Din;
+    smoothKnots = smoothKnotsin;
 end
+N = NB+Ksub-1;
+
+FinalTime = .5;
 
 [Nv, VX, K, EToV] = MeshGen1D(-1,1,K1D);
 
@@ -21,27 +30,58 @@ rp = linspace(-1,1,100);
 Vp = Vandermonde1D(N,rp)/V;
 xp = Vp*x;
 
-% Set initial conditions
-% p = cos(pi/2*x);
-p = exp(-100*x.^2);
+dofs = (N+1)*K1D;
+
+%% make splines
+
+rB = JacobiGL(0,0,N);
+xB = Vandermonde1D(N,rB)/V * x;
+
+[BVDM M Dr R rBq wBq Bq] = bsplineVDM(NB,Ksub,rB,smoothKnots); % VDM for interp, mass, M\S
+
+% [rq wq] = JacobiGQ(0,0,N);
+Vq = Vandermonde1D(N,rBq)/V;
+xq = Vq*x; 
+wJq = diag(wBq)*(Vq*J);
+
+Vq = Bq;
+% [Vq] = bsplineVDM(NB,Ksub,rq,smoothKnots); % VDM for interp, mass, M\S
+% M = Bq'*diag(wq)*Bq; % under-integrate mass matrix
+
+Mf = zeros(N+1,2);
+Mf(1,1) = 1;
+Mf(N+1,2) = 1;
+% keyboard
+LIFT = M\Mf;
+
+[Vp] = bsplineVDM(NB,Ksub,rp,smoothKnots);
+
+Pq = M\(Vq'*diag(wBq));
+
+%% Set initial conditions
+
+k = 15;
+pex = @(x,t) cos(k*pi/2*x).*cos(k*pi*t/2);
+p = Pq*pex(xq,0); 
+% p = exp(-100*x.^2);
 u = zeros(size(x));
 
 %% compute eigs
-
-U = zeros(Np*K,2);
-A = zeros(2*Np*K);
-for i = 1:2*Np*K
-    U(i) = 1;
-    [rhsp rhsu] = WaveRHS1D(reshape(U(:,1),Np,K),reshape(U(:,2),Np,K),0);
-    A(:,i) = [rhsp(:);rhsu(:)];
-    U(i) = 0;   
+if 0
+    U = zeros(Np*K,2);
+    A = zeros(2*Np*K);
+    for i = 1:2*Np*K
+        U(i) = 1;
+        [rhsp rhsu] = WaveRHS1D(reshape(U(:,1),Np,K),reshape(U(:,2),Np,K),0);
+        A(:,i) = [rhsp(:);rhsu(:)];
+        U(i) = 0;
+    end
+    
+    lam = eig(A);
+    rho = max(abs(lam));
+    return
 end
-
-lam = eig(A);
-rho = max(abs(lam));
-return
 %% Solve Problem
-FinalTime = 2;
 
 time = 0;
 
@@ -70,18 +110,20 @@ for tstep=1:Nsteps
     % Increment time
     time = time+dt;
     
-    if 1 && mod(tstep,10)==0
+    if nargin==0 && mod(tstep,10)==0
         clf
         pp = Vp*p;
-        plot(xp,pp,'-');
+        %semilogy(xp,abs(pex(xp,time)-pp),'-');
+         plot(xp,pp,'r-');
 %         hold on;
 %         up = Vp*u;
 %         plot(xp,up,'r-');
-%         axis([-1 1 -1 1])
+        axis([-1 1 -1 1])
         drawnow
     end
 end;
 
+L2err = sqrt(sum(sum(wJq.*(Vq*p - pex(xq,FinalTime)).^2)));
 
 function [rhsp rhsu] = WaveRHS1D(p,u,t)
 
@@ -96,8 +138,8 @@ du = zeros(Nfp*Nfaces,K);
 dp(:) = p(vmapP)-p(vmapM);
 du(:) = u(vmapP)-u(vmapM);
 
-dp(mapB) = 0;
-du(mapB) = -2*u(vmapB);
+dp(mapB) = -2*p(vmapB);
+% du(mapB) = -2*u(vmapB);
 
 tau = 1;
 pflux = .5*(tau*dp - du.*nx);

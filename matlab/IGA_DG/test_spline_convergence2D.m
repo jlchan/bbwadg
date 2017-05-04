@@ -43,8 +43,9 @@ for ii = 1:4
     
     clear L2err ndofs
     sk = 1;
-    for NB = 2:Nmax
-        
+    for NB = 7:Nmax
+%         K1D = 4;
+%         Ksub = 4;
         Ksub = fKsub(NB);
         N = NB+Ksub-1;
         dofs = (N+1)^2*K1D^2;
@@ -58,19 +59,21 @@ for ii = 1:4
         y = y + a*sin(.5*3*pi*x).*cos(pi/2*y);
         %     x = x + a*(1-y).*(1+y).*(1-x).*(1+x);
         %     y = y + a*(1-x).*(1+x).*(1-y).*(1+y);
-        if 0 && NB>7
-            x = reshape(x,N+1,N+1);
-            y = reshape(y,N+1,N+1);
-            rp1D = linspace(-1,1,100)';
-            Vp = Vandermonde1D(N,rp1D)/Vandermonde1D(N,JacobiGL(0,0,N));
-            hold on
-            for i = 1:N+1
-                plot(Vp*x(:,i),Vp*y(:,i),'k--');                
+        if 1 && NB>7
+            for e = 1:K
+                xK = reshape(x(:,e),N+1,N+1);
+                yK = reshape(y(:,e),N+1,N+1);
+                rp1D = linspace(-1,1,100)';
+                Vp = Vandermonde1D(N,rp1D)/Vandermonde1D(N,JacobiGL(0,0,N));
+                hold on
+                for i = 1:N+1
+                    plot(Vp*xK(:,i),Vp*yK(:,i),'k--');
+                end
+                for i = 1:N+1
+                    plot(Vp*xK(i,:)',Vp*yK(i,:)','k--');
+                end
+                plot(xK(:),yK(:),'ko','markersize',8,'MarkerFaceColor',[.49 1 .63]);hold on
             end
-            for i = 1:N+1
-                plot(Vp*x(i,:)',Vp*y(i,:)','k--');                
-            end
-            plot(x(:),y(:),'ko','markersize',8,'MarkerFaceColor',[.49 1 .63]);hold on            
             
             axis off
             axis tight

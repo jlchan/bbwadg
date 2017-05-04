@@ -1,13 +1,13 @@
-function [L2err] = WaveQuad_IGA(NB,Ksub,K1D,dt)
+function [L2err dofs] = WaveQuad_IGA(NB,Ksub,K1D,smoothKnots)
 
 Globals2D;
 if nargin==0
     NB = 4;
     Ksub = 16;
     K1D = 2;
+    smoothKnots = 0;
 end
 
-smoothKnots = 0;
 useQuadrature = 1;
     
 N = NB+Ksub-1;
@@ -218,7 +218,7 @@ for i = 1:10
     lam = Uprev(:)'*U(:) / norm(Uprev(:));
     U = U/norm(U(:));    
 end
-dt = 1/abs(lam)
+dt = .5/abs(lam)
 
 %% initial cond
 

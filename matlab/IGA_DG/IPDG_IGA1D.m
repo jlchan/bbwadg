@@ -1,20 +1,28 @@
-function IPDG_IGA
+function [L2err dofs] = IPDG_IGA(NBin,Ksubin,K1Din,smoothKnotsin)
 
 % Driver script for solving IPDG wave equation
 Globals1D;
 
 % Order of polymomials used for approximation
 global NB Ksub
-NB = 4;
-Ksub = 32;
-K1D = 1;
-smoothKnots = 50;
+if nargin==0
+    NB = 4;
+    Ksub = 8;
+    K1D = 2;
+    smoothKnots = 50;
+else
+    NB=NBin;
+    Ksub = Ksubin;
+    K1D = K1Din;
+    smoothKnots = smoothKnotsin;
+end
+
 
 N = NB+Ksub-1;
 
-FinalTime = 2;
+FinalTime = .5;
 
-dofs = (N+1)*K1D
+dofs = (N+1)*K1D;
 
 [Nv, VX, K, EToV] = MeshGen1D(-1,1,K1D);
 
@@ -46,8 +54,8 @@ xp = Vp*x;
 
 %% set init condition
 
-%uex = @(x,t) cos(pi*x/2);
-uex = @(x,t) exp(-5^2*x.^2);
+uex = @(x,t) cos(3*pi*x/2).*cos(3*pi*t/2);
+% uex = @(x,t) exp(-5^2*x.^2);
 u = uex(x,0);
 
 %% make splines
@@ -77,12 +85,12 @@ if 1
     Pq = M\(Bq'*diag(wBq));
     
     xBq = Vandermonde1D(N,rBq)/V * x;
-    u = Pq*uex(xBq);
+    u = Pq*uex(xBq,0);
     %     u = BVDM\uex(x);
 end
 
 %% check matrix symmetry
-if 1
+if 0
     MM = kron(diag(J(1,:)),M); % global mass matrix
     
     u = zeros(Np,K);
@@ -187,7 +195,13 @@ end
 
 %%
 
-dt = .5 / (Ksub*K1D*(NB+1)); % empirical
+if Ksub<NB
+    CT = (NB+1)^2;
+else
+    CT = (NB+1)*Ksub;
+end
+
+dt = .125 / (CT*K1D); % empirical
 
 v = zeros(Np,K);
 
@@ -220,16 +234,20 @@ while (time<FinalTime)
     time = time+dt;
     tstep = tstep+1; % Increment time
     
-    if (mod(tstep,10)==0) || abs(time-FinalTime)<1e-8
-        clf
-        plot(xp,Vp*u)
-        axis([-1 1 -1 1])
-        title(sprintf('time t = %f',time))
-        
-        drawnow
+    if (nargin==0)
+        if (mod(tstep,10)==0) || abs(time-FinalTime)<1e-8
+            clf
+            plot(xp,Vp*u)
+            axis([-1 1 -1 1])
+            title(sprintf('time t = %f',time))
+            
+            drawnow
+        end
     end
     
 end
+
+L2err = sqrt(sum(sum(wJq.*(Vq*u - uex(xq,FinalTime)).^2)));
 
 % keyboard
 
@@ -245,18 +263,17 @@ du(1) = 2*u(1); du(end) = 2*u(end); % reflection
 % du(1) = u(1); du(end) = u(end); % reflection
 
 % Compute q
-fluxu = nx.*du/2.0;
 ux = rx.*(Dr*u);
-q = ux - LIFT*(Fscale.*fluxu);
+q = ux - LIFT*(Fscale.*nx.*du/2.0);
 dq = zeros(Nfp*Nfaces,K); dq(:) = q(vmapM)-(ux(vmapM)+ux(vmapP))/2.0;
 
 % impose boundary jumps - Neumann BC's
-dq(1) = q(1) - ux(1);
-dq(end) = q(end) - ux(end);
+% dq(1) = q(1) - ux(1);
+% dq(end) = q(end) - ux(end);
 
 % evaluate fluxes
 global NB Ksub
-CT = max(10*(NB+1)*Ksub,(NB+1)^2);
+CT = 25*max((NB+1)*Ksub,(NB+1)^2);
 hmin = 2.0/max(max(rx)); tau = CT / hmin;
 fluxq = nx.*(dq + tau*nx.*du);
 
