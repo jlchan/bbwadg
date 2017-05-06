@@ -1,19 +1,18 @@
 function [L2err dofs] = WaveQuad_IGA(NB,Ksub,K1D,smoothKnots)
 
+
 Globals2D;
 if nargin==0
     NB = 4;
-    Ksub = 16;
+    Ksub = 32;
     K1D = 2;
-    smoothKnots = 0;
+    smoothKnots = 75;
 end
-
-useQuadrature = 1;
-    
+   
 N = NB+Ksub-1;
-dofs = (N+1)^2*K1D^2
+dofs = (N+1)^2*K1D^2;
 
-FinalTime = .3;
+FinalTime = .1;
 
 % Read in Mesh
 [Nv, VX, VY, K, EToV] = QuadMesh2D(K1D);
@@ -32,10 +31,11 @@ StartUpQuad2D;
 
 %%
 global rxJ sxJ ryJ syJ nxq nyq Jq sJq
-global Vq Vfq Vrq Vsq Pq Prq Psq Pfq
+% global Vq Vrq Vsq Pq Prq Psq 
+global Pfq Vfq
 
 % non-affine mappings
-a = .125;
+a = 0*.125;
 x = x + a*cos(.5*3*pi*y).*cos(pi/2*x);
 y = y + a*sin(.5*3*pi*x).*cos(pi/2*y);
 
@@ -51,71 +51,48 @@ y = y + a*sin(.5*3*pi*x).*cos(pi/2*y);
 rp1D = linspace(-1,1,150);
 [rp sp] = meshgrid(rp1D);
 rp = rp(:); sp = sp(:);
-Vp = Vandermonde2DQuad(N,rp,sp)/V;
-xp = Vp*x;
-yp = Vp*y;
-
-[rq1D wq1D] = JacobiGQ(0,0,N+1);
-if (Ksub>1)
-    %[rq1D wq1D] = spline_quadrature(NB);
-    [rgq wgq] = JacobiGQ(0,0,NB+1);
-    h = (2/Ksub);
-    rq1D = (1+repmat(rgq,1,Ksub))/2*h + repmat(linspace(-1,1-h,Ksub),length(rgq),1);    
-    wq1D = repmat(wgq,Ksub,1)*h/2;    
-    rq1D = rq1D(:); wq1D = wq1D(:);
+% Vp = Vandermonde2DQuad(N,rp,sp)/V;
+Vp1D = Vandermonde1D(N,rp1D)/Vandermonde1D(N,JacobiGL(0,0,N));
+for e = 1:K
+    xp(:,e) = reshape(Vp1D*reshape(x(:,e),N+1,N+1)*Vp1D',length(rp),1);
+    yp(:,e) = reshape(Vp1D*reshape(y(:,e),N+1,N+1)*Vp1D',length(rp),1);
 end
 
 [r1D] = JacobiGL(0,0,N);
-if Ksub > 1
-    [~, ~, ~, ~, ~, ~, ~, ~, VX] = bsplineVDM(NB,Ksub,r1D,smoothKnots);
-%     VX = linspace(-1,1,Ksub+1);
-    t = [VX(1)*ones(1,NB) VX VX(end)*ones(1,NB)]; % open knot vec
-    for i = 1:N+1
-        r1D(i) = mean(t((i+1):(i+NB))); % greville
-    end
-end
+[~, ~, ~, ~, rq1D, wq1D] = bsplineVDM(NB,Ksub,r1D,smoothKnots); % VDM for interp, mass, M\S
 
 
-% switch to new nodal points (assumes boundary points still!)
-[r s] = meshgrid(r1D); r = r(:); s = s(:);
-Vnodal1D = Vandermonde1D(N,r1D)/Vandermonde1D(N,JacobiGL(0,0,N));
-Vnodal = kron(Vnodal1D,Vnodal1D);
-Vfnodal = blkdiag(Vnodal1D,Vnodal1D,Vnodal1D,Vnodal1D);
-x = Vnodal*x;
-y = Vnodal*y;
-J = Vnodal*J;
-rx = Vnodal*rx;
-ry = Vnodal*ry;
-sx = Vnodal*sx;
-sy = Vnodal*sy;
-nx = Vfnodal * nx;
-ny = Vfnodal * ny;
-sJ = Vfnodal * sJ;
 
-
+global Vq1D Vrq1D Pq1D Prq1D 
 [rq sq] = meshgrid(rq1D); rq = rq(:); sq = sq(:);
 [wrq wsq] = meshgrid(wq1D); wq = wrq(:).*wsq(:);
 V1D = Vandermonde1D(N,r1D);
 Vq1D = Vandermonde1D(N,rq1D)/V1D;
-Vq = kron(Vq1D,Vq1D);
-xq = Vq*x; 
-yq = Vq*y;
-wJq = diag(wq)*(Vq*J);
-if useQuadrature
-    Vfq = blkdiag(Vq1D,Vq1D,Vq1D,Vq1D);
-    rxJ = Vq*(rx.*J); sxJ = Vq*(sx.*J);
-    ryJ = Vq*(ry.*J); syJ = Vq*(sy.*J);
-    Jq  = Vq*J;
-    nxq = Vfq*nx; nyq = Vfq*ny;
-    sJq = Vfq*sJ;    
 
-    % vv = J(:,1);
-    % color_line3(x(:,1),y(:,1),vv,vv,'.');
-    % hold on
-    % vv = Jq(:,1);
-    % color_line3(xq(:,1),yq(:,1),vv,vv,'o');
-    % return
+Nq = length(rq1D);
+rxj = (rx.*J); sxj = (sx.*J);
+ryj = (ry.*J); syj = (sy.*J);
+
+xq = zeros(Nq^2,K);
+yq = zeros(Nq^2,K);
+Jq = zeros(Nq^2,K);
+rxJ = zeros(Nq^2,K); sxJ = zeros(Nq^2,K);
+ryJ = zeros(Nq^2,K); syJ = zeros(Nq^2,K);
+for e = 1:K
+    xq(:,e) = reshape(Vq1D*reshape(x(:,e),N+1,N+1)*Vq1D',Nq^2,1);
+    yq(:,e) = reshape(Vq1D*reshape(y(:,e),N+1,N+1)*Vq1D',Nq^2,1);
+    Jq(:,e) = reshape(Vq1D*reshape(J(:,e),N+1,N+1)*Vq1D',Nq^2,1);
+    rxJ(:,e) = reshape(Vq1D*reshape(rxj(:,e),N+1,N+1)*Vq1D',Nq^2,1);
+    sxJ(:,e) = reshape(Vq1D*reshape(sxj(:,e),N+1,N+1)*Vq1D',Nq^2,1);
+    ryJ(:,e) = reshape(Vq1D*reshape(ryj(:,e),N+1,N+1)*Vq1D',Nq^2,1);
+    syJ(:,e) = reshape(Vq1D*reshape(syj(:,e),N+1,N+1)*Vq1D',Nq^2,1);    
 end
+wJq = spdiag(wq)*Jq;
+
+Vfq = sparse(blkdiag(Vq1D,Vq1D,Vq1D,Vq1D));
+nxq = Vfq*nx; nyq = Vfq*ny;
+sJq = Vfq*sJ;
+
 
 if Ksub==1
     V1D = Vandermonde1D(N,r1D);
@@ -125,56 +102,33 @@ if Ksub==1
     M1D = Vq1D'*diag(wq1D)*Vq1D;
     invM1D = V1D*V1D';
 else
-    [BVDM M1D D1D] = bsplineVDM(NB,Ksub,r1D,smoothKnots); % VDM for interp, mass, M\S    
+    [BVDM M1D D1D R, ~, ~, Vq1D Vrq1D] = bsplineVDM(NB,Ksub,r1D,smoothKnots); % VDM for interp, mass, M\S    
     Vp1D = bsplineVDM(NB,Ksub,rp1D,smoothKnots);
-    Vq1D = bsplineVDM(NB,Ksub,rq1D,smoothKnots);
+    
     invM1D = inv(M1D);
+    Pq1D = invM1D*Vq1D'*diag(wq1D);
+    Prq1D = invM1D*Vrq1D'*diag(wq1D);    
+
 end
-Vp = kron(Vp1D,Vp1D);
 
-Dr = kron(eye(N+1),D1D);
-Ds = kron(D1D,eye(N+1));
-
-invM = kron(invM1D,invM1D);
 Mf = zeros(N+1,4*(N+1));
 for f = 1:4
     Mf(Fmask(:,f),(1:N+1) + (f-1)*(N+1)) = M1D;
 end
-LIFT = invM * Mf;
-LIFT(abs(LIFT)<1e-8) = 0; 
-% spy(LIFT);return
-
-global Vq Vfq Vrq Vsq Pq Prq Psq Pfq
-
-Vq = kron(Vq1D,Vq1D);
-
-if useQuadrature
-    Vfq = blkdiag(Vq1D,Vq1D,Vq1D,Vq1D);
-    Vrq1D = Vq1D*D1D;
-    Vrq = kron(Vq1D,Vrq1D);
-    Vsq = kron(Vrq1D,Vq1D);
-    
-    Pq = invM*Vq'*diag(wq);
-    Prq = invM*Vrq'*diag(wq);
-    Psq = invM*Vsq'*diag(wq);    
-    
-    % project onto face space then apply usual lift    
-    Pfq = LIFT*kron(eye(Nfaces),invM1D)*Vfq'*diag(repmat(wq1D,Nfaces,1));
-   
-else
-    rxJ = (rx.*J);
-    sxJ = (sx.*J);
-    ryJ = (ry.*J);
-    syJ = (sy.*J);
-    nxq = (nx.*sJ);
-    nyq = (ny.*sJ);
+for i = 1:size(LIFT,2)
+    LIFT(:,i) = reshape(invM1D * reshape(Mf(:,i),N+1,N+1)*invM1D',(N+1)^2,1);
 end
+LIFT(abs(LIFT)<1e-8) = 0; 
+
+
+% project onto face space then apply usual lift
+Vfq = blkdiag(Vq1D,Vq1D,Vq1D,Vq1D);
+Pfq = LIFT*kron(eye(Nfaces),invM1D)*Vfq'*diag(repmat(wq1D,Nfaces,1));
 
 % keyboard
 
 %% check eigs
 
-3*Np*K
 if 0 && nargin==0 && 3*Np*K < 3000
     U = zeros(Np*K,3);
     A = zeros(3*Np*K);
@@ -183,11 +137,7 @@ if 0 && nargin==0 && 3*Np*K < 3000
         p = reshape(U(:,1),Np,K);
         u = reshape(U(:,2),Np,K);
         v = reshape(U(:,3),Np,K);
-        if useQuadrature
-            [rhsp, rhsu, rhsv] = acousticsRHS2Dq(p,u,v);
-        else
-            [rhsp, rhsu, rhsv] = acousticsRHS2D(p,u,v);
-        end
+        [rhsp, rhsu, rhsv] = acousticsRHS2Dq(p,u,v);
         A(:,i) = [rhsp(:);rhsu(:);rhsv(:)];
         U(i) = 0;
         if (mod(i,ceil(3*Np*K/10))==0)
@@ -206,11 +156,7 @@ end
 U = randn((N+1)^2*K,3);
 for i = 1:10
     Uprev = U;
-    if useQuadrature
-        [rhsp, rhsu, rhsv] = acousticsRHS2Dq(reshape(U(:,1),Np,K),reshape(U(:,2),Np,K),reshape(U(:,3),Np,K));
-    else
-        [rhsp, rhsu, rhsv] = acousticsRHS2D(reshape(U(:,1),Np,K),reshape(U(:,2),Np,K),reshape(U(:,3),Np,K));
-    end
+    [rhsp, rhsu, rhsv] = acousticsRHS2Dq(reshape(U(:,1),Np,K),reshape(U(:,2),Np,K),reshape(U(:,3),Np,K));
     U(:,1) = rhsp(:);
     U(:,2) = rhsu(:);
     U(:,3) = rhsv(:);
@@ -218,7 +164,7 @@ for i = 1:10
     lam = Uprev(:)'*U(:) / norm(Uprev(:));
     U = U/norm(U(:));    
 end
-dt = .5/abs(lam)
+dt = .5/abs(lam);
 
 %% initial cond
 
@@ -227,18 +173,26 @@ dt = .5/abs(lam)
 k = 3;
 pex = @(x,y,t) cos(k*pi*x/2).*cos(k*pi*y/2).*cos(sqrt(2)*.5*k*pi*t);
 
-% p = Pq*pex(xq,yq,0);
 for e = 1:K
-    p(:,e) = (Vq'*diag(wq.*Jq(:,e))*Vq)\(Vq'* (wq.*Jq(:,e).*pex(xq(:,e),yq(:,e),0)));
+    p(:,e) = reshape(Pq1D*reshape(pex(xq(:,e),yq(:,e),0),Nq,Nq)*Pq1D',(N+1)^2,1);
 end
 
 % p = VDM\pex(x,y,0);
 u = zeros(Np, K); 
 v = zeros(Np, K);
 
-err = wJq.*(Vq*p - pex(xq,yq,0)).^2;
-init_cond_err = sqrt(sum(err(:)))
+pq = zeros(Nq^2,K);
+for e = 1:K
+    pK = Vq1D*reshape(p(:,e),N+1,N+1)*Vq1D';
+    pq(:,e) = pK(:);
+end
+if nargin==0
+    err = wJq.*(pq - pex(xq,yq,0)).^2;
+    init_cond_err = sqrt(sum(err(:)))
+end
+
 % return
+% keyboard
 %%
 
 time = 0;
@@ -254,11 +208,8 @@ for tstep = 1:Nsteps
     for INTRK = 1:5
         
         timelocal = tstep*dt + rk4c(INTRK)*dt;
-        if useQuadrature
-            [rhsp, rhsu, rhsv] = acousticsRHS2Dq(p,u,v);
-        else
-            [rhsp, rhsu, rhsv] = acousticsRHS2D(p,u,v);
-        end        
+        [rhsp, rhsu, rhsv] = acousticsRHS2Dq(p,u,v);
+        
         % initiate and increment Runge-Kutta residuals
         resp = rk4a(INTRK)*resp + dt*rhsp;
         resu = rk4a(INTRK)*resu + dt*rhsu;
@@ -273,7 +224,10 @@ for tstep = 1:Nsteps
     
     if 1 && nargin==0 && (mod(tstep,5)==0 || tstep==Nsteps)
         clf
-        vv = Vp*p;
+        vv = zeros(length(rp),K);
+        for e = 1:K
+            vv(:,e) = reshape(Vp1D*reshape(p(:,e),N+1,N+1)*Vp1D',length(rp),1);
+        end
         color_line3(xp,yp,vv,vv,'.');
         axis equal
         axis tight
@@ -282,13 +236,17 @@ for tstep = 1:Nsteps
         drawnow
     end
         
-    if mod(tstep,25)==0
+    if nargin==0 && mod(tstep,25)==0
         disp(sprintf('on tstep %d out of %d\n',tstep,Nsteps))
     end
 end
 
-
-err = wJq.*(Vq*p - pex(xq,yq,FinalTime)).^2;
+pq = zeros(Nq^2,K);
+for e = 1:K
+    pK = Vq1D*reshape(p(:,e),N+1,N+1)*Vq1D';
+    pq(:,e) = pK(:);
+end
+err = wJq.*(pq - pex(xq,yq,FinalTime)).^2;
 L2err = sqrt(sum(err(:)));
 
 
@@ -297,7 +255,9 @@ function [rhsp, rhsu, rhsv] = acousticsRHS2Dq(p,u,v)
 Globals2D;
 
 global rxJ sxJ ryJ syJ nxq nyq Jq sJq
-global Vq Vfq Vrq Vsq Pq Prq Psq Pfq
+% global Vq Vrq Vsq Pq Prq Psq 
+global Vfq Pfq
+global Vq1D Vrq1D Pq1D Prq1D 
 
 % Define field differences at faces
 dp = zeros(Nfp*Nfaces,K); dp(:) = p(vmapP)-p(vmapM);
@@ -328,57 +288,57 @@ fluxp =  tau*dp - ndotUavg;
 fluxu =  (tau*ndotdU - dp).*nxq;
 fluxv =  (tau*ndotdU - dp).*nyq;
 
-pr = Vrq*p; ps = Vsq*p;
-dpdx = rxJ.*pr + sxJ.*ps;
-dpdy = ryJ.*pr + syJ.*ps;
-divU = -(Prq*(rxJ.*(Vq*u) + ryJ.*(Vq*v)) + Psq*(sxJ.*(Vq*u) + syJ.*(Vq*v)));
+% pr = Vrq*p;
+% ps = Vsq*p;
+Nq = size(Vrq1D,1);
+pr = zeros(Nq^2,K); ps = zeros(Nq^2,K);
+uq = zeros(Nq^2,K); vq = zeros(Nq^2,K);
+for e = 1:K        
+    prK = Vrq1D*reshape(p(:,e),N+1,N+1)*Vq1D';    
+    psK = Vq1D*reshape(p(:,e),N+1,N+1)*Vrq1D';    
+    
+    uqK = Vq1D*reshape(u(:,e),N+1,N+1)*Vq1D';    
+    vqK = Vq1D*reshape(v(:,e),N+1,N+1)*Vq1D';    
+    
+    uq(:,e) = uqK(:);
+    vq(:,e) = vqK(:);
+    pr(:,e) = prK(:);
+    ps(:,e) = psK(:);
+end
+px = rxJ.*pr + sxJ.*ps;
+py = ryJ.*pr + syJ.*ps;
+
+% dpdx = Pq*(px);
+% dpdy = Pq*(py);
+Ur = rxJ.*uq + ryJ.*vq;
+Us = sxJ.*uq + syJ.*vq;
+% divU = -(Prq*(Ur) + Psq*(Us));
+for e = 1:K
+    pxK = Pq1D*reshape(px(:,e),Nq,Nq)*Pq1D';
+    pyK = Pq1D*reshape(py(:,e),Nq,Nq)*Pq1D';
+    divUK = Prq1D*reshape(Ur(:,e),Nq,Nq)*Pq1D' + Pq1D*reshape(Us(:,e),Nq,Nq)*Prq1D';
+    dpdx(:,e) = pxK(:);
+    dpdy(:,e) = pyK(:);
+    divU(:,e) = -divUK(:);
+end
 
 % compute right hand sides of the PDE's
 rhsp =  (-divU) + Pfq*(sJq.*fluxp)/2.0;
-rhsu =  Pq*(-dpdx) + Pfq*(sJq.*fluxu)/2.0;
-rhsv =  Pq*(-dpdy) + Pfq*(sJq.*fluxv)/2.0;
+rhsu =  (-dpdx) + Pfq*(sJq.*fluxu)/2.0;
+rhsv =  (-dpdy) + Pfq*(sJq.*fluxv)/2.0;
 
-rhsp = Pq*((Vq*rhsp)./Jq);
-rhsu = Pq*((Vq*rhsu)./Jq);
-rhsv = Pq*((Vq*rhsv)./Jq);
+for e = 1:K
+    rp = Vq1D*reshape(rhsp(:,e),N+1,N+1)*Vq1D';
+    ru = Vq1D*reshape(rhsu(:,e),N+1,N+1)*Vq1D';
+    rv = Vq1D*reshape(rhsv(:,e),N+1,N+1)*Vq1D';
+    JqK = reshape(Jq(:,e),Nq,Nq);
+    
+    rp = Pq1D*(rp./JqK)*Pq1D';
+    ru = Pq1D*(ru./JqK)*Pq1D';
+    rv = Pq1D*(rv./JqK)*Pq1D';
+    rhsp(:,e) = rp(:);
+    rhsu(:,e) = ru(:);
+    rhsv(:,e) = rv(:);
+end
 
 
-function [rhsp, rhsu, rhsv] = acousticsRHS2D(p,u,v)
-
-Globals2D;
-
-global rxJ sxJ ryJ syJ nxq nyq J 
-global D1D 
-
-% Define field differences at faces
-dp = zeros(Nfp*Nfaces,K); dp(:) = p(vmapP)-p(vmapM);
-du = zeros(Nfp*Nfaces,K); du(:) = u(vmapP)-u(vmapM);
-dv = zeros(Nfp*Nfaces,K); dv(:) = v(vmapP)-v(vmapM);
-
-% Impose reflective boundary conditions (p+ = -p-)
-ndotdU = nx.*du + ny.*dv;
-ndotdU(mapB) = 0;
-dp(mapB) = -2*p(vmapB);
-
-tau = 1;
-fluxp =  tau*dp - ndotdU;
-fluxu =  (tau*ndotdU - dp).*nx;
-fluxv =  (tau*ndotdU - dp).*ny;
-
-pr = Dr*p; ps = Ds*p;
-dpdx = rxJ.*pr + sxJ.*ps;
-dpdy = ryJ.*pr + syJ.*ps;
-dudx = rxJ.*(Dr*u) + sxJ.*(Ds*u);
-dvdy = ryJ.*(Dr*v) + syJ.*(Ds*v);
-divU = dudx + dvdy;
-
-% compute right hand sides of the PDE's
-rhsp =  -divU + LIFT*(sJ.*fluxp)/2.0;
-rhsu =  -dpdx + LIFT*(sJ.*fluxu)/2.0;
-rhsv =  -dpdy + LIFT*(sJ.*fluxv)/2.0;
-
-rhsp = rhsp./J;
-rhsu = rhsu./J;
-rhsv = rhsv./J;
-
-return;

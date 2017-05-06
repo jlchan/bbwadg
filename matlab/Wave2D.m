@@ -8,21 +8,13 @@ K1D = 16;
 c_flag = 0;
 FinalTime = .5;
 cfun = @(x,y) ones(size(x));
-%     cfun = @(x,y) 1 + .5*sin(pi*x).*sin(pi*y); % smooth velocity
+% cfun = @(x,y) 1 + .5*sin(pi*x).*sin(pi*y); % smooth velocity
 % cfun = @(x,y) (1 + .5*sin(2*pi*x).*sin(2*pi*y) + (y > 0)); % piecewise smooth velocity
 
-% filename = 'Grid/Other/block2.neu';
-% filename = 'Grid/Maxwell2D/Maxwell05.neu';
-% [Nv, VX, VY, K, EToV] = MeshReaderGambit2D(filename);
 [Nv, VX, VY, K, EToV] = unif_tri_mesh(K1D);
-% VX = (VX + 1)/2;
-% VY = (VY + 1)/2;
 StartUp2D;
 
-% BuildPeriodicMaps2D(1,1);
-
-% PlotMesh2D; return
-
+% plotting nodes
 [rp sp] = EquiNodes2D(50); [rp sp] = xytors(rp,sp);
 Vp = Vandermonde2D(N,rp,sp)/V;
 xp = Vp*x; yp = Vp*y;

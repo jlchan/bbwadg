@@ -1,11 +1,11 @@
 clc
 clear
-smoothKnots = 75;
+smoothKnots = 0;
 for NB = 2:5;    
     e0 = []; 
     ndofs = [];
     for K1D = [2 4 8]
-        Kvec = 2.^(2:7);
+        Kvec = 2.^(2:6);
         Kvec = Kvec(Kvec*K1D < 2^7);
         clear L2err dofs
         sk = 1;
@@ -48,21 +48,20 @@ xlabel('Number of degrees of freedom','fontsize',14)
 
 %% 2D
 
-clc
+% clc
 clear
-smoothKnots = 0;
-for NB = 2:5;    
+smoothKnots = 25;
+for NB = 5;2:5;    
     e0 = []; 
     ndofs = [];
     for K1D = [2 4 8]
-        Kvec = 2.^(1:4);
+        Kvec = 2.^(1:6);
         Kvec = Kvec(Kvec*K1D < 2^7);
         clear L2err dofs
         sk = 1;
         for Ksub = Kvec
-            [L2e nndofs] = Wave2D_IGA(NB,Ksub,K1D,smoothKnots);
-%             [L2e nndofs] = IPDG_IGA1D(NB,Ksub,K1D,smoothKnots);
-%             [L2e nndofs] = Wave1D_IGA(NB,Ksub,K1D,smoothKnots);
+%             [L2e nndofs] = Wave2D_IGA(NB,Ksub,K1D,smoothKnots);
+            [L2e nndofs] = Wave2D_IPDG_IGA(NB,Ksub,K1D,smoothKnots);
             L2err(sk) = L2e;
             dofs(sk) = nndofs;
             sk = sk + 1;

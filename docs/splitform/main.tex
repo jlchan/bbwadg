@@ -6,7 +6,13 @@
 %\documentclass{siamart0216}
 
 \usepackage{fullpage}
-\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{amsmath,amssymb,amsfonts,amsthm}
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}[section]
+\newtheorem*{remark}{Remark}
+%\usepackage{thmtools}
+%\declaretheorem[style=definition,qed=$\blacksquare$,numberwithin=chapter]{definition}
+
 \usepackage[titletoc,toc,title]{appendix}
 
 \usepackage{array} 
@@ -289,7 +295,6 @@ legend style={font=\small}
 
 
 \newcommand{\note}[1]{{\color{blue}{#1}}}
-\newcommand{\remark}[1]{\textbf{\color{red}#1}}
 
 
 \newcommand{\LinfDk}{L^{\infty}\LRp{D^k}}
@@ -310,17 +315,75 @@ legend style={font=\small}
 
 \date{}
 \author{Jesse Chan}
-\title{Split form DG methods}
+\title{Energy stable discontinuous Galerkin formulations and discrete differential operators}
 
 \begin{document}
 
 \maketitle
-%\tableofcontents
+
+\begin{abstract}
+We show that, for non-linear hyperbolic conservation laws which admit a skew-symmetric splitting, energy stable discontinuous Galerkin (DG) methods can be constructed in a straightforward manner based on discrete DG gradient and divergence operators.  In particular, we show that these formulations remain energy stable for both curvilinear geometries and inexact quadrature.  Examples of energy stable formulations are given for variable advection, Burgers' equation, and a Burgers'-like system, and it is shown that the construction of DG methods based on discrete differential operators recover known entropy-conservative fluxes.  
+\end{abstract}
+
+\section{Introduction}
+
+\cite{feng2016discontinuous}
+
+Lifting operators  and discrete gradients \cite{bassi1997high, di2011mathematical}
+
+\section{Discrete differential operators}
+
+We assume that the domain $\Omega$ is decomposed into non-overlapping elements $D^k$.  We define the mesh $\Omega_h = \cup D^k$ and the corresponding global approximation space $V_h(\Omega_h) = \bigoplus V_h\LRp{D^k}$, where $V_h\LRp{D^k}$ is the approximation space over a single patch.  Furthermore, we introduce the jump and average of discontinuous functions across element interfaces.  Let $D^{k,+}$ denote the neighboring element of across a face $f$ of $D^k$, and let $u^+,u^-$ denote the values of $u$ on $D^{k,+}$ and $D^k$, respectively.  The jump of $u$ across $f$ is then defined as
+\[
+\jump{u} = u^+ - u^-, \qquad \avg{u} = \frac{u^+ + u^-}{2}.
+\]
+The jump and average of vector fields are defined component-wise using the jumps and averages of components.  
+
+\subsection{Discrete inner products}
+
+In order to define discrete differential operators, we first introduce the $L^2$ inner product on $V_h\LRp{\Oh}$
+\[
+\LRp{u,v}_{\Omega} = \sum_{D^k} \int_{D^k} uv \diff{x} = \sum_{D^k} \int_{\widehat{D}} uv J \diff{\widehat{x}}.  
+\]
+In practice, these integrals are computed using quadrature, such that 
+\[
+\int_{\widehat{D}}uv = \sum_{i=1}^{N_q} u(\bm{x}_i)v(\bm{x}_i) w_i,
+\]
+where $N_q$ is the number of quadrature points.  The only assumptions we make upon this quadrature is that it is sufficiently accurate such that 
+\begin{enumerate}
+\item The quadrature induces an equivalent inner product over the reference element $\widehat{D}$
+\item Integration by parts holds (with respect to the reference coordinates $\widehat{x}$).
+\end{enumerate}
+
+We also introduce the $L^2$ projection $\Pi_N: L^2\LRp{\Omega}\rightarrow P^N$ such that 
+\[
+\LRp{\Pi_N u,v}_{\Omega} = \LRp{u,v}_{\Omega}.
+\]
+
+\subsection{Discrete derivatives}
+We introduce two discrete DG derivatives in this section.  The first is the implicit definition used in \cite{di2011mathematical}
+
+\begin{definition}
+The discontinuous Galerkin differentiation operator ${D}^i: L^2\LRp{\Omega}\rightarrow V_h$ is defined implicitly as follows:
+\[
+\LRp{{D}^i u,v}_{\Oh} = \sum_{D^k} \LRp{\LRp{-u,\pd{v}{\bm{x}_i}}_{\LK} + \LRa{\avg{u},v\bm{n}_i}_{\LdK}}.
+\]
+\end{definition}
+
+We note that, for $u,v \in V_h$, integration by parts yields an equivalent definition of $D^i$ found in \cite{hesthaven2004high,Warburton20063205}
+\[
+\LRp{{D}^i u,v}_{\Oh} = \sum_{D^k} \LRp{\LRp{\pd{u}{\bm{x}_i},v}_{\LK} + \frac{1}{2}\LRa{\jump{u},v\bm{n}_i}_{\LdK}}.
+\]
+However, for $u \not\in V_h$, these two definitions are not equivalent.  This motivates the definition of a \textit{discrete} DG differentiation operator:
+\begin{definition}
+The discrete discontinuous Galerkin differentiation operator ${D}^i_h: L^2\LRp{\Omega} \rightarrow V_h$ is defined as $D^i_h = D^i \Pi_N$.
+\end{definition}
+
+The main property of 
 
 
 \section{Notes}
-
-Integration by parts gives
+Begin with the gradient.  Multiplication by $\bm{v}$ and integration by parts gives
 \[
 \sum_{D^k} \LRp{\Grad u, \bm{v}}_{\LK} = \sum_{D^k} \LRp{-u, \Grad \cdot \bm{v}}_{\LK} + \LRa{u,\bm{v}\cdot\bm{n}}_{\LdK}.
 \]
@@ -342,7 +405,7 @@ and
 \[
 \Grad_h \cdot u = \Grad\cdot u + \frac{1}{2}L\LRp{\jump{\bm{u}}\cdot\bm{n}}
 \]
-and it can be shown that, for a periodic mesh,
+and it can be shown that 
 \[
 \LRp{\Grad_h u, \bm{v}} = \LRp{-u, \Grad_h \cdot \bm{v}}.
 \]
@@ -502,7 +565,7 @@ It's currently unclear how to extend the symmetric two-point flux approximation 
 %\]
 
 \bibliographystyle{unsrt}
-\bibliography{dgpenalty}
+\bibliography{dg}
 
 
 \end{document}

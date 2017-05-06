@@ -225,7 +225,7 @@ The focus of this paper is to analyze and numerically demonstrate how the spectr
 
 \begin{enumerate}
 \item are all the spurious modes in the second set, or some are in the first set? In other words, will the numerical spectra of conforming discretization all be non-spurious? In fact, based on Lemma 3.1 on page 6, it seems all in the first set are non-spurious.  
-\note{We apologize for this confusion, and have clarified in the revised manuscript that conforming discretizations contain spurious modes as well.  This illustrates that DG methods with upwind or penalty fluxes address both \textit{non-conforming} and \textit{conforming} spurious modes which are otherwise present both for central fluxes ($\tau = 0$) and conforming discretizations (or equivalently, for large penalty parameters $\tau\rightarrow \infty$). }
+\note{We apologize for this confusion, and have clarified in the revised manuscript that conforming discretizations contain spurious modes as well.  This illustrates that DG methods with upwind or penalty fluxes address both \textit{non-conforming} and \textit{conforming} spurious modes which are otherwise present both for central fluxes ($\tau = 0$) and conforming discretizations (or equivalently, for large penalty parameters $\tau\rightarrow \infty$).  We have also added citations \cite{boffi2000problem,ainsworth2014dispersive}, which give a more in-depth description and analysis of spurious modes present for conforming discretizations.  }
 %\item If it is yes for the previous question, that is if Lemma 3.1 is true, then there is contradiction in "while the second set of eigenvalues have real parts approaching $-\infty$ as $\tau-> \infty$" and in "the real parts of certain eigenvalues converge to zero as  $\tau->\infty."$  That is, the conclusion in Lemma 3.1 is flawed.  
 \item page 6: the authors on one hand wrote: ``under normalization of $W^{C}, W^{NC}$'', on the other hand, conclude $W^{NC}\rightarrow 0$ as $\tau->\infty$, the argument contradicts.  
 \note{We apologize for this typo.  The normalization should be applied to $\bm{W}$, such that the component $\bm{W}^{NC}\rightarrow 0$ as $\tau \rightarrow \infty$.  This has been corrected in the revised manuscript.}
@@ -267,7 +267,7 @@ We have added a detailed discussion to the revised manuscript.  }
 \item page 4: ``this implies that $V_u^V$ is the H(div)-conforming Brezzi-Douglas-Marini finite element space''. The authors would want to check the definition of BDM elements, which differ greatly for rectangular or triangular meshes. On rectangular, they are not related to what the authors are using as discrete space.  
 \note{We thank the reviewer for pointing this out, and have specified in the revised manuscript that this equivalence holds only for simplicial elements.}
 \item Title: the meaning of "first order discontinuous Galerkin formulations" is not very clear. The authors can consider to rephrase the title.
-\note{We have rearranged the title to specify the paper is on discontinuous Galerkin formulations for first order hyperbolic systems.}
+\note{We have rearranged the title to specify the paper is on the penalization stabilization mechanism in upwinded discontinuous Galerkin formulations for first order hyperbolic systems.}
 \item If in (2) the summation convention is used, state this.
 \note{We apologize: summation notation was used, but not specified.  We have switched to explicit sums in the revised version.}
 %\item 3rd line in section 2.1, switch jump and average
@@ -275,4 +275,8 @@ We have added a detailed discussion to the revised manuscript.  }
 %\item In definition of $V$ on page 3: state which set $D^k$ belongs to.
 %\note{This has been added.}
 \end{itemize}
+
+\bibliographystyle{unsrt}
+\bibliography{dgpenalty}
+
 \end{document}

@@ -217,7 +217,7 @@ legend style={font=\small}
 
 %\maketitle
 \begin{frontmatter}
-\title{A short note on the penalty flux parameter for \note{discontinuous Galerkin formulations of first order hyperbolic systems}}
+\title{On the \note{penalty stabilization mechanism for upwind discontinuous Galerkin formulations of first order hyperbolic systems}}
 
 \author[rice]{Jesse Chan\corref{cor1}}
 \ead{Jesse.Chan@caam.rice.edu}
@@ -637,7 +637,7 @@ We note that, while we consider skew-symmetric DG formulations in this work, Lem
 
 \section{Numerical experiments}
 
-Lemma~\ref{lemma:eig} illustrates the behavior of the \note{spectrum} of the DG discretization for the asymptotic cases when $\tau = 0$ or $\tau \rightarrow \infty$.  However, it is less clear how the \note{spectrum} of $\bm{K}$ behaves for $\tau \approx 1$.  We rely instead on numerical experiments in one and two space dimensions to illustrate behaviors for the advection and acoustic wave equations.  {\note{Since $\tau$ can be chosen to be any arbitrary non-negative value, we consider three cases: $\tau = 0$, $\tau = 1$, and $\tau \rightarrow \infty$.  The choice of $\tau = 1$ is somewhat arbitrary, and (as mentioned in Section~\ref{sec:scaletau}) it may be beneficial to scale $\tau$ with problem parameters.  However, for the simple model problems considered in this section, taking $\tau = 1$ recovers an upwind flux, and the resulting spectrum of the DG operator is clearly distinct from the cases when $\tau = 0$ or $\tau \rightarrow \infty$.}  }
+Lemma~\ref{lemma:eig} illustrates the behavior of the \note{spectrum} of the DG discretization for the asymptotic cases when $\tau = 0$ or $\tau \rightarrow \infty$.  However, it is less clear how the \note{spectrum} of $\bm{K}$ behaves for $\tau \approx 1$.  We rely instead on numerical experiments in one and two space dimensions to illustrate behaviors for the advection and acoustic wave equations.  {\note{Since $\tau$ can be chosen to be any arbitrary non-negative value, we consider three cases: $\tau = 0$, $\tau = 1$, and $\tau \rightarrow \infty$.  As mentioned in Section~\ref{sec:scaletau}, it may be beneficial to scale $\tau$ with problem parameters.  However, for the simple model problems considered in this section, taking $\tau = 1$ recovers an upwind flux, and the resulting spectrum of the DG operator is clearly distinct from the cases when $\tau = 0$ or $\tau \rightarrow \infty$.}  }
 
 These experiments indicate that certain modes with negative real part for $\tau = 1$ return to the imaginary axis as $\tau \rightarrow \infty$.  Since eigenvalues with a negative real part correspond to dissipation in time-domain simulations, this implies that these under-resolved modes become undamped as $\tau$ grows sufficiently large.  
 
@@ -648,43 +648,43 @@ We consider first the scalar advection equation in 1D with $\bm{\beta} = 1$ and 
 
 \begin{figure}
 \centering
-\subfloat[Paths of eigenvalues as $\tau$ increases]{\includegraphics[width=.48\textwidth]{figs/trackedEigs.png}}
+\subfloat[Paths of eigenvalues as $\tau$ increases]{\includegraphics[width=.48\textwidth]{trackedEigs.png}}
 \hspace{1em}
-\subfloat[Zoom of eigenvalues near imaginary axis]{\includegraphics[width=.435\textwidth]{figs/trackedEigsZoom.png}}
+\subfloat[Zoom of eigenvalues near imaginary axis]{\includegraphics[width=.435\textwidth]{trackedEigsZoom.png}}
 \caption{Eigenvalue paths for DG advection with $\tau \in [0,4]$ on a mesh of 8 elements of degree $N=3$.  Eigenvalues are overlaid on these paths for $\tau = 0$, $\tau = 1$, and $\tau = 4$.  The zoomed in view near the imaginary axis shows the return of spurious modes to the imaginary axis for $\tau$ sufficiently large. }
 \label{fig:track1D}
 \end{figure}
 
 \begin{figure}
 \centering
-\subfloat{\includegraphics[width=.32\textwidth]{figs/tauEigsDiverge1.png}}
+\subfloat{\includegraphics[width=.32\textwidth]{tauEigsDiverge1.png}}
 \hspace{.5em}
-\subfloat{\includegraphics[width=.32\textwidth]{figs/tauEigsDiverge2.png}}
+\subfloat{\includegraphics[width=.32\textwidth]{tauEigsDiverge2.png}}
 \hspace{.5em}
-\subfloat{\includegraphics[width=.32\textwidth]{figs/tauEigsDiverge3.png}}\\
-\subfloat[$\tau = 0$]{\includegraphics[width=.32\textwidth]{figs/tauModesDiverge1.png}}
+\subfloat{\includegraphics[width=.32\textwidth]{tauEigsDiverge3.png}}\\
+\subfloat[$\tau = 0$]{\includegraphics[width=.32\textwidth]{tauModesDiverge1.png}}
 \hspace{.5em}
-\subfloat[$\tau = 1$]{\includegraphics[width=.32\textwidth]{figs/tauModesDiverge2.png}}
+\subfloat[$\tau = 1$]{\includegraphics[width=.32\textwidth]{tauModesDiverge2.png}}
 \hspace{.5em}
-\subfloat[$\tau = 10$]{\includegraphics[width=.32\textwidth]{figs/tauModesDiverge3.png}}
+\subfloat[$\tau = 10$]{\includegraphics[width=.32\textwidth]{tauModesDiverge3.png}}
 \caption{Behavior of a mode for the advection equation corresponding to a divergent eigenvalue (indicated by the red star) as $\tau$ increases.  The order of approximation is $N=3$ on a mesh of 4 elements.} %The displayed eigenfunctions correspond to the highlighted eigenvalue.  }
 \label{fig:trackmodes1D}
 \end{figure}
 
-However, for sufficiently large $\tau$, a subset of eigenvalues return to the imaginary axis.  Figure~\ref{fig:spurious} illustrates that, as $\tau$ increases, the magnitude of the inter-element jumps present in these modes decreases, and the mode approaches a $C^0$ continuous function.  These eigenvalues which move right to return to the imaginary axis correspond to a second set of \emph{spurious} modes.  These modes closely resemble back-propagating spurious modes observed for high order $C^0$ finite element methods \cite{ainsworth2014dispersive}, which consist of higher frequency components with sharp peaks.  Since the real part of these eigenvalues approaches zero as $\tau\rightarrow \infty$, these modes become undamped and persist as spurious solution components in time-domain simulations \cite{hughes2014finite}
+However, for sufficiently large $\tau$, a subset of eigenvalues return to the imaginary axis.  Figure~\ref{fig:spurious} illustrates that, as $\tau$ increases, the magnitude of the inter-element jumps present in these modes decreases, and the mode approaches a $C^0$ continuous function.  These eigenvalues which move right to return to the imaginary axis correspond to a second set of \emph{spurious} modes.  These modes closely resemble spurious modes observed for high order $C^0$ finite element methods \cite{boffi2000problem}, which consist of back-propagating high frequency components with sharp peaks \cite{ainsworth2014dispersive}.  Since the real part of these eigenvalues approaches zero as $\tau\rightarrow \infty$, these modes become undamped and persist as spurious solution components in time-domain simulations \cite{hughes2014finite}.  We note that that a similar phenomena has been observed for the solution of steady state problems in \cite{burman2010interior}, where the authors also point out that large penalty parameters result in decreased accuracy of the DG solution.  
 
 \begin{figure}
 \centering
-\subfloat{\includegraphics[width=.32\textwidth]{figs/tauEigs1.png}}
+\subfloat{\includegraphics[width=.32\textwidth]{tauEigs1.png}}
 \hspace{.5em}
-\subfloat{\includegraphics[width=.32\textwidth]{figs/tauEigs2.png}}
+\subfloat{\includegraphics[width=.32\textwidth]{tauEigs2.png}}
 \hspace{.5em}
-\subfloat{\includegraphics[width=.32\textwidth]{figs/tauEigs3.png}}\\
-\subfloat[$\tau = 0$]{\includegraphics[width=.32\textwidth]{figs/tauModes1.png}}
+\subfloat{\includegraphics[width=.32\textwidth]{tauEigs3.png}}\\
+\subfloat[$\tau = 0$]{\includegraphics[width=.32\textwidth]{tauModes1.png}}
 \hspace{.5em}
-\subfloat[$\tau = 1$]{\includegraphics[width=.32\textwidth]{figs/tauModes2.png}}
+\subfloat[$\tau = 1$]{\includegraphics[width=.32\textwidth]{tauModes2.png}}
 \hspace{.5em}
-\subfloat[$\tau = 10$]{\includegraphics[width=.32\textwidth]{figs/tauModes3.png}}
+\subfloat[$\tau = 10$]{\includegraphics[width=.32\textwidth]{tauModes3.png}}
 \caption{Return behavior of DG advection eigenvalues for sufficiently large $\tau$.  For $\tau = 1$ certain eigenvalues have negative real part, and the corresponding eigenmodes are damped.  For $\tau \gg 1$, certain eigenvalues return to the imaginary axis as spurious modes in conforming discretizations. }
 \label{fig:spurious}
 \end{figure}
@@ -700,9 +700,9 @@ which illustrates how modes $\bm{v}^{\tau}_j$ are damped for $t > 0$ if the corr
 the largest components correspond to eigenvalues with larger negative real parts and heavily damped modes.  As an example, we consider the spurious mode illustrated in Figure~\ref{fig:spurious}.  The absolute values of the coefficients $c^\tau_j$ of this mode are plotted in Figure~\ref{fig:cmodes} for both $\tau = 0$ and $\tau = 100$.  Only the four coefficients larger than $10^{-13}$ are shown.  For comparison, the negative real values of the corresponding eigenvalues $\lambda^1_j$ are also overlaid in Figure~\ref{fig:cmodes}.  The two largest coefficients correspond to eigenvalues with large negative real parts and more strongly damped modes.  The two remaining coefficients correspond to less highly damped eigenvalues with smaller negative real parts, but are an order of magnitude smaller than the two large coefficients.  
 \begin{figure}
 \centering
-\subfloat[$c_j^0$ (spurious modes for  $\tau = 0$)]{\includegraphics[width=.45\textwidth]{figs/ceigs0.png}}
+\subfloat[$c_j^0$ (spurious modes for  $\tau = 0$)]{\includegraphics[width=.45\textwidth]{ceigs0.png}}
 \hspace{1em}
-\subfloat[$c_j^{100}$ (spurious modes for $\tau = 100$)]{\includegraphics[width=.45\textwidth]{figs/ceigs100.png}}
+\subfloat[$c_j^{100}$ (spurious modes for $\tau = 100$)]{\includegraphics[width=.45\textwidth]{ceigs100.png}}
 \caption{Coefficients $c^0_j$ and $c^{100}_j$ of the spurious mode in Figure~\ref{fig:spurious} when expanded in the modes of $\bm{K}$ for $\tau=1$.  Coefficients with magnitude less than $10^{-13}$ are not shown.   The negative real parts of the corresponding eigenvalues ${\rm Re}(\lambda^1_j)$, which determine the magnitude of damping applied to the $j$th component, are overlaid. }
 \label{fig:cmodes}
 \end{figure}
@@ -712,9 +712,9 @@ The above experiments were repeated for the acoustic wave equation in 1D with re
 
 %\begin{figure}
 %\centering
-%\subfloat{\includegraphics[width=.475\textwidth]{figs/tauEigs1.png}}
+%\subfloat{\includegraphics[width=.475\textwidth]{tauEigs1.png}}
 %\hspace{.5em}
-%\subfloat{\includegraphics[width=.475\textwidth]{figs/tauEigs2.png}}
+%\subfloat{\includegraphics[width=.475\textwidth]{tauEigs2.png}}
 %\caption{ }
 %\label{fig:trackModesWave}
 %\end{figure}
@@ -727,11 +727,11 @@ Figure~\ref{fig:waveeigs} shows the \note{spectrum} of the DG discretization mat
 
 \begin{figure}
 \centering
-\subfloat[$\tau = 1$]{\includegraphics[width=.3\textwidth]{figs/waveEigs1.png}}
+\subfloat[$\tau = 1$]{\includegraphics[width=.3\textwidth]{waveEigs1.png}}
 \hspace{.5em}
-\subfloat[$\tau = 10$]{\includegraphics[width=.3\textwidth]{figs/waveEigs2.png}}
+\subfloat[$\tau = 10$]{\includegraphics[width=.3\textwidth]{waveEigs2.png}}
 \hspace{.5em}
-\subfloat[$\tau = 100$]{\includegraphics[width=.3\textwidth]{figs/waveEigs3.png}}
+\subfloat[$\tau = 100$]{\includegraphics[width=.3\textwidth]{waveEigs3.png}}
 \caption{Behavior of eigenvalues for the acoustic wave equation in two dimensions. Note the changing scale of the real axis.}
 \label{fig:waveeigs}
 \end{figure}
@@ -739,9 +739,9 @@ Figure~\ref{fig:waveeigs} shows the \note{spectrum} of the DG discretization mat
 
 \begin{figure}
 \centering
-\subfloat[$\tau = 0,1, 50$, zoomed in view]{\includegraphics[height=.3\textheight]{figs/waveEigs2Dbox.png}\label{subfig:big}}
+\subfloat[$\tau = 0,1, 50$, zoomed in view]{\includegraphics[height=.3\textheight]{waveEigs2Dbox.png}\label{subfig:big}}
 \hspace{2em}
-\subfloat[$\tau= 0,1,50$, returning eigenvalue paths]{\includegraphics[height=.3\textheight]{figs/trackedWaveEigs2D.png}\label{subfig:box}}
+\subfloat[$\tau= 0,1,50$, returning eigenvalue paths]{\includegraphics[height=.3\textheight]{trackedWaveEigs2D.png}\label{subfig:box}}
 \caption{Behavior of eigenvalues for the acoustic wave equation in two dimensions.  Figure~\ref{subfig:box} shows a zoom of the boxed region in Figure~\ref{subfig:big}, with overlaid eigenvalue paths as $\tau$ increases.  Divergent eigenvalues in the far left half plane are not shown.  }
 \label{fig:trackEigsWave}
 \end{figure}
@@ -753,22 +753,22 @@ The pressure and velocity components of the corresponding acoustic eigenmodes co
 
 \begin{figure}
 \centering
-\subfloat[$\tau = .1$, $\lambda = -0.2379 + 8.7528i$]{\includegraphics[width=.3\textwidth]{figs/waveEig2D_p1.png}}
+\subfloat[$\tau = .1$, $\lambda = -0.2379 + 8.7528i$]{\includegraphics[width=.3\textwidth]{waveEig2D_p1.png}}
 \hspace{.5em}
-\subfloat[$\tau = 1$, $\lambda = -1.0145 + 8.9270i$]{\includegraphics[width=.3\textwidth]{figs/waveEig2D_p2.png}}
+\subfloat[$\tau = 1$, $\lambda = -1.0145 + 8.9270i$]{\includegraphics[width=.3\textwidth]{waveEig2D_p2.png}}
 \hspace{.5em}
-\subfloat[$\tau = 100$, $\lambda = -0.0437 + 7.6167i$]{\includegraphics[width=.3\textwidth]{figs/waveEig2D_p3.png}}
+\subfloat[$\tau = 100$, $\lambda = -0.0437 + 7.6167i$]{\includegraphics[width=.3\textwidth]{waveEig2D_p3.png}}
 \caption{Behavior of the real part of the pressure component of spurious eigenmodes for the acoustic wave equation in two dimensions.  }
 \label{fig:trackModesWave}
 \end{figure}
 
 %\begin{figure}
 %\centering
-%\subfloat[$\tau = .1$, $\lambda = -0.6009 +11.3209i$]{\includegraphics[width=.3\textwidth]{figs/waveEig2D_u1.png}}
+%\subfloat[$\tau = .1$, $\lambda = -0.6009 +11.3209i$]{\includegraphics[width=.3\textwidth]{waveEig2D_u1.png}}
 %\hspace{.5em}
-%\subfloat[$\tau = 1$, $\lambda =  -1.9601 + 9.5629i$]{\includegraphics[width=.3\textwidth]{figs/waveEig2D_u2.png}}
+%\subfloat[$\tau = 1$, $\lambda =  -1.9601 + 9.5629i$]{\includegraphics[width=.3\textwidth]{waveEig2D_u2.png}}
 %\hspace{.5em}
-%\subfloat[$\tau = 100$, $\lambda = -0.0634 + 7.7670i$]{\includegraphics[width=.3\textwidth]{figs/waveEig2D_u3.png}}
+%\subfloat[$\tau = 100$, $\lambda = -0.0634 + 7.7670i$]{\includegraphics[width=.3\textwidth]{waveEig2D_u3.png}}
 %\caption{Behavior of the real part of the velocity component of spurious eigenmodes for the acoustic wave equation in two dimensions.  }
 %\label{fig:trackModesWaveU}
 %\end{figure}
@@ -778,9 +778,9 @@ For the advection equation with periodic boundary conditions, the \note{spectrum
 
 \begin{figure}
 \centering
-\subfloat{\includegraphics[width=.475\textwidth]{figs/trackedAdvecEigs.png}}
+\subfloat{\includegraphics[width=.475\textwidth]{trackedAdvecEigs.png}}
 \hspace{.5em}
-\subfloat{\includegraphics[width=.465\textwidth]{figs/trackedAdvecEigsZoom1.png}}
+\subfloat{\includegraphics[width=.465\textwidth]{trackedAdvecEigsZoom1.png}}
 \caption{Eigenvalue paths for the DG discretization of advection as $\tau$ increases.  Divergent eigenvalues in the far left half plane are not shown.  }
 \label{fig:trackModesAdvec}
 \end{figure}
@@ -788,11 +788,11 @@ For the advection equation with periodic boundary conditions, the \note{spectrum
 
 \begin{figure}
 \centering
-\subfloat[$\tau = 0$, $\lambda = 0 + 7.9246i$]{\includegraphics[width=.3\textwidth]{figs/advecEig2D_u1.png}}
+\subfloat[$\tau = 0$, $\lambda = 0 + 7.9246i$]{\includegraphics[width=.3\textwidth]{advecEig2D_u1.png}}
 \hspace{.5em}
-\subfloat[$\tau = 1$, $\lambda =  -0.8278 + 6.7831i$]{\includegraphics[width=.3\textwidth]{figs/advecEig2D_u2.png}}
+\subfloat[$\tau = 1$, $\lambda =  -0.8278 + 6.7831i$]{\includegraphics[width=.3\textwidth]{advecEig2D_u2.png}}
 \hspace{.5em}
-\subfloat[$\tau = 100$, $\lambda = -0.0239 + 5.9282i$]{\includegraphics[width=.3\textwidth]{figs/advecEig2D_u3.png}}
+\subfloat[$\tau = 100$, $\lambda = -0.0239 + 5.9282i$]{\includegraphics[width=.3\textwidth]{advecEig2D_u3.png}}
 \caption{Behavior of the real part of spurious eigenmodes for the advection equation with $\beta = (1,0)$. }
 \label{fig:trackModesAdvecU}
 \end{figure}
