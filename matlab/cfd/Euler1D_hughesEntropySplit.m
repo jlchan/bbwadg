@@ -7,7 +7,7 @@ function Euler1D
 Globals1D;
 
 % Order of polymomials used for approximation
-N = 3;
+N = 4;
 K1D = 32;
 FinalTime = 2;
 
@@ -28,7 +28,7 @@ xp=  Vp*x;
 global gamma Vq Pq
 gamma = 1.4;
 
-Nq = 2*N+2;
+Nq = 2*N+1;
 % Nq = N;
 [rq wq] = JacobiGQ(0,0,Nq);
 Vq = Vandermonde1D(N,rq)/V;
@@ -69,10 +69,14 @@ dfdW33 = @(W1,W2,W3)W2.*1.0./W3.^4.*exp((W1.*W3-W3.*gamma-W2.^2.*(1.0./2.0))./(W
 W1 = Pq*W1q;
 W2 = Pq*W2q;
 W3 = Pq*W3q;
+
+% W1 = limit1D(W1);
+% W2 = limit1D(W2);
+% W3 = limit1D(W3);
 % keyboard
 % [rho m E] = WToU(W1,W2,W3);
 % hold on
-% plot(xq,E,'x')
+% plot(x,W1,'o-');return
 
 
 time = 0;
@@ -107,11 +111,17 @@ for tstep=1:Nsteps
         [rhs1, rhs2, rhs3] = EulerRHS1D(W1tmp,W2tmp,W3tmp);
         W1tmp = (1-ssprk(i))*W1 + ssprk(i)*(W1tmp + dt*rhs1);
         W2tmp = (1-ssprk(i))*W2 + ssprk(i)*(W2tmp + dt*rhs2);
-        W3tmp = (1-ssprk(i))*W3 + ssprk(i)*(W3tmp + dt*rhs3);        
+        W3tmp = (1-ssprk(i))*W3 + ssprk(i)*(W3tmp + dt*rhs3);
+        
+%         W1tmp = limit1D(W1tmp);
+%         W2tmp = limit1D(W2tmp);
+%         W3tmp = limit1D(W3tmp);
+
     end
     W1 = W1tmp;
     W2 = W2tmp;
     W3 = W3tmp;
+    
     
 %     % low storage RK
 %     for INTRK = 1:5
@@ -256,12 +266,21 @@ if opt==1 % plain entropy variables
     %         global wJq
     %     sum(sum(wJq.*(W1.*r1 + W2.*r2 + W3.*r3)))
     
+    r1 = Pq*r1;
+    r2 = Pq*r2;
+    r3 = Pq*r3;
+    
     L1 = .5*LIFT*(Fscale.*LFc.*jump(W1_in));
     L2 = .5*LIFT*(Fscale.*LFc.*jump(W2_in));
-    L3 = .5*LIFT*(Fscale.*LFc.*jump(W3_in));
+    L3 = .5*LIFT*(Fscale.*LFc.*jump(W3_in));    
 %     r1 = r1 - L1;
 %     r2 = r2 - L2;
 %     r3 = r3 - L3;
+    
+    r1 = Vq*r1;
+    r2 = Vq*r2;
+    r3 = Vq*r3;
+    
     
     % dW/dU * rhs
     rhs1 = dWdU11(rho,m,E).*r1 + dWdU12(rho,m,E).*r2 + dWdU13(rho,m,E).*r3;
@@ -272,9 +291,10 @@ if opt==1 % plain entropy variables
     rhs2 = -Pq*rhs2;
     rhs3 = -Pq*rhs3;
     
-%     rhs1 = rhs1 + L1;
-%     rhs2 = rhs2 + L2;
-%     rhs3 = rhs3 + L3;
+    % penalization
+    rhs1 = rhs1 + L1;
+    rhs2 = rhs2 + L2;
+    rhs3 = rhs3 + L3;
 
 elseif opt==2 % integrated entropy variables
     

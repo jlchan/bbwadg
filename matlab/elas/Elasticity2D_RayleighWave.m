@@ -5,16 +5,26 @@ clear -global *
 
 Globals2D
 
+global Nfld mu lambda Vq Pq tau useWADG
+
 if nargin==0
     mu = 1;
+    lambda = 1;
     K1D = 4;
-    N = 3;
+    N = 4;
+    FinalTime = 5;
 end
 
-global Nfld mu lambda Vq Pq tau useWADG
-mu = muin;
-lambda = lambdain;
-FinalTime = .25*sqrt(lambda/mu);
+% for convergence results
+if nargin==2
+    mu = 1;
+    lambda = 1;
+    FinalTime = 5;
+elseif nargin==4
+    mu = muin;
+    lambda = lambdain;
+    FinalTime = .25*sqrt(lambda/mu);    
+end
 
 
 % filename = 'Grid/Other/block2.neu';

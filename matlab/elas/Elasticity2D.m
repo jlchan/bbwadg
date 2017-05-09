@@ -10,7 +10,7 @@ if nargin==0
     N = 5;
 end
 c_flag = 0;
-FinalTime = 1;
+FinalTime = 5;
 
 % filename = 'Grid/Other/block2.neu';
 % [Nv, VX, VY, K, EToV] = MeshReaderGambit2D(filename);
@@ -160,14 +160,14 @@ U{3} = sxx(x,y,0);
 U{4} = syy(x,y,0);
 U{5} = sxy(x,y,0);
 
-x0 = .5; y0 = .5;
-p = exp(-25^2*((x-x0).^2 + (y-y0).^2));
-u = zeros(Np, K);
-U{1} = p;
-U{2} = u;
-U{3} = u;
-U{4} = u;
-U{5} = u;
+% x0 = .5; y0 = .5;
+% p = exp(-25^2*((x-x0).^2 + (y-y0).^2));
+% u = zeros(Np, K);
+% U{1} = p;
+% U{2} = u;
+% U{3} = u;
+% U{4} = u;
+% U{5} = u;
 
 
 %%
@@ -214,7 +214,7 @@ while (time<FinalTime)
         clf
         
         p = U{3}+U{4}; % trace(S)        
-%         p = U{1};
+        p = U{1};
 
         vv = Vp*p;        
 %         vv = abs(vv);

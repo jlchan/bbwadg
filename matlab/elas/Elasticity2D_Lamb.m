@@ -6,11 +6,11 @@ clear -global *
 Globals2D
 
 if nargin==0
-    K1D = 4;
-    N = 5;
+    K1D = 8;
+    N = 2;
 end
 c_flag = 0;
-FinalTime = 1;
+FinalTime = 5;
 
 % filename = 'Grid/Other/block2.neu';
 % [Nv, VX, VY, K, EToV] = MeshReaderGambit2D(filename);
@@ -19,6 +19,7 @@ VY = (VY+1)/2-.5;
 % VX = 2*VX;
 
 StartUp2D;
+
 
 BuildPeriodicMaps2D(2,0);
 

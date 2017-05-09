@@ -13,6 +13,8 @@ else
 end
 [Nv, VX, K, EToV] = MeshGen1D(-1,1,K1D);
 
+% VX(2:end-1) = VX(2:end-1) + 1/K1D*randn;
+
 % Initialize solver and construct grid and metric
 StartUp1D;
 
@@ -200,7 +202,18 @@ elseif opt==4 % discrete split + interpolation instead of quadrature
     
     % add lax friedrichs
     du = .5*(uP-uM).*abs(uM);
-%     rhsu = rhsu + LIFT*(Fscale.*du);
+    rhsu = rhsu + LIFT*(Fscale.*du);
+
+elseif opt==5 % non-conservative part
+    
+    du(:) = uM.*(uP-uM); 
+    uDu = Pq*((Vq*u).*(Vq*(rx.*(Dr*u)))) + .5*LIFT*(Fscale.*du.*nx); % Dh*f    
+            
+    rhsu = -uDu;    
+    
+    % lax friedrichs
+    du = (uP-uM).*abs(uM);
+    rhsu = rhsu + .5*LIFT*(Fscale.*du);
     
 end
 

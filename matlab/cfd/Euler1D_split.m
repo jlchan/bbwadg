@@ -7,9 +7,9 @@ function Euler1D
 Globals1D;
 
 % Order of polymomials used for approximation
-N = 7;
+N = 5;
 K1D = 16;
-FinalTime = 2;
+FinalTime = 1;
 
 % Generate simple mesh
 [Nv, VX, K, EToV] = MeshGen1D(-1,1,K1D);
@@ -28,8 +28,8 @@ xp=  Vp*x;
 global gamma Vq Pq
 gamma = 1.4;
 
-Nq = 2*N+2;
-Nq = N;
+Nq = 2*N+1;
+% Nq = N;
 [rq wq] = JacobiGQ(0,0,Nq);
 Vq = Vandermonde1D(N,rq)/V;
 Pq = (Vq'*diag(wq)*Vq)\(Vq'*diag(wq));
@@ -89,6 +89,7 @@ for tstep=1:Nsteps
         hold off
         
 %         axis([-.5 .5 -1 3])
+        axis([-1 1 0 4])
         title(sprintf('Time = %f\n',time))
         drawnow
     end
@@ -97,13 +98,10 @@ for tstep=1:Nsteps
     mq = Vq*m;
     rhoq = Vq*rho;
     Eq = Vq*E;
-    uq = mq./rhoq;    
+    uq = mq./rhoq;        
+    pq = (gamma-1.0)*(Eq - 0.5*rhoq.*uq.^2);
     
-    u = mq./rhoq;
-    p = (gamma-1.0)*(Eq - 0.5*rhoq.*u.^2);
-    
-    S(tstep) = sum(sum(wJq.*real(log(p.*rhoq.^(-gamma)))));
-    
+    S(tstep) = sum(sum(wJq.*real(log(pq.*rhoq.^(-gamma)))));    
     
     if mod(tstep,1000)==0
         disp(sprintf('tstep = %d out of %d\n',tstep,Nsteps))
@@ -195,7 +193,7 @@ if opt==1
     rhsm   = rhsm   + .5*LIFT*(Fscale.*LFc.*jump(m_in));
     rhsE   = rhsE   + .5*LIFT*(Fscale.*LFc.*jump(E_in));
 
-elseif opt==2
+elseif opt==2 % KE conserving split form
     
     rhsrho  = -Dh(Pq*(rho.*u));
     rhsm    = -Dh(Pq*(p + .5*rho.*u.^2)) - .5*(Pq*(rho.*u.*(Vq*Dh(Pq*u))) + Pq*(u.*(Vq*Dh(Pq*(rho.*u)))));
@@ -214,8 +212,44 @@ elseif opt==2
     rhsm   = rhsm   + .5*LIFT*(Fscale.*LFc.*jump(m_in));
     rhsE   = rhsE   + .5*LIFT*(Fscale.*LFc.*jump(E_in));
     
-elseif opt==3
+elseif opt==3 % non-conservative formulation
+        
+    dfdU11 = @(rho,m,E) 0.0;
+    dfdU12 = @(rho,m,E) 1.0;
+    dfdU13 = @(rho,m,E) 0.0;
+    dfdU21 = @(rho,m,E) m.^2.*1.0./rho.^2.*(gamma-3.0).*(1.0./2.0);
+    dfdU22 = @(rho,m,E) -(m.*(gamma-3.0))./rho;
+    dfdU23 = @(rho,m,E)gamma-1.0;
+    dfdU31 = @(rho,m,E)-m.*1.0./rho.^3.*(-gamma.*m.^2+m.^2+E.*gamma.*rho);
+    dfdU32 = @(rho,m,E)1.0./rho.^2.*(gamma.*m.^2.*-3.0+m.^2.*3.0+E.*gamma.*rho.*2.0).*(1.0./2.0);
+    dfdU33 = @(rho,m,E)(gamma.*m)./rho;
+        
+    drho = Vq*Dh(rho_in);
+    dm = Vq*Dh(m_in);
+    dE = Vq*Dh(E_in);
+    rhsrho = dfdU11(rho,m,E).*drho + dfdU12(rho,m,E).*dm + dfdU13(rho,m,E).*dE;
+    rhsm   = dfdU21(rho,m,E).*drho + dfdU22(rho,m,E).*dm + dfdU23(rho,m,E).*dE;
+    rhsE   = dfdU31(rho,m,E).*drho + dfdU32(rho,m,E).*dm + dfdU33(rho,m,E).*dE;
     
+    rhsrho = -Pq*rhsrho;
+    rhsm = -Pq*rhsm;
+    rhsE = -Pq*rhsE;
+    
+    % mix in conservative form?
+    if 0
+        rhof = Pq*m;
+        mf   = Pq*(rho.*u.^2 + p);
+        Ef   = Pq*((E+p).*u);
+        rhsrho  = .5*(rhsrho-Dh(rhof));
+        rhsm    = .5*(rhsm-Dh(mf));
+        rhsE    = .5*(rhsE-Dh(Ef));
+    end
+    
+%     LFc = LFc*0;
+    rhsrho = rhsrho + .5*LIFT*(Fscale.*LFc.*jump(rho_in));
+    rhsm   = rhsm   + .5*LIFT*(Fscale.*LFc.*jump(m_in));
+    rhsE   = rhsE   + .5*LIFT*(Fscale.*LFc.*jump(E_in));
+
 end
 
 return

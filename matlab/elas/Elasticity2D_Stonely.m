@@ -10,11 +10,11 @@ if nargin==0
     N = 4;
 end
 c_flag = 0;
-FinalTime = .5;
+FinalTime = 5;
 
 % filename = 'Grid/Other/block2.neu';
 % [Nv, VX, VY, K, EToV] = MeshReaderGambit2D(filename);
-aa = 5;
+aa = 2;
 % [Nv, VX, VY, K, EToV] = unif_tri_mesh(aa*K1D,K1D);
 [Nv, VX, VY, K, EToV] = unif_tri_mesh(3*K1D,aa*K1D);
 VY = aa*VY;
@@ -361,13 +361,13 @@ while (time<FinalTime)
     end
 end
 
-%semilogy(tvec,errvec/errvec(1),'b-','linewidth',2)
-semilogy(tvec,errvec,'b-','linewidth',2)
-set(gca,'fontsize',15)
-xlabel('Time','fontsize',14)
-ylabel('Change in initial error','fontsize',14)
-keyboard
-return
+% %semilogy(tvec,errvec/errvec(1),'b-','linewidth',2)
+% semilogy(tvec,errvec,'b-','linewidth',2)
+% set(gca,'fontsize',15)
+% xlabel('Time','fontsize',14)
+% ylabel('Change in initial error','fontsize',14)
+% % keyboard
+% return
 
 Nq = 3*N;
 [rq sq wq] = Cubature2D(Nq); % integrate u*v*c
