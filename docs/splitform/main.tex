@@ -329,9 +329,13 @@ We show that, for non-linear hyperbolic conservation laws which admit a skew-sym
 
 \section{Introduction}
 
-\cite{feng2016discontinuous}
+Non-conservative discretizations \cite{rhebergen2008discontinuous}.  
 
-Lifting operators  and discrete gradients \cite{bassi1997high, di2011mathematical}
+DG calculus \cite{feng2016discontinuous} usually assumes exact integration.  As pointed out in \cite{gassner2016split}, this can be either be very expensive (curvilinear meshes or polynomial nonlinearities) or impossible (in the presence of rational integrands, such as for compressible flow).  
+
+Lifting operators and discrete gradients \cite{bassi1997high, di2011mathematical}
+
+Goal: reduce aliasing in advective problems caused by variable coefficients and curvilinear or non-affine mappings.  
 
 \section{Discrete differential operators}
 
@@ -345,13 +349,13 @@ On faces which coincide with the boundary $\partial \Omega$, the average and jum
 \]
 The jump and average of vector fields are defined component-wise using the jumps and averages of components.  
 
-We will assume for now that all elements are affine mappings of a reference element $\widehat{D}$.  
+We will assume for now that all elements are affine mappings of a reference element $\widehat{D}$.  Extensions to curvilinear meshes and non-affine mappings will be discussed in Section~\ref{sec:curv}.  
 
 \subsection{Discrete inner products}
 
 In order to define discrete differential operators, we first introduce the $L^2$ inner product on $V_h\LRp{\Oh}$
 \[
-\LRp{u,v}_{\Omega} = \sum_{D^k} \int_{D^k} uv \diff{x} = \sum_{D^k} \int_{\widehat{D}} uv J \diff{\widehat{x}},
+\LRp{u,v}_{\Omega} = \sum_{k} \int_{D^k} uv \diff{x} = \sum_{k} \int_{\widehat{D}} uv J \diff{\widehat{x}},
 \]
 and the associated $L^2$ projection $\Pi_N: L^2\LRp{\Omega}\rightarrow P^N$
 \[
@@ -371,29 +375,27 @@ where $N_q$ is the number of quadrature points.  The only assumptions we make up
 
 
 \subsection{Discrete derivatives}
-We introduce two discrete DG derivatives in this section.  The first is the implicit definition used in \cite{di2011mathematical}:
+We introduce two discrete DG derivatives in this section, based on definitions used in \cite{di2011mathematical} and \cite{hesthaven2004high,Warburton20063205}:
 \begin{definition}
-The discontinuous Galerkin differentiation operator ${D}^i: L^2\LRp{\Omega}\rightarrow V_h$ is defined implicitly as follows:
-\[
-\LRp{{D}^i u,v}_{\Oh} = \sum_{D^k} \LRp{\LRp{-u,\pd{v}{\bm{x}_i}}_{\LK} + \LRa{\avg{u},v\bm{n}_i}_{\LdK}}, \qquad \forall v \in V_h.
-\]
+We define two discontinuous Galerkin differentiation operators ${D}^i: L^2\LRp{\Omega}\rightarrow V_h$ and $\tilde{D}^i: L^2\LRp{\Omega}\rightarrow V_h$ is defined implicitly as follows:
+\begin{align}
+\LRp{{D}^i u,v}_{\Oh} &= \sum_{k} \LRp{\LRp{-u,\pd{v}{\bm{x}_i}}_{\LK} + \LRa{\avg{u},v\bm{n}_i}_{\LdK}}, \qquad \forall v \in V_h\\
+\LRp{\tilde{D}^i u,v}_{\Oh} &= \sum_{k} \LRp{\LRp{\pd{u}{\bm{x}_i},v}_{\LK} - \frac{1}{2}\LRa{\jump{u},v\bm{n}_i}_{\LdK}}, \qquad \forall v\in V_h.
+\label{eq:dgd1}
+\end{align}
 \end{definition}
 
-We note that, for $u,v \in V_h$, (discrete) integration by parts yields an equivalent definition of $D^i$ found in \cite{hesthaven2004high,Warburton20063205}
-\[
-\LRp{{D}^i u,v}_{\Oh} = \sum_{D^k} \LRp{\LRp{\pd{u}{\bm{x}_i},v}_{\LK} - \frac{1}{2}\LRa{\jump{u},v\bm{n}_i}_{\LdK}}, \qquad \forall v\in V_h.
-\]
-The main property of the discrete derivatives utilized in this work is a discrete integration-by-parts formula.  
+We note that, assuming $u,v \in V_h$ and sufficiently accurate quadrature, $D^i$ and $\tilde{D}^i$ are equivalent.  The main property of the discrete derivatives utilized in this work is a discrete integration-by-parts formula.  
 \begin{lemma}
 Let $u,v\in V_h$.  Then, 
 \begin{align*}
-\LRp{D^i u,v} &= \LRp{-u,D^i_h v} + \int_{\partial \Omega} uv \bm{n}_i\\
-\LRp{D_h^i u,v} &= \LRp{-u,D^i_h v} + \int_{\partial \Omega} uv \bm{n}_i.
+\LRp{D^i u,v} &= \LRp{-u,D^i_h v} + \int_{\partial \Omega} uv \bm{n}_i.
+%\LRp{D_h^i u,v} &= \LRp{-u,D^i_h v} + \int_{\partial \Omega} uv \bm{n}_i.
 \end{align*}
 \label{lemma:ibp}
 \end{lemma}
 \begin{proof}
-Ez
+Assuming that quadrature is sufficiently accurate for $u, v\in V_h$, integration by parts gives the equivalence. 
 \end{proof}
 
 For $u \not\in V_h$, due to the fact that the quadrature rule (\ref{eq:quad}) may not be exact, and these two definitions are not equivalent and Lemma~\ref{lemma:ibp} does not hold.  This motivates the definition of a \textit{discrete} DG differentiation operator:
@@ -403,51 +405,12 @@ The discrete discontinuous Galerkin differentiation operator ${D}^i_h: L^2\LRp{\
 
 Using these discrete derivatives, we can define discrete gradient and divergence operators
 \begin{definition}
-Let $u \in V_h$ and $\bm{u}\in \LRp{V_h}^d$.  Then, discrete gradient and divergence operators are defined as follows:
+Let $u \in V_h$ and $\bm{u}\in \LRp{V_h}^d$.  Then, discrete gradient and divergence operators are defined as
 \begin{align*}
 \LRp{\Grad^{\rm DG} u}_i &= D^i u, \qquad \Grad^{\rm DG}\cdot \bm{u} = \sum_{i=1}^d D^i \bm{u}_i\\
 \LRp{\Grad^{\rm DG}_h u}_i &= D_h^i u, \qquad \Grad^{\rm DG}_h\cdot \bm{u} = \sum_{i=1}^d D_h^i \bm{u}_i.
 \end{align*}
-\end{definition}
-
-
-\subsection{Examples}
-
-\begin{itemize}
-\item Tensor product elements: inner product computed using GLL nodes, $\Pi_N$ reduces to nodal interpolation
-\item General elements: $\Pi_N$ is just quadrature-based projection.  For accuracy, degree $2N$ or higher?  
-\item General elements: $\Pi_N$ can be taken to be nodal interpolation.  
-\item Pyramids?  
-\end{itemize}
-
-\section{Notes}
-Begin with the gradient.  Multiplication by $\bm{v}$ and integration by parts gives
-\[
-\sum_{D^k} \LRp{\Grad u, \bm{v}}_{\LK} = \sum_{D^k} \LRp{-u, \Grad \cdot \bm{v}}_{\LK} + \LRa{u,\bm{v}\cdot\bm{n}}_{\LdK}.
-\]
-We replace the values of ${u}$ with $\avg{u}$ on each element boundary to define the global DG gradient operator $\Grad_h$ 
-\[
-\sum_{D^k} \LRp{\Grad_h u, \bm{v}}_{\LK} \coloneqq \sum_{D^k} \LRp{-u, \Grad \cdot \bm{v}}_{\LK} + \LRa{\avg{u},\bm{v}\cdot\bm{n}}_{\LdK}.
-\]
-Integrating by parts again and the introduction of the lift operator shows that
-\[
-\Grad_h u = \Grad u + \frac{1}{2}L\LRp{\jump{u}\bm{n}}
-\]
-where $L$ is the lift operator.  
-
-The DG divergence operator is similarly defined as
-\[
-\sum_{D^k} \LRp{\Grad_h \cdot \bm{u}, v}_{\LK} \coloneqq \sum_{D^k} \LRp{-\bm{u}, \Grad v}_{\LK} + \LRa{\avg{\bm{u}}\cdot\bm{n},v}_{\LdK}.
-\]
-and
-\[
-\Grad_h \cdot u = \Grad\cdot u + \frac{1}{2}L\LRp{\jump{\bm{u}}\cdot\bm{n}}
-\]
-and it can be shown that 
-\[
-\LRp{\Grad_h u, \bm{v}} = \LRp{-u, \Grad_h \cdot \bm{v}}.
-\]
-We will incorporate boundary conditions in a stable way in the following sections.  
+\end{definition} 
 
 When the support of $v$ is limited to a single element, we have
 \[
@@ -457,6 +420,46 @@ and as a result when $v = 1$
 \[
 \LRp{\Grad_h\cdot \bm{u},\bbm{1}_{D^k}} = \int_{\partial D^k}\avg{\bm{u}}\cdot\bm{n}
 \]
+
+\section{Examples}
+
+\begin{itemize}
+\item Tensor product elements: inner product computed using GLL nodes, $\Pi_N$ reduces to nodal interpolation
+\item General elements: $\Pi_N$ is just quadrature-based projection.  For accuracy, degree $2N$ or higher?  
+\item Triangles and tetrahedra: lumped quadrature nodes.  Implies that mass lumping on triangles requires sufficiently accurate quadrature such that IBP holds.  This conclusion was first reached in the study of multi-dimensional SBP operators \cite{hicken2016multidimensional}.  
+\item General elements: $\Pi_N$ can be taken to be nodal interpolation.  
+\item Pyramids: need to account for non-affine mappings.  
+\end{itemize}
+
+\subsection{Variable advection}
+
+A split formulation for advection is 
+\[
+\LRp{\pd{u}{t},v} + \frac{1}{2}\LRp{\Grad_h\cdot \Pi_N \LRp{ \bm{\beta}u},v} + \frac{1}{2}\LRp{\bm{\beta}\cdot\Grad_h u,v} + \frac{1}{2}\LRp{\LRp{\Grad\cdot \bm{\beta}} u,v} = 0.
+\]
+Taking $v = u$ yields and using $\LRp{\Grad_h u, \bm{v}} = \LRp{-u, \Grad_h \cdot \bm{v}}$ yields the energy statement
+\[
+\frac{1}{2}\nor{u}^2 + \frac{1}{2}\LRp{\Grad_h\cdot \Pi_N \LRp{ \bm{\beta}u},u} - \frac{1}{2}\LRp{ u, \Grad_h\cdot \Pi_N\LRp{\bm{\beta}u}} = \frac{1}{2}\LRp{-\LRp{\Grad \cdot \bm{\beta}} u,u},
+\]
+implying that $\frac{1}{2}\nor{u}^2 = 0$ if $\Grad\cdot \bm{\beta} = 0$, or that the method is energy conserving.  The only difference in this formulation is the introduction of $\Pi_N$, which can be defined at a discrete level using any quadrature scheme for which a discrete projection is well-defined. 
+
+Penalization can be added by adding any positive-definite stabilization term (upwind, penalty, Lax-Friedrichs) through the regular divergence flux.  
+
+\section{Discrete DG derivatives}
+
+Methods based on discrete DG derivatives also work.  
+
+The discrete DG derivative-based method is not consistent in the sense that Galerkin orthogonality does not hold exactly.  The difference lies in the flux terms.  Assume $\Div \bm{\beta} = 0$, then
+\[
+\LRp{\pd{u}{t},v} + \frac{1}{2}\LRp{-{ \bm{\beta}u},\Grad_h v} + \frac{1}{2}\LRp{\bm{\beta}\cdot\Grad_h u,v} = 0.
+\]
+\begin{align*}
+\LRp{\Grad_h\cdot \Pi_N\LRp{ \bm{\beta}u},v} &= \sum_{k} \LRp{-\bm{\beta}u, \Grad v}_{\LK} + \LRa{\avg{\Pi_N\LRp{\bm{\beta} u}}\cdot \bm{n},v}_{\LdK}\\
+\LRp{\Grad_h u,\bm{\beta}v} &= \sum_{k} \LRp{-u, \Grad \cdot \LRp{\bm{\beta}v}}_{\LK} + \LRa{\bm{\beta}\cdot\bm{n}\avg{u},v}_{\LdK}.
+\end{align*}
+The latter term is consistent; the former is not due to the presence of $\avg{\Pi_N\LRp{\bm{\beta} u}}\cdot \bm{n}$ in the flux term.  The consistency error should then be $O(h^{N+1/2})$ using a trace inequality for $L^2$ projections.  
+
+Note: can also use interpolants in a stable manner if using $D_h$.  Unlike SEM, this still requires an extra matvec per RHS evaluation because of the lack of diagonality of the mass matrix.  Reduces number of steps by one (no interpolation to quadrature points) but does not reduce number of total matvecs.  
 
 \subsection{Local conservation}
 
@@ -482,46 +485,38 @@ through integration by parts and an assumption that $\bm{\beta}\cdot \bm{n}$ is 
 \]
 which is a discrete version of the continuous statement of local conservation.
 
-Penalization can be added by adding any positive-definite stabilization term (upwind, penalty, Lax-Friedrichs) through the regular divergence flux.  
 
-It's probably better to formulate this using continuous DG derivatives, recover flux terms, then discretize that - the flux terms \textit{should} still cancel out after discretization, right?
 
-\section{Variable advection}
+\section{Non-affine mappings}
+\label{sec:curv}
 
-A split formulation for advection is 
+For general elements and curvilinear meshes, $J$ and $\bm{G}$ are no longer constant over each element.  However, for isoparametric mappings (and appropriate polynomial interpolations of general curvilinear mappings), metric identities hold \cite{kopriva2006metric} such that $\widehat{\Grad} \cdot \LRp{J\bm{G}^T} = 0$.  Thus, we can write
 \[
-\LRp{\pd{u}{t},v} + \frac{1}{2}\LRp{\Grad_h\cdot \Pi_N \LRp{ \bm{\beta}u},v} + \frac{1}{2}\LRp{\bm{\beta}\cdot\Grad_h u,v} + \frac{1}{2}\LRp{\LRp{\Grad\cdot \bm{\beta}} u,v} = 0.
+\LRp{\Grad u,\bm{v}}_{D^k} = \LRp{J\bm{G}\widehat{\Grad} u,\bm{v}}_{\widehat{D}} = \LRp{-u,\widehat{\Grad} \cdot \LRp{J\bm{G}\bm{v}}}  + \LRa{J\bm{G}^T\widehat{\bm{n}} u,\bm{v}}.   
 \]
-Taking $v = u$ yields and using $\LRp{\Grad_h u, \bm{v}} = \LRp{-u, \Grad_h \cdot \bm{v}}$ yields the energy statement
-\[
-\frac{1}{2}\nor{u}^2 + \frac{1}{2}\LRp{\Grad_h\cdot \Pi_N \LRp{ \bm{\beta}u},u} - \frac{1}{2}\LRp{ u, \Grad_h\cdot \Pi_N\LRp{\bm{\beta}u}} = \frac{1}{2}\LRp{-\LRp{\Grad \cdot \bm{\beta}} u,u},
-\]
-implying that $\frac{1}{2}\nor{u}^2 = 0$ if $\Grad\cdot \bm{\beta} = 0$, or that the method is energy conserving.  The only difference in this formulation is the introduction of $\Pi_N$, which can be defined at a discrete level using any quadrature scheme for which a discrete projection is well-defined. 
+Noting that $J\bm{G}\widehat{\bm{n}} = J^f \bm{n} $ \cite{hesthaven2007nodal}, we recover integration by parts over the physical element.  
 
-
-\section{Discrete DG derivatives}
-
-Methods based on discrete DG derivatives also work.  
-
-The discrete DG derivative-based method is not consistent in the sense that Galerkin orthogonality does not hold exactly.  The difference lies in the flux terms.  Assume $\Div \bm{\beta} = 0$, then
-\[
-\LRp{\pd{u}{t},v} + \frac{1}{2}\LRp{-{ \bm{\beta}u},\Grad_h v} + \frac{1}{2}\LRp{\bm{\beta}\cdot\Grad_h u,v} = 0.
-\]
+Thus, to extend the discrete discontinuous Galerkin gradient and divergence to non-affine mappings, we simply define
 \begin{align*}
-\LRp{\Grad_h\cdot \Pi_N\LRp{ \bm{\beta}u},v} &= \sum_{D^k} \LRp{-\bm{\beta}u, \Grad v}_{\LK} + \LRa{\avg{\Pi_N\LRp{\bm{\beta} u}}\cdot \bm{n},v}_{\LdK}\\
-\LRp{\Grad_h u,\bm{\beta}v} &= \sum_{D^k} \LRp{-u, \Grad \cdot \LRp{\bm{\beta}v}}_{\LK} + \LRa{\bm{\beta}\cdot\bm{n}\avg{u},v}_{\LdK}.
+\LRp{\widehat{\Grad}_h u,\bm{v}}_{\Omega} &= \sum_{k} \LRp{\widehat{\Grad}u,\bm{v}}_{\widehat{D}}  - \frac{1}{2}\LRa{\widehat{\bm{n}} \jump{u},\bm{v}} \\
+\LRp{\widehat{\Grad}_h \cdot\bm{u},{v}}_{\Omega} &= \sum_{k} \LRp{\widehat{\Grad}\cdot \bm{u},{v}}_{\widehat{D}}  - \frac{1}{2}\LRa{\jump{\bm{u}},v\widehat{\bm{n}}} 
+%\LRp{\Grad_h \cdot \bm{u},v}_{\Omega} &= \sum_{k} \LRp{\widehat{\Grad}\cdot{\Pi_N\LRp{J\bm{G}\bm{u}}},v}  - \frac{1}{2}\LRa{\widehat{\bm{n}} \jump{J\bm{G}\bm{u}},v} \\
+%\LRp{\Grad_h u,\bm{v}}_{\Omega} &= \sum_{k} \LRp{\Pi_N\LRp{J\bm{G}\widehat{\Grad} u},\bm{v}}  - \frac{1}{2}\LRa{\widehat{\bm{n}} \jump{J\bm{G}u},v}.
 \end{align*}
-The latter term is consistent; the former is not due to the presence of $\avg{\Pi_N\LRp{\bm{\beta} u}}\cdot \bm{n}$ in the flux term.  The consistency error should then be $O(h^{N+1/2})$ using a trace inequality for $L^2$ projections.  
-
-Note: can also use interpolants in a stable manner if using $D_h$.  Unlike SEM, this still requires an extra matvec per RHS evaluation because of the lack of diagonality of the mass matrix.  Reduces number of steps by one (no interpolation to quadrature points) but does not reduce number of total matvecs.  
-
-\section{Curvilinear coordinates}
-
-For curvilinear meshes, $J$ and $\bm{G}$ are no longer constant over each element.  However, for isoparametric mappings (and special polynomial interpolations of general curvilinear mappings), metric identities hold \cite{kopriva2006metric} such that $\widehat{\Grad} \cdot \LRp{J\bm{G}} = 0$.  
+and define the discrete physical gradient and divergence as
+\begin{align*}
+\LRp{\Grad_h u,v}_{\Omega} &= \LRp{J\bm{G}\widehat{\Grad}_h u,\bm{v}}_{\Omega} = \sum_{k}\LRp{J\bm{G}\widehat{\Grad}u,\bm{v}}_{\widehat{D}}  - \frac{1}{2}\LRa{J\bm{G}\widehat{\bm{n}} \jump{u},\bm{v}} \\
+\LRp{\Grad_h \cdot \bm{u},v}_{\Omega} &= \LRp{\widehat{\Grad}_h\cdot\LRp{J\bm{G}^T\bm{u}}}_{\Omega} = \sum_{k} \LRp{\widehat{\Grad}\cdot \LRp{J\bm{G}^T\bm{u}},{v}}_{\widehat{D}}  - \frac{1}{2}\LRa{\jump{J\bm{G}^T\bm{u}},v\widehat{\bm{n}}}. 
+\end{align*}
+The discrete gradient is consistent with the physical gradient.  The discrete divergence is also consistent with the physical divergence, provided that the jump term $\LRa{\jump{J\bm{G}^T\bm{u}},v\widehat{\bm{n}}}$ is computed via
 \[
-\LRp{\Grad u,\bm{v}}_{D^k} = \LRp{J\bm{G}\widehat{\Grad} u,\bm{v}}_{\widehat{D}} = \LRp{-u,\widehat{\Grad} \cdot \LRp{J\bm{G}\bm{v}}}  + \LRa{J\bm{G}\widehat{\bm{n}} u,\bm{v}} 
+\LRa{\jump{J\bm{G}^T\bm{u}},v\widehat{\bm{n}}} = \LRa{\jump{J\LRp{\bm{G}\widehat{\bm{n}}}^T\bm{u}},v} = \LRa{\LRp{\widehat{\bm{n}}^T\LRp{J{\bm{G}}^T\bm{u}}}^+ + \LRp{\widehat{\bm{n}}^T\LRp{J{\bm{G}}^T\bm{u}}}^-,v}.  
 \]
-Noting that $J\bm{G}\widehat{\bm{n}} = \bm{n} J^f$ \cite{hesthaven2007nodal}, we recover integration by parts over the physical element.
+
+The advantage of this projected geometric factor approach is local conservation; taking $v = \bbm{1}_{D^k}$ recovers (after integration by parts) the flux integral
+\[
+\LRp{\Grad_h \cdot \bm{u},\bbm{1}_{D^k}}_{\Omega} = \int_{\partial D^k}\widehat{\bm{n}}^T\avg{J\bm{G}^T\bm{u}}.
+\]
 
 \section{Extension to other hyperbolic problems}
 
