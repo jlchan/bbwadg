@@ -26,9 +26,9 @@
 
 function [p_1,p_2,p_3,n_1,n_2,n_3,Xi_1,Xi_2,Xi_3,P,W] = NURBS_Pipe_Elbow_Volume(h,w,r,R,t)
 
-[p_1,p_2,n_1,n_2,Xi_1,Xi_2,P_1,W_1] = NURBS_Pipe_Elbow_Surface(h,w,r,R);
-[~,~,~,~,~,~,P_2,W_2] = NURBS_Pipe_Elbow_Surface(h,w,r+t,R);
-[~,~,~,~,~,~,P_3,W_3] = NURBS_Pipe_Elbow_Surface(h,w,r-t,R);
+[p_1,p_2,n_1,n_2,Xi_1,Xi_2,P_1,W_1] = NURBS_Pipe_Elbow_Surface(h,w,r-t,R);
+[~,~,~,~,~,~,P_2,W_2] = NURBS_Pipe_Elbow_Surface(h,w,r,R);
+[~,~,~,~,~,~,P_3,W_3] = NURBS_Pipe_Elbow_Surface(h,w,r+t,R);
 
 P = zeros(9,7,3,3);
 

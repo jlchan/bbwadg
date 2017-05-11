@@ -1,7 +1,7 @@
 % clear all; clc;
 
 h = 1; w = 1; r = .5; R = 1; t = r/2;
-h = 4; w = 3; r = 0.5; R = 3; t = 0.2; 
+h = 2; w = 2; r = 0.5; R = 2; t = 0.2; 
 
 [p_1,p_2,p_3,n_1,n_2,n_3,Xi_1,Xi_2,Xi_3,P,W] = NURBS_Pipe_Elbow_Volume(h,w,r,R,t);
 
@@ -10,9 +10,8 @@ d = 3;
 
 [P_b,w_b] = Extract_Geometry(d,n_el,C_operators,IEN,P,W);
 
-Bezier_Plotter(p_1,p_2,p_3,n_el,P_b,w_b);
-
-return
+% Bezier_Plotter(p_1,p_2,p_3,n_el,P_b,w_b);
+% return
 
 Np = (p_1+1)^3;
 cx = reshape(P_b(:,1,:),Np,n_el);
@@ -24,8 +23,8 @@ xp = linspace(-1,1,8);
 [V1D Vr1D] = bern_basis_1D(p_1,xp);
 V = kron(kron(V1D,V1D),V1D);
 Vr = kron(kron(V1D,Vr1D),V1D);
-Vt = kron(kron(Vr1D,V1D),V1D);
-Vs = kron(kron(V1D,V1D),Vr1D);
+Vs = kron(kron(Vr1D,V1D),V1D);
+Vt = kron(kron(V1D,V1D),Vr1D);
 
 % D1D = V1D\Vr1D; D1D(abs(D1D)<1e-8) = 0; I = eye(p_1+1);
 % Dr = kron(kron(I,D1D),I);
@@ -38,12 +37,12 @@ w = V*cw;
 x = (V*(cx.*cw))./w;
 y = (V*(cy.*cw))./w;
 z = (V*(cz.*cw))./w;
-plot3(x,y,z,'o')
+% plot3(x,y,z,'o')
 ids = abs(z-1)<1e-8;
-plot3(x(ids),y(ids),z(ids),'o')
+% plot3(x(ids),y(ids),z(ids),'o')
 axis equal
 
-return
+% return
 wr = Vr*cw;
 ws = Vs*cw;
 wt = Vt*cw;
@@ -69,4 +68,19 @@ tx =  (yr.*zs - zr.*ys)./J; ty = -(xr.*zs - zr.*xs)./J; tz = (xr.*ys - yr.*xs)./
 % z = V*t;
 color_line3(x,y,z,J,'.')
 axis equal
+colorbar
+
+[V1D Vr1D] = bern_basis_1D(p_1,JacobiGL(0,0,p_1));
+V = kron(kron(V1D,V1D),V1D);
+invV = kron(kron(inv(V1D),inv(V1D)),inv(V1D));
+x = (V*(cx.*cw))./(V*cw);
+% interpolate to 
+cx = invV*(x);
+xr = Vr*cx;
+xs = Vs*cx;
+xt = Vt*cx;
+
+norm(rx.*xr + sx.*xs + tx.*xt - 1,'fro')
+% clf
+% color_line3(x,y,z,x,'.')
 
