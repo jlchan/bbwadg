@@ -20,9 +20,9 @@ w_original = [1;1;1;cos(pi/4);cos(pi/4);cos(pi/4);1;1;1];
 
 P = P_original;
 w = w_original;
-P(:,1) = [-1 0 1 -1 0 1 -1 0 1]';
-P(:,2) = [0 0 0 .5 .5 .5 1 1 1]';
-w = ones(size(w));
+% P(:,1) = [-1 0 1 -1 0 1 -1 0 1]';
+% P(:,2) = [0 0 0 .5 .5 .5 1 1 1]';
+% w = ones(size(w));
 
 p_1 = 2;
 p_2 = 2;
@@ -56,17 +56,18 @@ if 1
         for q_1 = 1:Nplot
             for q_2 = 1:Nplot
                 %[R,dRdx,xij,J] = Shape_Function(xi_q(q_1),xi_q(q_2),p_1,p_2,C_e,P_b,w_b,w_e);
-                [R,dRdx,xij,G] = Shape_Function(xp(q_1),xp(q_2),p_1,p_2,C_e,P_b(:,:,e),w_b(:,e),w_e(:,e));
-                
+                [R,dRdx,xij,G,wb] = Shape_Function(xp(q_1),xp(q_2),p_1,p_2,C_e,P_b(:,:,e),w_b(:,e),w_e(:,e));                
                 
                 J(sk,e) = det(G);
                 x(sk,e) = xij(1);
                 y(sk,e) = xij(2);
+                ww(sk,e) = wb;
                 sk = sk + 1;
             end
         end
     end
-    plot(x,y,'o')
+    vv = ww.*y;
+    h = color_line3(x,y,vv,vv,'.'); set(h,'markersize',32);
     axis equal
     hold on
     return

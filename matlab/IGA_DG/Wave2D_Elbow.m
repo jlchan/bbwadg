@@ -2,7 +2,7 @@ function [L2err] = WaveQuad_IGA(NB,Ksub,K1D,dt)
 
 Globals2D;
 if nargin==0
-    NB = 3;
+    NB = 5;
     Ksub = 16;
     K1D = 1;
 end
@@ -13,7 +13,7 @@ useQuadrature = 1;
 N = NB+Ksub-1;
 dofs = (N+1)^2*K1D^2
 
-FinalTime = .25;
+FinalTime = .3;
 
 % Read in Mesh
 [Nv, VX, VY, K, EToV] = QuadMesh2D(K1D);
@@ -318,8 +318,12 @@ vavg = zeros(Nfp*Nfaces,K); vavg(:) = v(vmapP)+v(vmapM);
 
 % uavg(mapB) = u(vmapB);
 % vavg(mapB) = v(vmapB);
-% du(mapB) = 0; dv(mapB) = 0;
-dp(mapB) = -2*p(vmapB);
+% Impose reflective boundary conditions (p+ = -p-)
+% dp(mapB) = -2*p(vmapB);
+du(mapB) = -2*u(vmapB);
+dv(mapB) = -2*v(vmapB);
+uavg(mapB) = 0;
+vavg(mapB) = 0;
 
 global Vq1D Vrq1D Pq1D Prq1D 
 Nq = size(Vq1D,1);
@@ -329,7 +333,7 @@ dv = Vq1D*reshape(dv,N+1,4); dv = dv(:);
 uavg = Vq1D*reshape(uavg,N+1,4); uavg = uavg(:);
 vavg = Vq1D*reshape(vavg,N+1,4); vavg = vavg(:);
 
-% Impose reflective boundary conditions (p+ = -p-)
+
 ndotUavg = nxq.*uavg + nyq.*vavg;
 ndotdU = nxq.*du + nyq.*dv;
 

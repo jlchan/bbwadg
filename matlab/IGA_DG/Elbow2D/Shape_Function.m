@@ -22,7 +22,7 @@
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-function [R,dRdx,x,J] = Shape_Function(xi_1,xi_2,p_1,p_2,C_e,P_b,w_b,w_e)
+function [R,dRdx,x,J,wb] = Shape_Function(xi_1,xi_2,p_1,p_2,C_e,P_b,w_b,w_e)
 
 n_loc = (p_1+1)*(p_2+1);
 

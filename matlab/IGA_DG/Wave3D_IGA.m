@@ -228,7 +228,7 @@ init_cond_err = sqrt(sum(sum(wq2.*J2.*(matvec(Vq2,p,'all') - pex(xq2,yq2,zq2,0))
 
 %% test operators
 
-if 0
+if 1
     r2 = VDM\r; s2 = VDM\s; t2 = VDM\t;
     Dr = kron(kron(eye(N+1),D1D),eye(N+1));
     norm(Dr*r2 - matvec(D1D,r2,1))

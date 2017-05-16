@@ -10,17 +10,18 @@ if nargin < 4
     smoothKnots = 0;
 end
 
-if (K==1)
-    BVDM = bern_basis_1D(N,rin);
-    [rBq wBq] = JacobiGQ(0,0,N+2);
-    [Vq Vrq] = bern_basis_1D(N,rBq);
-    M = Vq'*diag(wBq)*Vq;
-    Dr = M\(Vq'*diag(wBq)*Vrq);
-    R = eye(N+1);
-    Bq = Vq;
-    Brq = Vrq;
-    return
-end
+% if (K==1)
+%     BVDM = bern_basis_1D(N,rin);
+%     [rBq wBq] = JacobiGQ(0,0,N+1);
+%     [Vq Vrq] = bern_basis_1D(N,rBq);
+%     M = Vq'*diag(wBq)*Vq;
+%     Dr = M\(Vq'*diag(wBq)*Vrq);
+%     R = eye(N+1);
+%     Bq = Vq;
+%     Brq = Vrq;
+%     VX = [-1 1];
+%     return
+% end
 
 [Nv, VX, K, EToV] = MeshGen1D(-1,1,K);
 
