@@ -8,6 +8,7 @@ K1D = 8;
 
 % Initialize solver and construct grid and metric
 StartUp2D; 
+
 vmapM = reshape(vmapM,Nfp*Nfaces,K);
 vmapP = reshape(vmapP,Nfp*Nfaces,K);
 mapM = reshape(mapM,Nfp*Nfaces,K);
@@ -73,6 +74,7 @@ ns = repmat(ns,1,K);
 
 norm(nxJ - (rxJ.*nr + sxJ.*ns),'fro')
 norm(nyJ - (ryJ.*nr + syJ.*ns),'fro')
+% return
 
 % quadrature arrays
 rxJ = Vq*(rx.*J); sxJ = Vq*(sx.*J);

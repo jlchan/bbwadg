@@ -333,9 +333,11 @@ Non-conservative discretizations \cite{rhebergen2008discontinuous}.
 
 DG calculus \cite{feng2016discontinuous} usually assumes exact integration.  As pointed out in \cite{gassner2016split}, this can be either be very expensive (curvilinear meshes or polynomial nonlinearities) or impossible (in the presence of rational integrands, such as for compressible flow).  
 
-Lifting operators and discrete gradients \cite{bassi1997high, di2011mathematical}
+Lifting operators and discrete gradients \cite{bassi1997high, di2011mathematical}.  
 
-Goal: reduce aliasing in advective problems caused by variable coefficients and curvilinear or non-affine mappings.  
+Goal: reduce aliasing in advective problems caused by variable coefficients and curvilinear or non-affine mappings.  Resembles ideas from summation by parts \cite{olsson1995summation1, olsson1995summation2, hicken2016multidimensional}, but based on global DG differentiation operators. 
+
+
 
 \section{Discrete differential operators}
 
