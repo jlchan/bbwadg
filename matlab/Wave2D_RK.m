@@ -214,8 +214,7 @@ dv = zeros(Nfp*Nfaces,K); dv(:) = v(vmapP)-v(vmapM);
 
 % Impose reflective boundary conditions (p+ = -p-)
 du(mapB) = 0; dv(mapB) = 0; dp(mapB) = -2*p(vmapB);
-du(mapB) = -2*u(vmapB); dv(mapB) = -2*v(vmapB); dp(mapB) = 0;
-
+% du(mapB) = -2*u(vmapB); dv(mapB) = -2*v(vmapB); dp(mapB) = 0;
 
 % evaluate upwind fluxes
 ndotdU = nx.*du + ny.*dv;

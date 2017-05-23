@@ -192,10 +192,10 @@ dp(mapB) = -2*p(vmapB);
 
 % left wall bcs
 global mapBx vmapBx t0
-% if (time < t0)
-%     dp(mapBx) = 2*(sin(pi*time/t0)*(time<t0) - p(vmapBx));
-%     ndotdU(mapBx(:)) = 0;
-% end
+if (time < t0)
+    dp(mapBx) = 2*(sin(pi*time/t0)*(time<t0) - p(vmapBx));
+    ndotdU(mapBx(:)) = 0;
+end
 
 % % basic ABCs
 % fluxp(mapB) = (nx(mapB).*u(vmapM(mapB)) + ny(mapB).*v(vmapM(mapB)));

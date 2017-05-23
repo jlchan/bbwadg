@@ -188,6 +188,7 @@ for e = 1:K
         % normalize so we can scale by sJ after
         wf(fids{f}) = wf(fids{f})/sum(wf(fids{f}));
         
+        nc
     end
     
     sJ = sqrt(nx(:,e).^2 + ny(:,e).^2 + nz(:,e).^2);

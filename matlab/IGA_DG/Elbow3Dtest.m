@@ -77,9 +77,6 @@ w = V*cw;
 x = (V*(cx.*cw))./w; 
 y = (V*(cy.*cw))./w;
 z = (V*(cz.*cw))./w;
-% x = ((V*cx).*(V*cw))./w; 
-% y = ((V*cy).*(V*cw))./w; 
-% z = ((V*cz).*(V*cw))./w; 
 
 wr = Vr*cw; 
 ws = Vs*cw; 

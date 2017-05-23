@@ -481,7 +481,7 @@ The second term gives
 \[
 \LRp{\bm{\beta}\cdot\Grad_h u,\bbm{1}_{D^k}} = \LRp{\Grad u,\bm{\beta}}_{D^k} + \frac{1}{2}\LRa{\jump{u},\bm{\beta}\cdot\bm{n}} = \LRp{u,-\Grad \cdot \bm{\beta}}_{D^k} + \LRa{\avg{u},\bm{\beta}\cdot\bm{n}}
 \]
-through integration by parts and an assumption that $\bm{\beta}\cdot \bm{n}$ is periodic.  Cancelling volume terms, we end up with the statement of local conservation 
+through integration by parts and an assumption that $\bm{\beta}\cdot \bm{n}$ is periodic.  Cancelling volume terms involving $\Grad\cdot \beta$, we end up with the statement of local conservation 
 \[
 \int_{D^k} \pd{u}{t}  + \frac{1}{2}\int_{\partial D^k} \LRp{\avg{\Pi_N\LRp{\bm{\beta}u}} + \LRp{\Pi_N\LRp{\bm{\beta}}\avg{u}}}\cdot\bm{n} = 0
 \]
@@ -520,6 +520,12 @@ The advantage of this projected geometric factor approach is local conservation;
 \LRp{\Grad_h \cdot \bm{u},\bbm{1}_{D^k}}_{\Omega} = \int_{\partial D^k}\widehat{\bm{n}}^T\avg{J\bm{G}^T\bm{u}}.
 \]
 
+\subsection{Specific discrete cases}
+
+Spectral element methods and mass-lumpable tets: $\Pi_N = I_N$, and the lift operator is just the $\bm{B}$ boundary operator, which you can commute terms such that the scaling of the lift is the same as the lift of the scaling.  
+
+CPR GL nodes: conservation for Burgers', but is this just because of the special nature of the flux function cancelling out other terms?  Skew-symmetric variable advection doesn't seem to be conservative.
+
 \section{Extension to other hyperbolic problems}
 
 Example: acoustic wave equation, simply discretize by replacing $\Grad, \Grad\cdot$ with discrete versions.  Automatically skew symmetric and energy stable via integration by parts.  Also, can show why WADG works: discretize based on discrete divergence, then test with $T_{c^2}^{-1}p$ and use identities.  Note - I think this requires the use of the strictly discrete version.  
@@ -531,6 +537,15 @@ Example: Kinetic energy preserving splitting of Euler (assumes exact time discre
 Example: Entropy splitting of Buckley-Leverett?
 
 Example: Entropy splitting of Euler (note - cannot extend to Navier-Stokes in an entropy-stable fashion due to fact that heat flux matrix is not symmetrizable w.r.t.\ homogeneous flux function, though viscous terms are.  This impacts only boundary conditions.) 
+
+\section{Numerical experiments}
+
+\begin{itemize}
+\item Check ``true'' conservation of discrete DG differentiation formulations - does it converge at $h^{N+2}$ or greater?
+\item Copy Ranocha's experiments.  
+\item Convergence of 2D advection and (pre-shock) Burgers equation on curvilinear grids: conservative and Lax-Friedrichs fluxes.  
+\item Stability (energy/entropy evolution) of 2D advection and Burgers equation on curvilinear grids: conservative and Lax-Friedrichs fluxes.  
+\end{itemize}
 
 %\section{Standard entropy stability estimates}
 %

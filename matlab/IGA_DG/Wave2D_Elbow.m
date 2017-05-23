@@ -3,17 +3,20 @@ function [L2err] = WaveQuad_IGA(NB,Ksub,K1D,dt)
 Globals2D;
 if nargin==0
     NB = 5;
-    Ksub = 16;
+    Ksub = 32;
+%     Ksubx = 32;
+%     Ksuby = 32;
     K1D = 1;
 end
 
 smoothKnots = 0;
 useQuadrature = 1;
-    
-N = NB+Ksub-1;
-dofs = (N+1)^2*K1D^2
 
-FinalTime = .3;
+N = NB+Ksub-1;
+% Nx = NB+Ksubx-1;
+% Ny = NB+Ksuby-1;
+
+FinalTime = .75;
 
 % Read in Mesh
 [Nv, VX, VY, K, EToV] = QuadMesh2D(K1D);
@@ -39,20 +42,20 @@ rp1D = linspace(-1,1,150);
 [rp sp] = meshgrid(rp1D);
 rp = rp(:); sp = sp(:);
 
-[rq1D wq1D] = JacobiGQ(0,0,N+1);
+[rq1D wq1D] = JacobiGQ(0,0,N);
 if (Ksub>1)
     %[rq1D wq1D] = spline_quadrature(NB);
-    [rgq wgq] = JacobiGQ(0,0,NB+1);
+    [rgq wgq] = JacobiGQ(0,0,NB);
     h = (2/Ksub);
-    rq1D = (1+repmat(rgq,1,Ksub))/2*h + repmat(linspace(-1,1-h,Ksub),length(rgq),1);    
-    wq1D = repmat(wgq,Ksub,1)*h/2;    
+    rq1D = (1+repmat(rgq,1,Ksub))/2*h + repmat(linspace(-1,1-h,Ksub),length(rgq),1);
+    wq1D = repmat(wgq,Ksub,1)*h/2;
     rq1D = rq1D(:); wq1D = wq1D(:);
 end
 
 [r1D] = JacobiGL(0,0,N);
 if Ksub > 1
     [~, ~, ~, ~, ~, ~, ~, ~, VX] = bsplineVDM(NB,Ksub,r1D,smoothKnots);
-%     VX = linspace(-1,1,Ksub+1);
+    %     VX = linspace(-1,1,Ksub+1);
     t = [VX(1)*ones(1,NB) VX VX(end)*ones(1,NB)]; % open knot vec
     for i = 1:N+1
         r1D(i) = mean(t((i+1):(i+NB))); % greville
@@ -73,15 +76,11 @@ if Ksub==1
     M1D = Vq1D'*diag(wq1D)*Vq1D;
     invM1D = V1D*V1D';
 else
-    [BVDM M1D D1D] = bsplineVDM(NB,Ksub,r1D,smoothKnots); % VDM for interp, mass, M\S    
+    [BVDM M1D D1D] = bsplineVDM(NB,Ksub,r1D,smoothKnots); % VDM for interp, mass, M\S
     Vp1D = bsplineVDM(NB,Ksub,rp1D,smoothKnots);
     Vq1D = bsplineVDM(NB,Ksub,rq1D,smoothKnots);
     invM1D = inv(M1D);
 end
-% Vp = kron(Vp1D,Vp1D);
-
-% Dr = kron(eye(N+1),D1D);
-% Ds = kron(D1D,eye(N+1));
 
 invM = kron(invM1D,invM1D);
 Mf = zeros(N+1,4*(N+1));
@@ -89,78 +88,118 @@ for f = 1:4
     Mf(Fmask(:,f),(1:N+1) + (f-1)*(N+1)) = M1D;
 end
 LIFT = invM * Mf;
-LIFT(abs(LIFT)<1e-8) = 0; 
+LIFT(abs(LIFT)<1e-8) = 0;
 LIFT = sparse(LIFT);
 % spy(LIFT);return
 % keyboard
 
-% global Prq Psq 
+% global Prq Psq
 if useQuadrature
     Vrq1D = Vq1D*D1D;
-%     Vfq = blkdiag(Vq1D,Vq1D,Vq1D,Vq1D);            
+    %     Vfq = blkdiag(Vq1D,Vq1D,Vq1D,Vq1D);
     Pq1D = invM1D*Vq1D'*diag(wq1D);
     Prq1D = invM1D*Vrq1D'*diag(wq1D);
-       
-%     Vq = kron(Vq1D,Vq1D);
-%     Pq = invM*Vq'*diag(wq);
-%     Vrq = kron(Vq1D,Vrq1D);
-%     Vsq = kron(Vrq1D,Vq1D);
-%     Prq = invM*Vrq'*diag(wq);
-%     Psq = invM*Vsq'*diag(wq);        
-%     % project onto face space then apply usual lift    
-%     Pfq = LIFT*kron(eye(Nfaces),invM1D)*Vfq'*diag(repmat(wq1D,Nfaces,1));   
-   
+    
+    %     Vq = kron(Vq1D,Vq1D);
+    %     Pq = invM*Vq'*diag(wq);
+    %     Vrq = kron(Vq1D,Vrq1D);
+    %     Vsq = kron(Vrq1D,Vq1D);
+    %     Prq = invM*Vrq'*diag(wq);
+    %     Psq = invM*Vsq'*diag(wq);
+    %     % project onto face space then apply usual lift
+    %     Pfq = LIFT*kron(eye(Nfaces),invM1D)*Vfq'*diag(repmat(wq1D,Nfaces,1));    
 end
 
-disp(sprintf('making geom ...\n'))
-[xp yp] = Elbow2D(rp1D);
-[xq yq rxq sxq ryq syq Jq] = Elbow2D(rq1D);
 
 e = ones(size(rq1D));
 rfq = [rq1D e rq1D -e];
 sfq = [-e rq1D e rq1D];
 
-xfq = []; yfq = [];
-rxf = []; sxf = []; ryf = []; syf = []; 
-Jf = [];
-for f = 1:4
-    if f==1
-        [xff yff rxff sxff ryff syff Jff] = Elbow2D(rq1D,-1);
-    elseif f==2
-        [xff yff rxff sxff ryff syff Jff] = Elbow2D(1,rq1D);
-    elseif f==3
-        [xff yff rxff sxff ryff syff Jff] = Elbow2D(rq1D,1);
-    elseif f==4
-        [xff yff rxff sxff ryff syff Jff] = Elbow2D(-1,rq1D);
+if 1
+    disp(sprintf('making geom ...\n'))
+    [x y] = Elbow2D(r1D);
+    [xp yp] = Elbow2D(rp1D);
+    
+    [xq yq rxq sxq ryq syq Jq] = Elbow2D(rq1D);
+    xfq = []; yfq = [];
+    rxf = []; sxf = []; ryf = []; syf = [];
+    Jf = [];
+    for f = 1:4
+        if f==1
+            [xff yff rxff sxff ryff syff Jff] = Elbow2D(rq1D,-1);
+        elseif f==2
+            [xff yff rxff sxff ryff syff Jff] = Elbow2D(1,rq1D);
+        elseif f==3
+            [xff yff rxff sxff ryff syff Jff] = Elbow2D(rq1D,1);
+        elseif f==4
+            [xff yff rxff sxff ryff syff Jff] = Elbow2D(-1,rq1D);
+        end
+        xfq = [xfq xff];
+        yfq = [yfq yff];
+        rxf = [rxf rxff];
+        sxf = [sxf sxff];
+        ryf = [ryf ryff];
+        syf = [syf syff];
+        Jf = [Jf Jff];
     end
-    xfq = [xfq xff];
-    yfq = [yfq yff];
-    rxf = [rxf rxff];
-    sxf = [sxf sxff];
-    ryf = [ryf ryff];
-    syf = [syf syff];
-    Jf = [Jf Jff];
+    
+    if 0
+        xx = reshape(x,N+1,N+1);
+        yy = reshape(y,N+1,N+1);
+        hold on;
+        for i = 1:N+1
+            plot(xx(:,i),yy(:,i),'k-','linewidth',2)
+            plot(xx(i,:),yy(i,:),'k-','linewidth',2)
+        end
+        grid on; axis equal; set(gca,'fontsize',15); return
+    end
+else
+    disp(sprintf('making geom ...\n'))
+    [x y] = meshgrid(r1D); x = x(:); y = y(:);
+    [xp yp] = meshgrid(rp1D); xp = xp(:); yp = yp(:);
+    [xq yq] = meshgrid(rq1D); xq = xq(:); yq = yq(:);
+    rxq = ones(size(xq));
+    sxq = zeros(size(xq));
+    ryq = zeros(size(xq));
+    syq = ones(size(xq));
+    Jq = ones(size(xq));
+
+    xfq = rfq;
+    yfq = sfq;
+    rxf = ones(size(xfq));
+    sxf = zeros(size(xfq));
+    ryf = zeros(size(xfq));
+    syf = ones(size(xfq));
+    Jf = ones(size(xfq));
 end
+
 
 disp('done making geom')
 
-nxq = zeros(size(rxf));
-nyq = zeros(size(rxf));
+nr = zeros(length(rq1D),4);
+ns = zeros(length(rq1D),4);
+nr(:,1) = 0; ns(:,1) = -1;
+nr(:,2) = 1; ns(:,2) = 0;
+nr(:,3) = 0; ns(:,3) = 1;
+nr(:,4) = -1; ns(:,4) = 0;
 
-nxq(:,1) = -sxf(:,1); nyq(:,1) = -syf(:,1);
-nxq(:,2) =  rxf(:,2); nyq(:,2) = ryf(:,2);
-nxq(:,3) =  sxf(:,3); nyq(:,3) = syf(:,3);
-nxq(:,4) = -rxf(:,4); nyq(:,4) = -ryf(:,4);
+% f = 4;
+% quiver(rfq(:,f),sfq(:,f),nr(:,f),ns(:,f));return
 
-sJq = sqrt(nxq.*nxq+nyq.*nyq);
+nxq = (rxf.*nr + sxf.*ns)./Jf;
+nyq = (ryf.*nr + syf.*ns)./Jf;
+
+sJq = sqrt(nxq.^2+nyq.^2);
 nxq = nxq./sJq; nyq = nyq./sJq;
 sJq = sJq.*Jf;
 
 % % plot(rq,sq,'o')
 % hold on
 % % plot(rfq,sfq,'o')
-% % keyboard
-% plot(xfq,yfq,'o'); hold on; quiver(xfq,yfq,nxq,nyq) ;return
+% keyboard
+% f = 1:4;
+% plot(xfq(:,f),yfq(:,f),'o'); hold on; quiver(xfq(:,f),yfq(:,f),nxq(:,f),nyq(:,f));
+% return
 % color_line3(xq,yq,Jq,Jq,'.'); return
 
 nxq = nxq(:); nyq = nyq(:); sJq = sJq(:);
@@ -168,7 +207,19 @@ rxJ = rxq.*Jq; sxJ = sxq.*Jq;
 ryJ = ryq.*Jq; syJ = syq.*Jq;
 wJq = spdiag(wq)*Jq;
 
+% keyboard
 
+% incoming pressure wave condition
+global mapI vmapI
+f = 4;
+mapI = (1:Nfp) + (f-1)*Nfp;
+vmapI = Fmask(:,f);
+
+% plot(x,y,'o')
+% hold on
+% plot(x(vmapI),y(vmapI),'x')
+% return
+% keyboard
 %% check eigs
 
 3*Np*K
@@ -199,12 +250,12 @@ if 0 && nargin==0 && 3*Np*K < 3000
 end
 
 %% estimate timestep
-if 1
+if 0
     U = randn((N+1)^2*K,3);
     for i = 1:10
         Uprev = U;
         if useQuadrature
-            [rhsp, rhsu, rhsv] = acousticsRHS2Dq(reshape(U(:,1),Np,K),reshape(U(:,2),Np,K),reshape(U(:,3),Np,K));
+            [rhsp, rhsu, rhsv] = acousticsRHS2Dq(reshape(U(:,1),Np,K),reshape(U(:,2),Np,K),reshape(U(:,3),Np,K),0);
         else
             [rhsp, rhsu, rhsv] = acousticsRHS2D(reshape(U(:,1),Np,K),reshape(U(:,2),Np,K),reshape(U(:,3),Np,K));
         end
@@ -218,25 +269,27 @@ if 1
     dt = .75/abs(lam)
 else
     CT = max((NB+1)*Ksub,(NB+1)^2);
-    dt = .25/(CT*K1D);
+    dt = .5*min(Jq(:))/(CT*K1D);
 end
 
 %% initial cond
 
-x0 = -.75*cos(pi/4); y0 = .75*sin(pi/4);
-% x0 = 0; y0 = 0;
-pex = @(x,y,t) exp(-10^2*((x-x0).^2 + (y-y0).^2));
+rr = .75;
+x0 = -rr*cos(pi/4); y0 = rr*sin(pi/4);
+% x0 = .05; y0 = .1;
+pex = @(x,y,t) 2.5*exp(-10^2*((x-x0).^2 + (y-y0).^2));
+
+a = cos(pi/4); b = sin(pi/4);
+xy0 = 0;
+pex = @(x,y,t) exp(-10^2*(a*x+b*y-xy0).^2);
 % k = 3;
 % pex = @(x,y,t) cos(k*pi*x/2).*cos(k*pi*y/2).*cos(sqrt(2)*.5*k*pi*t);
 
+% pex = @(x,y,t) zeros(size(x));
+
 Nq = size(Pq1D,2);
 p = Pq1D*reshape(pex(xq,yq,0),Nq,Nq)*Pq1D'; p  = p(:);
-% for e = 1:K
-%     p(:,e) = (Vq'*diag(wq.*Jq(:,e))*Vq)\(Vq'* (wq.*Jq(:,e).*pex(xq(:,e),yq(:,e),0)));
-% end
-
-% p = VDM\pex(x,y,0);
-u = zeros(Np, K); 
+u = zeros(Np, K);
 v = zeros(Np, K);
 
 pq = Vq1D*reshape(p,N+1,N+1)*Vq1D'; pq = pq(:);
@@ -258,15 +311,15 @@ Nsteps = ceil(FinalTime/dt);
 dt = FinalTime/Nsteps;
 
 % outer time step loop
-for tstep = 1:Nsteps    
+for tstep = 1:Nsteps
     for INTRK = 1:5
         
         timelocal = tstep*dt + rk4c(INTRK)*dt;
         if useQuadrature
-            [rhsp, rhsu, rhsv] = acousticsRHS2Dq(p,u,v);
+            [rhsp, rhsu, rhsv] = acousticsRHS2Dq(p,u,v,timelocal);
         else
             [rhsp, rhsu, rhsv] = acousticsRHS2D(p,u,v);
-        end        
+        end
         % initiate and increment Runge-Kutta residuals
         resp = rk4a(INTRK)*resp + dt*rhsp;
         resu = rk4a(INTRK)*resu + dt*rhsu;
@@ -280,17 +333,18 @@ for tstep = 1:Nsteps
         
     end;
     
-    if 1 && nargin==0 && (mod(tstep,5)==0 || tstep==Nsteps)
+    if 1 && nargin==0 && (mod(tstep,10)==0 || tstep==Nsteps)
         clf
         vv = Vp1D*reshape(p,N+1,N+1)*Vp1D';
         color_line3(xp,yp,vv,vv,'.');
         axis equal
         axis tight
         colorbar
+        caxis([-1.1 1.25])
         title(sprintf('time = %f',tstep*dt))
         drawnow
     end
-        
+    
     if mod(tstep,25)==0
         disp(sprintf('on tstep %d out of %d\n',tstep,Nsteps))
     end
@@ -302,7 +356,7 @@ return
 % L2err = sqrt(sum(err(:)));
 
 
-function [rhsp, rhsu, rhsv] = acousticsRHS2Dq(p,u,v)
+function [rhsp, rhsu, rhsv] = acousticsRHS2Dq(p,u,v,time)
 
 Globals2D;
 
@@ -316,23 +370,36 @@ dv = zeros(Nfp*Nfaces,K); dv(:) = v(vmapP)-v(vmapM);
 uavg = zeros(Nfp*Nfaces,K); uavg(:) = u(vmapP)+u(vmapM);
 vavg = zeros(Nfp*Nfaces,K); vavg(:) = v(vmapP)+v(vmapM);
 
-% uavg(mapB) = u(vmapB);
-% vavg(mapB) = v(vmapB);
 % Impose reflective boundary conditions (p+ = -p-)
 % dp(mapB) = -2*p(vmapB);
-du(mapB) = -2*u(vmapB);
-dv(mapB) = -2*v(vmapB);
+dp(mapB) = 0;
+du(mapB) = 2*(-u(vmapB));
+dv(mapB) = 2*(-v(vmapB));
 uavg(mapB) = 0;
 vavg(mapB) = 0;
 
-global Vq1D Vrq1D Pq1D Prq1D 
+if 0
+    global mapI vmapI
+%     keyboard
+    t0 = .25;
+    if time < 1e8*t0
+        vt = (1-cos(2*pi*time/t0))/2.*(time < t0);
+        %     vt = sin(pi*time/t0);
+        dp(mapI) = 2*(vt-p(vmapI));
+        du(mapI) = 0;
+        dv(mapI) = 0;
+        uavg(mapI) = 2*u(vmapI);
+        vavg(mapI) = 2*v(vmapI);
+    end
+end
+
+global Vq1D Vrq1D Pq1D Prq1D
 Nq = size(Vq1D,1);
 dp = Vq1D*reshape(dp,N+1,4); dp = dp(:);
 du = Vq1D*reshape(du,N+1,4); du = du(:);
 dv = Vq1D*reshape(dv,N+1,4); dv = dv(:);
 uavg = Vq1D*reshape(uavg,N+1,4); uavg = uavg(:);
 vavg = Vq1D*reshape(vavg,N+1,4); vavg = vavg(:);
-
 
 ndotUavg = nxq.*uavg + nyq.*vavg;
 ndotdU = nxq.*du + nyq.*dv;

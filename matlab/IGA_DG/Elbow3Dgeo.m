@@ -1,7 +1,7 @@
 function [x y z geofacs] = Elbow3Dgeo(r,s,t)
 % function Elbow3Dgeo(r,s,t)
 
-% h = 1; w = 1; r = .5; R = 1; t = r/2;
+% h = 1; w = 1; rad = .5; R = 1; T = rad/2;
 h = 2; w = 2; rad = 0.5; R = 2; T = 0.2; 
 
 [N,N_2,N_3,n_1,n_2,n_3,Xi_1,Xi_2,Xi_3,P,W] = NURBS_Pipe_Elbow_Volume(h,w,rad,R,T);

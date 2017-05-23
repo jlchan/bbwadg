@@ -83,7 +83,7 @@ xt = Vt*cx;
 rxJ =  (ys.*zt - zs.*yt); ryJ = -(xs.*zt - zs.*xt); rzJ = (xs.*yt - ys.*xt);
 sxJ = -(yr.*zt - zr.*yt); syJ =  (xr.*zt - zr.*xt); szJ = -(xr.*yt - yr.*xt);
 txJ =  (yr.*zs - zr.*ys); tyJ = -(xr.*zs - zr.*xs); tzJ = (xr.*ys - yr.*xs);
- norm(rxJ.*xr + sxJ.*xs + txJ.*xt - J,'fro')
+norm(rxJ.*xr + sxJ.*xs + txJ.*xt - J,'fro')
 % clf
 % color_line3(x,y,z,x,'.')
 
