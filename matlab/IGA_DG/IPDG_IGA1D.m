@@ -54,7 +54,8 @@ xp = Vp*x;
 
 %% set init condition
 
-uex = @(x,t) cos(3*pi*x/2).*cos(3*pi*t/2);
+k = 3;
+uex = @(x,t) cos(k*pi*x/2).*cos(k*pi*t/2);
 % uex = @(x,t) exp(-5^2*x.^2);
 u = uex(x,0);
 

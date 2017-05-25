@@ -1,7 +1,7 @@
 % function advec1D_dispersion
 clear
-NB = 3;
-Ksub = 32;
+NB = 2;
+Ksub = 2;
 K1D = 1;
 N = NB+Ksub-1;
 smoothKnots = 0;

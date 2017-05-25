@@ -2,9 +2,9 @@ function Wave3D_IGA_DG
 
 Globals3D
 
-NB = 5;
-Ksub = 16;
-smoothKnots = 0;
+NB = 3;
+Ksub = 8;
+smoothKnots = 25;
 
 computeEigs = 0;
 Testing = 0;
@@ -14,7 +14,7 @@ N = NB+Ksub-1;
 Np = (N+1)^3;
 Nfp = (N+1)^2;
 
-FinalTime = 4;
+FinalTime = 2;
 
 %% reference elem stuff
 
@@ -159,15 +159,15 @@ addpath IGA_DG/Elbow3D
 [re se te] = meshgrid([-1;1]); 
 re = re(:); se = se(:); te = te(:);
 
-    [vx vy vz] = Elbow3Dgeo(re,se,te);
-    [x y z geo] = Elbow3Dgeo(r,s,t);
-    [xq yq zq geo] = Elbow3Dgeo(rq,sq,tq);
-    [xfq yfq zfq fgeo] = Elbow3Dgeo(rfq,sfq,tfq);
+%     [vx vy vz] = Elbow3Dgeo(re,se,te);
+%     [x y z geo] = Elbow3Dgeo(r,s,t);
+%     [xq yq zq geo] = Elbow3Dgeo(rq,sq,tq);
+%     [xfq yfq zfq fgeo] = Elbow3Dgeo(rfq,sfq,tfq);
 
-% [vx vy vz] = WarpedCube3Dgeo(re,se,te);
-% [x y z geo] = WarpedCube3Dgeo(r,s,t);
-% [xq yq zq geo] = WarpedCube3Dgeo(rq,sq,tq);
-% [xfq yfq zfq fgeo] = WarpedCube3Dgeo(rfq,sfq,tfq);
+[vx vy vz] = WarpedCube3Dgeo(re,se,te);
+[x y z geo] = WarpedCube3Dgeo(r,s,t);
+[xq yq zq geo] = WarpedCube3Dgeo(rq,sq,tq);
+[xfq yfq zfq fgeo] = WarpedCube3Dgeo(rfq,sfq,tfq);
 
 % plot3(x,y,z,'o'); axis equal; return
 
@@ -452,8 +452,7 @@ Vp1D = bsplineVDM(NB,Ksub,rp1D,smoothKnots);
 k = 1;
 pex = @(x,y,z,t) cos(k*pi*x/2).*cos(k*pi*y/2).*cos(k*pi*z/2).*cos(sqrt(3)*.5*k*pi*t);
 
-% % pex = @(x,y,z,t) x.*y.*z;
-x0 = -1.4; y0 = -.5; z0 = 0;
+% x0 = -1.4; y0 = -.5; z0 = 0;
 % pex = @(x,y,z,t) exp(-5*((x-x0).^2 + (y-y0).^2 + (z-z0).^2));
 
 global mapI
@@ -461,11 +460,12 @@ Nfp = size(xf,1)/Nfaces;
 fids = @(f) (1:Nfp)+(f-1)*Nfp;
 % vids = reshape(1:(N+1)^3*K,(N+1)^3,K);
 mapI = [];
+x0b = 1;
 for e = 1:K
     for f = 1:6
         if e==EToE(e,f)
             xb = xf(fids(f),e);
-            if norm(xb-2,'fro')<1e-8
+            if norm(xb-x0b,'fro')<1e-8
                 bids = fids(f) + (e-1)*Nfp*Nfaces;
                 mapI = [mapI; bids(:)];                
             end            
@@ -483,7 +483,7 @@ end
 % p = matvec(inv(BVDM),pex(x,y,z,0),'all');
 p = zeros(Np,K);
 for e = 1:K
-%     p(:,e) = matvec(Pq1D,pex(xq(:,e),yq(:,e),zq(:,e),0),'all');
+    p(:,e) = matvec(Pq1D,pex(xq(:,e),yq(:,e),zq(:,e),0),'all');
 end
 u = zeros(Np, K);
 v = zeros(Np, K);
@@ -515,7 +515,7 @@ else
 % keyboard
     h = min(min(Jq)./max(sJ));
     if Ksub > 1
-        dt = .5*h/((NB+1)*Ksub);
+        dt = 3*h/((NB+1)*Ksub);
     else
         dt = .33*h/((NB+1)^2);
     end
@@ -595,7 +595,7 @@ for tstep = 1:Nsteps
         axis equal; axis tight
         view(3)
         colorbar
-        caxis([-1.1 1.2])
+%         caxis([-1.1 1.2])
         title(sprintf('time = %f',tstep*dt))
         drawnow
 
@@ -607,7 +607,7 @@ for tstep = 1:Nsteps
 end
 
 % keyboard
-return
+% return
 
 % J = matvec(Vq1D,J,'all');
 for e = 1:K
@@ -671,19 +671,14 @@ if opt==1
     dv(mapB) = -2*vf(mapB);
     dw(mapB) = -2*wf(mapB);
 
-    % dirichlet @ inflow
+    % velocity pulse @ inflow
     global mapI
     t0 = .5;
     if time < t0
-        pt = (1-cos(2*pi*time/(t0))).*(time < t0);
-%         pt = sin(pi*time/t0);
-        dp(mapI) = 2*(pt-pf(mapI));
-        uavg(mapI) = 2*uf(mapI);
-        vavg(mapI) = 2*vf(mapI);
-        wavg(mapI) = 2*wf(mapI);
-        du(mapI) = 0;
-        dv(mapI) = 0;
-        dw(mapI) = 0;
+        % uP-uM = 2*(uB-uM),  uP+uM = 2*uB
+        ut = -(1-cos(2*pi*time/(t0))).*(time < t0);
+        uavg(mapI) = ut;
+        du(mapI) = 2*(ut-uf(mapI));        
     end
 elseif opt==2  % dirichlet
     dp(mapB) = 2*(-pf(mapB));

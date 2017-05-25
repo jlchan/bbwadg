@@ -520,6 +520,8 @@ The advantage of this projected geometric factor approach is local conservation;
 \LRp{\Grad_h \cdot \bm{u},\bbm{1}_{D^k}}_{\Omega} = \int_{\partial D^k}\widehat{\bm{n}}^T\avg{J\bm{G}^T\bm{u}}.
 \]
 
+One downside of this approach is that stabilization must be applied separately from the discrete gradient.  We consider stabilization in the form of penalty fluxes.  For jump terms without normals, such as $\jump{p}$, these can be stabilized with no additional cost.  For terms involving normals, we often have $\jump{\bm{u}\cdot\bm{n}}\bm{n}$.  Since normals are rational functions for high order curvilinear mappings, these require quadrature to compute, and can be expensive.  An alternative approach would just be to use averaged normals instead, and combine them into the lifting within the reference element.  
+
 \subsection{Specific discrete cases}
 
 Spectral element methods and mass-lumpable tets: $\Pi_N = I_N$, and the lift operator is just the $\bm{B}$ boundary operator, which you can commute terms such that the scaling of the lift is the same as the lift of the scaling.  
@@ -536,7 +538,7 @@ Example: Kinetic energy preserving splitting of Euler (assumes exact time discre
 
 Example: Entropy splitting of Buckley-Leverett?
 
-Example: Entropy splitting of Euler (note - cannot extend to Navier-Stokes in an entropy-stable fashion due to fact that heat flux matrix is not symmetrizable w.r.t.\ homogeneous flux function, though viscous terms are.  This impacts only boundary conditions.) 
+Example: Entropy splitting of Euler and Navier-Stokes - can do ``formally'', but the fluxes are singular and non-integrable.  
 
 \section{Numerical experiments}
 

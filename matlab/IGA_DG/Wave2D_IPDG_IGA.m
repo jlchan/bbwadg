@@ -8,8 +8,8 @@ global NB Ksub
 if nargin==0
     NB = 3;
     Ksub = 8;
-    K1D = 4;
-    smoothKnots = 75;
+    K1D = 2;
+    smoothKnots = 25;
 
 else
     NB = NBin;
@@ -103,22 +103,23 @@ sJq = Vfq*sJ;
 % return
 
 global Vq1D Vrq1D Pq1D Prq1D 
-if Ksub==1
-    V1D = Vandermonde1D(N,r1D);
-    D1D = GradVandermonde1D(N,r1D)/V1D;
-    Vp1D = Vandermonde1D(N,rp1D)/V1D;
-    Vq1D = Vandermonde1D(N,rq1D)/V1D;
-    M1D = Vq1D'*diag(wq1D)*Vq1D;
-    invM1D = V1D*V1D';
-else
+% if Ksub==1
+%     V1D = Vandermonde1D(N,r1D);
+%     D1D = GradVandermonde1D(N,r1D)/V1D;
+%     Vp1D = Vandermonde1D(N,rp1D)/V1D;
+%     Vq1D = Vandermonde1D(N,rq1D)/V1D;    
+%     Vrq1D = Vq1D*D1D;
+%     M1D = Vq1D'*diag(wq1D)*Vq1D;
+%     invM1D = V1D*V1D';
+%     Pq1D = invM1D*Vq1D'*diag(wq1D);
+% else
     [BVDM M1D D1D R, ~, ~, Vq1D Vrq1D] = bsplineVDM(NB,Ksub,r1D,smoothKnots); % VDM for interp, mass, M\S    
     Vp1D = bsplineVDM(NB,Ksub,rp1D,smoothKnots);
     
     invM1D = inv(M1D);
     Pq1D = invM1D*Vq1D'*diag(wq1D);
-    Prq1D = invM1D*Vrq1D'*diag(wq1D);    
-    
-end
+    Prq1D = invM1D*Vrq1D'*diag(wq1D);        
+% end
 % Vp = kron(Vp1D,Vp1D);
 
 Mf = zeros(N+1,4*(N+1));
@@ -293,9 +294,6 @@ end
 qx = px - .5*Pfq*(dpq.*nxq.*sJq);
 qy = py - .5*Pfq*(dpq.*nyq.*sJq);
 
-dqx = Vfq*reshape(qx(vmapM)-.5*(px(vmapM)+px(vmapP)),Nfp*Nfaces,K);
-dqy = Vfq*reshape(qy(vmapM)-.5*(py(vmapM)+py(vmapP)),Nfp*Nfaces,K);
-
 qxr = zeros(Nq^2,K); qxs = zeros(Nq^2,K);
 qyr = zeros(Nq^2,K); qys = zeros(Nq^2,K);
 for e = 1:K
@@ -306,15 +304,19 @@ for e = 1:K
 end
 % qxr = Vrq*qx; qxs = Vsq*qx;
 % qyr = Vrq*qy; qys = Vsq*qy;
+divQ = rxJ.*qxr + sxJ.*qxs + ryJ.*qyr + syJ.*qys;
+
+dqx = Vfq*reshape(qx(vmapM)-.5*(px(vmapM)+px(vmapP)),Nfp*Nfaces,K);
+dqy = Vfq*reshape(qy(vmapM)-.5*(py(vmapM)+py(vmapP)),Nfp*Nfaces,K);
 
 global NB Ksub
 CT = max((NB+1)*Ksub,(NB+1)^2);
 hmin = min(min(Jq)./max(sJq));
 tau = CT / hmin;
+
 dqn = nxq.*dqx + nyq.*dqy;
 fluxq = dqn + tau*dpq;
 
-divQ = rxJ.*qxr + sxJ.*qxs + ryJ.*qyr + syJ.*qys;
 rhsflux = Pfq*(sJq.*fluxq);
 % rhs = Pq*((Vq*rhs)./Jq);
 

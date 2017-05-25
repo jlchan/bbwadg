@@ -10,8 +10,7 @@ if nargin==0
     Ksub = 16;
     K1D = 2;
     smoothKnots = 0;
-else
-    
+else    
     NB = NBin;
     Ksub = Ksubin;
     K1D = K1Din;
@@ -60,7 +59,7 @@ Pq = M\(Vq'*diag(wBq));
 
 %% Set initial conditions
 
-k = 15;
+k = 3;
 pex = @(x,t) cos(k*pi/2*x).*cos(k*pi*t/2);
 p = Pq*pex(xq,0); 
 % p = exp(-100*x.^2);
@@ -91,7 +90,7 @@ resu = zeros(Np,K);
 
 % compute time step size
 xmin = min(abs(x(1,:)-x(2,:)));
-dt  = .5*xmin;
+dt  = .125*xmin;
 % dt = min(dt,1/smax);
 Nsteps = ceil(FinalTime/dt);
 dt = FinalTime/Nsteps;
