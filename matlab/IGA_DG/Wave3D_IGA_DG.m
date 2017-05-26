@@ -2,9 +2,9 @@ function Wave3D_IGA_DG
 
 Globals3D
 
-NB = 3;
-Ksub = 8;
-smoothKnots = 25;
+NB = 2;
+Ksub = 12;
+smoothKnots = 50;
 
 computeEigs = 0;
 Testing = 0;
@@ -14,7 +14,7 @@ N = NB+Ksub-1;
 Np = (N+1)^3;
 Nfp = (N+1)^2;
 
-FinalTime = 2;
+FinalTime = 4;
 
 %% reference elem stuff
 
@@ -159,15 +159,16 @@ addpath IGA_DG/Elbow3D
 [re se te] = meshgrid([-1;1]); 
 re = re(:); se = se(:); te = te(:);
 
-%     [vx vy vz] = Elbow3Dgeo(re,se,te);
-%     [x y z geo] = Elbow3Dgeo(r,s,t);
-%     [xq yq zq geo] = Elbow3Dgeo(rq,sq,tq);
-%     [xfq yfq zfq fgeo] = Elbow3Dgeo(rfq,sfq,tfq);
 
-[vx vy vz] = WarpedCube3Dgeo(re,se,te);
-[x y z geo] = WarpedCube3Dgeo(r,s,t);
-[xq yq zq geo] = WarpedCube3Dgeo(rq,sq,tq);
-[xfq yfq zfq fgeo] = WarpedCube3Dgeo(rfq,sfq,tfq);
+    [vx vy vz] = Elbow3Dgeo(re,se,te);
+    [x y z geo] = Elbow3Dgeo(r,s,t);
+    [xq yq zq geo] = Elbow3Dgeo(rq,sq,tq);
+    [xfq yfq zfq fgeo] = Elbow3Dgeo(rfq,sfq,tfq);
+    
+% [vx vy vz] = WarpedCube3Dgeo(re,se,te);
+% [x y z geo] = WarpedCube3Dgeo(r,s,t);
+% [xq yq zq geo] = WarpedCube3Dgeo(rq,sq,tq);
+% [xfq yfq zfq fgeo] = WarpedCube3Dgeo(rfq,sfq,tfq);
 
 % plot3(x,y,z,'o'); axis equal; return
 
@@ -460,7 +461,7 @@ Nfp = size(xf,1)/Nfaces;
 fids = @(f) (1:Nfp)+(f-1)*Nfp;
 % vids = reshape(1:(N+1)^3*K,(N+1)^3,K);
 mapI = [];
-x0b = 1;
+x0b = 2;
 for e = 1:K
     for f = 1:6
         if e==EToE(e,f)
@@ -483,7 +484,7 @@ end
 % p = matvec(inv(BVDM),pex(x,y,z,0),'all');
 p = zeros(Np,K);
 for e = 1:K
-    p(:,e) = matvec(Pq1D,pex(xq(:,e),yq(:,e),zq(:,e),0),'all');
+%     p(:,e) = matvec(Pq1D,pex(xq(:,e),yq(:,e),zq(:,e),0),'all');
 end
 u = zeros(Np, K);
 v = zeros(Np, K);
@@ -517,7 +518,7 @@ else
     if Ksub > 1
         dt = 3*h/((NB+1)*Ksub);
     else
-        dt = .33*h/((NB+1)^2);
+        dt = 3*h/((NB+1)^2);
     end
 end
 % return
@@ -559,18 +560,20 @@ Nsteps = ceil(FinalTime/dt)
 dt = FinalTime/Nsteps;
 
 % outer time step loop
+tic
 vids = reshape(1:length(rp)*K,length(rp),K);
 ids = vids(Fmaskp(:),:);
+clear vids
 for tstep = 1:Nsteps
     for INTRK = 1:5
         
         timelocal = tstep*dt + rk4c(INTRK)*dt;
         
-        if Testing            
-            [rhsp,rhsu,rhsv,rhsw] = acousticsRHS3Dtest(p,u,v,w);
-        else
+%         if Testing            
+%             [rhsp,rhsu,rhsv,rhsw] = acousticsRHS3Dtest(p,u,v,w);
+%         else
             [rhsp,rhsu,rhsv,rhsw] = acousticsRHS3Dq(p,u,v,w,timelocal);
-        end
+%         end
         
         % initiate and increment Runge-Kutta residuals
         resp = rk4a(INTRK)*resp + dt*rhsp;
@@ -595,18 +598,19 @@ for tstep = 1:Nsteps
         axis equal; axis tight
         view(3)
         colorbar
-%         caxis([-1.1 1.2])
+        caxis([-1.1 1.2])
         title(sprintf('time = %f',tstep*dt))
         drawnow
-
+        
+        T = toc; 
+        Trem = (Nsteps-tstep)*(T/tstep);
+        disp(sprintf('on tstep %d out of %d. Est time remaining = %f sec\n',tstep,Nsteps,Trem))        
     end
-    
-    if mod(tstep,25)==0
-        disp(sprintf('on tstep %d out of %d\n',tstep,Nsteps))
-    end
+        
 end
 
-% keyboard
+total_time_elapsed = toc
+keyboard
 % return
 
 % J = matvec(Vq1D,J,'all');
@@ -673,13 +677,13 @@ if opt==1
 
     % velocity pulse @ inflow
     global mapI
-    t0 = .5;
-    if time < t0
-        % uP-uM = 2*(uB-uM),  uP+uM = 2*uB
-        ut = -(1-cos(2*pi*time/(t0))).*(time < t0);
-        uavg(mapI) = ut;
-        du(mapI) = 2*(ut-uf(mapI));        
-    end
+    t0 = 2;
+    %     if time < t0
+    % uP-uM = 2*(uB-uM),  uP+uM = 2*uB
+    ut = -(1-cos(2*pi*time/(t0))).*(time < t0);
+    uavg(mapI) = ut;
+    du(mapI) = 2*(ut-uf(mapI));
+    %     end
 elseif opt==2  % dirichlet
     dp(mapB) = 2*(-pf(mapB));
 else % neumann
