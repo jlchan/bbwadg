@@ -319,14 +319,14 @@ legend style={font=\small}
 
 \date{}
 \author{Jesse Chan}
-\title{On discrete entropy conservation for general high order discontinuous Galerkin methods}
+\title{On discrete entropy conservation for a more general class of discontinuous Galerkin methods}
 
 \begin{document}
 
 \maketitle
 
 \begin{abstract}
-High order methods based on diagonal-norm summation by parts operators can be shown to semi-discretely conserve entropy for nonlinear systems of hyperbolic PDEs \cite{fisher2013high,carpenter2014entropy}.  These include discontinuous Galerkin spectral element methods (DG-SEM) \cite{gassner2016split,gassner2016well,wintermeyer2017entropy, chen2017entropy} based on mass-lumping.  In this work, we describe how to extend discretely entropy conservative schemes for a more general class of DG methods using quadrature-based projections and global differentiation operators.  The construct of these methods is independent of the choice of basis and accuracy of quadrature rule used, and includes DG methods involving generalized SBP operators without boundary nodes and certain dense-norm SBP operators.  Numerical experiments confirm the stability and high order accuracy of the proposed methods for the Burgers, shallow water, and compressible Euler equations.  
+High order methods based on diagonal-norm summation by parts operators can be shown to semi-discretely conserve entropy for nonlinear systems of hyperbolic PDEs \cite{fisher2013high,carpenter2014entropy}.  These include discontinuous Galerkin spectral element methods (DG-SEM) \cite{gassner2016split,gassner2016well,wintermeyer2017entropy, chen2017entropy} based on mass lumping and nodal collocation.  In this work, we describe how to extend discretely entropy conservative schemes for a more general class of DG methods using quadrature-based projections and global DG differentiation operators.  The construct of these methods is independent of the choice of basis and accuracy of quadrature rule used, and includes DG methods involving generalized SBP operators without boundary nodes and certain dense-norm SBP operators.  Numerical experiments confirm the stability and high order accuracy of the proposed methods for the Burgers, shallow water, and compressible Euler equations.  
 \end{abstract}
 
 \tableofcontents
@@ -341,15 +341,14 @@ High order methods based on diagonal-norm summation by parts operators can be sh
 
 Hughes entropy variables \cite{hughes1986new}
 
-\cite{hicken2016multidimensional}
-
-\cite{gassner2016split,gassner2016well,wintermeyer2017entropy}
-
-\cite{chen2017entropy}
+\note{Specify that entropy stability has been shown for mass lumped collocation DG discretizations.  Requirements are a diagonal norm SBP operators (or diagonal mass matrix) and collocated differentiation. }  \cite{gassner2016split,gassner2016well,wintermeyer2017entropy}  
+\note{The construction of such operators on non-tensor product elements (such as simplices or pyramids) is non-trivial.} \cite{hicken2016multidimensional, chen2017entropy}.  \note{Constructing such operators for non-polynomial spaces (such as splines) is also difficult within the current framework.}
 
 While DG-SEM based on flux differencing is entropy conservative, this is tied to a specific choice of basis and quadrature.  Furthermore, GLL quadratures and diagonal-norm SBP operators do not naturally generalize to triangles or tetrahedra \cite{helenbrook2009existence}.  Diagonal-norm SBP operators can be constructed for triangles and tetrahedra \cite{chin1999higher, cohen2001higher, hicken2016multidimensional, chen2017entropy}; however, the number of nodal points for such operators is greater than the dimension of the natural polynomial approximation space.  Furthermore, appropriate point sets have only been constructed for $N \leq 4$ in three dimensions \cite{zhebel2014comparison}.  
 
-\section{Entropy conservative collocation DG methods}
+\section{Entropy conservative diagonal norm collocation DG methods}
+
+\note{Specify what we mean by diagonal norm collocation DG method.}
 
 \subsection{Entropy stability for systems of hyperbolic PDEs}
 
@@ -419,15 +418,20 @@ The mass and derivative matrices may be used to define the diagonal norm SBP ope
 \]
 This property is simply a restatement of integration by parts, using that the derivative of $\ell_j(x) \in P^{N-1}$ and that GLL quadrature is exact for polynomials of degree $2N-1$.  
 
-%In order to simplify notation for flux differencing, we define the following bilinear matrix product 
-%\[
-%\LRp{\bm{A} \odot \bm{f}_S(\bm{x},\bm{y})}_i = \sum_j \bm{A}_{ij} \bm{f}_S(\bm{x}_j,\bm{y}_i).  
-%\]
-We seek a nodal approximation $\bm{u}_i \approx \bm{u}(x_i)$ to the solution $\bm{u}(x)$ of (\ref{eq:pde}).  A typical nodal collocation method in conservation form is given as follows 
+We seek a polynomial approximation to the solution $\bm{u}(x)$ of (\ref{eq:pde}).  A DG formulation in the ``strong form'' \cite{hesthaven2007nodal} is given as
+\[
+\int_{-1}^1\LRp{ \pd{\bm{u}}{t} + \pd{\bm{f}(\bm{u})}{x}}\bm{w} + \left.\LRp{\bm{f}^* - \bm{f}(\bm{u})} \bm{w}\right|_{-1}^1 = 0, \qquad \forall \bm{w}\in V_h.
+\]
+Here, $\bm{f}^*$ is a numerical flux used for the weak imposition of boundary or continuity conditions.  
+
+We derive a DG-SEM approximation by evaluating the above integrals using GLL quadrature.  We furthermore assume that the solution is approximated using a nodal basis at GLL points 
+\[
+\bm{u}(\bm{x},t) = \sum_{j=1}^{N+1} \bm{u}_j(t)\ell_j(x).  
+\]
+The resulting semi-discrete system yields a nodal collocation scheme for $\bm{u}_i$ 
 \[
 \pd{\bm{u}_i}{t} + \sum_{j=1}^{N+1}\LRp{\LRp{\bm{D}\otimes \bm{I}}_{ij}\bm{f}(\bm{u}_j) +\LRp{\bm{M}^{-1}\bm{B}}_{ij}(\bm{f}_i^* - \bm{f}(\bm{u}_i))} = 0.
 \]
-Here, $\bm{f}^*$ is a numerical flux used for the weak imposition of boundary or continuity conditions \cite{hesthaven2007nodal}.  This method can be derived from an appropriate DG formulation under a specific choice of quadrature.  
 
 This formulation conserves the quantities $\bm{u}_i$, but (except in specific cases) does not satisfy a discrete analogue of the statement of entropy conservation (\ref{eq:consentropy}).  Entropy conservative schemes may be constructed based on the SBP property and a ``flux differencing'' approach \cite{gassner2016split} involving a definition of entropy conservative/stable fluxes given by Tadmor \cite{tadmor1987numerical, tadmor2003entropy}.  
 \begin{definition}
@@ -513,29 +517,93 @@ We simultaneously address all three areas of difficulty by introducing a general
 %\item Contraction with the \textit{projection} of the entropy variables.  
 %\end{itemize}
 
+\subsection{Notation}
+
+We assume that the domain $\Omega \in \mathbb{R}^d$ is exactly triangulated by a mesh which consists of the union of non-overlapping elements $D^k$.  We further assume that each element $D^k$ is the image of a reference element $\widehat{D}$ under the local elemental mapping 
+\[
+\bm{x}^k = \bm{\Phi}^k \widehat{\bm{x}},
+\]
+where $\bm{x}^k$ denote physical coordinates on $D^k$ and $\widehat{\bm{x}}$ denote coordinates on the reference element.  Finally, we identify $J$ as the determinant of the Jacobian of $\bm{\Phi}^k$, and refer to it as the Jacobian for the remainder of this work.  
+
+We will approximate solution components over each element $D^k$ from an approximation space $V_h\LRp{D^k}$, which we define as the composition of the mapping $\bm{\Phi}^k$ and a reference approximation space $V_h\LRp{\widehat{D}}$
+\[
+V_h\LRp{D^k} = \bm{\Phi}^k \circ V_h\LRp{\widehat{D}}.
+\]
+The global approximation space $V_h\LRp{\Omega}$ is then defined as the direct sum of local approximation spaces
+\[
+V_h\LRp{\Omega} = \bigoplus_{D^k}V_h\LRp{D^k}.  
+\]
+We assume that $V_h(D^k) \subset L^2(D^k)$; in other words, that all elements of each local approximation space are square integrable.  We also define the local $L^2$ projection operator $\Pi_N: L^2(D^k)\rightarrow V_h(D^k)$ such that
+\[
+\LRp{\Pi_N u,v}_{D^k} = \LRp{u,v}_{D^k}, \qquad \forall v\in V_h\LRp{D^k}.  
+\]
+Because the global approximation space $V_h\LRp{\Omega}$ is the direct sum of independent local approximation spaces, the global $L^2$ projection is simply the composition of local $L^2$ projections.  
+
+%\note{We define the quadrature-based $L^2$ projection $\Pi_N$ as the $L^2$ projection where integrals are evaluated using some (inexact) quadrature.  We also define the discrete approximation space $V_h$, and assume that the quadrature is sufficiently accurate such that integration by parts holds for any two elements of $V_h$.  Finally, we assume that the discrete derivative (to be defined) maps from $V_h$ to $V_h$.  }
+
+Finally, we define the jump and average of discontinuous functions across element interfaces.  Let $D^{k,+}$ denote the neighboring element of across a face $f$ of $D^k$, and let $u^+,u^-$ denote the values of $u$ on $D^{k,+}$ and $D^k$, respectively.  The jump of $u$ across $f$ is then defined as
+\[
+\jump{u} = u^+ - u^-, \qquad \avg{u} = \frac{u^+ + u^-}{2}.
+\]
+The jump and average of vector fields are defined component-wise using the jumps and averages of components.  
+
+%\note{Specify assumption that differentiation operators $\bm{D}:V_h\rightarrow V_h$}
+
 \subsection{A continuous interpretation of flux differencing}
 
-We define the quadrature-based $L^2$ projection $\Pi_N$ as the $L^2$ projection where integrals are evaluated using some (inexact) quadrature.  We also define the discrete approximation space $V_h$, and assume that the quadrature is sufficiently accurate such that integration by parts holds for any two elements of $V_h$.  Finally, we assume that the discrete derivative (to be defined) maps from $V_h$ to $V_h$.  
+In this section, we offer a continuous interpretation of flux differencing \cite{fisher2013high,gassner2017br1,chen2017entropy}, which also encompasses the split form methodology proposed in \cite{gassner2016split}.  This interpretation will guide the construction of entropy conservative DG schemes.  
 
-The split-form methodology of Gassner et al.\ can be interpreted as the following: let $f_S(u_L,u_R)$ be a symmetric and consistent two-point flux (i.e. $f_S(u,u) = f(u)$).  Split forms can be rewritten at the continuous level as replacing the flux derivative with differentiation along one argument of $f_S(u_L,u_R)$, then evaluation of the other argument at $u$
+Assume that $\bm{f}_S(\bm{u}_L,\bm{u}_R)$ is the symmetric and consistent two-point flux defined in (\ref{def:tadmor}).  Consider the bilinear function
 \[
-\pd{f(u)}{x} \Longrightarrow 2\left.\pd{f_S(u(x),u(y))}{x}\right|_{y=x}.
+\bm{f}_S\LRp{\bm{u}(\bm{x}),\bm{u}(\bm{y})}, \qquad \bm{x}, \bm{y} \in \mathbb{R}^d.  
 \]
-This allows for the recovery of different split-forms.  For example, for Burgers equation, choosing $f_S(u_L,u_R) = (u_L^2 + u_Lu_R + u_R^2)/6$ gives
+Flux differencing can be interpreted as differentiating $\bm{f}_S\LRp{\bm{u}(\bm{x}),\bm{u}(\bm{y})}$ along one coordinate $\bm{x}_k$, then evaluating the resulting derivative with $\bm{y}=\bm{x}$.  Since the two-point flux is consistent, this results in the following approximation of the flux derivative
+\begin{equation}
+\pd{\bm{f}(\bm{u}(\bm{x}))}{\bm{x}_k} \Longrightarrow 2\left.\pd{\bm{f}_S\LRp{\bm{u}(\bm{x}),\bm{u}(\bm{y})}}{\bm{x}_k}\right|_{\bm{y}=\bm{x}}.
+\label{eq:fluxdiff}
+\end{equation}
+
+\subsubsection{Illustration using Burgers' equation}
+
+We note that flux differencing allows for the recovery of split formulations.  We illustrate this using the one-dimensional Burgers equation, which is given in conservative form as
 \[
-2\left.\pd{f_S(u(x),u(y))}{x}\right|_{y=x} = \frac{1}{3}\left.\pd{\LRp{u(x)^2 + u(x)u(y) + u(y)^2}}{x}\right|_{y=x} = \frac{1}{3}\LRp{\pd{u^2}{x} + u\pd{u}{x}}
+\pd{u}{t} + \pd{f(u)}{x} = 0, \qquad f(u) = \frac{1}{2}u^2.
 \]
-due to the fact that $\pd{u(y)^2}{x} = 0$.  The resulting form of Burgers equation appears in the intermediate steps of energy stability proofs, and is the basis for discretely stable DG methods.  When applied discretely (using quadrature-based projections), the resulting right hand side for Burgers' equation becomes 
+It is well known that DG formulations based on the split form
 \[
-\LRp{\frac{1}{3}\LRp{\pd{\LRp{\Pi_N u^2}}{x} + \Pi_N \LRp{u\pd{u}{x}}}, v}.
+\pd{u}{t} + \frac{1}{3}\LRp{\pd{u^2}{x} + u\pd{u}{x}} = 0
 \]
-Using the fact integration by parts holds when considering two elements of $V_h$, and that $\LRp{\Pi_N u^2, v} = \LRp{u^2,v}$ for any $v \in V_h$, it can be shown that the volume terms cancel out for $v = u$, and we're left with boundary terms (which is a prerequisite of energy/entropy stability).  
+can be shown to be discretely energy stable under appropriately imposed boundary conditions \cite{gassner2013skew, ranocha2017extended}.  This form may be recovered using flux differencing by choosing the two-point flux
+\[
+f_S(u_L,u_R) = \frac{1}{6}(u_L^2 + u_Lu_R + u_R^2).
+\]
+Then, applying (\ref{eq:fluxdiff}) yields
+\[
+2\left.\pd{f_S(u(x),u(y))}{x}\right|_{y=x} = \frac{1}{3}\left.\pd{\LRp{u(x)^2 + u(x)u(y) + u(y)^2}}{x}\right|_{y=x} = \frac{1}{3}\LRp{\pd{u^2}{x} + u\pd{u}{x}},
+\]
+due to the fact that $\pd{u(y)^2}{x} = 0$.  
+
+Both the conservative and split forms of Burgers' equation are equivalent at the continuous level (assuming continuity of $u$ and exact differentiation); however, this is no longer true at the discrete level.  Suppose now that the solution is approximated by $u \in V_h(\Omega)$ on a single element.  Since $f(u) = u^2/2 \not\in V_h(\Omega)$, it is not possible to differentiate $f(u)$ exactly without prior knowledge of the form of the nonlinearity.  Instead, it is more common to first project $f(u)$ to $V_h$, then differentiate, such that the discrete scheme is equivalent to solving for $u \in V_h(\Omega)$ such that
+\[
+\int_{-1}^1 \LRp{\pd{u}{t} + \pd{\Pi_N f(u)}{x}}w = 0, \qquad \forall w \in V_h(\Omega).  
+\]
+This scheme is energy stable only for projections which are computed using a quadrature of degree $3N-1$, which is sufficiently accurate to integrate the nonlinear DG weak form exactly.  
+
+In comparison, when applying (\ref{eq:fluxdiff}) using $\pd{\Pi_N (\cdot)}{x}$, the resulting right hand side for Burgers' equation becomes 
+\[
+\int_{-1}^1\LRp{\pd{u}{t} + \frac{1}{3}\LRp{\pd{\LRp{\Pi_N u^2}}{x} + \Pi_N \LRp{u\pd{u}{x}}}}w = 0, \qquad \forall w \in V_h(\Omega).  
+\]
+Using the fact integration by parts holds when considering two elements of $V_h$, and that $\LRp{\Pi_N u^2, v} = \LRp{u^2,v}$ for any $v \in V_h$, it can be shown that the volume terms cancel out for $v = u$, leaving only boundary terms (which is a prerequisite of energy/entropy stability).  
+
+\note{De-aliasing by increasing the degree of quadrature hits a ``bottleneck'': in the end, you are only differentiating a polynomial of degree $N$ \cite{kirby2003aliasing}.}
 
 We note that the recovery of the split-form of Burgers' equation in the above example relies only on the property that 
 \[
 \pd{f(u(y))}{x} = f(u(y)) \pd{1}{x} = 0.
 \]
 As such, replacing $\pd{}{x}$ by any differential operator $D$ such that $D 1 = 0$ will recover a similar formulation.
+
+\subsubsection{Recovering the algebraic form of flux differencing}
 
 This approach yields the following evaluation (in Matlab for lack of better notation): let 
 \[
@@ -545,42 +613,104 @@ be the flux function.  Let \verb+uq = Vq * u+ denote the interpolation of $u$ to
 \[
 \verb+Pq * diag((Vq*Dx*Pq) * fS(ux, uy)) = Pq * sum((Vq* Dx* Pq) .* fS(ux, uy), 2).+
 \]
-The latter expression can be performed by computing \verb+fS(ux,uy)+ on the fly, avoiding the need to store it as a matrix.  It can also be generalized to handle non-square matrices in a very similar way.
+The latter expression can be performed by computing \verb+fS(ux,uy)+ on the fly, avoiding the need to store it as a matrix.  It can also be generalized to handle non-square matrices in a very similar way.  
 
-\subsection{Discretely entropy conservative general DG methods on a single domain}
+When using nodal collocation using either GLL or GQ points, \verb+Vq,Pq+ are the identity matrix and we recover the algebraic form of flux differencing described in \cite{gassner2016split}.
 
-Global DG operators reveal how to construct SBP-SAT terms for any collocation-type DG methods (where $L^2$ projection and interpolation are equivalent).  However, for quadrature-based DG methods, it is not possible to test with the entropy variables directly because the test space is polynomial.  However, we may test with the projections of the entropy variables.  On the left hand side, we may use the fact that, under a method of lines discretization, 
+\note{Introduce definition of $\bm{f}(\bm{u}_q)$ as $f(\bm{u}_q)$.}
+
+\subsection{Global DG differentiation operators}
+
+The construction of entropy conservative DG methods 
+
+Global DG methods \cite{di2011mathematical}
+
+We adapt the construction of local differentiation operators by Chen and Shu \cite{chen2017entropy} to construct a global DG differentiation operator
+\begin{equation}
+\LRp{D^x_h u,v} = \sum_k \LRp{\pd{ \Pi_N u}{x},v}_{D^k} + \frac{1}{2}{\LRa{{u_P - \Pi_N u_M}, v\bm{n}_x}_{\partial D^k} + \frac{1}{2}\LRa{{u_M - \Pi_Nu_M },\Pi_Nv \bm{n}_x}_{\partial D^k}}.
+\label{eq:dgd}
+\end{equation}
+Integrating by parts then yields the skew-symmetric form of $\bm{D}^x_h$
 \[
-u(x,t) = \sum_{j=1}^{N_p} u_j(t) \phi_j(x), \qquad \pd{u}{t} \in P^N.
-\]
-Thus, testing with $\Pi_N v$ yields
-\[
-\int_{D^k} \pd{u}{t}\Pi_N v = \int_{D^k} \pd{u}{t} v   
-\]
-which yields a pointwise relationship which can be manipulated into the time derivative of entropy.  
-
-The right-hand side is more difficult.  For collocation DG methods, interpolation and quadrature-based $L^2$ projection are identical.  However, when using a quadrature rule with $N_q > N_p$, this is not the case.  The solution is to evaluate the flux with $u(\Pi_N v)$ - in other words, evaluate the flux variables in terms of the projections of the entropy variables.  
-
-\subsection{SBP-SAT terms by global DG differentiation operators}
-
-We can define a global discontinuous Galerkin operator $\bm{D}^x_h: P^N\rightarrow P^N$ such that
-\[
-\sum_k \LRp{D^x_h u,v}_{D^k} = \sum_k \LRp{\pd{u}{x},v}_{D^k} + \LRa{\frac{1}{2}\jump{u}\bm{n}_x,v}_{\partial D^k}.
-\]
-Then, composing $D^x_h \Pi_N$ gives global skew-symmetry $\LRp{D^x_h\Pi_N u, v}_{\L} = \LRp{- D^x_h\Pi_N v, u}_{\L}$ for all $u,v\in \L$.  The downside to this simple construction is that the stencil of the DG scheme now incorporates all degrees of freedom on neighboring elements due to the composition with the projection.  
-
-We adapt the construction of local differentiation operators by Shi and Shu to construct a global DG differentiation operator.  
-\[
-2\LRp{D^x_h u,v} = \sum_k \LRp{2\pd{ \Pi_N u}{x},v}_{D^k} + \LRa{\LRp{u_P - \Pi_N u_M}\bm{n}_x, v} + \LRa{\LRp{u_M - \Pi_Nu_M }\bm{n}_x,\Pi_Nv}.
-\]
-In skew-symmetric form, this gives 
-\[
-2\LRp{D^x_h u,v} = \sum_k \LRp{\pd{ \Pi_N u}{x},v}_{D^k} - \LRp{u,\pd{\Pi_N v}{x}}_{D^k} + \LRa{\LRp{u_P - \Pi_N u_M}\bm{n}_x, v} + \LRa{{u_M }\bm{n}_x,\Pi_Nv}.
+\LRp{D^x_h u,v} =\frac{1}{2} \sum_k \LRp{\pd{ \Pi_N u}{x},v}_{D^k} - \LRp{u,\pd{\Pi_N v}{x}}_{D^k} + \LRa{\LRp{u_P - \Pi_N u_M}\bm{n}_x, v} + \LRa{{u_M }\bm{n}_x,\Pi_Nv}.
 \]
 Taking $v = u_M$ and cancelling $u_P u_M \bm{n}_x$ terms shows that the differentiation operator has the global SBP property and is skew-symmetric  w.r.t.\ a discrete $L^2$ inner product.  The coupling requires only traces of neighboring elements.  
 
 It's currently unclear how to distinguish whether different operators are high order accurate.  
 
+\begin{remark}
+It is possible to define a simpler global DG differentiation operator based on the composition of a weak polynomial differentiation operator and the $L^2$ projection.  Let $\bm{D}^x_h: V_h\rightarrow V_h$ be defined as
+\[
+\sum_k \LRp{D^x_h u,v}_{D^k} = \sum_k \LRp{\pd{u}{x},v}_{D^k} + \frac{1}{2}\LRa{\jump{u},v\bm{n}_x}_{\partial D^k}, \qquad \forall v \in V_h.
+\]
+Then, it is straightforward to show that $D^x_h \Pi_N$ possesses a global SBP property with respect to the $L^2$ norm, such that
+\[
+\LRp{D^x_h\Pi_N u, v}_{\Omega} = \LRa{\Pi_N u,v}_{\partial \Omega} - \LRp{D^x_h\Pi_N v, u}_{\Omega}, \qquad \forall u,v\in \L.
+\]
+Numerical results using this global differentiation operator result in slightly more accurate results than when using the DG operator (\ref{eq:dgd}).  Unfortunately, compared to  (\ref{eq:dgd}), this construction results in a wide stencil involving all degrees of freedom on neighboring elements due to the presence of $\jump{u}$ and the $L^2$ projection.  
+\end{remark}
+
+\subsection{Discretely entropy conservative general DG methods}
+
+We introduce 
+\[
+\int_{D^k}\pd{\bm{u}}{t} \bm{w} + \left.\LRp{D^x_h\bm{f}_S\LRp{\bm{u}(\Pi_N\bm{v}(\bm{x})),\bm{u}(\Pi_N\bm{v}(\bm{y}))}}\right|_{\bm{y}=\bm{x}}\bm{w} = 0, \qquad \forall \bm{w}\in V_h,
+\]
+where the global operator $D^x_h$ is understood to be applied to each component of $\bm{f}_S\LRp{\bm{u}(x),\bm{u}(y)}$.  
+
+Global DG operators reveal how to construct SBP-SAT terms for any collocation-type DG methods (where $L^2$ projection and interpolation are equivalent).  However, for quadrature-based DG methods, it is not possible to test with the entropy variables directly because the test space is polynomial.  However, we may test with the projections of the entropy variables.  On the left hand side, we may use the fact that, under a method of lines discretization, 
+\[
+\bm{u}(x,t) = \sum_{j=1}^{N_p} \bm{u}_j(t) \phi_j(x), \qquad \pd{\bm{u}}{t} \in P^N.
+\]
+Thus, testing with $\Pi_N \bm{v}$ over each element $D^k$ yields  
+\[
+\int_{D^k} \pd{\bm{u}}{t}\Pi_N \bm{v} = \int_{D^k} \pd{\bm{u}}{t}\bm{v} = \int_{D^k} \pd{U(\bm{u})}{t}.  
+\]
+In matrix notation, this can be shown by multiplying with $\LRp{\bm{P}_q\bm{v}_q}^T$ 
+\[
+\LRp{\bm{P}_q\bm{v}_q}^T\bm{M}\pd{\bm{u}}{t} = \bm{v}_q^T\bm{W}\bm{V}_q\bm{M}^{-1}\bm{M}\pd{\bm{u}}{t} = \bm{1}^T \bm{W} {\rm diag}(\bm{v}_q) \pd{\bm{u}_q}{t} = \bm{1}^T \bm{W} \pd{U(\bm{u}_q)}{t},
+\]
+where we have assumed continuity in time, and have used that $\bm{W}$ is diagonal.  Summing contributions from each element $D^k$ yields the time derivative of the entropy over the entire domain $\Omega$. 
+
+%which yields a pointwise relationship which can be manipulated into the time derivative of entropy.  
+
+For collocation DG methods, interpolation and quadrature-based $L^2$ projection are identical.  However, when using a quadrature rule with $N_q > N_p$, this is not the case.  The solution is to evaluate the flux with $u(\Pi_N v)$ - in other words, evaluate the flux variables in terms of the projections of the entropy variables.  
+
+Not easy to deal with SBP-SAT terms for more complex systems \cite{ranocha2017extended,ranocha2017comparison}.
+
+We summarize this analysis in the following theorem:
+\begin{theorem}
+\note{Blah is entropy conservative.  Finish up proof + statement of entropy conservation.}
+\end{theorem}
+
+
+\begin{remark}
+The analysis in this section has focused on the construction of entropy conservative schemes.  However, for problems with shocks, entropy is not conserved and should be dissipated away.  To this end, one can construct entropy stable schemes by adding additional stabilization terms (for example, by adding Lax-Friedrichs penalization or matrix dissipation terms \cite{chandrashekar2013kinetic,winters2017uniquely}).  
+\end{remark}
+
+\subsubsection{On implementation}
+
+Let $V_h^f$ denote the trace space of the approximation space $V_h$ 
+\[
+V_h^f = \LRc{ \left.u\right|_{\partial D^k}, \quad u \in V_h}.  
+\]
+We introduce the lifting operator ${L}: V_h^f\rightarrow V_h$.  For $u_f \in V^f_h$, ${L}$ is defined as 
+\[
+\LRp{{L} u_f,v}_{D^k} = \LRa{u_f,v}_{\partial D^k}, \qquad \forall v\in V_h.
+\]
+
+\subsubsection{Example: Burgers equation}
+
+We illustrate the application of the global flux differencing approach to Burgers' equation using the energy conserving flux
+\[
+f_S(u_L,u_R) = \frac{1}{6}\LRp{u_L^2 + u_Lu_R u_R^2}.  
+\]
+We will derive 
+\[
+\LRp{\left.\bm{D}^x_h f_S(u(x),u(y))\right|_{y=x}, w} = 
+\]
+
+We note that the global flux differencing approach with the DG operator (\ref{eq:dgd}) recovers the formulation and correction terms introduced in \cite{ranocha2017extended}.  
 
 \subsection{Conservation of secondary properties}
 
@@ -588,44 +718,69 @@ It holds but with respect to specifically defined fluxes.
 
 \section{Numerical experiments}
 
+\note{We illustrate the entropy conservation and accuracy of the proposed schemes for three equations.  These gradually increase in complexity.  }
+
 \subsection{Burgers}
+
+We begin by computing $L^2$ errors and rates of convergence for smooth solutions of Burgers' equation.  
 
 \subsection{Shallow water}
 
-We describe in this section the shallow water equations in one dimension.  We use this model problem to illustrate the proposed method because (unlike Burgers' equation) it highlights some non-trivial details in proving entropy stability associated with the nonlinear equations of compressible flow.  
-
-The one-dimensional shallow water equations are 
+We now move on to the one-dimensional shallow water equations, which consist of a conservation equation and momentum equation
 \begin{align*}
 \pd{h}{t} + \pd{hv}{x} &= 0\\
 \pd{hv}{t} + \pd{\LRp{hv^2 + gh^2/2}}{x} + gh\pd{b}{x}&= 0.
 \end{align*}
-where $h$ is the water height, $v$ is the velocity, $g$ is the gravitational constant, and $b$ is bottom topography.  
-
-The entropy associated with this system is the total energy $e = k + p$, where 
+where $h$ is the water height, $v$ is the velocity, $g$ is the gravitational constant, and $b$ is bottom topography.  The entropy associated with this system is the total energy $e = k + p$, where $k, p$ are the kinetic and potential energies
 \[
 k = hv^2/2, \qquad p = gh^2/2 + ghb.
 \]
-Testing with the entropy variables 
+The entropy variables can be derived from the entropy $e$
 \[
-q_1 = \pd{e}{h} = g(h+b)-v^2/2, \qquad q_2 = \pd{e}{hv} = v
+q_1 = \pd{e}{h} = g(h+b)-v^2/2, \qquad q_2 = \pd{e}{hv} = v.
 \]
-recovers a statement of conservation of energy
+Multiplying the continuity equation by $q_1$ and the momentum equation by $q_2$ recovers a statement of conservation of energy
 \[
-\pd{e}{t} + \pd{}{x}\LRp{hv^3/2 + g(hv)(h+b)} = 0.  
+\pd{e}{t} + \pd{}{x}\LRp{\frac{hv^3}{2} + g(hv)(h+b)} = 0.  
 \]
+Like the Burgers' equation, the shallow water equations are stable under an appropriate split formulation\cite{gassner2016well, chen2017entropy}.  However, unlike Burgers' equation, the shallow water equations are not entropy stable with respect to the square entropy.  Additionally, a key difference between the shallow water equations and Burgers' equation is that, when discretizing with respect to the conservative variables $h, hv$, the entropy variables $v_1,v_2$ are not contained within the space $V_h$.  
 
-This conservation of energy does not hold at the discrete level for two reasons.  The first reason is because, under inexact quadrature, calculus identities such as the chain or product rule do not hold, and naive spatial formulations can not be manipulated into a form which is amenable to a proof of discrete entropy stability.  This issue can be remedied by the use of a split formulation (as shown in Gassner et al.) which is provably entropy stable under inexact quadrature.  
-
-The second more subtle reason why entropy conservation does not hold at the discrete level is because the entropy variables are not contained within the test space.  Moreover, the spatial part of the proposed discretization requires one discrete definition of the entropy variables for entropy stability, while the temporal part of the discretization requires another discrete definition of the entropy variables.  We address this by adopting a rescaling in the mass matrix on the left hand side involving both definitions of the discrete entropy variables.  Under an appropriate choice of basis and quadrature, the proposed approach recovers existing DG-SEM discretizations. 
-
+%This conservation of energy does not hold at the discrete level for two reasons.  The first reason is because, under inexact quadrature, calculus identities such as the chain or product rule do not hold, and naive spatial formulations can not be manipulated into a form which is amenable to a proof of discrete entropy stability.  This issue can be remedied by the use of a split formulation (as shown in Gassner et al.) which is provably entropy stable under inexact quadrature.  
+%
+%The second more subtle reason why entropy conservation does not hold at the discrete level is because the entropy variables are not contained within the test space.  Moreover, the spatial part of the proposed discretization requires one discrete definition of the entropy variables for entropy stability, while the temporal part of the discretization requires another discrete definition of the entropy variables.  We address this by adopting a rescaling in the mass matrix on the left hand side involving both definitions of the discrete entropy variables.  Under an appropriate choice of basis and quadrature, the proposed approach recovers existing DG-SEM discretizations. 
 
 \subsection{Compressible Euler equations}
+
+We now test the proposed entropy conservative schemes on the one-dimensional compressible Euler equations, which correspond to the inviscid limit of the compressible Navier-Stokes equations
+\begin{align*}
+\pd{\rho}{t} + \pd{\LRp{\rho u}}{x} &= 0,\\
+\pd{\rho u}{t} + \pd{\LRp{\rho u^2 + p }}{x} &= 0,\\
+\pd{E}{t} + \pd{\LRp{u(E+p)}}{x} &= 0.
+\end{align*}
+We assume an ideal gas, such that the pressure satisfies the constitutive relation $p = (\gamma-1)\LRp{E - \frac{1}{2}\rho u^2}$, where $\gamma = 1.4$ is the ratio of specific heat for a diatomic gas.    
+
+The choice of convex entropy for the Euler equations is non-unique \cite{harten1983symmetric}.  However, a unique entropy can be chosen by restricting to choices of entropy variables which symmetrize the viscous heat conduction term in the compressible Navier-Stokes equations \cite{hughes1986new}.  The entropy is given by
+\[
+U(\bm{u}) = -\frac{\rho s}{\gamma-1},
+\]
+where $s = \log\LRp{\frac{p}{\rho^\gamma}}$ is the physical specific entropy.  The entropy variables under this choice of entropy are then
+\begin{align*}
+q_1 = \frac{\gamma-s}{\gamma-1} - \frac{\rho u^2}{2p}, \qquad q_2 = \frac{\rho u}{p}, \qquad q_3 = -\frac{\rho}{p}.
+\end{align*}
+The reverse mapping is given by 
+\[
+d
+\]
+
+\note{Add Chandreshekar's fluxes \cite{chandrashekar2013kinetic}.}
+
+Unlike the shallow water equations, these entropy conservative fluxes do not correspond to stable split formulations of the Euler equations.  Thus, the compressible Euler equations serve as a test of the flux differencing formulation, as entropy stability cannot be achieved through skew-symmetry.  
 
 \section{Conclusions}
 
 \section{Acknowledgments}
 
-
+The author thanks Andrew Winters for several informative discussions.  Jesse Chan is supported by NSF awards DMS-1719818 and DMS-1712639.  
 
 \bibliographystyle{unsrt}
 \bibliography{dg}
