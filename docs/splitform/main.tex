@@ -783,7 +783,6 @@ Thus, testing with $\Pi_N \bm{v}$ and assuming continuity in time yields
 \[
 \LRp{\pd{\bm{u}}{t}, \Pi_N \bm{v}(\bm{u})}_{\widehat{D}} = \LRp{\pd{\bm{u}}{t},\bm{v}(\bm{u})}_{\widehat{D}} = \LRp{\pd{U(\bm{u})}{t},1}_{\widehat{D}}, \qquad \forall \bm{u}\in V_h.
 \]
-
 %Let $\bm{v}_q$ denote the entropy variables evaluated in terms of the conservative variables at quadrature points.  Then, the same argument involving the time term can be shown using matrix notation by testing with $\bm{v} = {\bm{P}_q\bm{v}_q}$,
 %\[
 %\LRp{\bm{P}_q\bm{v}_q}^T\bm{M}\pd{\bm{u}}{t} = \bm{v}_q^T\bm{W}\bm{V}_q\bm{M}^{-1}\bm{M}\pd{\bm{u}}{t} = \bm{1}^T \bm{W} {\rm diag}(\bm{v}_q) \pd{\bm{u}_q}{t} = \bm{1}^T \bm{W} \pd{U(\bm{u}_q)}{t},
@@ -793,8 +792,8 @@ For the spatial derivative, we expand $\bm{f}_S$ out using Assumption~\ref{eq:as
 \begin{align*}
 &\LRp{\left.\LRp{D_N \sum_{i=1}^{\infty}\bm{f}_i(\bm{u}_x)\bm{g}_i(\bm{u}_y)}\right|_{y=x}, \Pi_N\bm{v}(x)}_{\widehat{D}} = \sum_{i=1}^{\infty} \LRp{{D_N \bm{f}_i(\bm{u}_x)}, {\bm{g}_i(\bm{u}_x)\Pi_N\bm{v} }}_{\widehat{D}}\\
 &= \sum_{i=1}^{\infty}\LRa{\bm{f}_i(\bm{u}_x) \bm{g}_i(\bm{u}_x),\Pi_N\bm{v}}_{\partial \widehat{D}}  - \LRp{ \bm{f}_i(\bm{u}_x), D_N \LRp{\bm{g}_i\Pi_N\bm{v} }}_{\widehat{D}}\\
-&= \LRa{f_S(\bm{u}_x,\bm{u}_x), \Pi_N\bm{v}(x)}_{\partial \widehat{D}}  - \LRp{\left.\LRp{D_N \Pi_N\LRp{\bm{f}_S(\bm{u}_x,\bm{u}_y)\bm{v}(x)} }\right|_{y=x},1}_{\widehat{D}}\\
-&= \LRa{f(\bm{u}_x), \Pi_N\bm{v}(x)}_{\partial \widehat{D}}  - \LRp{\left.\LRp{D_N \Pi_N\LRp{\bm{f}_S(\bm{u}_x,\bm{u}_y)\bm{v}(x)} }\right|_{y=x},1}_{\widehat{D}},
+&= \LRa{\bm{f}_S(\bm{u}_x,\bm{u}_x), \Pi_N\bm{v}(x)}_{\partial \widehat{D}}  - \LRp{\left.\LRp{D_N \Pi_N\LRp{\bm{f}_S(\bm{u}_x,\bm{u}_y)\bm{v}(x)} }\right|_{y=x},1}_{\widehat{D}}\\
+&= \LRa{\bm{f}(\bm{u}_x), \Pi_N\bm{v}(x)}_{\partial \widehat{D}}  - \LRp{\left.\LRp{D_N \Pi_N\LRp{\bm{f}_S(\bm{u}_x,\bm{u}_y)\bm{v}(x)} }\right|_{y=x},1}_{\widehat{D}},
 \end{align*}
 where we have used the consistency of $\bm{f}_S$ in the last step.  
 %where $\Pi_N^x, \Pi_N^y$ denote $L^2$ projections taken with respect to the $x$ and $y$ coordinates, respectively.  
@@ -866,44 +865,8 @@ Applying Lemma~\ref{lemma:dgd_local} over each element yields
 &= \sum_k \LRp{-u,D_N (vw)}_{D^k} - \LRa{\jump{vw},u\bm{n}_x}_{\partial D^k \setminus \partial \Omega} + \LRa{vw,u\bm{n}_x}_{\partial \Omega} \\
 &= \LRa{vw,u\bm{n}_x}_{\partial \Omega}-\LRp{u,D^x_h (vw)}_{\Omega}.    
 \end{align*}
-%Since $\pd{ \Pi_N u}{x}\in V_h$ by assumption, we can integrate by parts the local volume term of (\ref{eq:dgd_global}) on $D^k$.  Using properties of the $L^2$ projection then yields
-%\begin{align*}
-%\LRp{\pd{ \Pi_N u}{x},v}_{D^k} &= \LRp{\pd{ \Pi_N u}{x}, \Pi_N v}_{D^k} = \LRa{\Pi_N u,\Pi_N v}_{\partial D^k} - \LRp{\Pi_N u, \pd{\Pi_N v}{x}}_{D^k}\\
-%&= \LRa{\Pi_N u,\Pi_N v}_{\partial D^k} - \LRp{u, \pd{\Pi_N v}{x}}_{D^k}.  
-%\end{align*}
-%Substituting this into (\ref{eq:dgd_global}) yields
-%\[
-%\LRp{D^x_h u,v} = \sum_k  - \LRp{u, \pd{\Pi_N v}{x}}_{D^k} + \frac{1}{2}{\LRa{{u^+ - \Pi_N u}, v\bm{n}_x}_{\partial D^k} + \frac{1}{2}\LRa{{u},\Pi_Nv \bm{n}_x}_{\partial D^k}}.
-%\]
-%For elements which do not intersect with the boundary, the term $\LRa{u^+,v\bm{n}_x}_{\partial D^k}$ can be exchanged with terms from neighboring elements to show
-%\[
-%\sum_k \frac{1}{2}\LRa{u^+,v\bm{n}_x}_{\partial D^k} = \sum_k \frac{1}{2}\LRa{u,v^+\bm{n}^+_x}_{\partial D^k} = 
-%\sum_k - \frac{1}{2}\LRa{u,v^+\bm{n}_x}_{\partial D^k}.  
-%\]
-%On the boundary $\partial \Omega$, the interface terms satisfy
-%\[
-%\frac{1}{2}\LRa{u^+,v\bm{n}_x}_{\partial \Omega} = \frac{1}{2}\LRa{u,v\bm{n}_x}_{\partial \Omega} = \LRa{u,v\bm{n}_x}_{\partial \Omega}-\frac{1}{2}\LRa{v^+,u\bm{n}_x}_{\partial \Omega}.
-%\]
-%Combining these yields the following statement
-%\begin{align*}
-%\LRp{D^x_h u,v} &= \LRa{u,v\bm{n}_x}_{\partial \Omega} - \LRp{\sum_k  \LRp{\pd{\Pi_N v}{x},u}_{D^k} + \frac{1}{2}\LRa{{v^+ - \Pi_N v}, u\bm{n}_x}_{\partial D^k} + \frac{1}{2}\LRa{{v},\Pi_Nu \bm{n}_x}_{\partial D^k}} \\
-%&= \LRa{u,v\bm{n}_x}_{\partial \Omega}-\LRp{u,D^x_h v} 
-%\end{align*}
-%which is the desired analogue of integration by parts.  
 \end{proof}
-%Integration by parts can also be shown to yield the skew-symmetric form of $\bm{D}^x_h$
-%\[
-%\LRp{D^x_h u,v} =\frac{1}{2} \sum_k \LRp{\pd{ \Pi_N u}{x},v}_{D^k} - \LRp{u,\pd{\Pi_N v}{x}}_{D^k} + \LRa{\LRp{u_P - \Pi_N u_M}\bm{n}_x, v} + \LRa{{u_M }\bm{n}_x,\Pi_Nv}.
-%\]
-%Taking $v = u_M$ and cancelling $u_P u_M \bm{n}_x$ terms shows that the differentiation operator is skew-symmetric w.r.t.\ a discrete $L^2$ inner product.  
 
-%Lemma~\ref{lemma:ibp} is equivalent to showing that the matrix representation $\bm{D}^x_h$ of the global DG differential operator satisfies a global SBP property with respect to a discrete $L^2$ norm defined by quadrature weights.  
-%\begin{lemma}
-%Let $\bm{u}$ be degrees of freedom for $u,v \in V_h$.  Define the matrix $\bm{D}^x_h$ such that 
-%\[
-%\bm{W}
-%\]
-%\end{lemma}
 \begin{remark}
 It is possible to define a simpler global DG differentiation operator based on the composition of a discrete differentiation operator and the $L^2$ projection.  Let ${D}^x_h: V_h\rightarrow V_h$ be defined as
 \[
@@ -927,7 +890,7 @@ Unfortunately, while (\ref{eq:dgd_global}) requires only traces of neighboring e
 
 Extending the entropy stable DG formulation (\ref{eq:ecdg_oneelem}) is done by combining the flux differencing with the global DG differential operator $D^x_h$
 \begin{equation}
-\sum_{k}\LRp{\pd{\bm{u}}{t},\bm{w}}_{D^k} + \LRp{\left.\LRp{2D^x_h\bm{f}(\bm{u}_x,\bm{u}_y)}\right|_{y=x},\bm{w}}_{D^k} = \LRa{\bm{f}(\bm{u}_x)-\bm{f}^*,\bm{w}}_{\partial \Omega},
+\sum_{k}\LRp{\pd{\bm{u}}{t},\bm{w}}_{D^k} + \LRp{\left.\LRp{2D^x_h\bm{f}_S(\bm{u}_x,\bm{u}_y)}\right|_{y=x},\bm{w}}_{D^k} = \LRa{\bm{f}(\bm{u}_x)-\bm{f}^*,\bm{w}}_{\partial \Omega},
 %\int_{D^k}\pd{\bm{u}}{t} \bm{w} + \left.\LRp{2D^x_h\bm{f}_S\LRp{\bm{u}(\Pi_N\bm{v}({x})),\bm{u}(\Pi_N\bm{v}({y}))}}\right|_{{y}={x}}\bm{w} + \LRa{\bm{f}^*-\bm{f}(\bm{u}),\bm{w}}_{\partial \Omega}= 0, \qquad \forall \bm{w}\in V_h^n,
 \label{eq:ecdg}
 \end{equation}
@@ -953,12 +916,23 @@ The presented analysis focuses on discrete entropy conservation in one dimension
 
 \subsubsection{Local conservation}
 
-It is also straightforward to show that the formulation (\ref{eq:ecdg}) is locally conservative.  Taking $v = \mathbbm{1}_{D^k}$ in the formulation (\ref{eq:ecdg}) yields
+It is also straightforward to show that the formulation (\ref{eq:ecdg}) is locally conservative.  We follow \cite{chen2017entropy} and take $\bm{w} = \mathbbm{1}_{D^k}$ in the formulation (\ref{eq:ecdg}) yields
 \[
-d
+\sum_{k}\LRp{\pd{\bm{u}}{t},1}_{D^k} + \LRp{\left.\LRp{2D^x_h\bm{f}_S(\bm{u}_x,\bm{u}_y)}\right|_{y=x},1}_{D^k} = \LRa{\bm{f}(\bm{u}_x)-\bm{f}^*,1}_{\partial \Omega \cap D^k}.  
 \]
-
-\note{It holds but with respect to specifically defined fluxes.  Need to use $v = 1$ on $D^k$ and then symmetry of the global DG operator $D^x_h$.  }
+Using Lemma~\ref{lemma:dgd_local} and the symmetry of $\bm{f}_S$ yields that
+\[
+\LRp{\left.\LRp{D^x_h\bm{f}_S(\bm{u}_x,\bm{u}_y)}\right|_{y=x},1}_{D^k} = \LRa{\bm{f}(\bm{u}_x) ,1}_{\partial D^k} - \LRp{\left.\LRp{D^x_h\bm{f}_S(\bm{u}_x,\bm{u}_y)}\right|_{y=x},1}_{D^k}.
+\]
+Substituting this back into the first equation cancels volume terms, leaving
+\[
+\sum_{k}\LRp{\pd{\bm{u}}{t},1}_{D^k} + \LRa{\bm{f}(\bm{u}_x) ,1}_{\partial D^k \setminus \partial \Omega} + \LRa{\bm{f}^*,1}_{\partial \Omega \cap D^k} = 0.  
+\]
+We note that this definition of local conservation is given in terms of the conservation variables evaluated as a function of the projected entropy variables
+\[
+\bm{u}_x(x) = \bm{u}\LRp{\LRp{\Pi_N \bm{v}}(x)}.
+\]
+It is not immediately clear whether this statement of local conservation satisfies the conditions of the classic Lax-Wendroff theorem.  However, this form of local conservation does satisfy a generalized definition of local conservation given in \cite{shi2017local}, and is sufficient to guarantee convergence to the weak solution.  
 
 
 
@@ -992,17 +966,13 @@ This formulation, which was derived through the use of flux differencing with th
 
 
 
-\subsection{On implementation for general flux functions}
+\subsection{On implementation in terms of the flux function}
 
 While it is possible to use (\ref{eq:ecdg}) to derive explicit DG weak formulations, this can be difficult for complicated flux functions.  Instead, we follow \cite{gassner2016split, chen2017entropy} and seek an implementation of flux differencing and (\ref{eq:ecdg}) which requires only the specification of $\bm{f}_S(\bm{u}_L,\bm{u}_R)$ and local matrices.  
 
-We begin by rewriting the global DG differentiation operator $D^x_h$ using the lifting operator  ${L}: V_h^f\rightarrow V_h$
+We begin by rewriting the global DG differentiation operator $D^x_h$ using the lifting operator  ${L}: V_h \rightarrow V_h$ \cite{hesthaven2007nodal, di2011mathematical}
 \[
-\LRp{{L} u_f,v}_{D^k} = \LRa{u_f,v}_{\partial D^k}, \qquad u_f \in V_h^f, \qquad \forall v\in V_h.
-\]
-where $V_h^f$ denotes the trace space of the approximation space $V_h$
-\[
-V_h^f = \LRc{ \left.u\right|_{\partial D^k}, \quad u \in V_h}.
+\LRp{{L} u,v}_{D^k} = \LRa{u,v}_{\partial D^k}, \qquad u \in V_h, \qquad \forall v\in V_h.
 \]
 The lift operator can be used to rewrite surface terms which involve the volume $L^2$ projection
 \[
@@ -1020,14 +990,58 @@ Applying Assumption~\ref{eq:assumption}, we can rewrite
 &+  \sum_k \sum_{i=1}^{\infty}\frac{1}{2}\LRa{\bm{f}_i(\bm{u}^+)\bm{g}_i(\bm{u}) - \bm{g}_i(\bm{u})\Pi_N\bm{f}_i(\bm{u}),\bm{w}\bm{n}_x}_{\partial D^k}\\
 &+  \sum_k \sum_{i=1}^{\infty}\frac{1}{2}\LRp{\bm{g}_i(\bm{u})L\LRp{\bm{f}_i(\bm{u}^+) - \Pi_N\bm{f}_i(\bm{u})}\bm{n}_x,\bm{w}}_{D^k},
 \end{align*}
-where $\bm{w}\bm{n}_x$ denotes component-wise multiplication of $\bm{w}$ by $\bm{n}_x$, the $x$-component of the unit outward normal.  Moving the sum inside then allows us to re-write the resulting expression as
+where $\bm{w}\bm{n}_x$ denotes component-wise multiplication of $\bm{w}$ by $\bm{n}_x$, the $x$-component of the unit outward normal.  Moving the sum inside and simplifying then allows us to re-write the resulting expression as
 \begin{align}
 \LRp{\left.\LRp{D^x_h \bm{f}_S(\bm{u}_x,\bm{u}_y)}\right|_{y=x},\bm{w}}_{\Omega} &= \sum_k \LRp{\left.\pd{\Pi_N \bm{f}_S(\bm{u}_x,\bm{u}_y)}{x}\right|_{y=x},\bm{w}}_{D^k}\nonumber\\ 
-&+ \frac{1}{2}\LRa{\bm{f}_S(\bm{u}^+,\bm{u}) - \left.\Pi_N\bm{f}_S(\bm{u}_x,\bm{u}_y)\right|_{y=x},\bm{w}\bm{n}_x}_{\partial D^k} \label{eq:eval}\\
-&+ \frac{1}{2}\LRp{\left.\LRp{L\LRp{\bm{f}_S(\bm{u}_x,\bm{u}_y) - \Pi_N\bm{f}_S(\bm{u}_x,\bm{u}_y)}\bm{n}_x}\right|_{y=x},\bm{w}}_{D^k},\nonumber
+&+ \frac{1}{2}\LRa{\bm{f}_S(\bm{u}^+,\bm{u}) - \left.\Pi_N^x\bm{f}_S(\bm{u}_x,\bm{u}_y)\right|_{y=x},\bm{w}\bm{n}_x}_{\partial D^k} \label{eq:eval}\\
+&+ \frac{1}{2}\LRp{\left.\LRp{L^x\LRp{\bm{f}_S(\bm{u}_x,\bm{u}_y) - \Pi_N^x\bm{f}_S(\bm{u}_x,\bm{u}_y)}\bm{n}_x}\right|_{y=x},\bm{w}}_{D^k},\nonumber
 \end{align}
+where the superscripts $L^x, \Pi_N^x$ are used to emphasize that the lift and projection operators are applied in $x$ and not in $y$.  
 This can be used to practically evaluate $\left.\LRp{\bm{D}^x_h \bm{f}_S(\bm{u}_x,\bm{u}_y)}\right|_{y=x}$ using only reference operators and evaluations of $\bm{f}_S$.  However, unlike previous entropy conservative collocation DG methods, the boundary terms in (\ref{eq:eval}) interact with volume terms through the $L^2$ projection and the lift operator.  This can be simplified for diagonal norm SBP operators with boundary nodes, using equivalences between $L^2$ projection and interpolation at nodal points in those cases.  
 
+Finally, we show how to recover a computational form of flux differencing analogous to those presented in \cite{gassner2016split, chen2017entropy}.  We will describe how to compute the three non-standard terms which appear within (\ref{eq:eval}):
+\begin{align}
+\LRp{\left.\pd{\Pi_N {f}_S({u}_x,{u}_y)}{x}\right|_{y=x},{w}}_{D^k}\label{eq:voleval}\\
+\LRa{\left.\Pi_N^x{f}_S({u}_x,{u}_y)\right|_{y=x},{w}\bm{n}_x}_{\partial D^k}\label{eq:surfeval}\\
+\LRp{\left.\LRp{L^x\LRp{{f}_S({u}_x,{u}_y) - \Pi_N^x{f}_S({u}_x,{u}_y)}\bm{n}_x}\right|_{y=x},{w}}_{D^k}\label{eq:volsurfeval}
+\end{align}
+where we have assumed a scalar variable $u(x)$ and flux function $f_S$ for simplicity.
+
+We first introduce matrices defined over $[-1,1]$.  We assume some discrete quadrature rule on the reference element consisting of $N_q$ points ${\bm{x}}_q = \LRc{{x}_1,\ldots,{x}_{N_q}}$ and quadrature weights $\bm{w}_q = \LRc{w_1,\ldots,w_{N_q}}$.  Let $\bm{W}$ denote the diagonal matrix whose entries are quadrature weights. Then, let $u(x)$ be represented in some basis $\phi_j(x)$ of dimension $N_p$ which spans $V_h$
+\[
+V_h = {\rm span}\LRc{\phi_j(\widehat{x})}_{j=1}^{N_p},
+\]
+we can define the quadrature interpolation matrix $\bm{V}_q$
+\[
+\LRp{\bm{V}_q}_{ij} = \phi_j(\widehat{x}_i), \qquad 1 \leq j \leq N_p, \qquad 1 \leq i \leq N_q.  
+\]
+Given $\bm{V}_q$, we introduce the mass matrix $\bm{M} = \bm{V}_q^T\bm{W}\bm{V}_q$, as well as the quadrature-based $L^2$ projection operator $\bm{P}_q$
+\[
+\bm{P}_q = \bm{M}^{-1}\bm{V}_q^T\bm{W}.
+\]
+Let $\bm{D}_x$ denote the differentiation matrix defined implicitly through
+\[
+u(x) = \sum_{j=1}^{N_p} \bm{u}_j \phi_j(\widehat{x}), \qquad \pd{u}{\widehat{x}} = \sum_{j=1}^{N_p} \LRp{\bm{D}_x \bm{u}}_j\phi_j(\widehat{x})
+\]
+In other words, $\bm{D}_x$ maps basis coefficients of some function $u \in V_h$ to coefficients of its derivative on $[-1,1]$.  
+
+We also introduce matrices used to compute boundary terms.  Let $\bm{V}_f$ denote the matrix which interpolates to boundary values\footnote{In generalizing to higher dimensions, $\bm{V}_f$ would be the matrix which interpolates to surface quadrature points.}
+\[
+\LRp{\bm{V}_f}_{1j} = \phi_j(-1), \qquad \LRp{\bm{V}_f}_{2j} = \phi_j(1), \qquad 1 \leq j \leq N_p.  
+\]
+Furthermore, let $\bm{W}_f$ denote the diagonal matrix of surface quadrature weights.  In one dimension, this is simply the $2\times 2$ identity matrix.  This allows us to define the quadrature-based lift matrix 
+\[
+\bm{L} = \bm{M}^{-1}\bm{V}_f^T \bm{W}_f.
+\]
+Together, these matrices can be used to interpolate the output of the differentiation and lift matrices to volume quadrature points
+\[
+\bm{D}_q = \bm{V}_q \bm{D}_x \bm{P}_q, \qquad \bm{L}_q = \bm{V}_q\bm{L}_q.
+\]
+
+
+
+
+Hadamard product \cite{horn2012matrix}
 %\subsection{Matrix and algebraic forms of entropy conservative DG methods}
 %
 %We note that it also possible to show that the proposed formulation (\ref{eq:ecdg}) is entropy conservative using matrix notation.  
@@ -1053,7 +1067,6 @@ This can be used to practically evaluate $\left.\LRp{\bm{D}^x_h \bm{f}_S(\bm{u}_
 The analysis in previous sections has focused on the construction of entropy conservative schemes.  However, entropy is only conserved for smooth solutions and should be dissipated away in the presence of discontinuities and shocks.  To this end, one can construct discretely entropy stable schemes by adding additional dissipative terms (for example, by adding HLL or Lax-Friedrichs penalization \cite{chen2017entropy} or matrix dissipation terms \cite{chandrashekar2013kinetic, winters2017uniquely}).  
 
 \note{Unlike collocative DG, entropy stability must be in terms of $\jump{\bm{u}\LRp{\Pi_N \bm{v}}}$ to guarantee discrete entropy decay.  }
-
 
 \section{Numerical experiments}
 \label{sec:num}
@@ -1152,9 +1165,11 @@ In evaluating the logarithmic mean, we utilize the procedure described by Ismail
 
 \section{Conclusions}
 
+\note{Analysis and experiments are presented in one dimension for clarity; however, they are directly extendable to higher dimensions, including on simplicial elements.  This will be the focus of future work.  }
+
 \section{Acknowledgments}
 
-The author thanks Andrew Winters and David M.\ Williams for informative discussions.  Jesse Chan is supported by NSF awards DMS-1719818 and DMS-1712639.  
+The author thanks Andrew Winters, David M.\ Williams, and Paul Hand for informative discussions.  Jesse Chan is supported by NSF awards DMS-1719818 and DMS-1712639.  
 
 \appendix
 \section{Expansion of the flux function}
