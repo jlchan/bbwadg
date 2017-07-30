@@ -167,7 +167,8 @@ legend style={font=\small}
 \newcommand{\Gin} {\Gamma_{in}}
 \newcommand{\Gout} {\Gamma_{out}}
 
-\newcommand{\note}[1]{{\color{blue}#1}}
+%\newcommand{\note}[1]{{\color{blue}#1}}
+\newcommand{\note}[1]{#1}
 \newcommand{\remark}[1]{\textbf{\color{red}#1}}
 
 \newcommand{\tri}{{\rm tri}}
@@ -212,6 +213,7 @@ legend style={font=\small}
 \date{}
 %\author{Jesse Chan, T. Warburton}
 %\title{A short note on the penalty flux parameter for first order discontinuous Galerkin formulations}
+\graphicspath{{./figs/}}
 
 \begin{document}
 
@@ -351,15 +353,15 @@ If $\bm{A}_i$ is constant over each element $D^k$, we again have an energy estim
 \[
 \sum_{D^k\in \Oh}\pd{}{t}\nor{\bm{U}}^2_{L^2\LRp{D^k}} = -\sum_{D^k \in \Oh} \frac{\tau}{2}\nor{\jump{\bm{A}_n\bm{U}}}^2_{L^2\LRp{\partial D^k}} \leq 0.
 \]
-The upwind flux can similarly be extended for discontinuous coefficients
-\[
-(\bm{A}_n\bm{U})^* = \avg{\bm{A}_n\bm{U}} - \frac{1}{2} \jump{\bm{V}\LRb{\Lambda}\bm{V}^{-1}\bm{U}},
-\]
-where the eigenvalue decompositions inside the jump is evaluated as 
-\begin{align*}
-&\jump{\bm{V}\LRb{\Lambda}\bm{V}^{-1}\bm{U}} = {\bm{V}^+\LRb{\Lambda}^+\LRp{\bm{V}^+}^{-1}\bm{U}^+} - {\bm{V}^-\LRb{\Lambda}^-\LRp{\bm{V}^-}^{-1}\bm{U}^-}\\
-&\bm{A}_n^+ = \sum_{i=1}^d \bm{n}_i \bm{A}_i^+ = \bm{V}^+{\Lambda}^+\LRp{\bm{V}^+}^{-1}, \qquad \bm{A}_n^- = \sum_{i=1}^d \bm{n}_i \bm{A}_i^- = \bm{V}^-{\Lambda}^-\LRp{\bm{V}^-}^{-1}.
-\end{align*} 
+%The upwind flux can similarly be extended for discontinuous coefficients
+%\[
+%(\bm{A}_n\bm{U})^* = \avg{\bm{A}_n\bm{U}} - \frac{1}{2} \jump{\bm{V}\LRb{\Lambda}\bm{V}^{-1}\bm{U}},
+%\]
+%where the eigenvalue decompositions inside the jump is evaluated as 
+%\begin{align*}
+%&\jump{\bm{V}\LRb{\Lambda}\bm{V}^{-1}\bm{U}} = {\bm{V}^+\LRb{\Lambda}^+\LRp{\bm{V}^+}^{-1}\bm{U}^+} - {\bm{V}^-\LRb{\Lambda}^-\LRp{\bm{V}^-}^{-1}\bm{U}^-}\\
+%&\bm{A}_n^+ = \sum_{i=1}^d \bm{n}_i \bm{A}_i^+ = \bm{V}^+{\Lambda}^+\LRp{\bm{V}^+}^{-1}, \qquad \bm{A}_n^- = \sum_{i=1}^d \bm{n}_i \bm{A}_i^- = \bm{V}^-{\Lambda}^-\LRp{\bm{V}^-}^{-1}.
+%\end{align*} 
 Finally, we note that the energy estimate changes when $\bm{A}_i$ varies over an element, though the penalty flux still adds a dissipative contribution to the right hand side \cite{kopriva2014energy}.  
 }
 

@@ -209,8 +209,8 @@ legend style={font=\small}
 \newcommand{\squareface}{[-1,1]^2}
 
 \date{}
-\author{Jesse Chan, T. Warburton}
-\title{A short note on the penalty flux parameter for first order discontinuous Galerkin formulations}
+%\author{Jesse Chan, T. Warburton}
+%\title{A short note on the penalty flux parameter for first order discontinuous Galerkin formulations}
 
 \begin{document}
 
@@ -452,7 +452,7 @@ where the blocks $\bm{A},\bm{B},\bm{C}$ are defined as
 \end{align*}
 For exact quadrature, constant $\bm{A}_i$, and $\tau = 0$, the DG formulation is skew-symmetric \cite{warburton2013low, chan2015gpu, chan2016weight2, kopriva2014energy}, implying that $\bm{A},\bm{C}$ are skew-symmetric and that $\tilde{\bm{B}} = -\bm{B}$.  Additionally, the entries of the penalization matrix $\bm{S}$ can be rewritten as a sum over all unique faces of elements in the mesh
 \[
-\bm{S}_{mn}  &= \frac{1}{2}\sum_{D^k\in \Oh} \LRa{\jump{\bm{A}_n \bm{\Psi}_n}, \bm{A}_n{\bm{\Psi}_m}}_{\partial D^k} = -\frac{1}{2}\sum_{f \in \Gh} \LRa{\jump{\bm{A}_n \bm{\Psi}_n}, \jump{\bm{A}_n{\bm{\Psi}_m}}}_{f},
+\bm{S}_{mn}  = \frac{1}{2}\sum_{D^k\in \Oh} \LRa{\jump{\bm{A}_n \bm{\Psi}_n}, \bm{A}_n{\bm{\Psi}_m}}_{\partial D^k} = -\frac{1}{2}\sum_{f \in \Gh} \LRa{\jump{\bm{A}_n \bm{\Psi}_n}, \jump{\bm{A}_n{\bm{\Psi}_m}}}_{f},
 \]
 for consistently defined jumps and normal vectors $\bm{n}$  over each unique face.  This implies $\bm{S}$ is symmetric and negative-definite.  
 

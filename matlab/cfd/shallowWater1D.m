@@ -2,10 +2,10 @@ clear
 Globals1D;
 
 N = 4;
-K1D = 8;
+K1D = 16;
 tau = 0;
 FinalTime = 2;
-CFL = .25;
+CFL = .125;
 
 r = JacobiGL(0,0,N);
 % r = JacobiGQ(0,0,N);
@@ -164,10 +164,11 @@ dt = CFL * h/CN;
 Nsteps = ceil(FinalTime/dt); 
 dt = FinalTime/Nsteps;
 
-hex  = @(x) sin(pi*x);
-hvex = @(x) cos(pi*x);
-hex  = @(x) 2 + exp(-10*x.^2);
+hex  = @(x) 2+cos(pi*x);
+hvex = @(x) sin(pi*x);
+hex  = @(x) 1.5 + .5*(x > 0);
 hvex = @(x) zeros(size(x));
+
 
 % h = P*hex(xq);
 h = hex(x(:));
@@ -192,17 +193,12 @@ for i = 1:Nsteps
         vq = q2;
         
         [hx hy] = meshgrid(hq);
-        [vx vy] = meshgrid(vq);
-        
-        %         d1 = PqG*(sum(Dq.*f1(hx,hy,vx,vy),2));
-        %         rhs1 = 2*d1 + tau*S*h;
-        %         d1 = PqG*(sum(Dq.*f2(hx,hy,vx,vy),2));
-        %         rhs2 = 2*d1 + tau*S*hv;
+        [vx vy] = meshgrid(vq);       
         
         d1 = PqG*(sum(Dh.*f1(hx,hy,vx,vy),2)) + Pfh*(sum(Fh.*f1(hx,hy,vx,vy),2));
-        rhs1 = 2*d1 + tau*S*h;
+        rhs1 = -2*d1 + tau*S*h;
         d1 = PqG*(sum(Dh.*f2(hx,hy,vx,vy),2)) + Pfh*(sum(Fh.*f2(hx,hy,vx,vy),2));
-        rhs2 = 2*d1 + tau*S*hv;
+        rhs2 = -2*d1 + tau*S*hv;
         
         % try to recover total energy = entropy
         if INTRK==5
@@ -220,7 +216,6 @@ for i = 1:Nsteps
     hq = Vq2G*h;
     hvq = Vq2G*hv;
     
-%     vq = Vq2G*P*(hvq./hq);    
     vq = hvq./hq;
     
     energy(i) = wJq2(:)'*(hq.*vq.^2 + g*hq.^2)/2;
@@ -232,7 +227,7 @@ for i = 1:Nsteps
         hold on
         plot(xp,hvp./hp,'x')
         title(sprintf('Time = %f',dt*i))
-        axis([-1,1 -1 5])
+        axis([-1,1 -1 3])
         hold off
         drawnow
     end    

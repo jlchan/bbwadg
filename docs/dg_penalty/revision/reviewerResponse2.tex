@@ -1,0 +1,197 @@
+%&pdflatex
+
+%\documentclass[preprint,10pt]{elsarticle}
+\documentclass[10pt]{article}
+\usepackage{fullpage}
+\usepackage{hyperref}
+\let\proof\relax
+\let\endproof\relax
+\usepackage{amsmath,amssymb,amsfonts,mathrsfs,amsthm}
+\usepackage[titletoc,toc,title]{appendix}
+
+%\usepackage{lineno}
+\usepackage{array}
+\usepackage[utf8]{inputenc}
+\usepackage{listings}
+\usepackage{mathtools}
+\usepackage{pdfpages}
+\usepackage[textsize=footnotesize,color=green]{todonotes}
+\usepackage{bm}
+%\usepackage{tikz}
+\usepackage[normalem]{ulem}
+\usepackage{hhline}
+\usepackage{csquotes}
+\usepackage{algorithm}
+\usepackage[noend]{algpseudocode}
+\usepackage{algorithmicx}
+
+\usepackage{graphicx}
+%\usepackage{subfigure}
+\usepackage{subfig}
+
+\usepackage{color}
+
+\renewcommand{\topfraction}{0.85}
+\renewcommand{\textfraction}{0.1}
+\renewcommand{\floatpagefraction}{0.75}
+
+\newcommand{\vect}[1]{\ensuremath\boldsymbol{#1}}
+\newcommand{\tensor}[1]{\underline{\bm{#1}}}
+\newcommand{\del}{\triangle}
+\newcommand{\curl}{\grad \times}
+\renewcommand{\div}{\grad \cdot}
+\newcommand{\td}[2]{\frac{{\rm d}#1}{{\rm d}#2}}
+\newcommand{\pd}[2]{\frac{\partial#1}{\partial#2}}
+\newcommand{\pdd}[2]{\frac{\partial^2#1}{\partial#2^2}}
+
+\newcommand{\bs}[1]{\boldsymbol{#1}}
+
+\newcommand{\equaldef}{\stackrel{\mathrm{def}}{=}}
+
+\newcommand{\tablab}[1]{\label{tab:#1}}
+\newcommand{\tabref}[1]{Table~\ref{tab:#1}}
+
+\newcommand{\theolab}[1]{\label{theo:#1}}
+\newcommand{\theoref}[1]{\ref{theo:#1}}
+\newcommand{\eqnlab}[1]{\label{eq:#1}}
+\newcommand{\eqnref}[1]{\eqref{eq:#1}}
+\newcommand{\seclab}[1]{\label{sec:#1}}
+\newcommand{\secref}[1]{\ref{sec:#1}}
+\newcommand{\lemlab}[1]{\label{lem:#1}}
+\newcommand{\lemref}[1]{\ref{lem:#1}}
+
+\newcommand{\mb}[1]{\mathbf{#1}}
+\newcommand{\mbb}[1]{\mathbb{#1}}
+\newcommand{\mc}[1]{\mathcal{#1}}
+\newcommand{\nor}[1]{\left\| #1 \right\|}
+\newcommand{\snor}[1]{\left| #1 \right|}
+\newcommand{\LRp}[1]{\left( #1 \right)}
+\newcommand{\LRs}[1]{\left[ #1 \right]}
+\newcommand{\LRa}[1]{\left\langle #1 \right\rangle}
+\newcommand{\LRb}[1]{\left| #1 \right|}
+\newcommand{\LRc}[1]{\left\{ #1 \right\}}
+
+\newcommand{\Grad} {\ensuremath{\nabla}}
+\newcommand{\Div} {\ensuremath{\nabla\cdot}}
+\newcommand{\Nel} {\ensuremath{{N^\text{el}}}}
+\newcommand{\jump}[1] {\ensuremath{\LRs{\![#1]\!}}}
+\newcommand{\avg}[1] {\ensuremath{\LRc{\!\{#1\}\!}}}
+\newcommand{\uh}{\widehat{u}}
+\newcommand{\Bh}{\widehat{B}}
+\newcommand{\fnh}{\widehat{f}_n}
+\renewcommand{\L}{L^2\LRp{\Omega}}
+\newcommand{\pO}{\partial\Omega}
+\newcommand{\Gh}{\Gamma_h}
+\newcommand{\Gm}{\Gamma_{-}}
+\newcommand{\Gp}{\Gamma_{+}}
+\newcommand{\Go}{\Gamma_0}
+\newcommand{\Oh}{\Omega_h}
+
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+
+\newenvironment{definition}[1][Definition]{\begin{trivlist}
+\item[\hskip \labelsep {\bfseries #1}]}{\end{trivlist}}
+\newenvironment{example}[1][Example]{\begin{trivlist}
+\item[\hskip \labelsep {\bfseries #1}]}{\end{trivlist}}
+
+\newcommand{\eval}[2][\right]{\relax
+  \ifx#1\right\relax \left.\fi#2#1\rvert}
+
+\def\etal{{\it et al.~}}
+
+
+\def\arr#1#2#3#4{\left[
+\begin{array}{cc}
+#1 & #2\\
+#3 & #4\\
+\end{array}
+\right]}
+\def\vectwo#1#2{\left[
+\begin{array}{c}
+#1\\
+#2\\
+\end{array}
+\right]}
+\def\vecthree#1#2#3{\left[
+\begin{array}{c}
+#1\\
+#2\\
+#3\\
+\end{array}
+\right]}
+\def\vectfour#1#2#3#4{\left[
+\begin{array}{c}
+#1\\
+#2\\
+#3\\
+#4\\
+\end{array}
+\right]}
+
+\newcommand{\G} {\Gamma}
+\newcommand{\Gin} {\Gamma_{in}}
+\newcommand{\Gout} {\Gamma_{out}}
+
+\newcommand{\note}[1]{{\color{blue}#1}}
+\newcommand{\remark}[1]{\textbf{\color{red}#1}}
+
+\newcommand{\tri}{{\rm tri}}
+\newcommand{\sqr}{{\rm quad}}
+
+\newcommand{\refhex}{\widehat{\mathcal{H}}}
+\newcommand{\reftet}{\widehat{\mathcal{T}}}
+\newcommand{\refwedg}{\widehat{\mathcal{W}}}
+
+\newcommand{\refpyr}{\widehat{\mathcal{P}}}
+\newcommand{\refpyrf}{\widehat{\mathcal{P}}^f}
+\newcommand{\refpyrfq}{\widehat{\mathcal{P}}^{\sqr}}
+\newcommand{\refpyrft}{\widehat{\mathcal{P}}^{\tri}}
+
+
+\newcommand{\hex}{{\mathcal{H}}}
+\newcommand{\tet}{{\mathcal{T}}}
+\newcommand{\wedg}{{\mathcal{W}}}
+
+\newcommand{\pyr}{{\mathcal{P}}}
+\newcommand{\pyrf}{{\mathcal{P}}^f}
+\newcommand{\pyrfq}{{\mathcal{P}}^{\sqr}}
+\newcommand{\pyrft}{{\mathcal{P}}^{\tri}}
+
+\newcommand{\half}{1/2}
+
+\newcolumntype{C}[1]{>{\centering\let\newline\\\arraybackslash\hspace{0pt}}m{#1}}
+
+%% d in integrand
+\newcommand*\diff[1]{\mathop{}\!{\mathrm{d}#1}}
+
+\makeatletter
+\renewcommand\d[1]{\mspace{6mu}\mathrm{d}#1\@ifnextchar\d{\mspace{-3mu}}{}}
+\makeatother
+
+\newcommand{\squareface}{[-1,1]^2}
+
+%\journal{Journal of Computational Physics (JCP)}
+
+\date{}
+\author{Jesse Chan, T. Warburton}
+\title{Response to reviewers: ``A short note on the penalty flux parameter for first order discontinuous Galerkin formulations''}
+
+\begin{document}
+
+\maketitle
+
+\note{We thank Reviewers 1 for their feedback.  We have edited the manuscript as per the recommendation of the reviewer. We hope this revision improves the readability of this paper and its suitability for the audience of CAMWA.}
+
+\section{Referee 1}
+
+The authors have convincingly addressed all my concerns except for one: They claim that, in the case of discontinous material coefficients, the upwind flux can be written as a linear combination of an expression in terms of state and coefficents on one side of an element interface and state and coefficients on the other side of the interface. This appears to contradict, e.g., the conventional upwind flux for Maxwell's equations at a material interface\footnote{Mohammadian, Alireza H., Vijaya Shankar, and William F. Hall. "Computation of electromagnetic scattering and radiation using a time-domain finite-volume discretization procedure." Computer Physics Communications 68.1-3 (1991): 175-196.}, which appears to be genuinely nonlinear in the material coefficients on either side of the interface. Since the authors' statement about upwind fluxes across material discontinuities is immaterial to the remainder of the paper, this reviewer recommends removal of the relevant statement.
+
+\note{We have removed the discussion concerning discontinuous material interfaces from the manuscript.}
+
+\bibliographystyle{unsrt}
+\bibliography{dgpenalty}
+
+\end{document}
