@@ -1,36 +1,30 @@
 \pdfoutput=1
 
 %\documentclass[preprint,10pt]{elsarticle}
-%\documentclass[10pt]{article}
+\documentclass[10pt]{article}
 %\documentclass[review]{siamart0216}
-\documentclass{siamart0216}
+%\documentclass{siamart0216}
+
+%\documentclass[AMA]{WileyNJD-v1}
+%\articletype{Article Type}
 
 \usepackage{fullpage}
+
+\usepackage{lineno}
+
 \usepackage{amsmath,amssymb,amsfonts}
+\usepackage{amsthm}
 \usepackage[titletoc,toc,title]{appendix}
 
 \usepackage{array} 
 \usepackage{listings}
 \usepackage{mathtools}
-\usepackage{pdfpages}
-\usepackage[textsize=footnotesize,color=green]{todonotes}
+%\usepackage{pdfpages}
+%\usepackage[textsize=footnotesize,color=green]{todonotes}
 \usepackage{bm}
-%\usepackage{tikz}
+\usepackage{tikz}
 \usepackage[normalem]{ulem}
 \usepackage{hhline}
-
-%% ====================================== alg package
-\usepackage{algorithm}
-\usepackage[noend]{algpseudocode}
-\usepackage{algorithmicx}
-\algblock{ParFor}{EndParFor}
-% customising the new block
-\algnewcommand\algorithmicparfor{\textbf{parfor}}
-\algnewcommand\algorithmicpardo{\textbf{do}}
-\algnewcommand\algorithmicendparfor{\textbf{end\ parfor}}
-\algrenewtext{ParFor}[1]{\algorithmicparfor\ #1\ \algorithmicpardo}
-\algrenewtext{EndParFor}{\algorithmicendparfor}
-%% ====================================== end alg package
 
 \usepackage{graphicx}
 \usepackage{subfig}
@@ -278,8 +272,9 @@ legend style={font=\small}
 \newcommand{\Dhat}{\widehat{D}}
 \newcommand{\Lhat}{L^2\LRp{\Dhat}}
 
-%\newtheorem{theorem}{Theorem}[section]
-%\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+
 %\newtheorem{proposition}[theorem]{Proposition}
 %\newtheorem{corollary}[theorem]{Corollary}
 
@@ -295,7 +290,7 @@ legend style={font=\small}
 
 
 \newcommand{\note}[1]{{\color{blue}{#1}}}
-\newcommand{\remark}[1]{\textbf{\color{red}#1}}
+%\newcommand{\remark}[1]{\textbf{\color{red}#1}}
 
 
 \newcommand{\LinfDk}{L^{\infty}\LRp{D^k}}
@@ -319,14 +314,21 @@ legend style={font=\small}
 
 \begin{document}
 
+%\title{This is the sample article title\protect\thanks{This is an example for title footnote.}}
+%\author[1]{Author One*}
+%\authormark{AUTHOR ONE \textsc{et al}}
+%\address[1]{\orgdiv{Original Division}, \orgname{Original University}, \orgaddress{\state{State name}, \country{Country name}}}
+%\corres{*Corresponding author name, This is sample corresponding address. \email{authorone@gmail.com}}
+
+
 \maketitle
 
+\linenumbers
 \begin{abstract}
 Weight-adjusted inner products \cite{chan2016weight1,chan2016weight2} are easily invertible approximations to weighted $L^2$ inner products.  These approximations can be paired with a discontinuous Galerkin (DG) discretization to produce a time-domain method for wave propagation which is low storage, energy stable, and high order accurate for arbitrary heterogeneous media and curvilinear meshes.  In this work, we extend weight-adjusted DG (WADG) methods to the case of matrix-valued weights, with the linear elastic wave equation as an application.  We present a DG formulation of the symmetric form of the linear elastic wave equation, with upwind-like dissipation incorporated through simple penalty fluxes.  A semi-discrete convergence analysis is given, and numerical results confirm the stability and high order accuracy of WADG for several problems in elastic wave propagation.  
 \end{abstract}
 
 %\tableofcontents
-
 
 \section{Introduction}
 
@@ -361,7 +363,6 @@ where $\bm{C}$ is the symmetric matrix form of the constitutive tensor $\tensor{
 0 &< \rho_{\min} \leq \rho(\bm{x}) \leq \rho_{\max} < \infty, \\
 0 &< c_{\min} \leq \bm{u}^T\bm{C}(\bm{x})\bm{u} \leq c_{\max} < \infty\\
 0 &< \tilde{c}_{\min} \leq \bm{u}^T\bm{C}^{-1}(\bm{x})\bm{u} \leq \tilde{c}_{\max} < \infty
-%, \qquad \forall \bm{u} \in \mathbb{R}^{N_d}, \quad \forall \bm{x} \in \mathbb{R}^d.
 \end{align*}
 for all $\bm{x}\in \mathbb{R}^d$ and all $\bm{u} \in \mathbb{R}^{N_d}$.  
 
@@ -1030,7 +1031,7 @@ Inverting these weight-adjusted mass matrices yields the following local system 
 \end{align*}
 In practice, the matrices $\LRp{\bm{I}\otimes\bm{M}^{-1}} \bm{M}_{\LRp{\rho^{-1}\bm{I}}}$ and $\LRp{\bm{I}\otimes\bm{M}^{-1}} \bm{M}_{\bm{C}}$ are applied in a matrix-free fashion using reference element matrices and values of $\rho,\bm{C}$ at quadrature points.  After fusing operations together, this procedure can be boiled down to multiplication by two rectangular matrices \cite{chan2016weight2}.  
 
-One drawback of the analysis presented in this work is that accuracy of the weight-adjusted approximation is not guaranteed in the incompressible limit $\mu / \lambda \rightarrow 0$.  In this case, the stiffness matrix $\bm{C}$ becomes singular, and the constant $\tilde{w}_{\max}$ in the upper bound on $\nor{\bm{C}^{-1}}$ blows up.  However, numerical experiments in Section~\ref{sec:incomp} suggest that, while taking $\mu/\lambda \approx 0$ (or $\bm{C}$ nearly singular) results in larger relative errors for $\bm{\sigma}$, the accuracy of the WADG solution for $\bm{v}$ does not degrade significantly for near-incompressible materials.  
+One drawback of the analysis presented in this work is that accuracy of the weight-adjusted approximation is not guaranteed in the incompressible limit $\mu / \lambda \rightarrow 0$.  In this case, the stiffness matrix $\bm{C}$ becomes singular, and the constant $\tilde{w}_{\max}$ in the upper bound on $\nor{\bm{C}^{-1}}$ blows up.  However, numerical experiments in Section~\ref{sec:incomp} suggest that, while taking $\mu/\lambda \approx 0$ (or $\bm{C}$ nearly singular) results in larger relative errors for $\bm{\sigma}$, the accuracy of the WADG solution for $\bm{v}$ does not degrade as significantly for near-incompressible materials.  
 
 \subsection{Energy stability on curvilinear meshes}
 
