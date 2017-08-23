@@ -3,7 +3,7 @@ Globals2D
 
 N = 4;
 K1D = 8;
-FinalTime = .2;
+FinalTime = .15;
 CFL = .75;
 
 [Nv, VX, VY, K, EToV] = unif_tri_mesh(K1D);
@@ -33,7 +33,7 @@ ryJ = ry.*J; syJ = sy.*J;
 rxJ = Vq*rxJ; sxJ = Vq*sxJ;
 ryJ = Vq*ryJ; syJ = Vq*syJ;
 
-[rq1D wq1D] = JacobiGQ(0,0,N);
+[rq1D wq1D] = JacobiGQ(0,0,N+2);
 rfq = [rq1D; -rq1D; -ones(size(rq1D))];
 sfq = [-ones(size(rq1D)); rq1D; -rq1D];
 wfq = [wq1D; wq1D; wq1D];
@@ -179,18 +179,18 @@ figure(1)
 for i = 1:Nsteps
     for INTRK = 1:5
         
+        % project to entropy variables        
         hq = Vq*h;
         huq = Vq*hu;
         hvq = Vq*hv;
         uq = huq./hq;
         vq = hvq./hq;
         
-        % project to entropy variables
         q1 = Pq*(g.*(hq+b)- .5*(uq.^2 + vq.^2));
         u  = Pq*uq;
         v  = Pq*vq;
         
-        % re-evaluate at quad/surface points
+        % evaluate at quad/surface points
         qq = Vq*q1; qM = Vfq*q1;
         uq = Vq*u;  uM = Vfq*u;
         vq = Vq*v;  vM = Vfq*v;
@@ -215,7 +215,7 @@ for i = 1:Nsteps
     %     uq = Vq*u;
     %     energy(i) = sum(sum(wJq.*uq.^2));
     
-    if mod(i,10)==0 || i==Nsteps
+    if mod(i,5)==0 || i==Nsteps
         clf
         pp = h;
         vv = Vp*pp;
@@ -249,13 +249,8 @@ global mapPq
 global fxS1 fxS2 fxS3 fyS1 fyS2 fyS3
 
 % operators
-% Pq
-% Vq
-% Vfq Lq
 Drq = (Vq*Dr*Pq - .5*Vq*Lq*diag(nrJ)*Vfq*Pq);
 Dsq = (Vq*Ds*Pq - .5*Vq*Lq*diag(nsJ)*Vfq*Pq);
-% Lrq = (.5*Vq*Lq*diag(nrJ));
-% Lsq = (.5*Vq*Lq*diag(nsJ));
 VfPq = (Vfq*Pq);
 VqLq = Vq*Lq;
 
@@ -271,6 +266,8 @@ rhs1 = zeros(Np,K);
 rhs2 = zeros(Np,K);
 rhs3 = zeros(Np,K);
 for e = 1:K
+    
+    % local arithmetic operations - cheap for GPU?
     [hx hy] = meshgrid(hq(:,e));  [hfx hfy] = meshgrid(hM(:,e),hq(:,e));
     [ux uy] = meshgrid(uq(:,e));  [ufx ufy] = meshgrid(uM(:,e),uq(:,e));
     [vx vy] = meshgrid(vq(:,e));  [vfx vfy] = meshgrid(vM(:,e),vq(:,e));
@@ -282,49 +279,48 @@ for e = 1:K
     FxSf1 = fxS1(hfx,ufx,vfx,hfy,ufy,vfy);  FySf1 = fyS1(hfx,ufx,vfx,hfy,ufy,vfy);
     FxSf2 = fxS2(hfx,ufx,vfx,hfy,ufy,vfy);  FySf2 = fyS2(hfx,ufx,vfx,hfy,ufy,vfy);
     FxSf3 = fxS3(hfx,ufx,vfx,hfy,ufy,vfy);  FySf3 = fyS3(hfx,ufx,vfx,hfy,ufy,vfy);
-       
+    
+    % premultiply by geofacs
+    FrS1 = rxJ(:,e).*FxS1 + ryJ(:,e).*FyS1; FsS1 = sxJ(:,e).*FxS1 + syJ(:,e).*FyS1;
+    FrS2 = rxJ(:,e).*FxS2 + ryJ(:,e).*FyS2; FsS2 = sxJ(:,e).*FxS2 + syJ(:,e).*FyS2;
+    FrS3 = rxJ(:,e).*FxS3 + ryJ(:,e).*FyS3; FsS3 = sxJ(:,e).*FxS3 + syJ(:,e).*FyS3;
+    
+    % flux/volume combos
     Nq = size(FxSf1,1);
     FSf1 = FxSf1.*repmat(nxJ(:,e)',Nq,1) + FySf1.*repmat(nyJ(:,e)',Nq,1);
     FSf2 = FxSf2.*repmat(nxJ(:,e)',Nq,1) + FySf2.*repmat(nyJ(:,e)',Nq,1);
     FSf3 = FxSf3.*repmat(nxJ(:,e)',Nq,1) + FySf3.*repmat(nyJ(:,e)',Nq,1);
         
-%     keyboard
+    %% bulk of GPU work: application of local operators
     
-%     fx1r = sum(Drq.*FxS1,2) + sum(Lrq.*(FxSf1),2);  fx1s = sum(Dsq.*FxS1,2) + sum(Lsq.*(FxSf1),2);
-%     fx2r = sum(Drq.*FxS2,2) + sum(Lrq.*(FxSf2),2);  fx2s = sum(Dsq.*FxS2,2) + sum(Lsq.*(FxSf2),2);
-%     fx3r = sum(Drq.*FxS3,2) + sum(Lrq.*(FxSf3),2);  fx3s = sum(Dsq.*FxS3,2) + sum(Lsq.*(FxSf3),2);
+%     fx1r = sum(Drq.*FxS1,2);  fx1s = sum(Dsq.*FxS1,2);
+%     fx2r = sum(Drq.*FxS2,2);  fx2s = sum(Dsq.*FxS2,2);
+%     fx3r = sum(Drq.*FxS3,2);  fx3s = sum(Dsq.*FxS3,2);
 %     
-%     fy1r = sum(Drq.*FyS1,2) + sum(Lrq.*(FySf1),2);  fy1s = sum(Dsq.*FyS1,2) + sum(Lsq.*(FySf1),2);
-%     fy2r = sum(Drq.*FyS2,2) + sum(Lrq.*(FySf2),2);  fy2s = sum(Dsq.*FyS2,2) + sum(Lsq.*(FySf2),2);
-%     fy3r = sum(Drq.*FyS3,2) + sum(Lrq.*(FySf3),2);  fy3s = sum(Dsq.*FyS3,2) + sum(Lsq.*(FySf3),2);
-         
-    fx1r = sum(Drq.*FxS1,2);  fx1s = sum(Dsq.*FxS1,2);
-    fx2r = sum(Drq.*FxS2,2);  fx2s = sum(Dsq.*FxS2,2);
-    fx3r = sum(Drq.*FxS3,2);  fx3s = sum(Dsq.*FxS3,2);
+%     fy1r = sum(Drq.*FyS1,2);  fy1s = sum(Dsq.*FyS1,2);
+%     fy2r = sum(Drq.*FyS2,2);  fy2s = sum(Dsq.*FyS2,2);
+%     fy3r = sum(Drq.*FyS3,2);  fy3s = sum(Dsq.*FyS3,2);   
     
-    fy1r = sum(Drq.*FyS1,2);  fy1s = sum(Dsq.*FyS1,2);
-    fy2r = sum(Drq.*FyS2,2);  fy2s = sum(Dsq.*FyS2,2);
-    fy3r = sum(Drq.*FyS3,2);  fy3s = sum(Dsq.*FyS3,2);
-
-    % apply J*G^T here
-    divF1 = rxJ(:,e).*fx1r + sxJ(:,e).*fx1s + ryJ(:,e).*fy1r + syJ(:,e).*fy1s;
-    divF2 = rxJ(:,e).*fx2r + sxJ(:,e).*fx2s + ryJ(:,e).*fy2r + syJ(:,e).*fy2s;
-    divF3 = rxJ(:,e).*fx3r + sxJ(:,e).*fx3s + ryJ(:,e).*fy3r + syJ(:,e).*fy3s;
+    %% apply J*G^T here - can maybe fuse with computation of FxS above?
     
-    %fSproj1 = nxJ(:,e).*sum(VfPq.*FxSf1',2) + nyJ(:,e).*sum(VfPq.*FySf1',2);
-    %fSproj2 = nxJ(:,e).*sum(VfPq.*FxSf2',2) + nyJ(:,e).*sum(VfPq.*FySf2',2);
-    %fSproj3 = nxJ(:,e).*sum(VfPq.*FxSf3',2) + nyJ(:,e).*sum(VfPq.*FySf3',2);
+    divF1 = sum(Drq.*FrS1,2) + sum(Dsq.*FsS1,2);
+    divF2 = sum(Drq.*FrS2,2) + sum(Dsq.*FsS2,2);
+    divF3 = sum(Drq.*FrS3,2) + sum(Dsq.*FsS3,2);
+%     divF1 = rxJ(:,e).*fx1r + sxJ(:,e).*fx1s + ryJ(:,e).*fy1r + syJ(:,e).*fy1s;
+%     divF2 = rxJ(:,e).*fx2r + sxJ(:,e).*fx2s + ryJ(:,e).*fy2r + syJ(:,e).*fy2s;
+%     divF3 = rxJ(:,e).*fx3r + sxJ(:,e).*fx3s + ryJ(:,e).*fy3r + syJ(:,e).*fy3s;             
+        
+    %% intermediate fluxes - can we get rid of this?
+    
     fSproj1 = sum(VfPq.*FSf1',2);
     fSproj2 = sum(VfPq.*FSf2',2);
-    fSproj3 = sum(VfPq.*FSf3',2);
+    fSproj3 = sum(VfPq.*FSf3',2); 
     
-%     rhs1(:,e) =  Pq*divF1 + Lq*(.5*(fSf1(:,e) - fSproj1));
-%     rhs2(:,e) =  Pq*divF2 + Lq*(.5*(fSf2(:,e) - fSproj2));
-%     rhs3(:,e) =  Pq*divF3 + Lq*(.5*(fSf3(:,e) - fSproj3));
-        
     f1 = .5*FSf1 + repmat(.5*(fSf1(:,e) - fSproj1)',Nq,1);
     f2 = .5*FSf2 + repmat(.5*(fSf2(:,e) - fSproj2)',Nq,1);
     f3 = .5*FSf3 + repmat(.5*(fSf3(:,e) - fSproj3)',Nq,1);
+    
+    %% project back to polynomial space
     
     rhs1(:,e) =  Pq*(divF1 + sum(VqLq.*f1,2));
     rhs2(:,e) =  Pq*(divF2 + sum(VqLq.*f2,2));
