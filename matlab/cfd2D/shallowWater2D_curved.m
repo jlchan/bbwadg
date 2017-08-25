@@ -1,9 +1,9 @@
 clear
 Globals2D
 
-N = 4;
-K1D = 8;
-FinalTime = 1.5;
+N = 3;
+K1D = 16;
+FinalTime = 1;
 CFL = .75;
 
 [Nv, VX, VY, K, EToV] = unif_tri_mesh(K1D);
@@ -146,7 +146,7 @@ end
 
 %% make curvilinear mesh (still unstable?)
 
-a = 0/16;
+a = 1/8;
 x = x + a*sin(pi*x).*sin(pi*y);
 y = y + a*sin(pi*x).*sin(pi*y);
 
@@ -159,16 +159,28 @@ ryJ = zeros(Nq,K); syJ = zeros(Nq,K);
 J = zeros(Nq,K);
 rxJf = zeros(Nfq*Nfaces,K); sxJf = zeros(Nfq*Nfaces,K);
 ryJf = zeros(Nfq*Nfaces,K); syJf = zeros(Nfq*Nfaces,K);
+Jf = zeros(Nfq*Nfaces,K);
 for e = 1:K
     [rxk,sxk,ryk,syk,Jk] = GeometricFactors2D(x(:,e),y(:,e),Vq*Dr,Vq*Ds);
     rxJ(:,e) = rxk.*Jk;    sxJ(:,e) = sxk.*Jk;
     ryJ(:,e) = ryk.*Jk;    syJ(:,e) = syk.*Jk;
     J(:,e) = Jk;
     
-    [rxk,sxk,ryk,syk,Jfk] = GeometricFactors2D(x(:,e),y(:,e),Vfq*Dr,Vfq*Ds);
-    rxJf(:,e) = rxk.*Jfk;    sxJf(:,e) = sxk.*Jfk;
-    ryJf(:,e) = ryk.*Jfk;    syJf(:,e) = syk.*Jfk;
+    [rxk,sxk,ryk,syk,Jk] = GeometricFactors2D(x(:,e),y(:,e),Vfq*Dr,Vfq*Ds);
+    rxJf(:,e) = rxk.*Jk;    sxJf(:,e) = sxk.*Jk;
+    ryJf(:,e) = ryk.*Jk;    syJf(:,e) = syk.*Jk;
+    Jf(:,e) = Jk;
 end
+
+nxJ = rxJf.*nrJ + sxJf.*nsJ;
+nyJ = ryJf.*nrJ + syJf.*nsJ;
+
+nx = nxJ./Jf;
+ny = nyJ./Jf;
+sJ = sqrt(nx.^2 + ny.^2);
+nx = nx./sJ; ny = ny./sJ;
+sJ = sJ.*Jf;
+
 
 %% problem params setup
 
@@ -206,7 +218,7 @@ res1 = zeros(Np,K); res2 = zeros(Np,K); res3 = zeros(Np,K);
 
 % compute time step size
 CN = (N+1)^2/2; % guessing...
-CNh = max(CN*max(Fscale(:)));
+CNh = max(CN*max(sJ(:)./Jf(:)));
 dt = CFL*2/CNh;
 
 Nsteps = ceil(FinalTime/dt);
@@ -244,7 +256,7 @@ for i = 1:Nsteps
         res2 = rk4a(INTRK)*res2 + dt*rhs2;
         res3 = rk4a(INTRK)*res3 + dt*rhs3;
         
-        h = h + rk4b(INTRK)*res1;
+        h  = h  + rk4b(INTRK)*res1;
         hu = hu + rk4b(INTRK)*res2;
         hv = hv + rk4b(INTRK)*res3;                
     end;
@@ -287,18 +299,27 @@ global mapPq
 global fxS1 fxS2 fxS3 fyS1 fyS2 fyS3
 global avg
 
-% quadrature-based operators 
+% operators
 Drq = (Vq*Dr*Pq - .5*Vq*Lq*diag(nrJ)*Vfq*Pq);
 Dsq = (Vq*Ds*Pq - .5*Vq*Lq*diag(nsJ)*Vfq*Pq);
 VfPq = (Vfq*Pq);
 VqLq = Vq*Lq;
 
-% extract + values
 hP = hM(mapPq);
 uP = uM(mapPq);
 vP = vM(mapPq);
 
-% precompute normal fluxes
+% Lax-Friedrichs flux
+g = 1;
+cvel = sqrt(g*hM);
+LFc = max(sqrt(uM.^2+vM.^2)+cvel);
+hUn = (hP.*uP-hM.*uM).*nx + (hP.*vP-hM.*vM).*ny;
+tau = 1;
+Lf1 = tau*LFc.*(hP-hM).*sJ;
+Lf2 = tau*LFc.*(hUn.*nx).*sJ;
+Lf3 = tau*LFc.*(hUn.*ny).*sJ;
+
+
 fSf1 = nxJ.*fxS1(hM,uM,vM,hP,uP,vP) + nyJ.*fyS1(hM,uM,vM,hP,uP,vP);
 fSf2 = nxJ.*fxS2(hM,uM,vM,hP,uP,vP) + nyJ.*fyS2(hM,uM,vM,hP,uP,vP);
 fSf3 = nxJ.*fxS3(hM,uM,vM,hP,uP,vP) + nyJ.*fyS3(hM,uM,vM,hP,uP,vP);
@@ -312,24 +333,35 @@ for e = 1:K
     [hx hy] = meshgrid(hq(:,e));  [hfx hfy] = meshgrid(hM(:,e),hq(:,e));
     [ux uy] = meshgrid(uq(:,e));  [ufx ufy] = meshgrid(uM(:,e),uq(:,e));
     [vx vy] = meshgrid(vq(:,e));  [vfx vfy] = meshgrid(vM(:,e),vq(:,e));
-        
-    Nq = size(rxJ,1);
-    rxJK = repmat(rxJ(:,e),1,Nq); sxJK = repmat(sxJ(:,e),1,Nq);
-    ryJK = repmat(ryJ(:,e),1,Nq); syJK = repmat(syJ(:,e),1,Nq);
+    
+    if 0
+        % avoiding geometric aliasing
+        [rxJ1 rxJ2] = meshgrid(rxJ(:,e));  [sxJ1 sxJ2] = meshgrid(sxJ(:,e));
+        [ryJ1 ryJ2] = meshgrid(ryJ(:,e));  [syJ1 syJ2] = meshgrid(syJ(:,e));
+        rxJK = avg(rxJ1,rxJ2);  sxJK = avg(sxJ1,sxJ2);
+        ryJK = avg(ryJ1,ryJ2);  syJK = avg(syJ1,syJ2);
+    else
+        Nq = size(rxJ,1);
+        rxJK = repmat(rxJ(:,e),1,Nq); sxJK = repmat(sxJ(:,e),1,Nq);
+        ryJK = repmat(ryJ(:,e),1,Nq); syJK = repmat(syJ(:,e),1,Nq);
+    end
     
     FxS1 = fxS1(hx,ux,vx,hy,uy,vy);  FyS1 = fyS1(hx,ux,vx,hy,uy,vy);      
     FxS2 = fxS2(hx,ux,vx,hy,uy,vy);  FyS2 = fyS2(hx,ux,vx,hy,uy,vy);  
     FxS3 = fxS3(hx,ux,vx,hy,uy,vy);  FyS3 = fyS3(hx,ux,vx,hy,uy,vy);  
         
     % premultiply by geofacs
-    FrS1 = rxJK.*FxS1 + ryJK.*FyS1;  FsS1 = sxJK.*FxS1 + syJK.*FyS1;
-    FrS2 = rxJK.*FxS2 + ryJK.*FyS2;  FsS2 = sxJK.*FxS2 + syJK.*FyS2;
-    FrS3 = rxJK.*FxS3 + ryJK.*FyS3;  FsS3 = sxJK.*FxS3 + syJK.*FyS3;        
+    FrS1 = rxJK.*FxS1 + ryJK.*FyS1; 
+    FsS1 = sxJK.*FxS1 + syJK.*FyS1;
+    FrS2 = rxJK.*FxS2 + ryJK.*FyS2; 
+    FsS2 = sxJK.*FxS2 + syJK.*FyS2;
+    FrS3 = rxJK.*FxS3 + ryJK.*FyS3; 
+    FsS3 = sxJK.*FxS3 + syJK.*FyS3;        
         
     % bulk of GPU work: application of local operators
     divF1 = sum(Drq.*FrS1,2) + sum(Dsq.*FsS1,2);
     divF2 = sum(Drq.*FrS2,2) + sum(Dsq.*FsS2,2);
-    divF3 = sum(Drq.*FrS3,2) + sum(Dsq.*FsS3,2);
+    divF3 = sum(Drq.*FrS3,2) + sum(Dsq.*FsS3,2);        
     
     %% flux/volume combos
     
@@ -337,39 +369,51 @@ for e = 1:K
     FxSf2 = fxS2(hfx,ufx,vfx,hfy,ufy,vfy);  FySf2 = fyS2(hfx,ufx,vfx,hfy,ufy,vfy);
     FxSf3 = fxS3(hfx,ufx,vfx,hfy,ufy,vfy);  FySf3 = fyS3(hfx,ufx,vfx,hfy,ufy,vfy);
     
-    FSf1 = FxSf1.*repmat(nxJ(:,e)',Nq,1) + FySf1.*repmat(nyJ(:,e)',Nq,1);
-    FSf2 = FxSf2.*repmat(nxJ(:,e)',Nq,1) + FySf2.*repmat(nyJ(:,e)',Nq,1);
-    FSf3 = FxSf3.*repmat(nxJ(:,e)',Nq,1) + FySf3.*repmat(nyJ(:,e)',Nq,1);    
+    % averaging to prevent geometric aliasing?     
+    [rxJ1 rxJ2] = meshgrid(rxJ(:,e),rxJf(:,e)); rxJK = avg(rxJ1,rxJ2)';
+    [sxJ1 sxJ2] = meshgrid(sxJ(:,e),sxJf(:,e)); sxJK = avg(sxJ1,sxJ2)';
+    [ryJ1 ryJ2] = meshgrid(ryJ(:,e),ryJf(:,e)); ryJK = avg(ryJ1,ryJ2)';
+    [syJ1 syJ2] = meshgrid(syJ(:,e),syJf(:,e)); syJK = avg(syJ1,syJ2)';
     
+    Nq = size(FxSf1,1);
+    FxSf1r = FxSf1.*nrJq; FxSf1s = FxSf1.*nsJq;         
+    FxSf2r = FxSf2.*nrJq; FxSf2s = FxSf2.*nsJq;  
+    FxSf3s = FxSf3.*nsJq; FxSf3r = FxSf3.*nrJq; 
+    
+    FySf1r = FySf1.*nrJq; FySf1s = FySf1.*nsJq;        
+    FySf2r = FySf2.*nrJq; FySf2s = FySf2.*nsJq;    
+    FySf3s = FySf3.*nsJq; FySf3r = FySf3.*nrJq;
+    
+    FSf1 = rxJK.*FxSf1r + ryJK.*FySf1r + sxJK.*FxSf1s + syJK.*FySf1s;
+    FSf2 = rxJK.*FxSf2r + ryJK.*FySf2r + sxJK.*FxSf2s + syJK.*FySf2s;
+    FSf3 = rxJK.*FxSf3r + ryJK.*FySf3r + sxJK.*FxSf3s + syJK.*FySf3s;
+        
     % bulk of GPU work: application of local operators
     fSproj1 = sum(VfPq.*FSf1',2);
     fSproj2 = sum(VfPq.*FSf2',2);
     fSproj3 = sum(VfPq.*FSf3',2);     
     
     % intermediate fluxes - form on the fly on GPU
-    f1 = FSf1 + repmat((fSf1(:,e) - fSproj1)',Nq,1);
-    f2 = FSf2 + repmat((fSf2(:,e) - fSproj2)',Nq,1);
-    f3 = FSf3 + repmat((fSf3(:,e) - fSproj3)',Nq,1);
+    f1 = FSf1 + repmat((fSf1(:,e) - fSproj1 - .25*Lf1(:,e))',Nq,1) ;
+    f2 = FSf2 + repmat((fSf2(:,e) - fSproj2 - .25*Lf2(:,e))',Nq,1) ;
+    f3 = FSf3 + repmat((fSf3(:,e) - fSproj3 - .25*Lf3(:,e))',Nq,1) ;
     
     %% project back to polynomial space - can incorporate WADG here
     
-    JK = J(:,e);
-    rhs1(:,e) =  Pq*((divF1 + .5*sum(VqLq.*f1,2))./JK);
-    rhs2(:,e) =  Pq*((divF2 + .5*sum(VqLq.*f2,2))./JK);
-    rhs3(:,e) =  Pq*((divF3 + .5*sum(VqLq.*f3,2))./JK);
+    rhs1(:,e) =  Pq*(divF1 + .5*sum(VqLq.*f1,2));
+    rhs2(:,e) =  Pq*(divF2 + .5*sum(VqLq.*f2,2));
+    rhs3(:,e) =  Pq*(divF3 + .5*sum(VqLq.*f3,2));
 
 end
 
-% Lax-Friedrichs flux
-g = 1;
-cvel = sqrt(g*hM);
-LFc = max(abs(sqrt(uM.^2+vM.^2))+cvel);
 
-tau = 1;
-hUn = (hP.*uP-hM.*uM).*nx + (hP.*vP-hM.*vM).*ny;
-rhs1 = -2*rhs1 + .5*tau*Lq*(LFc.*(hP-hM).*Fscale);
-rhs2 = -2*rhs2 + .5*tau*Lq*(LFc.*(hUn.*nx).*Fscale);
-rhs3 = -2*rhs3 + .5*tau*Lq*(LFc.*(hUn.*ny).*Fscale);
+% rhs1 = rhs1 - .25*Lq*(Lf1); % .25 b/c multiply by 2 later
+% rhs2 = rhs2 - .25*Lq*(Lf2);
+% rhs3 = rhs3 - .25*Lq*(Lf3);
+
+rhs1 = -2*Pq*((Vq*rhs1)./J);
+rhs2 = -2*Pq*((Vq*rhs2)./J);
+rhs3 = -2*Pq*((Vq*rhs3)./J);
 
 end
 
