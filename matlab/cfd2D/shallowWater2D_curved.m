@@ -2,17 +2,22 @@ clear
 Globals2D
 
 N = 3;
-K1D = 16;
+K1D = 8;
 FinalTime = 1;
-CFL = .75;
+CFL = .5;
+global tau
+tau = 1;
 
 [Nv, VX, VY, K, EToV] = unif_tri_mesh(K1D);
+% VX = VX/max(abs(VX));  VY = VY/max(abs(VY));
+% VX = VX*5 + 5; VY = VY*5;
+
 % iids = abs(VX) < 1 & abs(VY) < 1;
 % VX(iids) = VX(iids) + .25/K1D*randn(size(VX(iids)));
 % VY(iids) = VY(iids) + .25/K1D*randn(size(VY(iids)));
 
 StartUp2D;
-BuildPeriodicMaps2D(2,2);
+BuildPeriodicMaps2D(max(VX)-min(VX),max(VY)-min(VY));
 % StartUp2D;
 
 % plotting nodes
@@ -69,22 +74,6 @@ Nq = length(rq);
 nrJq = repmat(nrJ',Nq,1);
 nsJq = repmat(nsJ',Nq,1);
 
-if 0
-    u = (1:Np)';
-    uq = Vq*u;
-    uf = Vfq*u;
-    
-    [ux uy] = meshgrid(uq);
-    [ufx ufy] = meshgrid(uf,uq);
-    
-    FS = fS(ux,uy);
-    FSf = fS(ufx,ufy);
-    
-    Pq*sum((diag(wq)*Vq*Lq).*FSf,2)
-    sum((diag(wq)*Vq*Lq).*FSf,1)*(M\Vfq')'
-    M\Vfq'*sum((diag(wfq)*Vfq*Pq).*FSf',2)
-end
-
 %% make quadrature face maps
 
 xf = Vfq*x;
@@ -123,26 +112,11 @@ for e = 1:K
                     keyboard
                 end
                 
-                %                     plot(x1,y1,'o')
-                %                     hold on
-                %                     plot(x2,y2,'x')
-                %                     axis([-1,1,-1,1])
-                %                     keyboard
-                
             end
             mapPq(id1,e) = id2(p) + (enbr-1)*(Nfq*Nfaces);
         end
     end
 end
-
-% hold on
-% for i = 1:nnz(xf)
-%     id = mapPq(i) ;
-%     plot(xf(i),yf(i),'o')
-%     plot(xf(id),yf(id),'x')
-%    pause
-% end
-% return
 
 %% make curvilinear mesh (still unstable?)
 
@@ -152,7 +126,7 @@ y = y + a*sin(pi*x).*sin(pi*y);
 
 xq = Vq*x; yq = Vq*y;
 xp = Vp*x; yp = Vp*y;
-% plot(xp,yp,'.');return
+% plot(x(Fmask(:),:),y(Fmask(:),:),'.');return
 
 rxJ = zeros(Nq,K); sxJ = zeros(Nq,K);
 ryJ = zeros(Nq,K); syJ = zeros(Nq,K);
@@ -184,10 +158,11 @@ sJ = sJ.*Jf;
 
 %% problem params setup
 
-x0 = 0; y0 = 0;
+x0 = mean(VX); y0 = 0;
 
-%hex = @(x,y) 2+exp(-5^2*((x-x0).^2 + (y-y0).^2));
+hex = @(x,y) 2 + exp(-5^2*((x-x0).^2 + (y-y0).^2));
 hex = @(x,y) 2 + exp(-5^2*(x-x0).^2);
+% hex = @(x,y) 2 + exp(-1^2*(x-x0).^2);
 % hex = @(x,y) 2 + (abs(x)<.5).*(abs(y)<.5);
 h = Pq*hex(xq,yq);
 hu = Pq*(xq*0);
@@ -261,8 +236,13 @@ for i = 1:Nsteps
         hv = hv + rk4b(INTRK)*res3;                
     end;
     
-    %     uq = Vq*u;
-    %     energy(i) = sum(sum(wJq.*uq.^2));
+    % project to entropy variables
+    hq = Vq*h;
+    huq = Vq*hu;
+    hvq = Vq*hv;
+    uq = huq./hq;
+    vq = hvq./hq;
+    energy(i) = sum(sum(wJq.*(.5*hq.*(uq.^2+vq.^2) + .5*g*hq.^2 + g.*hq.*b)));
     
     if mod(i,5)==0 || i==Nsteps
         clf
@@ -273,14 +253,14 @@ for i = 1:Nsteps
         axis tight
         colorbar
         title(sprintf('time = %f',dt*i))
-        %         view(3)
+                view(3)
         drawnow
         
     end
     
 end
 
-return
+% return
 figure(2)
 semilogy(dt*(1:Nsteps),energy,'--')
 hold on
@@ -312,13 +292,13 @@ vP = vM(mapPq);
 % Lax-Friedrichs flux
 g = 1;
 cvel = sqrt(g*hM);
-LFc = max(sqrt(uM.^2+vM.^2)+cvel);
+lfm = sqrt(uM.^2+vM.^2)+cvel;
+LFc = max(lfm(mapPq),lfm);
 hUn = (hP.*uP-hM.*uM).*nx + (hP.*vP-hM.*vM).*ny;
-tau = 1;
+global tau
 Lf1 = tau*LFc.*(hP-hM).*sJ;
 Lf2 = tau*LFc.*(hUn.*nx).*sJ;
 Lf3 = tau*LFc.*(hUn.*ny).*sJ;
-
 
 fSf1 = nxJ.*fxS1(hM,uM,vM,hP,uP,vP) + nyJ.*fyS1(hM,uM,vM,hP,uP,vP);
 fSf2 = nxJ.*fxS2(hM,uM,vM,hP,uP,vP) + nyJ.*fyS2(hM,uM,vM,hP,uP,vP);
@@ -334,17 +314,11 @@ for e = 1:K
     [ux uy] = meshgrid(uq(:,e));  [ufx ufy] = meshgrid(uM(:,e),uq(:,e));
     [vx vy] = meshgrid(vq(:,e));  [vfx vfy] = meshgrid(vM(:,e),vq(:,e));
     
-    if 0
-        % avoiding geometric aliasing
-        [rxJ1 rxJ2] = meshgrid(rxJ(:,e));  [sxJ1 sxJ2] = meshgrid(sxJ(:,e));
-        [ryJ1 ryJ2] = meshgrid(ryJ(:,e));  [syJ1 syJ2] = meshgrid(syJ(:,e));
-        rxJK = avg(rxJ1,rxJ2);  sxJK = avg(sxJ1,sxJ2);
-        ryJK = avg(ryJ1,ryJ2);  syJK = avg(syJ1,syJ2);
-    else
-        Nq = size(rxJ,1);
-        rxJK = repmat(rxJ(:,e),1,Nq); sxJK = repmat(sxJ(:,e),1,Nq);
-        ryJK = repmat(ryJ(:,e),1,Nq); syJK = repmat(syJ(:,e),1,Nq);
-    end
+    % avoiding geometric aliasing
+    [rxJ1 rxJ2] = meshgrid(rxJ(:,e));  [sxJ1 sxJ2] = meshgrid(sxJ(:,e));
+    [ryJ1 ryJ2] = meshgrid(ryJ(:,e));  [syJ1 syJ2] = meshgrid(syJ(:,e));
+    rxJK = avg(rxJ1,rxJ2);  sxJK = avg(sxJ1,sxJ2);
+    ryJK = avg(ryJ1,ryJ2);  syJK = avg(syJ1,syJ2);
     
     FxS1 = fxS1(hx,ux,vx,hy,uy,vy);  FyS1 = fyS1(hx,ux,vx,hy,uy,vy);      
     FxS2 = fxS2(hx,ux,vx,hy,uy,vy);  FyS2 = fyS2(hx,ux,vx,hy,uy,vy);  
@@ -405,11 +379,6 @@ for e = 1:K
     rhs3(:,e) =  Pq*(divF3 + .5*sum(VqLq.*f3,2));
 
 end
-
-
-% rhs1 = rhs1 - .25*Lq*(Lf1); % .25 b/c multiply by 2 later
-% rhs2 = rhs2 - .25*Lq*(Lf2);
-% rhs3 = rhs3 - .25*Lq*(Lf3);
 
 rhs1 = -2*Pq*((Vq*rhs1)./J);
 rhs2 = -2*Pq*((Vq*rhs2)./J);

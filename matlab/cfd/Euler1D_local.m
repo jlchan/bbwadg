@@ -3,12 +3,12 @@ Globals1D;
 
 projectV = 1;
 CFL = .125/2.5;
-CFL = .125;
+CFL = .25;
 N = 4;
-K1D = 40;
+K1D = 16;
 FinalTime = 1.8;
 FinalTime = .2;
-opt = 2;
+opt = 1;
 
 global tau
 tau = 1;
@@ -105,8 +105,9 @@ pfun = @(rho,u,E) (gamma-1)*(E-.5*rho.*u.^2);
 beta = @(rho,u,E) rho./(2*pfun(rho,u,E));
 
 global f1 f2 f3
+pavg = @(rhoL,rhoR,uL,uR,EL,ER) avg(rhoL,rhoR)./(2*avg(beta(rhoL,uL,EL),beta(rhoR,uR,ER)));
 f1 = @(rhoL,rhoR,uL,uR,EL,ER) logmean(rhoL,rhoR).*avg(uL,uR);
-f2 = @(rhoL,rhoR,uL,uR,EL,ER) avg(rhoL,rhoR)./(2*avg(beta(rhoL,uL,EL),beta(rhoR,uR,ER))) + avg(uL,uR).*f1(rhoL,rhoR,uL,uR,EL,ER);
+f2 = @(rhoL,rhoR,uL,uR,EL,ER) pavg(rhoL,rhoR,uL,uR,EL,ER) + avg(uL,uR).*f1(rhoL,rhoR,uL,uR,EL,ER);
 f3 = @(rhoL,rhoR,uL,uR,EL,ER) f1(rhoL,rhoR,uL,uR,EL,ER)...
     .*(1./(2*(gamma-1).*logmean(beta(rhoL,uL,EL),beta(rhoR,uR,ER))) - .5*avg(uL.^2,uR.^2)) ...
     + avg(uL,uR).*f2(rhoL,rhoR,uL,uR,EL,ER);
@@ -271,6 +272,7 @@ for i = 1:Nsteps
             drawnow
         end
 end
+return
 %%
 
 % F = V*diag([ones(N-2,1);0;0;0])/V;

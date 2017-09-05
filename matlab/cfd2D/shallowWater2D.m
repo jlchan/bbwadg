@@ -2,7 +2,7 @@ clear
 Globals2D
 
 N = 4;
-K1D = 8;
+K1D = 16;
 FinalTime = 1.5;
 CFL = .75;
 
@@ -146,7 +146,7 @@ end
 
 %% make curvilinear mesh (still unstable?)
 
-a = 0/16;
+a = 1/16;
 x = x + a*sin(pi*x).*sin(pi*y);
 y = y + a*sin(pi*x).*sin(pi*y);
 
@@ -292,6 +292,7 @@ Drq = (Vq*Dr*Pq - .5*Vq*Lq*diag(nrJ)*Vfq*Pq);
 Dsq = (Vq*Ds*Pq - .5*Vq*Lq*diag(nsJ)*Vfq*Pq);
 VfPq = (Vfq*Pq);
 VqLq = Vq*Lq;
+Nq = size(Vq,1);
 
 % extract + values
 hP = hM(mapPq);
@@ -313,23 +314,24 @@ for e = 1:K
     [ux uy] = meshgrid(uq(:,e));  [ufx ufy] = meshgrid(uM(:,e),uq(:,e));
     [vx vy] = meshgrid(vq(:,e));  [vfx vfy] = meshgrid(vM(:,e),vq(:,e));
         
-    Nq = size(rxJ,1);
-    rxJK = repmat(rxJ(:,e),1,Nq); sxJK = repmat(sxJ(:,e),1,Nq);
-    ryJK = repmat(ryJ(:,e),1,Nq); syJK = repmat(syJ(:,e),1,Nq);
+    rxJK = rxJ(:,e); sxJK = sxJ(:,e);
+    ryJK = ryJ(:,e); syJK = syJ(:,e);    
     
     FxS1 = fxS1(hx,ux,vx,hy,uy,vy);  FyS1 = fyS1(hx,ux,vx,hy,uy,vy);      
     FxS2 = fxS2(hx,ux,vx,hy,uy,vy);  FyS2 = fyS2(hx,ux,vx,hy,uy,vy);  
     FxS3 = fxS3(hx,ux,vx,hy,uy,vy);  FyS3 = fyS3(hx,ux,vx,hy,uy,vy);  
         
     % premultiply by geofacs
-    FrS1 = rxJK.*FxS1 + ryJK.*FyS1;  FsS1 = sxJK.*FxS1 + syJK.*FyS1;
-    FrS2 = rxJK.*FxS2 + ryJK.*FyS2;  FsS2 = sxJK.*FxS2 + syJK.*FyS2;
-    FrS3 = rxJK.*FxS3 + ryJK.*FyS3;  FsS3 = sxJK.*FxS3 + syJK.*FyS3;        
+%     FrS1 = rxJK.*FxS1 + ryJK.*FyS1;  FsS1 = sxJK.*FxS1 + syJK.*FyS1;
+%     FrS2 = rxJK.*FxS2 + ryJK.*FyS2;  FsS2 = sxJK.*FxS2 + syJK.*FyS2;
+%     FrS3 = rxJK.*FxS3 + ryJK.*FyS3;  FsS3 = sxJK.*FxS3 + syJK.*FyS3;        
         
     % bulk of GPU work: application of local operators
-    divF1 = sum(Drq.*FrS1,2) + sum(Dsq.*FsS1,2);
-    divF2 = sum(Drq.*FrS2,2) + sum(Dsq.*FsS2,2);
-    divF3 = sum(Drq.*FrS3,2) + sum(Dsq.*FsS3,2);
+    divF1 = rxJK.*sum(Drq.*FxS1,2) + sxJK.*sum(Dsq.*FxS1,2) + ryJK.*sum(Drq.*FyS1,2) + syJK.*sum(Dsq.*FyS1,2);
+    divF2 = rxJK.*sum(Drq.*FxS2,2) + sxJK.*sum(Dsq.*FxS2,2) + ryJK.*sum(Drq.*FyS2,2) + syJK.*sum(Dsq.*FyS2,2);
+    divF3 = rxJK.*sum(Drq.*FxS3,2) + sxJK.*sum(Dsq.*FxS3,2) + ryJK.*sum(Drq.*FyS3,2) + syJK.*sum(Dsq.*FyS3,2);
+%     divF2 = sum(Drq.*FrS2,2) + sum(Dsq.*FsS2,2);
+%     divF3 = sum(Drq.*FrS3,2) + sum(Dsq.*FsS3,2);
     
     %% flux/volume combos
     
