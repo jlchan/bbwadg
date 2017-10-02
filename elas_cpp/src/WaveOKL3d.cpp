@@ -498,13 +498,15 @@ void InitWADG_subelem(Mesh *mesh,double(*c2_ptr)(double,double,double)){
     }
   }
 
-#if 0 // take local average of coeffs
+#if 1 // take local average of coeffs
 
   for (int e = 0; e < mesh->K; ++e){
-    VectorXd wJq = wq.array()*Jq_reduced.col(e).array();
-    double muavg = wJq.dot(muq.col(e));
+    double muavg = wq.dot(muq.col(e)) / wq.sum();
+    muq.col(e).fill(muavg);
   }
-#endif 0
+#endif
+
+  //cout << "Muq = " << endl << muq.col(0) << endl;
 
   //  cout << "c11" << endl  << c11.col(0) << endl;
   //  cout << "c12" << endl  << c12.col(0) << endl;
