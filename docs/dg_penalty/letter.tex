@@ -1,0 +1,33 @@
+\documentclass{letter}
+\usepackage{fullpage}
+\signature{Jesse Chan, T.\ Warburton}
+\address{6100 Main St,\\
+Houston, TX 77005}
+
+\begin{document}
+\begin{letter}{Dr Leszek Demkowicz\\CAMWA Editor-in-Chief}
+
+
+\opening{Dear Dr Demkowicz,}
+
+Please find enclosed our manuscript, 
+\begin{center}
+Jesse Chan, T.\ Warburton\\
+\textit{A short note on the penalty flux parameter for first order discontinuous Galerkin formulations},
+\end{center}
+which we would like to submit for publication as a short research note in CAMWA.  
+
+The submitted manuscript investigates discontinuous Galerkin (DG) methods for symmetric first order hyperbolic systems using a dissipative penalty flux.  We show that, as with second order DG formulations, increasing the penalty parameter $\tau$ divides the spectra into eigenvalues which are bounded and eigenvalues where ${\rm Re}(\lambda_i)\rightarrow -\infty$ as the $\tau \rightarrow \infty$.  In the context of time-domain simulations, bounded eigenvalues correspond to \emph{conforming} solution components, while the latter group of eigenvalues correspond to non-conforming components of the solution and are dissipated from the solution proportionally to ${\rm Re}(\lambda_i)$.  
+
+Finally, we demonstrate that spurious solution components which are present for both $\tau = 0$ (non-dissipative central fluxes) and $\tau \rightarrow \infty$ (conforming finite element methods) are damped when $\tau = O(1)$.  This illustrates a unique advantage of dissipative DG methods for time-domain simulations.
+
+We hope that the method and results discussed in this manuscript would appeal to the readership of CAMWA.  All authors have approved the manuscript and agree with its submission, and we confirm that this manuscript has not been published elsewhere and is not under consideration by another journal.  We look forward to hearing from you at your earliest convenience.
+
+\closing{Best regards}
+
+\end{letter}
+
+\end{document}
+
+
+

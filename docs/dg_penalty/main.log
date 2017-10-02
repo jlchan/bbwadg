@@ -1,6 +1,6 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.17 (TeX Live 2016) (preloaded format=pdflatex 2016.5.22)  18 DEC 2016 15:15
+This is pdfTeX, Version 3.14159265-2.6-1.40.17 (TeX Live 2016) (preloaded format=pdflatex 2016.5.22)  28 JUL 2017 16:35
 entering extended mode
- \write18 enabled.
+ restricted \write18 enabled.
  file:line:error style messages enabled.
  %&-line parsing enabled.
 **main.tex
@@ -1371,16 +1371,6 @@ Package hyperref Warning: Token not allowed in a PDF string (PDFDocEncoding):
 Package hyperref Warning: Token not allowed in a PDF string (PDFDocEncoding):
 (hyperref)                removing `math shift' on input line 430.
 
-./main.tex:455: Misplaced alignment tab character &.
-l.455 \bm{S}_{mn}  &
-                    = \frac{1}{2}\sum_{D^k\in \Oh} \LRa{\jump{\bm{A}_n \bm{\...
-I can't figure out why you would want to use a tab mark
-here. If you just want an ampersand, the remedy is
-simple: Just type `I\&' now. But if some right brace
-up above has ended a previous alignment prematurely,
-you're probably due for more error messages, and you
-might try typing `S' now just to see what is salvageable.
-
 [5] [6] <figs/trackedEigs.png, id=174, 489.5088pt x 375.804pt>
 File: figs/trackedEigs.png Graphic file (type png)
 
@@ -1635,7 +1625,7 @@ texmf-dist/fonts/type1/public/amsfonts/cm/cmti8.pfb></usr/local/texlive/2016/te
 xmf-dist/fonts/type1/public/amsfonts/cm/cmtt8.pfb></usr/local/texlive/2016/texm
 f-dist/fonts/type1/public/amsfonts/symbols/msbm10.pfb></usr/local/texlive/2016/
 texmf-dist/fonts/type1/public/stmaryrd/stmary10.pfb>
-Output written on main.pdf (13 pages, 1254493 bytes).
+Output written on main.pdf (13 pages, 1254660 bytes).
 PDF statistics:
  413 PDF objects out of 1000 (max. 8388607)
  330 compressed objects within 4 object streams

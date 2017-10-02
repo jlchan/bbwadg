@@ -1,0 +1,29 @@
+\BOOKMARK [1][-]{section.1}{Introduction}{}% 1
+\BOOKMARK [1][-]{section.2}{Symmetric form of the elastic wave equation}{}% 2
+\BOOKMARK [1][-]{section.4}{An energy stable discontinuous Galerkin formulation for elastic wave propagation}{}% 3
+\BOOKMARK [2][-]{subsection.6}{Boundary conditions}{section.4}% 4
+\BOOKMARK [2][-]{subsection.7}{Energy stability}{section.4}% 5
+\BOOKMARK [2][-]{subsection.10}{The semi-discrete matrix system for DG}{section.4}% 6
+\BOOKMARK [1][-]{section.13}{Weight-adjusted inner products for matrix-valued weights}{}% 7
+\BOOKMARK [2][-]{subsection.14}{Scalar weight adjusted inner products}{section.13}% 8
+\BOOKMARK [2][-]{subsection.19}{Extension to matrix weights}{section.13}% 9
+\BOOKMARK [3][-]{subsubsection.22}{Weight-adjusted approximations with matrix weights}{subsection.19}% 10
+\BOOKMARK [3][-]{subsubsection.31}{Approximation of weighted mass matrix inverses}{subsection.19}% 11
+\BOOKMARK [1][-]{section.33}{An energy stable weight-adjusted discontinuous Galerkin formulation for elastic wave propagation}{}% 12
+\BOOKMARK [2][-]{subsection.34}{Energy stability on curvilinear meshes}{section.33}% 13
+\BOOKMARK [2][-]{subsection.36}{Convergence analysis}{section.33}% 14
+\BOOKMARK [1][-]{section.40}{Numerical experiments}{}% 15
+\BOOKMARK [2][-]{subsection.41}{Spectra and choice of penalty parameter}{section.40}% 16
+\BOOKMARK [2][-]{subsection.45}{Analytic solutions}{section.40}% 17
+\BOOKMARK [3][-]{subsubsection.46}{Harmonic oscillation of a square}{subsection.45}% 18
+\BOOKMARK [3][-]{subsubsection.48}{Rayleigh and Lamb waves}{subsection.45}% 19
+\BOOKMARK [3][-]{subsubsection.52}{Rayleigh waves in near-incompressible materials}{subsection.45}% 20
+\BOOKMARK [3][-]{subsubsection.56}{Stoneley waves}{subsection.45}% 21
+\BOOKMARK [3][-]{subsubsection.60}{Convergence to a reference solution}{subsection.45}% 22
+\BOOKMARK [2][-]{subsection.62}{Application examples}{section.40}% 23
+\BOOKMARK [3][-]{subsubsection.63}{Stiff inclusion}{subsection.62}% 24
+\BOOKMARK [3][-]{subsubsection.67}{Heterogeneous anisotropic material}{subsection.62}% 25
+\BOOKMARK [2][-]{subsection.72}{A three-dimensional example}{section.40}% 26
+\BOOKMARK [1][-]{section.77}{Conclusions}{}% 27
+\BOOKMARK [1][-]{section.78}{Acknowledgments}{}% 28
+\BOOKMARK [1][-]{section.78}{References}{}% 29

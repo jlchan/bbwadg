@@ -6,7 +6,7 @@ function  Wave2D_curved
 Globals2D;
 
 N = 5;
-nref = 0;
+nref = 1;
 useJprojection = 1;
 
 Nq = 2*N+1;
@@ -109,11 +109,11 @@ end
 
 
 global tau;
-tau = 0;
+tau = 1;
 
 
 %%
-if 1 && nargin==0
+if 0 && nargin==0
     
     e = zeros(3*Np*K,1);
     A = zeros(3*Np*K);

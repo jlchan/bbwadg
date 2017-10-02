@@ -1024,9 +1024,9 @@ dfloat WaveInitOCCA3d(Mesh *mesh, int KblkVin, int KblkSin,
 
   occa::printAvailableDevices();
 
-  device.setup("mode = OpenCL, platformID = 0, deviceID = 0");
+  //device.setup("mode = OpenCL, platformID = 0, deviceID = 0");
   //device.setup("mode = OpenMP, platformID = 0, deviceID = 0");
-  //device.setup("mode = Serial");
+  device.setup("mode = Serial");
   //device.setup("mode = CUDA, platformID = 0, deviceID = 2");
 
   //device.setCompiler("nvcc"); device.setCompilerFlags("--use_fast_math"); device.setCompilerFlags("--fmad=true");

@@ -1,0 +1,44 @@
+{\rtf1\ansi\ansicpg1252\cocoartf1348\cocoasubrtf170
+{\fonttbl\f0\fswiss\fcharset0 ArialMT;\f1\fnil\fcharset0 HelveticaNeue;}
+{\colortbl;\red255\green255\blue255;\red26\green26\blue26;\red26\green26\blue26;\red38\green38\blue38;
+\red255\green255\blue255;\red29\green38\blue42;\red83\green83\blue83;}
+\margl1440\margr1440\vieww28300\viewh15280\viewkind0
+\deftab720
+\pard\pardeftab720
+
+\f0\fs24 \cf2 \expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec2 Title: Designing Discontinuous Galerkin methods for high order efficiency\
+\
+Abstract: Effective computational simulations require accurate and efficient numerical methods for the \cf3 \expnd0\expndtw0\kerning0
+\outl0\strokewidth0 solution of partial differential equations (PDEs).  Among such methods,\cf2 \expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec2  high order time-domain nodal Discontinuous Galerkin (DG) methods\'a0have been successfully applied to a wide variety of problems in \cf3 \expnd0\expndtw0\kerning0
+\outl0\strokewidth0 wave propagation and fluid dynamics.  \cf2 \expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec2 Crucial to the success of nodal DG methods is their computational structure, which enables efficient parallel implementations on modern many-core architectures such as Graphics Processing Units (GPUs).  \cf3 \expnd0\expndtw0\kerning0
+\outl0\strokewidth0 High order approximations offer many advantages over low order methods, including reduced numerical dissipation, subgrid resolution, and faster convergence.  However, the increased computational cost associated with high order limits the full potential of DG.  \cf2 \expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec2 \
+\
+In this talk, I discuss two approaches to decrease the cost of DG at high orders.  First, while \cf3 \expnd0\expndtw0\kerning0
+\outl0\strokewidth0 high order costs may be controlled \cf2 \expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec2 by leveraging the tensor product structure of hexahedral elements, the approximation of complex geometries using hexahedral meshes remains an open problem.  To \cf3 \expnd0\expndtw0\kerning0
+\outl0\strokewidth0 retain both efficiency and geometric flexibility\cf2 \expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec2 , I consider the use of hex-dominant hybrid meshes.  Such meshes consist primarily of hexahedral and \cf3 \expnd0\expndtw0\kerning0
+\outl0\strokewidth0 tetrahedral elements, as well as \cf2 \expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec2 a small number of transitional wedge and pyramid elements.  I introduce new basis functions for transitional elements which enable efficient implementations of DG methods on GPUs, and discuss issues of stability associated with hybrid meshes.  Secondly, I consider Bernstein-Bezier polynomials as an alternative to Lagrange bases on tetrahedral meshes.  Unlike nodal bases, the discretized equations yield additional structure under a Bernstein-Bezier basis.  I discuss how to exploit to this structure on many-core architectures, as well as issues of numerical stability and conditioning.  \
+\pard\pardeftab720\sl360\sa180\qj
+
+\f1 \cf4 \cb5 \expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec4 \
+\pard\pardeftab720\sl320
+
+\f0\fs26 \cf6 \cb1 \expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec6 There is now a growing consensus in the computational physics community that state of the art solver technology requires, and will continue to require too extensive computational resources to provide the necessary resolution for a broad range of demanding applications, even at the rate that computational power increases. Higher-order methods are a key enabling technology for high fidelity simulations that are out of reach of today\'92s state of the art solvers. \
+\pard\pardeftab720\sl360\sa180\qj
+
+\f1\fs24 \cf4 \cb5 \expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec4 \
+\
+Quantifying uncertainty in systems described by partial differential equations (PDEs) typically requires solving the PDEs many times for different realizations of the stochastic parameters. Solving the PDEs for thousands or even millions of parameter realizations is often intractable. A common remedy is to replace the high-fidelity model (system of equations) stemming from the discretization of the PDEs with a reduced model that provides low-cost approximations of the PDE solutions; however, reduced models induce an error into the overall result that typically leads to the loss of accuracy guarantees for the statistics of interest (often the error cannot even be quantified). We introduce multifidelity methods that combine, instead of replace, the high-fidelity model with reduced models---to increase the accuracy of the overall result and to ultimately establish accuracy guarantees. We first present an online adaptive model reduction approach that uses sparse data of the high-fidelity model to adapt a reduced model while it is evaluated. Numerical results demonstrate that our online adaptive reduced models achieve higher accuracies in approximating nonlinear PDEs than static models. In the second part, we introduce the multifidelity Monte Carlo method that combines the high-fidelity model with reduced models and data-fit models to efficiently estimate statistics of outputs of the high-fidelity model. Our multifidelity method is guaranteed to provide unbiased estimates ("accuracy guarantees"). In our numerical experiments with linear and nonlinear models from aerospace engineering, the multifidelity Monte Carlo method achieves speedups by orders of magnitude compared to methods that invoke a single high-fidelity or reduced model only.\cb1 \
+\pard\pardeftab720\sl360\qc
+\cf7 \expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec7 \
+}

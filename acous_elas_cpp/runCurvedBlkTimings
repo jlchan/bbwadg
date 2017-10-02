@@ -1,0 +1,21 @@
+rm blockTimingsStrong.txt
+rm blockTimingsSkew.txt
+
+for ((N=2; N<=5; N++))
+do
+    make clean; make B=0 N=$N -j;
+
+    maxBlk=10
+    for ((Kblk=1; Kblk<=maxBlk; Kblk++))
+    do
+        echo N=$N, KblkV= $Kblk
+        ./main meshes/sphere49748.msh .1 $Kblk $Kblk $Kblk $Kblk $Kblk
+    done
+    printf '\n' >> blockTimingsStrong.txt
+    #printf '\n' >> blockTimingsSkew.txt
+done
+
+mv blockTimingsStrong.txt strong.txt
+#mv blockTimingsStrong.txt strongUnderint.txt
+#mv blockTimingsSkew.txt skewCombined.txt
+#mv blockTimingsSkew.txt skewSplit.txt

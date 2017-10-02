@@ -1,0 +1,336 @@
+\pdfoutput=1
+
+%\documentclass[preprint,10pt]{elsarticle}
+\documentclass[preprint,10pt]{article}
+%\documentclass[review]{siamart0216}
+%\documentclass{siamart0216}
+
+\usepackage{fullpage}
+\usepackage[colorlinks=true]{hyperref}
+
+\usepackage{amsmath,amssymb,amsfonts,amsthm}
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}
+\theoremstyle{lemma}
+\newtheorem{lemma}{Lemma}
+\newtheorem*{remark}{Remark}
+\theoremstyle{theorem}
+\newtheorem{theorem}{Theorem}
+\theoremstyle{assumption}
+\newtheorem{assumption}{Assumption}
+
+\usepackage[titletoc,toc,title]{appendix}
+
+\usepackage{array} 
+\usepackage{mathtools}
+\usepackage{pdfpages}
+\usepackage{bm}
+\usepackage{bbm}
+
+\usepackage{tikz}
+\usepackage[normalem]{ulem}
+\usepackage{hhline}
+
+\usepackage{graphicx}
+\usepackage{subfig}
+\usepackage{color}
+
+%% ====================================== graphics
+
+\usepackage{pgfplots}
+\usepackage{pgfplotstable}
+\definecolor{markercolor}{RGB}{124.9, 255, 160.65}
+\pgfplotsset{
+compat=1.3,
+width=10cm,
+tick label style={font=\small},
+label style={font=\small},
+legend style={font=\small}
+}
+
+\usetikzlibrary{calc}
+\usetikzlibrary{intersections} 
+
+%%% START MACRO FOR ANNOTATION OF TRIANGLE WITH SLOPE %%%.
+\newcommand{\logLogSlopeTriangle}[5]
+{
+    % #1. Relative offset in x direction.
+    % #2. Width in x direction, so xA-xB.
+    % #3. Relative offset in y direction.
+    % #4. Slope d(y)/d(log10(x)).
+    % #5. Plot options.
+
+    \pgfplotsextra
+    {
+        \pgfkeysgetvalue{/pgfplots/xmin}{\xmin}
+        \pgfkeysgetvalue{/pgfplots/xmax}{\xmax}
+        \pgfkeysgetvalue{/pgfplots/ymin}{\ymin}
+        \pgfkeysgetvalue{/pgfplots/ymax}{\ymax}
+
+        % Calculate auxilliary quantities, in relative sense.
+        \pgfmathsetmacro{\xArel}{#1}
+        \pgfmathsetmacro{\yArel}{#3}
+        \pgfmathsetmacro{\xBrel}{#1-#2}
+        \pgfmathsetmacro{\yBrel}{\yArel}
+        \pgfmathsetmacro{\xCrel}{\xArel}
+
+        \pgfmathsetmacro{\lnxB}{\xmin*(1-(#1-#2))+\xmax*(#1-#2)} % in [xmin,xmax].
+        \pgfmathsetmacro{\lnxA}{\xmin*(1-#1)+\xmax*#1} % in [xmin,xmax].
+        \pgfmathsetmacro{\lnyA}{\ymin*(1-#3)+\ymax*#3} % in [ymin,ymax].
+        \pgfmathsetmacro{\lnyC}{\lnyA+#4*(\lnxA-\lnxB)}
+        \pgfmathsetmacro{\yCrel}{\lnyC-\ymin)/(\ymax-\ymin)} % THE IMPROVED EXPRESSION WITHOUT 'DIMENSION TOO LARGE' ERROR.
+
+        % Define coordinates for \draw. MIND THE 'rel axis cs' as opposed to the 'axis cs'.
+        \coordinate (A) at (rel axis cs:\xArel,\yArel);
+        \coordinate (B) at (rel axis cs:\xBrel,\yBrel);
+        \coordinate (C) at (rel axis cs:\xCrel,\yCrel);
+
+        % Draw slope triangle.
+        \draw[#5]   (A)-- node[pos=0.5,anchor=north] {}
+                    (B)-- 
+                    (C)-- node[pos=0.5,anchor=west] {#4}
+                    cycle;
+    }
+}
+%%% END MACRO FOR ANNOTATION OF TRIANGLE WITH SLOPE %%%.
+
+\newcommand{\logLogSlopeTriangleNeg}[5]
+{
+    % #1. Relative offset in x direction.
+    % #2. Width in x direction, so xA-xB.
+    % #3. Relative offset in y direction.
+    % #4. Slope d(y)/d(log10(x)).
+    % #5. Plot options.
+
+    \pgfplotsextra
+    {
+        \pgfkeysgetvalue{/pgfplots/xmin}{\xmin}
+        \pgfkeysgetvalue{/pgfplots/xmax}{\xmax}
+        \pgfkeysgetvalue{/pgfplots/ymin}{\ymin}
+        \pgfkeysgetvalue{/pgfplots/ymax}{\ymax}
+
+        % Calculate auxilliary quantities, in relative sense.
+        \pgfmathsetmacro{\xArel}{#1}
+        \pgfmathsetmacro{\yArel}{#3}
+        \pgfmathsetmacro{\xBrel}{#1-#2}
+        \pgfmathsetmacro{\yBrel}{\yArel}
+        \pgfmathsetmacro{\xCrel}{\xArel}
+
+        \pgfmathsetmacro{\lnxB}{\xmin*(1-(#1-#2))+\xmax*(#1-#2)} % in [xmin,xmax].
+        \pgfmathsetmacro{\lnxA}{\xmin*(1-#1)+\xmax*#1} % in [xmin,xmax].
+        \pgfmathsetmacro{\lnyA}{\ymin*(1-#3)+\ymax*#3} % in [ymin,ymax].
+        \pgfmathsetmacro{\lnyC}{\lnyA+#4*(\lnxA-\lnxB)}
+        \pgfmathsetmacro{\yCrel}{\lnyC-\ymin)/(\ymax-\ymin)} % THE IMPROVED EXPRESSION WITHOUT 'DIMENSION TOO LARGE' ERROR.
+
+        % Define coordinates for \draw. MIND THE 'rel axis cs' as opposed to the 'axis cs'.
+        \coordinate (A) at (rel axis cs:\xArel,\yArel);
+        \coordinate (B) at (rel axis cs:\xBrel,\yBrel);
+        \coordinate (C) at (rel axis cs:\xCrel,\yCrel);
+
+        % Draw slope triangle.
+        \draw[#5]   (A)-- node[pos=.5,anchor=south] {}
+                    (B)-- 
+                    (C)-- node[pos=0.5,anchor=west] {#4}
+                    cycle;
+    }
+}
+%%% END MACRO FOR ANNOTATION OF TRIANGLE WITH SLOPE %%%.
+
+%%% START MACRO FOR ANNOTATION OF TRIANGLE WITH SLOPE %%%.
+\newcommand{\logLogSlopeTriangleFlipNeg}[5]
+{
+    % #1. Relative offset in x direction.
+    % #2. Width in x direction, so xA-xB.
+    % #3. Relative offset in y direction.
+    % #4. Slope d(y)/d(log10(x)).
+    % #5. Plot options.
+
+    \pgfplotsextra
+    {
+        \pgfkeysgetvalue{/pgfplots/xmin}{\xmin}
+        \pgfkeysgetvalue{/pgfplots/xmax}{\xmax}
+        \pgfkeysgetvalue{/pgfplots/ymin}{\ymin}
+        \pgfkeysgetvalue{/pgfplots/ymax}{\ymax}
+
+        % Calculate auxilliary quantities, in relative sense.
+        %\pgfmathsetmacro{\xArel}{#1}
+        %\pgfmathsetmacro{\yArel}{#3}
+        \pgfmathsetmacro{\xBrel}{#1-#2}
+        \pgfmathsetmacro{\yBrel}{#3}
+        \pgfmathsetmacro{\xCrel}{#1}
+
+        \pgfmathsetmacro{\lnxB}{\xmin*(1-(#1-#2))+\xmax*(#1-#2)} % in [xmin,xmax].
+        \pgfmathsetmacro{\lnxA}{\xmin*(1-#1)+\xmax*#1} % in [xmin,xmax].
+        \pgfmathsetmacro{\lnyA}{\ymin*(1-#3)+\ymax*#3} % in [ymin,ymax].
+        \pgfmathsetmacro{\lnyC}{\lnyA+#4*(\lnxA-\lnxB)}
+        \pgfmathsetmacro{\yCrel}{\lnyC-\ymin)/(\ymax-\ymin)} % THE IMPROVED EXPRESSION WITHOUT 'DIMENSION TOO LARGE' ERROR.
+
+	\pgfmathsetmacro{\xArel}{\xBrel}
+        \pgfmathsetmacro{\yArel}{\yCrel}
+
+        % Define coordinates for \draw. MIND THE 'rel axis cs' as opposed to the 'axis cs'.
+        \coordinate (A) at (rel axis cs:\xArel,\yArel);
+        \coordinate (B) at (rel axis cs:\xBrel,\yBrel);
+        \coordinate (C) at (rel axis cs:\xCrel,\yCrel);
+
+        % Draw slope triangle.
+        \draw[#5]   (A)-- node[pos=0.5,anchor=east] {#4}
+                    (B)-- 
+                    (C)-- node[pos=0.5,anchor=north] {1}
+                    cycle;
+    }
+}
+%%% END MACRO FOR ANNOTATION OF TRIANGLE WITH SLOPE %%%.
+
+
+%%% START MACRO FOR ANNOTATION OF TRIANGLE WITH SLOPE %%%.
+\newcommand{\logLogSlopeTriangleFlip}[5]
+{
+    % #1. Relative offset in x direction.
+    % #2. Width in x direction, so xA-xB.
+    % #3. Relative offset in y direction.
+    % #4. Slope d(y)/d(log10(x)).
+    % #5. Plot options.
+
+    \pgfplotsextra
+    {
+        \pgfkeysgetvalue{/pgfplots/xmin}{\xmin}
+        \pgfkeysgetvalue{/pgfplots/xmax}{\xmax}
+        \pgfkeysgetvalue{/pgfplots/ymin}{\ymin}
+        \pgfkeysgetvalue{/pgfplots/ymax}{\ymax}
+
+        % Calculate auxilliary quantities, in relative sense.
+        %\pgfmathsetmacro{\xArel}{#1}
+        %\pgfmathsetmacro{\yArel}{#3}
+        \pgfmathsetmacro{\xBrel}{#1-#2}
+        \pgfmathsetmacro{\yBrel}{#3}
+        \pgfmathsetmacro{\xCrel}{#1}
+
+        \pgfmathsetmacro{\lnxB}{\xmin*(1-(#1-#2))+\xmax*(#1-#2)} % in [xmin,xmax].
+        \pgfmathsetmacro{\lnxA}{\xmin*(1-#1)+\xmax*#1} % in [xmin,xmax].
+        \pgfmathsetmacro{\lnyA}{\ymin*(1-#3)+\ymax*#3} % in [ymin,ymax].
+        \pgfmathsetmacro{\lnyC}{\lnyA+#4*(\lnxA-\lnxB)}
+        \pgfmathsetmacro{\yCrel}{\lnyC-\ymin)/(\ymax-\ymin)} % THE IMPROVED EXPRESSION WITHOUT 'DIMENSION TOO LARGE' ERROR.
+
+	\pgfmathsetmacro{\xArel}{\xBrel}
+        \pgfmathsetmacro{\yArel}{\yCrel}
+
+        % Define coordinates for \draw. MIND THE 'rel axis cs' as opposed to the 'axis cs'.
+        \coordinate (A) at (rel axis cs:\xArel,\yArel);
+        \coordinate (B) at (rel axis cs:\xBrel,\yBrel);
+        \coordinate (C) at (rel axis cs:\xCrel,\yCrel);
+
+        % Draw slope triangle.
+        \draw[#5]   (A)-- node[pos=0.5,anchor=east] {#4}
+                    (B)-- 
+                    (C)-- node[pos=0.5,anchor=south] {}
+                    cycle;
+    }
+}
+%%% END MACRO FOR ANNOTATION OF TRIANGLE WITH SLOPE %%%.
+
+
+\renewcommand{\topfraction}{0.85}
+\renewcommand{\textfraction}{0.1}
+\renewcommand{\floatpagefraction}{0.75}
+
+\renewcommand{\hat}{\widehat}
+
+\newcommand{\bbm}[1]{\mathbbm{#1}}
+\newcommand{\bs}[1]{\boldsymbol{#1}}
+\newcommand{\equaldef}{\stackrel{\mathrm{def}}{=}}
+
+\newcommand{\td}[2]{\frac{{\rm d}#1}{{\rm d}{\rm #2}}}
+\newcommand{\pd}[2]{\frac{\partial#1}{\partial#2}}
+\newcommand{\pdn}[3]{\frac{\partial^{#3}#1}{\partial#2^{#3}}}
+
+\newcommand{\mb}[1]{\mathbf{#1}}
+\newcommand{\mbb}[1]{\mathbb{#1}}
+\newcommand{\mc}[1]{\mathcal{#1}}
+
+\newcommand{\snor}[1]{\left| #1 \right|}
+\newcommand{\nor}[1]{\left\| #1 \right\|}
+
+\newcommand{\LRp}[1]{\left( #1 \right)}
+\newcommand{\LRs}[1]{\left[ #1 \right]}
+\newcommand{\LRa}[1]{\left\langle #1 \right\rangle}
+\newcommand{\LRb}[1]{\left| #1 \right|}
+\newcommand{\LRc}[1]{\left\{ #1 \right\}}
+\newcommand{\LRceil}[1]{\left\lceil #1 \right\rceil}
+\newcommand{\LRl}[1]{\left. #1 \right|}
+
+\newcommand{\Grad} {\ensuremath{\nabla}}
+
+\newcommand{\jump}[1] {\ensuremath{\llbracket#1\rrbracket}}
+\newcommand{\avg}[1] {\ensuremath{\LRc{\!\{#1\}\!}}}
+
+\newcommand{\LK}{L^2\LRp{D^k}}
+\newcommand{\LdK}{L^2\LRp{\partial D^k}}
+\newcommand{\Dhat}{\widehat{D}}
+\newcommand{\Lhat}{L^2\LRp{\Dhat}}
+
+\newcommand{\note}[1]{{\color{blue}{#1}}}
+
+\newcommand*\diff[1]{\mathop{}\!{\mathrm{d}#1}} % d in integrand
+
+\date{}
+\author{Jesse Chan}
+\title{Entropy stable notes}
+\graphicspath{{./figs/}}
+
+
+\begin{document}
+
+\maketitle
+
+\section{Curved meshes}
+
+Non-affine geometric factors
+
+Let $\bm{F}(\bm{U})$ denote the flux matrix whose rows are 
+\[
+\bm{F}(\bm{U}) = \LRp{
+\begin{array}{c}
+\bm{F}_x \\
+\bm{F}_y
+\end{array}
+}.
+\]
+The conservation law we're interested in is the following
+\[
+\pd{\bm{U}}{t} + \Grad \cdot \bm{F}(\bm{U}) = 0,
+\]
+where the divergence is taken over each column of $\bm{F}(\bm{U})$.  
+
+Let $\bm{G}$ denote the Jacobian of the geometric mapping
+\[
+\bm{G}_{ij} = \pd{\hat{\bm{x}}_j}{\bm{x}_i},
+\]
+and let $J$ denote the determinant of $\bm{G}$.  One can show (Kopriva?) that
+\[
+\hat{\Grad} \cdot \LRp{J\bm{G}} = 0.  
+\]
+At the continuous level, the physical gradient and divergence satisfy
+\[
+\LRp{\Grad u, \bm{v}}_{D^k} = \LRp{J\bm{G} \hat{\Grad} u,\bm{v}}_{\hat{D}}, \qquad \LRp{\Grad\cdot \bm{u},v}_{D^k} = \LRp{\hat{\Grad}\cdot \LRp{J\bm{G}^T u},\bm{v}}_{\hat{D}}, 
+\]
+as well as a corresponding integration by parts property.  
+
+\section{Flux differencing}
+
+Replace the flux derivative with
+\[
+\LRp{\LRl{\Grad \cdot \bm{F}_S(\bm{U}(\bm{x}),\bm{U}(\bm{x}'))}_{\bm{x}' = \bm{x}}}_{D^k}.
+\]
+It is possible to remove the effect of geometric aliasing by evaluating the above term via
+\[
+\LRp{\LRl{\hat{\Grad} \cdot \bm{F}^k_S(\bm{U}(\bm{x}),\bm{U}(\bm{x}'))}_{\bm{x}' = \bm{x}}}_{\hat{D}}, \qquad \bm{F}^k_S = \avg{J\bm{G}}\bm{F}_S\LRp{\bm{U}(\bm{x}),\bm{U}(\bm{x}')}
+\]
+
+\bibliographystyle{unsrt}
+\bibliography{dg}
+
+
+\end{document}
+
+

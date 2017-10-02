@@ -1,0 +1,22 @@
+# ------------------------------------------------------------------------
+# see the copyright information for BBDG in license.midg
+# BBDG: a Bernstein-Bezier Discontinuous Galerkin solver for CPUs or GPUs
+# Copyright (c) 2014, Tim Warburton
+# http://www.nudg.org
+# ------------------------------------------------------------------------
+
+BBDG is based on the Matlab codes of "Nodal Discontinuous Galerkin Methods" by Jan Hesthaven and Tim Warburton, as well as the MIDG code of Tim Warburton.
+
+BBDG is built with Eigen 3.2.8 (most recent stable version as of Feb 16, 2016). To update Eigen, replace header files in include/Eigen with new header files.
+
+- To compile with nodal basis on MBPr 13 inch: 
+
+   make N=3 B=0 -j
+
+- To compile with Bernstein-Bezier basis:
+
+   make N=3 B=1 -j
+
+To run:
+
+./main meshes/cubeTetra1.msh

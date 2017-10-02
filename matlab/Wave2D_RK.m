@@ -7,7 +7,7 @@ Globals2D
 
 if nargin==0
     %     Nin = 4; K1D = 16;
-    Nin = 7; K1D = 2; c_flag = 0;
+    Nin = 6; K1D = 4; c_flag = 0;
     FinalTime = .5;
 %     cfun = @(x,y) ones(size(x));
 %     cfun = @(x,y) 1 + .5*sin(pi*x).*sin(pi*y); % smooth velocity
@@ -96,7 +96,7 @@ end
 
 
 %% check eigenvalues of DG matrix 
-if 1 && nargin==0
+if 0 && nargin==0
     e = zeros(3*Np*K,1);
     A = zeros(3*Np*K);
     for i = 1:3*Np*K
@@ -213,8 +213,8 @@ du = zeros(Nfp*Nfaces,K); du(:) = u(vmapP)-u(vmapM);
 dv = zeros(Nfp*Nfaces,K); dv(:) = v(vmapP)-v(vmapM);
 
 % Impose reflective boundary conditions (p+ = -p-)
-du(mapB) = 0; dv(mapB) = 0;
-dp(mapB) = -2*p(vmapB);
+du(mapB) = 0; dv(mapB) = 0; dp(mapB) = -2*p(vmapB);
+% du(mapB) = -2*u(vmapB); dv(mapB) = -2*v(vmapB); dp(mapB) = 0;
 
 % evaluate upwind fluxes
 ndotdU = nx.*du + ny.*dv;

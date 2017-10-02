@@ -6,7 +6,11 @@ function [x w] = JacobiGL(alpha,beta,N);
 %          of type (alpha,beta) > -1 ( <> -0.5). 
 
 x = zeros(N+1,1);
-if (N==1) x(1)=-1.0; x(2)=1.0; return; end;
+if (N==1) 
+    x(1)=-1.0; x(2)=1.0; 
+    w = [1; 1];
+    return; 
+end;
 
 [xint,w] = JacobiGQ(alpha+1,beta+1,N-2);
 x = [-1, xint', 1]';
