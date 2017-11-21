@@ -48,53 +48,53 @@ f1 = [v1,v2,v3,v1];
 f2 = [v1,v2,v4,v1];
 f3 = [v2,v3,v4,v2];
 f4 = [v3,v1,v4,v3];
-plot3(f1(1,:),f1(2,:),f1(3,:), 'k-', 'LineWidth', 2) 
+plot3(f1(1,:),f1(2,:),f1(3,:), 'k-', 'LineWidth', 2)
 
 hold on;
-plot3(f2(1,:),f2(2,:),f2(3,:), 'k-', 'LineWidth', 2) 
-plot3(f3(1,:),f3(2,:),f3(3,:), 'k-', 'LineWidth', 2) 
-plot3(f4(1,:),f4(2,:),f4(3,:), 'k-', 'LineWidth', 2) 
+plot3(f2(1,:),f2(2,:),f2(3,:), 'k-', 'LineWidth', 2)
+plot3(f3(1,:),f3(2,:),f3(3,:), 'k-', 'LineWidth', 2)
+plot3(f4(1,:),f4(2,:),f4(3,:), 'k-', 'LineWidth', 2)
 
 [xs,ys,zs] = sphere(80);
 cs = 0*xs;
 %ra= 0.05;
 ra = 0.075;
 if(0)
-col(1,:) =   [.9 .9 0];
-col(2,:) =   [.9 0 0];
-col(3,:) =   [0 .9 0];
-col(4,:) =   [0 0 .9];
-col(5,:) =   [.9 0 .9];
-col(6,:) = [.9, .9, .9];
-col(7,:) = [0 0 0]; 
+    col(1,:) =   [.9 .9 0];
+    col(2,:) =   [.9 0 0];
+    col(3,:) =   [0 .9 0];
+    col(4,:) =   [0 0 .9];
+    col(5,:) =   [.9 0 .9];
+    col(6,:) = [.9, .9, .9];
+    col(7,:) = [0 0 0];
 else
-col(1,:) = [.9 .9 .9];
-col(2,:) = [.8 .8 .8];
-col(3,:) = [.7 .7 .7];
-col(4,:) = [.6 .6 .6];
-col(5,:) = [.5 .5 .5];
-col(6,:) = [.4 .4 .4];
-col(7,:) = [0  0   0];
-
+    col(1,:) = [.9 .9 .9];
+    col(2,:) = [.8 .8 .8];
+    col(3,:) = [.7 .7 .7];
+    col(4,:) = [.6 .6 .6];
+    col(5,:) = [.5 .5 .5];
+    col(6,:) = [.4 .4 .4];
+    col(7,:) = [0  0   0];
+    
 end
-colormap(col)
+% colormap(col)
 
 flag
 
 for n=1:length(X)
-  ha = surf(ra*xs+sX(n), ra*ys+sY(n), ra*zs + sZ(n), flag(n)+1 + cs);
-  
-  shading interp
-  material shiny
+    ha = surf(ra*xs+sX(n), ra*ys+sY(n), ra*zs + sZ(n), flag(n)+1 + cs);
+    
+    shading interp
+    material shiny
 end
 lighting gouraud
-camlight 
+camlight
 
 hold off; axis off; axis equal
 
-view([0.8601    0.7398         0   -0.6687;
-   -0.1468    0.1307    0.9848   -0.4027;
-   -0.8323    0.7414   -0.1736    9.5041;
-         0         0         0    1.0000]);
+% view([0.8601    0.7398         0   -0.6687;
+%     -0.1468    0.1307    0.9848   -0.4027;
+%     -0.8323    0.7414   -0.1736    9.5041;
+%     0         0         0    1.0000]);
 
 return;

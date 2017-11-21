@@ -2,8 +2,8 @@ clear
 Globals1D;
 
 N = 4;
-K1D = 8;
-CFL = .25;
+K1D = 32;
+CFL = .125;
 T = 2;
 
 [Nv, VX, K, EToV] = MeshGen1D(-1,1,K1D);
@@ -146,13 +146,14 @@ for i = 1:Nsteps
 %         rhsu = PqG*(DTq*uq.^2 + uq.*(DTq*uq) + Dq*(uq.^2) + uq.*(Dq*uq))/6 + L*(uM.^2 + uM.*uP + uP.^2)/6 + ...
 %             PqG*(uq.*(VqG*L*uM) - VqG*L*(uM.^2 + VfG*PqG*uq.^2))/6;
         
-%         rhsu = (-DTx*PqG*uq.^2 - PqG*(uq.*(VqG*PrqG*uq)))/3 + L*(fS(uM,uP) - uM.^2/6) + PqG*(uq.*(VqG*L*uM/3));
+        %rhsu = -(DTx*PqG*uq.^2 + PqG*(uq.*(VqG*PrqG*uq)))/3 + L*(fS(uM,uP) - uM.^2/6) + PqG*(uq.*(VqG*L*uM/3));
+        rhsu = -(DTx*PqG*uq.^2 + PqG*(uq.*(VqG*PrqG*uq)))/3 + L*((uM+uP).*uP/6) + PqG*(uq.*(VqG*L*uM/3));
                         
 %         rhsu = PqG*(sum((Dq+DTq).*f(ux,uy),2)) + L*(fS(uM,uP) - uM.^2/2 + uM.^2/6 + uM.^2/6); % accurate for SEM only        
         
        
 %         rhsu = 2*PqG*(sum(Dhq.*f(ux,uy),2));     
-        rhsu = 2*PqG*(sum(Dwq.*f(ux,uy),2));
+%         rhsu = 2*PqG*(sum(Dwq.*f(ux,uy),2));
   
         resu = rk4a(INTRK)*resu + dt*rhsu;
         u = u + rk4b(INTRK)*resu;

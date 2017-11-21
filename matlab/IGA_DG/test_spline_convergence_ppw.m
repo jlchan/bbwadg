@@ -1,7 +1,7 @@
 clear
 Globals1D;
 
-smoothKnots = 0;'opt';
+smoothKnots = 75;'opt';
 
 K1D = 1;
 
@@ -55,7 +55,7 @@ PBq = M\(Bq'*spdiag(wq));
 Vq = Vandermonde1D(NB,rq)/Vandermonde1D(NB,JacobiGL(0,0,NB));
 Pq = (Vq'*spdiag(wq)*Vq)\(Vq'*spdiag(wq));
 
-kvec = linspace(1/N,N,100);
+kvec = linspace(1/N,N,1000);
 sk = 1;
 for k = kvec
     
@@ -69,8 +69,17 @@ for k = kvec
 end
 
 % error / number of wavelengths
-semilogy(kvec/N,L2errB)
+if smoothKnots==0
+    semilogy(kvec/N,L2errB,'-','linewidth',2)
+elseif strcmp(smoothKnots,'opt')==1
+    semilogy(kvec/N,L2errB,'--','linewidth',2)
+else
+    semilogy(kvec/N,L2errB,'-.','linewidth',2)
+end
 hold on
+set(gca,'fontsize',15);grid on
+ylabel('L^2 error','fontsize',15)
+axis([0 .5 10^-14 1])
 return
 
 

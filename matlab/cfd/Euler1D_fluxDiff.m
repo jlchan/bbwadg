@@ -1,12 +1,12 @@
 clear
 Globals1D;
 
-projectV = 0;
-for CFL = [.5 .125]
+projectV = 1;
+for CFL = .25; [.5 .25 .125]
     N = 4;
     K1D = 16;
-    tau = 0/2;
-    FinalTime = 2;
+    tau = 1/2;
+    FinalTime = .1;
     
     r = JacobiGL(0,0,N);
     % r = JacobiGQ(0,0,N);
@@ -194,7 +194,7 @@ for CFL = [.5 .125]
         p = ones(size(x(:)));
         m = rho;
         E = p/(gamma-1) + .5*rho.*u.^2;
-    elseif opt==3
+    elseif opt==3 % sod 
         rho = PqG*(1*(xq < 0) + .125*(xq > 0));
         p = PqG*(1*(xq < 0) + .1*(xq > 0));
         u = 0*rho;
@@ -282,12 +282,26 @@ for CFL = [.5 .125]
     
     figure(2)
     if abs(tau)>.1
-        tag = sprintf('LF, CFL = %1.1f',CFL);
+        if abs(CFL-.5)<1e-8
+            mark = 'o';
+        elseif abs(CFL-.25) < 1e-8
+            mark = 'x';
+        elseif abs(CFL-.125) < 1e-8
+            mark = 'x';
+        end
+        tag = sprintf('LF, CFL = %3.3f',CFL);
         step = Nsteps/50;
-        semilogy(dt*(1:step:Nsteps),dS(1:step:end),'x','linewidth',2,'DisplayName',tag)
+        semilogy(dt*(1:step:Nsteps),dS(1:step:end),mark,'linewidth',2,'DisplayName',tag)
     else
-        tag = sprintf('EC, CFL = %1.1f',CFL);
-        semilogy(dt*(1:Nsteps),dS,'--','linewidth',2,'DisplayName',tag)
+        if abs(CFL-.5)<1e-8
+            mark = '-';
+        elseif abs(CFL-.25) < 1e-8
+            mark = '--';
+        elseif abs(CFL-.125) < 1e-8
+            mark = '-.';
+        end
+        tag = sprintf('EC, CFL = %3.3f',CFL);
+        semilogy(dt*(1:Nsteps),dS,mark,'linewidth',2,'DisplayName',tag)
         
     end
     % semilogy(dt*(1:Nsteps),abs(energy),'--','linewidth',2)
@@ -302,9 +316,19 @@ for CFL = [.5 .125]
     
     figure(4)
     if projectV
-        semilogy(dt*(1:4:Nsteps),abs(rhstest(1:4:end)),'o','linewidth',2,'DisplayName',sprintf('Projected entropy variables, CFL = %1.1f',CFL))
+        if abs(CFL-.5)<1e-8
+            mark = 'o';
+        elseif abs(CFL-.125) < 1e-8
+            mark = 'x';
+        end
+        semilogy(dt*(1:4:Nsteps),abs(rhstest(1:4:end)),mark,'linewidth',2,'DisplayName',sprintf('Projected entropy variables, CFL = %3.3f',CFL))
     else
-        semilogy(dt*(1:4:Nsteps),abs(rhstest(1:4:end)),'x','linewidth',2,'DisplayName',sprintf('Conservative variables, CFL = %1.1f',CFL))
+        if abs(CFL-.5)<1e-8
+            mark = 's';
+        elseif abs(CFL-.125) < 1e-8
+            mark = '^';
+        end
+        semilogy(dt*(1:4:Nsteps),abs(rhstest(1:4:end)),mark,'linewidth',2,'DisplayName',sprintf('Conservative variables, CFL = %3.3f',CFL))
     end
     hold on
     grid on
@@ -315,8 +339,6 @@ for CFL = [.5 .125]
 end
 
 
-return
-
 figure(3)
 rhop = VpG*F*rho;
 mp = VpG*F*m;
@@ -324,13 +346,13 @@ xp = reshape(xp,length(rp),K); xp = [xp;nan(1,size(xp,2))]; xp = xp(:);
 up = reshape(mp./rhop,length(rp),K); up = [up;nan(1,size(up,2))]; up = up(:);
 rhop = reshape(rhop,length(rp),K); rhop = [rhop;nan(1,size(rhop,2))]; rhop = rhop(:);
 if abs(tau) > 1e-8
-    plot(xp,rhop,'b-','linewidth',2,'DisplayName','Density, LF')
+    plot(xp,rhop,'r-','linewidth',2,'DisplayName','Density, LF')
     hold on
-    plot(xp,up,'b--','linewidth',2,'DisplayName','Velocity, LF')
+    plot(xp,up,'g:','linewidth',2,'DisplayName','Velocity, LF')
 else
-    plot(xp,rhop,'r-','linewidth',2,'DisplayName','Density, EC')
+    plot(xp,rhop,'b-.','linewidth',2,'DisplayName','Density, EC')
     hold on
-    plot(xp,up,'r--','linewidth',2,'DisplayName','Velocity, EC')
+    plot(xp,up,'k--','linewidth',2,'DisplayName','Velocity, EC')
 end
 axis([-1,1 -1 4])
 grid on
