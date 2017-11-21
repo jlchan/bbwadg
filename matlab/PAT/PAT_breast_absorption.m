@@ -1,7 +1,8 @@
-function PAT_breast
+function PAT_breast_absorption
 
 load PAT/PAT_breast_boundary.mat
 load PAT/PAT_setup.mat
+% hmin = .425;
 hmin = .25;
 % hmin = .2;
 % hmin = .175;
@@ -35,8 +36,12 @@ axis on
 %% produce model of c2
 
 Globals2D
-N = 3;
+N = 1;
 FinalTime = 1e-4;
+
+% penalty parameter
+global tau0
+tau0 = 1;
 
 % make mesh
 VX = p(:,1); VX = VX(:)';
@@ -69,7 +74,7 @@ end
 StartUp2D
 
 % set up cubature/plotting
-global Pq Vq cq rho
+global Pq Vq cq rho kappa 
 [rq sq wq] = Cubature2D(2*N);
 Vq = Vandermonde2D(N,rq,sq)/V;
 Pq = V*V' * Vq'*diag(wq);
@@ -83,60 +88,88 @@ xp = Vp*x;
 yp = Vp*y;
 
 % smooth velocity model
-for iter = 1:5
+for it = 1:5
     savg = speed;
+    kavg = absorption;
+    rhoavg = density;
     for i = 2:d1-1
         for j = 2:d2-1
+%             stencil = @(f,i,j) (f(i,j) + f(i+1,j) + f(i-1,j) + f(i,j+1) + f(i,j-1) + f(i+1,j+1) + f(i-1,j+1) + f(i+1,j-1) + f(i-1,j-1))/9;
+%             savg(i,j) = stencil(speed,i,j);
             sij = speed(i,j) + ...
                 speed(i+1,j) + speed(i-1,j) + speed(i,j+1) + speed(i,j-1) + ...
                 speed(i+1,j+1) + speed(i-1,j+1) + speed(i+1,j-1) + speed(i-1,j-1);
             savg(i,j) = sij/9;
+            
+            sij = absorption(i,j) + ...
+                absorption(i+1,j) + absorption(i-1,j) + absorption(i,j+1) + absorption(i,j-1) + ...
+                absorption(i+1,j+1) + absorption(i-1,j+1) + absorption(i+1,j-1) + absorption(i-1,j-1);
+            kavg(i,j) = sij/9;
+            
+            
+            sij = density(i,j) + ...
+                density(i+1,j) + density(i-1,j) + density(i,j+1) + density(i,j-1) + ...
+                density(i+1,j+1) + density(i-1,j+1) + density(i+1,j-1) + density(i-1,j-1);
+            rhoavg(i,j) = sij/9;
         end
     end
     speed = savg;
+    absorption = kavg;
+    density = rhoavg;
 end
 
 cq = interp2(xm,ym,speed',xq,yq);
 rho = interp2(xm,ym,density',xq,yq);
+kappa = interp2(xm,ym,absorption',xq,yq);
+kappa = 0*max(kappa(:))*ones(size(kappa));
 
-% clf
-% vv = cq;
-% color_line3(xq,yq,vv,vv,'.')
-% % vv = Vp*c2; color_line3(xp,yp,vv,vv,'.')
-% hold on
-% axis on
-% c2 = Pq*cq;
-% plot3(x(Fmask(:),:),y(Fmask(:),:),c2(Fmask(:),:)*1.05,'k-','linewidth',2)
-% colorbar
-% return
+if 1
+    vv = cq;
+    color_line3(xq,yq,vv,vv,'.')
+    % vv = Vp*c2; color_line3(xp,yp,vv,vv,'.')
+    hold on
+    axis on
+%     c2 = Pq*cq;
+%     plot3(x(Fmask(:),:),y(Fmask(:),:),c2(Fmask(:),:)*1.05,'k-','linewidth',2)
+    colorbar
+    axis tight
+    return
+end
 
 
 %% init cond
 
-% smooth absorption initial cond
-for iter = 1:5
-    savg = absorption;
-    for i = 2:d1-1
-        for j = 2:d2-1
-            sij = absorption(i,j) + ...
-                absorption(i+1,j) + absorption(i-1,j) + absorption(i,j+1) + absorption(i,j-1) + ...
-                absorption(i+1,j+1) + absorption(i-1,j+1) + absorption(i+1,j-1) + absorption(i-1,j-1);
-            savg(i,j) = sij/9;
+opt = 1;
+if opt==1
+    x0 = mean(x(:)); y0 = mean(y(:));
+    a = 1e4;
+    r2 = @(x,y) x.^2 + y.^2;
+    pex = @(x,y) exp(-a*r2(x-x0,y-y0));
+else
+    % smooth absorption initial cond
+    for it = 1:5
+        savg = absorption;
+        for i = 2:d1-1
+            for j = 2:d2-1
+                sij = absorption(i,j) + ...
+                    absorption(i+1,j) + absorption(i-1,j) + absorption(i,j+1) + absorption(i,j-1) + ...
+                    absorption(i+1,j+1) + absorption(i-1,j+1) + absorption(i+1,j-1) + absorption(i-1,j-1);
+                savg(i,j) = sij/9;
+            end
         end
+        absorption = savg;
     end
-    absorption = savg;
+    pex = @(x,y) interp2(xm,ym,absorption',x,y);
+
 end
 
-pex = @(x,y) interp2(xm,ym,absorption',x,y);
 
 % projection
 p = Pq*pex(xq,yq);
 u = zeros(Np, K);
 v = zeros(Np, K);
 
-% keyboard
-% vv = Vp*p; color_line3(xp,yp,vv,vv,'.'); axis equal; axis tight; colorbar
-% return
+% clf;vv = Vp*p; color_line3(xp,yp,vv,vv,'.'); axis equal; axis tight; colorbar;return
 
 %% check eigs
 if 0 & 3*Np*K < 4000
@@ -169,8 +202,6 @@ dt = 2/CNh;
 Nstep = ceil(FinalTime/dt);
 dt = FinalTime/Nstep;
 
-tau = 1;
-
 %% generate synthetic data
 
 NstepRK = Nstep*5;
@@ -178,10 +209,9 @@ Ubc{1} = zeros(length(mapB(:)),NstepRK);
 Ubc{2} = zeros(length(mapB(:)),NstepRK);
 
 % outer time step loop
-time = 0;
 for i = 1:Nstep
     for INTRK = 1:5
-        [rhsp, rhsu, rhsv,UbcI] = acousticsRHS2D(p,u,v,tau,'abc');
+        [rhsp, rhsu, rhsv,UbcI] = acousticsRHS2D(p,u,v,dt,'abc');
         resp = rk4a(INTRK)*resp + dt*rhsp;
         resu = rk4a(INTRK)*resu + dt*rhsu;
         resv = rk4a(INTRK)*resv + dt*rhsv;
@@ -191,10 +221,12 @@ for i = 1:Nstep
         
         % save traces
         id0 = ((i-1)*5+(INTRK-1)); % zero index
-        Ubc{1}(:,NstepRK - id0) = UbcI{1};
-        Ubc{2}(:,NstepRK - id0) = UbcI{2};
+        Ubc{1}(:,NstepRK - id0) = p(vmapB);
+%         Ubc{1}(:,NstepRK - id0) = UbcI{1};            
+        %Ubc{2}(:,NstepRK - id0) = UbcI{2};
     end;
     
+    time = i * dt;
     if mod(i,10)==0
         vv = Vp*p;
         clf; color_line3(xp,yp,vv,vv,'.');
@@ -202,7 +234,7 @@ for i = 1:Nstep
         title(sprintf('time = %f, max solution val = %f',time,max(abs(vv(:)))))
         drawnow
     end
-    time = i * dt;
+    
     if (mod(i,ceil(Nstep/10))==0)
         disp(sprintf('generating synthetic data: tstep %d out of %d\n',i,Nstep))
     end
@@ -224,7 +256,7 @@ for i = 1:Nstep
         UbcI{1} = Ubc{1}(:,id0+1);
         UbcI{2} = Ubc{2}(:,id0+1);
         
-        [rhsp, rhsu, rhsv] = acousticsRHS2D(p,u,v,sign(dt)*tau,'rd',UbcI);
+        [rhsp, rhsu, rhsv] = acousticsRHS2D(p,u,v,dt,'rd',UbcI);
         resp = rk4a(INTRK)*resp + dt*rhsp;
         resu = rk4a(INTRK)*resu + dt*rhsu;
         resv = rk4a(INTRK)*resv + dt*rhsv;
@@ -246,56 +278,92 @@ for i = 1:Nstep
 end
 
 % save reversed data
-Rm = p;
+p0 = p;
 
 
 %% iterate
 
-% initalize pressure condition
-p0 = Rm;
-p = Rm;
+plotFlag = 0; 
+useTraces = 0; % traces vs error BCs
 
-for iter = 1:5
+% initalize pressure condition
+p = p0;
+
+for iter = 1:10
     
-%     p = p0; 
+    % save p to compute (I-A*L)*p = p_prev - A*L*p
+    p_prev = p; 
+    
+    % apply L (compute forward propagation)
     u = zeros(Np,K); v = zeros(Np,K);
     resp = zeros(Np,K); resu = resp; resv = resp;
-    
-    % compute forward propagation
     dt = abs(dt);
     for i = 1:Nstep
         for INTRK = 1:5
-            [rhsp, rhsu, rhsv, UbcI] = acousticsRHS2D(p,u,v,sign(dt)*tau,'abc');
+            [rhsp, rhsu, rhsv, UbcI] = acousticsRHS2D(p,u,v,dt,'abc');
             resp = rk4a(INTRK)*resp + dt*rhsp;
             resu = rk4a(INTRK)*resu + dt*rhsu;
             resv = rk4a(INTRK)*resv + dt*rhsv;
             p = p + rk4b(INTRK)*resp;
             u = u + rk4b(INTRK)*resu;
             v = v + rk4b(INTRK)*resv;
+            
+            % save traces
+            id0 = ((i-1)*5+(INTRK-1)); % zero index
+            Ubc{1}(:,NstepRK - id0) = p(vmapB);
+%             Ubc{1}(:,NstepRK - id0) = UbcI{1};
+            %Ubc{2}(:,NstepRK - id0) = UbcI{2};
         end;
         
         if (mod(i,ceil(Nstep/5))==0)
             disp(sprintf('fwd prop: tstep %d out of %d',i,Nstep))
         end
-        %         if mod(i,10)==0
-        %             vv = Vp*p;
-        %             clf; color_line3(xp,yp,vv,vv,'.');
-        %             title(sprintf('forwards time = %f, max solution val = %f',time,max(abs(vv(:)))))
-        %             axis equal; axis tight; colorbar
-        %             drawnow
-        %         end
+        if plotFlag && mod(i,10)==0
+            vv = Vp*p;
+            clf; color_line3(xp,yp,vv,vv,'.');
+            title(sprintf('forwards time = %f, max solution val = %f',time,max(abs(vv(:)))))
+            axis equal; axis tight; colorbar
+            drawnow
+        end
     end
     
-    %     % compute new auxiliary initial conditions
-    %     p = 0*p;
-    %     u = 0*u;
-    %     v = 0*v;
+    if useTraces
+        
+        if 0 % compute harmonic extension: p should be 
+            [R vmapBT] = getCGRestriction();
+            Mhat = inv(V*V');
+            M = kron(spdiag(J(1,:)),Mhat);
+            Dx = kron(spdiag(rx(1,:)),Dr) + kron(spdiag(sx(1,:)),Ds);
+            Dy = kron(spdiag(ry(1,:)),Dr) + kron(spdiag(sy(1,:)),Ds);
+            KK = Dx'*M*Dx + Dy'*M*Dy;
+            KK = R*KK*R';
+            KK(vmapBT) = speye(size(vmapBT));
+            b = zeros(size(KK,2),1);
+            pB = zeros(Np,K); 
+            pB(vmapB) = Ubc{1}(:,1);            
+            pCG = diag(1./sum(R,2))*R*pB(:); % nodal averaging for BCs
+            b(vmapBT) = pCG(vmapBT);
+            p = reshape(R'*(KK\b),Np,K);
+        else
+            p = zeros(size(p)); 
+        end
+                
+        u = zeros(size(p));
+        v = zeros(size(p));
+    end
     
-    % compute backwards propagation
+    % apply A (compute backwards propagation)
     dt = -dt;
     for i = 1:Nstep
-        for INTRK = 1:5
-            [rhsp, rhsu, rhsv] = acousticsRHS2D(p,u,v,sign(dt)*tau,'d');
+        for INTRK = 1:5                                   
+          if useTraces
+              id0 = (i-1)*5+INTRK-1; 
+              UbcI{1} = Ubc{1}(:,id0+1);
+              UbcI{2} = Ubc{2}(:,id0+1);
+              [rhsp, rhsu, rhsv] = acousticsRHS2D(p,u,v,dt,'rd',UbcI);
+          else
+              [rhsp, rhsu, rhsv] = acousticsRHS2D(p,u,v,dt,'d');
+          end
             
             resp = rk4a(INTRK)*resp + dt*rhsp;
             resu = rk4a(INTRK)*resu + dt*rhsu;
@@ -308,22 +376,34 @@ for iter = 1:5
         if (mod(i,ceil(Nstep/5))==0)
             disp(sprintf('backwards prop: tstep %d out of %d',i,Nstep))
         end
-        %         if mod(i,10)==0
-        %             vv = Vp*p;
-        %             clf; color_line3(xp,yp,vv,vv,'.');
-        %             title(sprintf('backwards, time = %f, max solution val = %f',time,max(abs(vv(:)))))
-        %             axis equal; axis tight; colorbar
-        %             drawnow
-        %         end
+        if plotFlag && mod(i,10)==0
+            vv = Vp*p;
+            clf; color_line3(xp,yp,vv,vv,'.');
+            title(sprintf('backwards, time = %f, max solution val = %f',time,max(abs(vv(:)))))
+            axis equal; axis tight; colorbar
+            drawnow
+        end
     end
     
     % update initial condition
-    %     p0 = (p0-p) + Rm;
-    %p0 = p + Rm;
-    p = p + Rm;
-    
+    if useTraces
+        
+        % use p_recon = sum_{m=0}^inf K^m * p0
+        % K = (I - A*L), p0 = A*boundary_measurements = reverse time
+%         p_recon = p0 + (I-A*L)*p0 + ... = p0 + (p0 - A*L*p0) + (I-A*L)*(I-A*L)*p0
+%                 = p0 + w1 + (I-A*L)*w1 + ... = p0 + w1 + w2 + ..., w_2 = (I-A*L)*w1;
+        
+        p = p_prev - p;
+        
+        % keep p - repeatedly apply (I - A*L) to it        
+        p_recon = p0 + p;
+    else        
+        p = p0 + p; % using error formulation
+        p_recon = p;
+    end
+        
     % plot initial cond
-    err = diag(wq)*(Vq*J).*(Vq*p0-pex(xq,yq)).^2;
+    err = diag(wq)*(Vq*J).*(Vq*p_recon-pex(xq,yq)).^2;
     L2err(iter) = sqrt(sum(err(:)));
     uq = diag(wq)*(Vq*J).*pex(xq,yq).^2;
     Unorm = sqrt(sum(uq(:)));
@@ -333,24 +413,28 @@ for iter = 1:5
 end
 
 keyboard
-
+%%
 figure
-% vv = pex(xp,yp)-Vp*p0;
-vv = Vp*p0;
+% vv = pex(xp,yp)-Vp*p_recon;
+vv = Vp*p_recon;
 % vv = pex(xp,yp);
 clf; color_line3(xp,yp,vv,vv,'.');
 axis equal; axis tight; colorbar
 title(sprintf('iter = %d, reconstruction error = %f',iter,L2err(iter)))
-
+%%
 return
 
 
-function [rhsp, rhsu, rhsv, UbcO] = acousticsRHS2D(p,u,v,tau,bcOpt,Ubc)
+function [rhsp, rhsu, rhsv, UbcO] = acousticsRHS2D(p,u,v,dt,bcOpt,Ubc)
 
 % function [rhsu, rhsv, rhsp] = acousticsRHS2D(u,v,p)
 % Purpose  : Evaluate RHS flux in 2D acoustics TM form
 
 Globals2D;
+
+global tau0
+
+tau = tau0*sign(dt);
 
 % Define field differences at faces
 dp = zeros(Nfp*Nfaces,K); dp(:) = p(vmapP)-p(vmapM);
@@ -395,10 +479,11 @@ rhsp =  -divU + LIFT*(Fscale.*fluxp)/2.0;
 rhsu =  -dpdx + LIFT*(Fscale.*fluxu.*nx)/2.0;
 rhsv =  -dpdy + LIFT*(Fscale.*fluxu.*ny)/2.0;
 
-global Pq Vq cq rho
-rhsp = Pq*(cq.*(Vq*rhsp));
+global Pq Vq cq rho kappa
+rhsp = Pq*(cq.*(Vq*rhsp) - sign(dt)*kappa.*(Vq*p)); % todo: add absorption
 rhsu = Pq*(rho.*(Vq*rhsu));
 rhsv = Pq*(rho.*(Vq*rhsv));
+
 
 return;
 
