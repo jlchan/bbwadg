@@ -1,9 +1,9 @@
-function PAT_breast
+% function PAT_breast
 
 load PAT/PAT_breast_boundary.mat
 load PAT/PAT_setup.mat
 hmin = .25;
-% hmin = .2;
+hmin = .2;
 % hmin = .175;
 
 tb = linspace(min(t),max(t)-hmin,ceil((max(t)-min(t))/hmin));
@@ -35,7 +35,7 @@ axis on
 %% produce model of c2
 
 Globals2D
-N = 2;
+N = 3;
 FinalTime = 1e-4;
 
 % make mesh
@@ -83,7 +83,7 @@ xp = Vp*x;
 yp = Vp*y;
 
 % smooth velocity model
-for iter = 1:5
+for iter = 1:3
     savg = speed;
     for i = 2:d1-1
         for j = 2:d2-1
@@ -254,7 +254,7 @@ Rm = p;
 % initalize pressure condition
 p0 = Rm;
 
-for iter = 1:5
+for iter = 1:25
     
     p = p0; u = zeros(Np,K); v = zeros(Np,K);
     resp = zeros(Np,K); resu = resp; resv = resp;
@@ -339,7 +339,6 @@ clf; color_line3(xp,yp,vv,vv,'.');
 axis equal; axis tight; colorbar
 title(sprintf('iter = %d, reconstruction error = %f',iter,L2err(iter)))
 
-return
 
 
 function [rhsp, rhsu, rhsv, UbcO] = acousticsRHS2D(p,u,v,tau,bcOpt,Ubc)
@@ -397,5 +396,4 @@ rhsp = Pq*(cq.*(Vq*rhsp));
 rhsu = Pq*(rho.*(Vq*rhsu));
 rhsv = Pq*(rho.*(Vq*rhsv));
 
-return;
-
+end
