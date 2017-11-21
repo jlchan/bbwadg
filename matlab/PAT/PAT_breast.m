@@ -253,10 +253,12 @@ Rm = p;
 
 % initalize pressure condition
 p0 = Rm;
+p = Rm;
 
 for iter = 1:25
     
-    p = p0; u = zeros(Np,K); v = zeros(Np,K);
+%     p = p0; 
+    u = zeros(Np,K); v = zeros(Np,K);
     resp = zeros(Np,K); resu = resp; resv = resp;
     
     % compute forward propagation
@@ -317,7 +319,8 @@ for iter = 1:25
     
     % update initial condition
     %     p0 = (p0-p) + Rm;
-    p0 = p + Rm;
+    %p0 = p + Rm;
+    p = p + Rm;
     
     % plot initial cond
     err = diag(wq)*(Vq*J).*(Vq*p0-pex(xq,yq)).^2;
