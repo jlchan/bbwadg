@@ -5,7 +5,7 @@ N = 4;
 K1D = 16;
 tau = 0;
 FinalTime = 2;
-CFL = .125;
+CFL = .25;
 
 r = JacobiGL(0,0,N);
 % r = JacobiGQ(0,0,N);
@@ -189,16 +189,16 @@ for i = 1:Nsteps
         q2 = VqG*PqG*(vq);
         
         % redefine flux variables
-        hq = (q1+q2.^2/2)/g;
+        hq = (q1 + q2.^2/2)/g; % 1/g*[(g*hq-P(hv^2/h^2)/2) + P(vq)^2/2]
         vq = q2;
-        
+                
         [hx hy] = meshgrid(hq);
         [vx vy] = meshgrid(vq);       
         
         d1 = PqG*(sum(Dh.*f1(hx,hy,vx,vy),2)) + Pfh*(sum(Fh.*f1(hx,hy,vx,vy),2));
-        rhs1 = -2*d1 + tau*S*h;
+        rhs1 = -2*d1 + tau*S*PqG*hq;
         d1 = PqG*(sum(Dh.*f2(hx,hy,vx,vy),2)) + Pfh*(sum(Fh.*f2(hx,hy,vx,vy),2));
-        rhs2 = -2*d1 + tau*S*hv;
+        rhs2 = -2*d1 + tau*S*PqG*(hq.*vq);
         
         % try to recover total energy = entropy
         if INTRK==5
@@ -211,7 +211,6 @@ for i = 1:Nsteps
         hv = hv + rk4b(INTRK)*res2;
         
     end;
-    
         
     hq = Vq2G*h;
     hvq = Vq2G*hv;

@@ -6,11 +6,15 @@ function L2err = burgers1D(Nin,K1D)
 Globals1D;
 
 if nargin==0
-    N = 8;
-    K1D = 7;
+    N = 7;
+    K1D = 9;
 else
     N = Nin;
 end
+CFL = .25;
+FT = 2;1.06765;
+global tau
+tau = 0;
 [Nv, VX, K, EToV] = MeshGen1D(-1,1,K1D);
 
 % VX(2:end-1) = VX(2:end-1) + 1/K1D*randn;
@@ -29,8 +33,8 @@ xp=  Vp*x;
 global uex Vq Pq Prq shockSol
  
 % Nq = ceil((3*N-1)/2); % exact integration
-Nq = 2*N+2; % same as overkill integration
-Nq = N; % inexact integration
+% Nq = 2*N+2; % same as overkill integration
+Nq = N+1; % inexact integration
 [rq wq] = JacobiGQ(0,0,Nq);
 
 Vq = Vandermonde1D(N,rq)/V;
@@ -49,8 +53,8 @@ if shockSol
     uex = @(x) 1 + (x < (-1 + .25));
     FinalTime = 1;
 else
-    uex = @(x) sin(2*pi*x);
-    FinalTime = 1;
+    uex = @(x) -sin(pi*x);
+    FinalTime = FT;
     
 end
 u = Pq*uex(xq);
@@ -61,7 +65,8 @@ invM = V*V';
 
 % compute time step size
 xmin = min(abs(x(1,:)-x(2,:)));
-dt   = .25*xmin;
+dt   = CFL*xmin;
+dt   =  0.0036;
 resu = zeros(Np,K);
 Nsteps = ceil(FinalTime/dt); dt = FinalTime/Nsteps;
 
@@ -69,6 +74,7 @@ D = diag([ones(N,1); 1]);
 F = V*D/V;
 
 % outer time step loop
+tvec = round(Nsteps/FinalTime * .25 *[1:7]);
 figure(1)
 for tstep=1:Nsteps
     
@@ -84,7 +90,7 @@ for tstep=1:Nsteps
     
     time = (tstep-1)*dt;
     
-    if nargin==0 && (mod(tstep,5)==0 || tstep==Nsteps)
+    if nargin==0 && (mod(tstep,1)==0 || tstep==Nsteps)
         
         plot(xp,Vp*u,'b-','linewidth',2)
         if shockSol
@@ -92,17 +98,43 @@ for tstep=1:Nsteps
             plot(xp,uex(xp-1.5*time));
             hold off
         end
-        axis([-1 1 -3 5])
-        title(sprintf('Time = %f\n',tstep*dt))
-        drawnow
+        axis([-1 1 -4 4])
+        set(gca,'fontsize',15);grid on
+        title(sprintf('Time = %f\n',tstep*dt),'fontsize',15)
+        
+%         drawnow
+        
+[val id] = min(abs(tstep-tvec));
+        if val<1e-8
+%             tag = '~/Desktop/bbwadg/talks/TAMES2017/figs/burgersStableEC_%d.png';
+%             tag = '~/Desktop/bbwadg/talks/TAMES2017/figs/burgersStableLF_%d.png';
+%             tag = '~/Desktop/bbwadg/talks/TAMES2017/figs/burgersStable_%d.png';
+%             tag = '~/Desktop/bbwadg/talks/TAMES2017/figs/burgersUnstable_%d.png';
+%             print(gcf,'-dpng',sprintf(tag,id))            
+%             keyboard
+%             pause(.1)
+        end
     end
     
     energy(tstep) = sum(sum(diag(wq)*(Vq*u).^2*J(1)));
     
 end;
+
+% print(gcf,'-dpng',sprintf(tag,length(tvec)+1))
+% print(gcf,'-dpng',sprintf('~/Desktop/bbwadg/talks/TAMES2017/figs/burgersStable_%d.png',4))
+% print(gcf,'-dpng',sprintf('~/Desktop/bbwadg/talks/TAMES2017/figs/burgersUnstable_%d.png',4))
 figure(2)
-plot(dt*(1:Nsteps),energy)
-hold on
+plot(dt*(1:Nsteps),energy,'-','linewidth',2)
+set(gca,'fontsize',15)
+grid on
+xlabel('Time','fontsize',15)
+ylabel('$\|u\|^2$','fontsize',18,'Interpreter','LaTeX')
+%ytickformat('%5.5f')
+ytickformat('%2.1f')
+ylim([0 1.1])
+print(gcf,'-dpng','~/Desktop/bbwadg/talks/TAMES2017/figs/burgersSplitEnergyEC.png')
+% print(gcf,'-dpng','~/Desktop/bbwadg/talks/TAMES2017/figs/burgersSplitEnergyLF.png')
+        
 
 
 
@@ -113,7 +145,7 @@ function [rhsu] = BurgersRHS1D(u)
 
 Globals1D;
 global uex Pq Vq Prq shockSol
-
+global tau
 % form field differences at faces
 alpha = 0;
 du = zeros(Nfp*Nfaces,K);
@@ -130,17 +162,18 @@ end
 
 opt = 2;
 if opt==1 % conservative
-%     du(:) = .5*(uP-uM).*(uM.*nx - abs(uM.*nx));
-    %         rhsu = -Pq*((Vq*u).*(Vq*(rx.*(Dr*u)))) - LIFT*(Fscale.*(du)); % non-conservative form
-%     rhsu = -rx.*(Dr*(Pq*.5*(Vq*u).^2)) - LIFT*(Fscale.*du); % quadrature projection (non-conservative!) form
-    %     rhsu = -rx.*(Dr*(.5*u.^2)) - LIFT*(Fscale.*du); % quadrature conservation form
+    du(:) = .5*(uP-uM).*(uM.*nx - abs(uM.*nx));
     
-    % entropy-conserving flux (strong form)
-    fq = .5*(Vq*u).^2;        
-    f = Pq*fq; 
-    fM = reshape(f(vmapM),Nfp*Nfaces,K);   
-    du(:) = -(uP.^2 + uP.*uM + uM.^2)/6.*nx + fM.*nx + .5*abs(uM).*(uP-uM);
-    rhsu = -rx.*(Dr*f) + LIFT*(Fscale.*du);
+    rhsu = -Pq*((Vq*u).*(Vq*(rx.*(Dr*u)))) - LIFT*(Fscale.*(du)); % non-conservative form
+%     rhsu = -rx.*(Dr*(Pq*.5*(Vq*u).^2)) - LIFT*(Fscale.*du); % quadrature projection (non-conservative!) form
+%     rhsu = -rx.*(Dr*(.5*u.^2)) - LIFT*(Fscale.*du); % quadrature conservation form
+    
+%     % entropy-conserving flux (strong form)
+%     fq = .5*(Vq*u).^2;        
+%     f = Pq*fq; 
+%     fM = reshape(f(vmapM),Nfp*Nfaces,K);   
+%     du(:) = -(uP.^2 + uP.*uM + uM.^2)/6.*nx + fM.*nx + .5*abs(uM).*(uP-uM);
+%     rhsu = -rx.*(Dr*f) + LIFT*(Fscale.*du);
             
 
 elseif opt==2 % discrete split
@@ -163,7 +196,7 @@ elseif opt==2 % discrete split
     rhsu = -(uDu + Df)*1/3;
     
     % add lax friedrichs
-    du = .5*(uP-uM).*abs(uM);
+    du = tau*.5*(uP-uM).*abs(uM);
     rhsu = rhsu + LIFT*(Fscale.*du);
 
 elseif opt==3 % continuous split + discretization

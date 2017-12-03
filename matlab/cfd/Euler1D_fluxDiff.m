@@ -2,28 +2,28 @@ clear
 Globals1D;
 
 projectV = 1;
-for CFL = .25; [.5 .25 .125]
-    N = 4;
-    K1D = 16;
-    tau = 1/2;
-    FinalTime = .1;
+for CFL = .125/2; [.5 .25 .125]
+    N = 2;
+    K1D = 2;
+    tau = 0/2;
+    FinalTime = .2;
+    opt = 1;
     
     r = JacobiGL(0,0,N);
-    % r = JacobiGQ(0,0,N);
+    r = JacobiGQ(0,0,N);
     
     [rq wq] = JacobiGL(0,0,N);
-    [rq wq] = JacobiGQ(0,0,N+1);
+    [rq wq] = JacobiGQ(0,0,N);
     
     % % include boundary nodes for extraction
-    rq = [-1;rq;1];
-    wq = [0;wq;0];
+%     rq = [-1;rq;1];
+%     wq = [0;wq;0];
     Nq = length(rq);
     
     % evaluate error
     rq2 = rq; wq2 = wq;
     % [rq2 wq2] = JacobiGQ(0,0,N+4);
-    % [rq2 wq2] = JacobiGL(0,0,N);
-    
+    % [rq2 wq2] = JacobiGL(0,0,N);    
     
     [Nv, VX, K, EToV] = MeshGen1D(-1,1,K1D);
     
@@ -35,9 +35,10 @@ for CFL = .25; [.5 .25 .125]
     for e = 1:K
         mapP(:,e) = [(Nfp*Nfaces)*e-2, Nfp*Nfaces*(e+1)-1];
     end
-    % mapP(1) = 1; mapP(end) = Nfp*Nfaces*K;
-    mapP(1) = mapM(end); mapP(end) = mapM(1);
-    vmapP(1) = vmapM(end); vmapP(end) = vmapM(1);
+    mapP(1) = 1; mapP(end) = Nfp*Nfaces*K;
+%     mapP(1) = mapM(end); mapP(end) = mapM(1);
+%     vmapP(1) = vmapM(end); vmapP(end) = vmapM(1);
+    mapB = find(mapM==mapP);
     
     V = Vandermonde1D(N,r);
     Dr = GradVandermonde1D(N,r)/V;
@@ -136,8 +137,14 @@ for CFL = .25; [.5 .25 .125]
     % Fh = .5*diag(nx(:))*(tP - tM*VqG*PqG);
     % Pfh = MM\(VfG');
     
-    % Dh = VqG*Dx*PqG + .5*VqG*L*(tP-tM)*VqG*PqG;
-    % Fh = 0*Fh;
+    Dh = VqG*D*PqG;
+    
+    Bmask = 0*nx(:); 
+    Bmask(1) = 1;
+    Bmask(end) = 1;
+    norm(W*Dh + Dh'*W - (VfG*PqG)'*diag(nx(:).*Bmask)*(VfG*PqG),'fro')
+    Pfh = 0*Pfh;
+    return
     
     %% fluxes
     
@@ -176,7 +183,6 @@ for CFL = .25; [.5 .25 .125]
     Nsteps = ceil(FinalTime/dt);
     dt = FinalTime/Nsteps;
     
-    opt = 1;
     if opt==1
         % pulse condition
         x0 = 0;
@@ -299,12 +305,14 @@ for CFL = .25; [.5 .25 .125]
             mark = '--';
         elseif abs(CFL-.125) < 1e-8
             mark = '-.';
+        elseif abs(CFL-.125/2) < 1e-8
+            mark = ':';            
         end
         tag = sprintf('EC, CFL = %3.3f',CFL);
         semilogy(dt*(1:Nsteps),dS,mark,'linewidth',2,'DisplayName',tag)
         
     end
-    % semilogy(dt*(1:Nsteps),abs(energy),'--','linewidth',2)
+%     semilogy(dt*(1:Nsteps),abs(energy),'--','linewidth',2)
     hold on
     % semilogy(dt*(1:Nsteps),abs(rhstest),'x','linewidth',2,'DisplayName','\delta')
     % title(sprintf('rhstest = %g\n',max(abs(rhstest))))

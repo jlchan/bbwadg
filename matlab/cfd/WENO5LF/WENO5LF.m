@@ -35,8 +35,8 @@ global gamma
 
 %% Parameters
 CFL     = 0.5;	% CFL number
-tFinal	= 1.80;	% Final time
-nE      = 1001;  % Number of cells/Elements
+tFinal	= 1.8;	% Final time
+nE      = 10001;  % Number of cells/Elements
 gamma   = 1.4;  % Ratio of specific heats for ideal di-atomic gas
 IC      = 01;	% 10 IC cases are available
 plot_fig= 1;
@@ -60,6 +60,11 @@ elseif opt==2
     uL   = 2.629369; uR = 0;
     pL   = 10.3333;  pR = 1;
     
+    rhoRex = @(x) 2 + .2*sin(5*x);
+    rhoL = 4; rhoR = rhoRex(x(end));
+    uL   = 2; uR = 0;
+    pL   = 10; pR = 2;
+        
     rho0 = rhoL*(x < -4) + (rhoRex(x)).*(x >= -4);
     u0 = uL*(x < -4);
     p0 = pL*(x < -4) + pR*(x >= -4);
@@ -117,11 +122,12 @@ while t<tFinal
     % Plot figure
     if rem(it,10) == 0
         if plot_fig == 1;
-            subplot(2,2,1); plot(x,rho,'.b');
-            subplot(2,2,2); plot(x,u,'.m'); 
-            subplot(2,2,3); plot(x,p,'.k'); 
-            subplot(2,2,4); plot(x,E,'.r');
+            subplot(2,2,1); plot(x,rho,'.b'); legend('\rho')
+            subplot(2,2,2); plot(x,u,'.m'); legend('u')
+            subplot(2,2,3); plot(x,p,'.k'); legend('p')
+            subplot(2,2,4); plot(x,E,'.r'); legend('E')
             title(sprintf('time = %f',t))
+            
         end
 	drawnow
     end
