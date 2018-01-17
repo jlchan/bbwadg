@@ -48,7 +48,6 @@ plot(x,p0(x))
 N = 500;
 [x y] = meshgrid(linspace(-1,1,N));
 h = 2/N;
-dt = .5*h;
 
 e = ones(N,1);
 A = diag(2*e) - diag(e(2:end),1) - diag(e(2:end),-1);
@@ -60,8 +59,11 @@ p = exp(-25^2*((x).^2+y.^2));
 pp = p;
 
 %c2 = 1 + (x > 0);
-% c2 = 1+25*(x.^2+y.^2 < .125);
-c2 = 1;
+c2 = 1+10*((x-.1).^2+y.^2 < .125);
+% c2 = 1;
+
+dt = .5*h;
+dt = dt/max(c2(:));
 
 time = 0;
 FinalTime = 2;

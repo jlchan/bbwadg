@@ -7,22 +7,23 @@ Globals2D
 
 if nargin==0
     %     Nin = 4; K1D = 16;
-    Nin = 6; K1D = 4; c_flag = 0;
+    Nin = 3; K1D = 2; c_flag = 0;
     FinalTime = .5;
-%     cfun = @(x,y) ones(size(x));
+    cfun = @(x,y) ones(size(x));
 %     cfun = @(x,y) 1 + .5*sin(pi*x).*sin(pi*y); % smooth velocity
-    cfun = @(x,y) (1 + .5*sin(2*pi*x).*sin(2*pi*y) + (y > 0)); % piecewise smooth velocity
+%     cfun = @(x,y) (1 + .5*sin(2*pi*x).*sin(2*pi*y) + (y > 0)); % piecewise smooth velocity
 %     cfun = @(x,y) 1 + .75*sin(8*pi*x).*sin(8*pi*y);
 %     cfun = @(x,y) 2 + sin(2*pi*sin(x));
 end
 N = Nin;
 
-filename = 'Grid/Other/block2.neu';
+% filename = 'Grid/Other/block2.neu';
 % filename = 'Grid/Maxwell2D/Maxwell05.neu';
 % [Nv, VX, VY, K, EToV] = MeshReaderGambit2D(filename);
 [Nv, VX, VY, K, EToV] = unif_tri_mesh(K1D);
 StartUp2D;
 
+BuildPeriodicMaps2D(2,2);
 % PlotMesh2D; return
 
 [rp sp] = EquiNodes2D(25); [rp sp] = xytors(rp,sp);
@@ -39,9 +40,7 @@ Jq = Vq*J;
 
 %% params setup
 
-global c cq Vq Pq Minvc Mref USE_C_MASS
-
-USE_C_MASS = c_flag;
+global c cq Vq Pq Minvc Mref
 
 cq = cfun(xq,yq);
 c = cfun(x,y);
@@ -96,7 +95,7 @@ end
 
 
 %% check eigenvalues of DG matrix 
-if 0 && nargin==0
+if 1 && nargin==0
     e = zeros(3*Np*K,1);
     A = zeros(3*Np*K);
     for i = 1:3*Np*K
@@ -116,7 +115,8 @@ if 0 && nargin==0
     hold on;
     plot(lam,'o')
     title(sprintf('Largest real part = %e',max(real(lam))))
-    
+    M = Vq'*diag(wq)*Vq; Mh = kron(spdiag(J(1,:)),M);
+    keyboard
     VB = bern_basis_tri(N,r,s);    
 end
 
@@ -144,6 +144,12 @@ while (time<FinalTime)
         timelocal = time + rk4c(INTRK)*dt;
         
         [rhsp, rhsu, rhsv] = acousticsRHS2D(p,u,v,timelocal);
+        
+%         if tstep==10
+%             M = Vq'*diag(wq)*Vq;
+%             sum(sum(p.*(M*rhsp) + u.*(M*rhsu) + v.*(M*rhsv)))
+%             keyboard
+%         end
         
         % initiate and increment Runge-Kutta residuals
         resp = rk4a(INTRK)*resp + dt*rhsp;
@@ -212,15 +218,14 @@ dp = zeros(Nfp*Nfaces,K); dp(:) = p(vmapP)-p(vmapM);
 du = zeros(Nfp*Nfaces,K); du(:) = u(vmapP)-u(vmapM);
 dv = zeros(Nfp*Nfaces,K); dv(:) = v(vmapP)-v(vmapM);
 
-% Impose reflective boundary conditions (p+ = -p-)
-du(mapB) = 0; dv(mapB) = 0; dp(mapB) = -2*p(vmapB);
-% du(mapB) = -2*u(vmapB); dv(mapB) = -2*v(vmapB); dp(mapB) = 0;
+% % Impose reflective boundary conditions (p+ = -p-)
+% du(mapB) = 0; dv(mapB) = 0; dp(mapB) = -2*p(vmapB);
+% % du(mapB) = -2*u(vmapB); dv(mapB) = -2*v(vmapB); dp(mapB) = 0;
 
 % evaluate upwind fluxes
 ndotdU = nx.*du + ny.*dv;
-tau = 1;
+tau = 0;
 fluxp =  tau*dp - ndotdU;
-
 fluxu =  (tau*ndotdU - dp).*nx;
 fluxv =  (tau*ndotdU - dp).*ny;
 
@@ -234,21 +239,7 @@ rhsp =  -divU + LIFT*(Fscale.*fluxp)/2.0;
 rhsu =  -dpdx + LIFT*(Fscale.*fluxu)/2.0;
 rhsv =  -dpdy + LIFT*(Fscale.*fluxv)/2.0;
 
-if USE_C_MASS==1 % actual inversion of c2-weighted mass matrix
-    if abs(time)<1e-8
-        fprintf('full mass\n')
-    end
-    for e = 1:K
-        rhsp(:,e) = Minvc{e}\(Mref*rhsp(:,e));
-    end
-elseif USE_C_MASS==0  % projection
-%     if abs(time)<1e-8
-%         fprintf('low storage projection\n')
-%     end
-    rhsp = Pq*(cq.*(Vq*rhsp));
-%     rhsp = rhsp./c;
-    
-end
+rhsp = Pq*(cq.*(Vq*rhsp));    
 
 
 return;

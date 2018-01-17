@@ -204,7 +204,7 @@ useQuadrature = 1;
 x0 = .1; y0 = .1;
 pex = @(x,y,t) exp(-5^2*((x-x0).^2 + (y-y0).^2));
 
-k = 1;
+k = 5;
 pex = @(x,y,t) cos(k*pi*x/2).*cos(k*pi*y/2);
 % pex = @(x,y,t) sin(k*pi*x).*sin(k*pi*y); 
 % pex = @(x,y,t) exp(x.*y).*sin(k*pi*x).*sin(k*pi*y); 
@@ -213,7 +213,7 @@ pex = @(x,y,t) cos(k*pi*x/2).*cos(k*pi*y/2);
 a = .125;
         
 % figure
-for ii = 1:3
+for ii = [1 3]
     ii
     if ii==1
         K1D = 2;
@@ -328,10 +328,9 @@ for ii = 1:3
         end
     end
     
-    if ii==1
+    if ii==4
         semilogy(ndofs.^(.5),L2err,'o--','linewidth',2,'DisplayName',sprintf('Ksub = %d, smoothKnots = opt',Ksub))
     elseif ii==2
-%         keyboard
         semilogy(ndofs.^(.5),L2err,'x--','linewidth',2,'DisplayName',sprintf('Ksub = %d, smoothKnots = %d',Ksub,smoothKnots))
     else
         semilogy(ndofs.^(.5),L2err,'d--','linewidth',2,'DisplayName',sprintf('Ksub = %d, smoothKnots = %d',Ksub,smoothKnots))

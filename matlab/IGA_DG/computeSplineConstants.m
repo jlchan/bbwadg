@@ -4,15 +4,16 @@ clear
 
 Globals1D;
 
-smoothKnots = 25;'opt';
+smoothKnots = 0;'opt';
 
 % for K = [2 4 8 16];
 sk = 1;
-Nvec = 1:12;
+Nvec = 1:7; 12;
 for N = Nvec
     
-%     K = ceil(N/2);
+    K = ceil(N/2);
     K = N;
+    K = 2*N;
     
     % Generate simple mesh
     [Nv, VX, K, EToV] = MeshGen1D(-1,1,K);
@@ -85,14 +86,16 @@ for N = Nvec
     e(1,1) = 1;
     e(end,end) = 1;
     lam = eig(e,MB);
-    CT(sk) = max(lam);%/K;
+    CT(sk) = max(lam);
     
     lam = eig(R'*S*R,MB);
-    CM(sk) = sqrt(max(lam));%/K;
+    CM(sk) = sqrt(max(lam));
     
     lam = eig(Vrq'*diag(wq)*Vrq,Vq'*diag(wq)*Vq);
     CMpoly(sk) = sqrt(max(lam));
     
+    Ndofs(sk) = N+K;
+    Kvec(sk) = K;
     sk = sk + 1;
     if sk > 1
         sk
@@ -103,27 +106,41 @@ maxC = max(max(CMpoly))+5;
 
 NN = Nvec;
 CTpoly = (NN+1).*(NN+1)/2;
+Ndofp = (NN+1);
+% Ndofs = Ndofs;
+
+figure
+plot(Kvec,CTpoly,'o--')
+hold on
+plot(Kvec,CT./Kvec,'x--')
+
+figure
+plot(Kvec,CMpoly,'o--')
+hold on
+plot(Kvec,CM./Kvec,'x--')
+
+return
 
 % figure
 figure(1)
-plot(Nvec,CTpoly,'o--','linewidth',2,'markersize',8)
+plot(Nvec,CTpoly./Ndofp,'o--','linewidth',2,'markersize',8)
 hold on
-plot(Nvec,CT,'x--','linewidth',2,'markersize',8)
+plot(Nvec,CT./Ndofs,'x--','linewidth',2,'markersize',8)
 legend('C_T poly','C_T spline')
 grid on
-axis([0 N+1 0 maxC])
+% axis([0 N+1 0 maxC])
 xlabel('Degree N','fontsize',14)
 set(gca,'fontsize',14)
 
 figure(2)
-plot(Nvec,CMpoly,'o--','linewidth',2,'markersize',8)
+plot(Nvec,CMpoly./Ndofp,'o--','linewidth',2,'markersize',8)
 hold on
 % plot(Nvec,C,'o--','linewidth',2,'markersize',8)
 % plot(NN,1.5*NN,'k--')
-plot(Nvec,CM,'x--','linewidth',2,'markersize',8)
+plot(Nvec,CM./Ndofs,'x--','linewidth',2,'markersize',8)
 legend('C_I poly','C_I spline')
 grid on
-axis([0 N+1 0 maxC])
+% axis([0 N+1 0 maxC])
 xlabel('Degree N','fontsize',14)
 set(gca,'fontsize',14)
 

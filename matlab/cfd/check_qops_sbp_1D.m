@@ -1,19 +1,18 @@
 clear
 
-[H,Q,r]=CSBPp2(15);
+[H,Q,rr]=CSBPp2(8);
 
-N = length(r)-1;
+N = 2;
 
-rq = r;
-dx = r(2)-r(1);
-wq = ones(length(rq),1)*dx; wq([1 length(rq)]) = wq([1 length(rq)])/2;
+rq = rr;
+dx = rr(2)-rr(1);
 wq = diag(H);
 
-N = 4;
-r = JacobiGL(0,0,N);
+% N = 4;
+% r = JacobiGL(0,0,N);
 % r = JacobiGQ(0,0,N);
 % 
-[rq wq] = JacobiGL(0,0,N); rq = .9999999999*rq; % N+1 -> deg 2(N+1)-3
+% [rq wq] = JacobiGL(0,0,N); rq = .9999999999*rq; % N+1 -> deg 2(N+1)-3
 % [rq wq] = JacobiGL(0,0,N+1); % 
 % 
 % % rq = [-1;rq;1];
@@ -22,10 +21,14 @@ r = JacobiGL(0,0,N);
 
 Nq = length(rq);
 
+r = JacobiGL(0,0,N);
 V = Vandermonde1D(N,r);
 Dr = GradVandermonde1D(N,r)/V;
 Vq = Vandermonde1D(N,rq)/V;
 Vf = Vandermonde1D(N,[-1 1])/V;
+
+% [Vq, ~, Dr] = bsplineVDM(1,14,rr,0,N); % VDM for interp, mass, M\S
+% Vf = zeros(2,size(Vq,2));Vf(1) = 1; Vf(end) = 1;
 
 M = Vq'*diag(wq)*Vq;
 LIFT = M\Vf';
@@ -39,9 +42,6 @@ tf = zeros(2,length(rq)); tf(1) = 1; tf(end) = 1;
 Drq = Vq*Dr*Pq;
 Dfq = .5*Vq*LIFT*diag([-1,1])*(tf - tf*VqPq);
 
-rp = linspace(-1,1,50); F = eye(N+1);
-Vp = Vandermonde1D(N,rp)/V;
-
 VqLq = Vq*Lq;
 VfPq = Vf*Pq;
 
@@ -54,6 +54,8 @@ E = zeros(2,Nq); E(1,1) = 1; E(end,end) = 1;
 wfq = [1;1];
 W = diag([wq;wfq]);
 Q2 = [eye(Nq);E]'*diag([wq;wfq])*DNr*[eye(Nq);E]
+
+
 return
 
 %% build shu operators

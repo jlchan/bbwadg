@@ -6,8 +6,8 @@ smoothKnots = 1;'opt';
 
 % for K = [2 4 8 16];
 sk = 1;
-Nvec = 1:7;
-for N = 2:4
+Nvec = 1:5;
+for N = Nvec
         
     % Generate simple mesh
     [Nv, VX, K, EToV] = MeshGen1D(-1,1,K);

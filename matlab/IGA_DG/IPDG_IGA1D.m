@@ -91,7 +91,7 @@ if 1
 end
 
 %% check matrix symmetry
-if 0
+if 1
     MM = kron(diag(J(1,:)),M); % global mass matrix
     
     u = zeros(Np,K);

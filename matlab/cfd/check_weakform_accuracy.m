@@ -1,9 +1,18 @@
-for N = 1:150
+num_discontin = 3;
+a = [1 1 2 4];
+c = [.5 .1 rand rand];
+for N = 1:100
     [rq wq] = JacobiGQ(0,0,N);
-    f = 1.0*(rq > pi/4);
+    f = 0*rq;
+    iex = 0;
+    for i = 1:num_discontin
+        f = f + a(i)*(rq > c(i));
+        iex = iex + a(i)*(1-c(i));
+    end
     val = wq'*f;
     h(N) = max(diff(rq));
-    loglog(h(N),abs(val-(1-pi/4)),'o')
+    
+    loglog(h(N),abs(val-iex),'o')
     hold on 
 end
 loglog(h,h,'--') % first order accuracy

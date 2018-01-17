@@ -2,6 +2,4 @@ New continuous formulations of systems of conservation laws are introduced and s
 
 Discretely entropy conservative and entropy stable schemes are extended to high order discontinuous Galerkin methods with dense mass matrices and over-integrated quadrature rules. 
 
-The methodology is shown to recover existing energy stable methods for the Burgers’ equation.  
-
 Numerical experiments confirm the high order accuracy and entropy conservation/stability of the proposed methods when using dense mass matrices and over-integrated quadrature rules. 

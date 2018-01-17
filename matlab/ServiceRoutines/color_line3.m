@@ -28,7 +28,8 @@ h = surface(...
   'EdgeColor','flat',...
   'Marker','none','Markersize',msize);
   
-if nargin ==5
+
+if nargin == 5
     switch varargin{1}
         case {'+' 'o' '*' '.' 'x' 'square' 'diamond' 'v' '^' '>' '<' 'pentagram' 'p' 'hexagram' 'h'}
             set(h,'LineStyle','none','Marker',varargin{1},'Markersize',msize)

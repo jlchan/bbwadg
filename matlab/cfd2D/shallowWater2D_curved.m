@@ -3,10 +3,12 @@ Globals2D
 
 N = 3;
 K1D = 8;
-FinalTime = 1;
-CFL = .5;
+FinalTime = 2.5;
+CFL = .125;
 global tau
 tau = 1;
+projectV = 0;
+a = 1/8;
 
 [Nv, VX, VY, K, EToV] = unif_tri_mesh(K1D);
 % VX = VX/max(abs(VX));  VY = VY/max(abs(VY));
@@ -21,7 +23,7 @@ BuildPeriodicMaps2D(max(VX)-min(VX),max(VY)-min(VY));
 % StartUp2D;
 
 % plotting nodes
-[rp sp] = EquiNodes2D(50); [rp sp] = xytors(rp,sp);
+[rp sp] = EquiNodes2D(25); [rp sp] = xytors(rp,sp);
 Vp = Vandermonde2D(N,rp,sp)/V;
 xp = Vp*x; yp = Vp*y;
 % plot(xp,yp,'o')
@@ -120,13 +122,12 @@ end
 
 %% make curvilinear mesh (still unstable?)
 
-a = 1/8;
-x = x + a*sin(pi*x).*sin(pi*y);
-y = y + a*sin(pi*x).*sin(pi*y);
+x = x + a*cos(pi/2*x).*cos(3*pi/2*y);
+y = y + a*cos(3*pi/2*x).*cos(pi/2*y);
 
 xq = Vq*x; yq = Vq*y;
 xp = Vp*x; yp = Vp*y;
-% plot(x(Fmask(:),:),y(Fmask(:),:),'.');return
+plot(x(Fmask(:),:),y(Fmask(:),:),'k-','linewidth',2);return
 
 rxJ = zeros(Nq,K); sxJ = zeros(Nq,K);
 ryJ = zeros(Nq,K); syJ = zeros(Nq,K);
@@ -160,8 +161,8 @@ sJ = sJ.*Jf;
 
 x0 = mean(VX); y0 = 0;
 
-hex = @(x,y) 2 + exp(-5^2*((x-x0).^2 + (y-y0).^2));
-hex = @(x,y) 2 + exp(-5^2*(x-x0).^2);
+hex = @(x,y) 2 + exp(-50*((x-x0).^2 + (y-y0).^2));
+% hex = @(x,y) 2 + exp(-5^2*((x-x0)-(y-y0)).^2);
 % hex = @(x,y) 2 + exp(-1^2*(x-x0).^2);
 % hex = @(x,y) 2 + (abs(x)<.5).*(abs(y)<.5);
 h = Pq*hex(xq,yq);
@@ -175,13 +176,23 @@ g = 1;
 global fxS1 fxS2 fxS3 fyS1 fyS2 fyS3
 global avg
 avg = @(x,y) .5*(x+y);
-fxS1 = @(hL,uL,vL,hR,uR,vR) avg(hL,hR).*avg(uL,uR);
-fxS2 = @(hL,uL,vL,hR,uR,vR) avg(hL,hR).*avg(uL,uR).^2 + .5*g*avg(hL.^2,hR.^2);
-fxS3 = @(hL,uL,vL,hR,uR,vR) avg(hL,hR).*avg(uL,uR).*avg(vL,vR);
-
-fyS1 = @(hL,uL,vL,hR,uR,vR) avg(hL,hR).*avg(vL,vR);
-fyS2 = @(hL,uL,vL,hR,uR,vR) avg(hL,hR).*avg(uL,uR).*avg(vL,vR);
-fyS3 = @(hL,uL,vL,hR,uR,vR) avg(hL,hR).*avg(vL,vR).^2 + .5*g*avg(hL.^2,hR.^2);
+if projectV
+    fxS1 = @(hL,uL,vL,hR,uR,vR) avg(hL,hR).*avg(uL,uR);
+    fxS2 = @(hL,uL,vL,hR,uR,vR) avg(hL,hR).*avg(uL,uR).^2 + .5*g*avg(hL.^2,hR.^2);
+    fxS3 = @(hL,uL,vL,hR,uR,vR) avg(hL,hR).*avg(uL,uR).*avg(vL,vR);
+    
+    fyS1 = @(hL,uL,vL,hR,uR,vR) avg(hL,hR).*avg(vL,vR);
+    fyS2 = @(hL,uL,vL,hR,uR,vR) avg(hL,hR).*avg(uL,uR).*avg(vL,vR);
+    fyS3 = @(hL,uL,vL,hR,uR,vR) avg(hL,hR).*avg(vL,vR).^2 + .5*g*avg(hL.^2,hR.^2);
+else
+    fxS1 = @(hL,uL,vL,hR,uR,vR) avg(hL.*uL,hR.*uR);
+    fxS2 = @(hL,uL,vL,hR,uR,vR) avg(hL.*uL.^2,hR.*uR.^2) + .5*g*avg(hL.^2,hR.^2);
+    fxS3 = @(hL,uL,vL,hR,uR,vR) avg(hL.*uL.*vL,hR.*uR.*vR);
+    
+    fyS1 = @(hL,uL,vL,hR,uR,vR) avg(hL.*vL,hR.*vR);
+    fyS2 = @(hL,uL,vL,hR,uR,vR) avg(hL.*uL.*vL,hR.*uR.*vR);
+    fyS3 = @(hL,uL,vL,hR,uR,vR) avg(hL.*vL.^2,hR.*vR.^2) + .5*g*avg(hL.^2,hR.^2);
+end
 
 %%
 
@@ -203,23 +214,38 @@ figure(1)
 for i = 1:Nsteps
     for INTRK = 1:5
         
-        % project to entropy variables        
-        hq = Vq*h;
-        huq = Vq*hu;
-        hvq = Vq*hv;
-        uq = huq./hq;
-        vq = hvq./hq;
-        
-        q1 = Pq*(g.*(hq+b)- .5*(uq.^2 + vq.^2));
-        u  = Pq*uq;
-        v  = Pq*vq;
-        
-        % evaluate at quad/surface points
-        qq = Vq*q1; qM = Vfq*q1;
-        uq = Vq*u;  uM = Vfq*u;
-        vq = Vq*v;  vM = Vfq*v;
-        hq = (qq + .5*(uq.^2 + vq.^2))./g - b;
-        hM = (qM + .5*(uM.^2 + vM.^2))./g - b;
+        if projectV
+            % project to entropy variables
+            hq = Vq*h;
+            huq = Vq*hu;
+            hvq = Vq*hv;
+            uq = huq./hq;
+            vq = hvq./hq;
+            
+            q1 = Pq*(g.*(hq+b)- .5*(uq.^2 + vq.^2));
+            u  = Pq*uq;
+            v  = Pq*vq;
+            
+            % evaluate at quad/surface points
+            qq = Vq*q1; qM = Vfq*q1;
+            uq = Vq*u;  uM = Vfq*u;
+            vq = Vq*v;  vM = Vfq*v;
+            hq = (qq + .5*(uq.^2 + vq.^2))./g - b;
+            hM = (qM + .5*(uM.^2 + vM.^2))./g - b;
+        else
+            hq = Vq*h;
+            huq = Vq*hu;
+            hvq = Vq*hv;
+            uq = huq./hq;
+            vq = hvq./hq;
+            
+            hM = Vfq*h;
+            uM = (Vfq*hu)./hM;
+            vM = (Vfq*hv)./hM;
+            qq = g.*(hq+b)- .5*(uq.^2 + vq.^2);
+            uq = huq./hq;
+            vq = hvq./hq;
+        end
                 
         [rhs1 rhs2 rhs3]  = RHS2D(hq,uq,vq,hM,uM,vM);
         
@@ -242,12 +268,13 @@ for i = 1:Nsteps
     hvq = Vq*hv;
     uq = huq./hq;
     vq = hvq./hq;
-    energy(i) = sum(sum(wJq.*(.5*hq.*(uq.^2+vq.^2) + .5*g*hq.^2 + g.*hq.*b)));
+    energyq = (.5*hq.*(uq.^2+vq.^2) + .5*g*hq.^2 + g.*hq.*b);
+    energy(i) = sum(sum(wJq.*energyq));
     
     if mod(i,5)==0 || i==Nsteps
         clf
         pp = h;
-        vv = Vp*pp;
+        vv = real(Vp*pp);
         color_line3(xp,yp,vv,vv,'.');
         axis equal
         axis tight
@@ -262,9 +289,11 @@ end
 
 % return
 figure(2)
-semilogy(dt*(1:Nsteps),energy,'--')
+semilogy(dt*(1:i),energy,'--','linewidth',2)
+% dS = abs(energy-energy(1));
+% semilogy(dt*(1:Nsteps),dS,'--','linewidth',2)
 hold on
-semilogy(dt*(1:Nsteps),abs(rhstest),'x')
+% semilogy(dt*(1:Nsteps),abs(rhstest),'x')
 
 
 function [rhs1 rhs2 rhs3] = RHS2D(hq,uq,vq,hM,uM,vM)

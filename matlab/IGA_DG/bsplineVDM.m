@@ -1,4 +1,4 @@
-function [BVDM M Dr R rBq wBq Bq Brq VX] = bsplineVDM(N,K,rin,smoothKnots)
+function [BVDM M Dr R rBq wBq Bq Brq VX] = bsplineVDM(N,K,rin,smoothKnots,Nq)
  
 if nargin==0
     N = 4;
@@ -8,6 +8,9 @@ end
 
 if nargin < 4
     smoothKnots = 0;
+end
+if nargin < 5
+    Nq = N;
 end
 
 if (K==1)
@@ -71,7 +74,8 @@ rB = map(r);
 
 % local quadrature
 if 1
-    [rq, wq] = JacobiGQ(0,0,N);
+%     [rq, wq] = JacobiGL(0,0,Nq); rq = rq*(1-1e-10); disp('using GLL')
+    [rq, wq] = JacobiGQ(0,0,Nq);
     rBq = map(rq);
     rBq = rBq(:);
     wBq = repmat(wq,1,K).*h(rq)/2;    

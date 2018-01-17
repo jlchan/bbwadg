@@ -1,38 +1,45 @@
-clear
+% clear
 Globals2D
 
-N = 4;
-K1D = 8;
-FinalTime = 5;
-CFL = .4;
+N = 2;
+K1D = 1;
+FinalTime = 10;
+CFL = .25;
 global tau
 tau = 1;
 a = 0/16; % curv warping
 
 Lx = 10; Ly = 5;
-
-[Nv, VX, VY, K, EToV] = unif_tri_mesh(K1D,round(K1D*Ly/Lx));
-VX = VX/max(abs(VX));  VY = VY/max(abs(VY)); 
-VX = VX*Lx + Lx; VY = VY*Ly;
+if 0   
+    [Nv, VX, VY, K, EToV] = unif_tri_mesh(K1D,round(K1D*Ly/Lx));
+    VX = VX/max(abs(VX));  VY = VY/max(abs(VY));
+    VX = VX*Lx + Lx; VY = VY*Ly;
+else
+    [Nv, VX, VY, K, EToV] = unif_tri_mesh(K1D);    
+end
 
 StartUp2D;
 BuildPeriodicMaps2D(max(VX)-min(VX),max(VY)-min(VY));
 
 % plotting nodes
-[rp sp] = EquiNodes2D(15); [rp sp] = xytors(rp,sp);
+[rp sp] = EquiNodes2D(25); [rp sp] = xytors(rp,sp);
 Vp = Vandermonde2D(N,rp,sp)/V;
 xp = Vp*x; yp = Vp*y;
 % plot(xp,yp,'o'); return
 
-global Vq Pq Lq Lqf Vfqf Vfq Pfqf
+global Vq Pq Lq Lqf Vfqf Vfq Pfqf VqPq
 global rxJ sxJ ryJ syJ rxJf sxJf ryJf syJf
 global nxJ nyJ nrJ nsJ nrJq nsJq
 global mapPq
 Nq = 2*N+1;
 [rq sq wq] = Cubature2D(Nq); % integrate u*v*c
+
 Vq = Vandermonde2D(N,rq,sq)/V;
 M = Vq'*diag(wq)*Vq;
 Pq = M\(Vq'*diag(wq)); % J's cancel out
+
+VqPq = Vq*Pq;
+
 xq = Vq*x; yq = Vq*y;
 Jq = Vq*J;
 
@@ -49,6 +56,8 @@ wfq = [wq1D; wq1D; wq1D];
 Vq1D = Vandermonde1D(N,rq1D)/Vandermonde1D(N,JacobiGL(0,0,N));
 % plot(rfq,sfq,'o')
 Nfq = length(rq1D);
+
+Nq = length(rq);
 
 Vfq = Vandermonde2D(N,rfq,sfq)/V;
 Vfqf = kron(eye(3),Vq1D);
@@ -78,6 +87,8 @@ Dsq = (Vq*Ds*Pq - .5*Vq*Lq*diag(nsJ)*Vfq*Pq);
 VfPq = (Vfq*Pq);
 VqLq = Vq*Lq;
 
+
+% DNr = [Drq .5*Vq*Lq*diag(nrJ);-.5*diag(nrJ)*Vf*Pq];
 
 %% make quadrature face maps
 
@@ -173,7 +184,7 @@ yf = Vfq*y;
 % plot(xf,yf,'o')
 % hold on
 % quiver(xf,yf,nxJ,nyJ)
-% keyboard
+% return
 %% fluxes
 global gamma
 gamma = 1.4;
@@ -238,35 +249,55 @@ fyS4 = @(rhoL,uL,vL,EL,rhoR,uR,vR,ER) (plogmean(rhoL,uL,vL,EL,rhoR,uR,vR,ER)/(ga
 %% problem params setup
 
 x0 = 0; y0 = 0;
-
 [rhoq uq vq pq] = vortexSolution(xq,yq,0);
-rho  = Pq*rhoq;
-rhou = Pq*(rhoq.*uq);
-rhov = Pq*(rhoq.*vq);
-E    = Pq*(pq/(gamma-1) + .5*rhoq.*(uq.^2+vq.^2));
+rho  = VqPq*rhoq;
+rhou = VqPq*(rhoq.*uq);
+rhov = VqPq*(rhoq.*vq);
+E    = VqPq*(pq/(gamma-1) + .5*rhoq.*(uq.^2+vq.^2));
 
-% rho = Pq*(2 + exp(-5^2*(xq).^2));
-% rhou = 0*x;
-% rhov = 0*x;
-% E = 0*x;
+rho = 1*ones(size(xq));
+rhou = 2*ones(size(xq));
+rhov = 5*ones(size(xq));
+E = 1 + .5*(rhou.^2+rhov.^2)./rho;
 
-% vv = Vp*rho; color_line3(xp,yp,vv,vv,'.'); return
+% tol = 0e-6;
+% rho = rho + tol*randn(size(rho));
+% rhou = rhou + tol*randn(size(rho));
+% rhov = rhov + tol*randn(size(rho));
+% E = E + tol*randn(size(rho));
 
+% rhoV = U1(V1(rho,rhou,rhov,E),V2(rho,rhou,rhov,E),V3(rho,rhou,rhov,E),V4(rho,rhou,rhov,E));
+% rhouV = U2(V1(rho,rhou,rhov,E),V2(rho,rhou,rhov,E),V3(rho,rhou,rhov,E),V4(rho,rhou,rhov,E));
+% rhovV = U3(V1(rho,rhou,rhov,E),V2(rho,rhou,rhov,E),V3(rho,rhou,rhov,E),V4(rho,rhou,rhov,E));
+% EV = U4(V1(rho,rhou,rhov,E),V2(rho,rhou,rhov,E),V3(rho,rhou,rhov,E),V4(rho,rhou,rhov,E));
+% max(max(abs(rho - rhoV)))
+% max(max(abs(rhou - rhouV)))
+% max(max(abs(rhov - rhovV)))
+% max(max(abs(E - EV)))
+% return
+
+rho0 = rho;
+rhou0 = rhou;
+rhov0 = rhov;
+E0 = E;
+% vv = Vp*Pq*rho; color_line3(xp,yp,vv,vv,'.'); return
+keyboard
 %%
 
 global wJq
 wJq = diag(wq)*(J);
 
 % Runge-Kutta residual storage
-res1 = zeros(Np,K);
-res2 = zeros(Np,K);
-res3 = zeros(Np,K);
-res4 = zeros(Np,K);
+res1 = zeros(Nq,K);
+res2 = zeros(Nq,K);
+res3 = zeros(Nq,K);
+res4 = zeros(Nq,K);
 
 % compute time step size
-CN = (N+1)^2/2; % guessing...
+CN = (N+1)*(N+2)/2; % guessing...
 CNh = max(CN*max(sJ(:)./Jf(:)));
 dt = CFL*2/CNh;
+dt = .01;
 
 Nsteps = ceil(FinalTime/dt);
 dt = FinalTime/Nsteps;
@@ -275,10 +306,10 @@ figure(1)
 for i = 1:Nsteps
     for INTRK = 1:5
         
-        rhoq  = Vq*rho;
-        rhouq = Vq*rhou;
-        rhovq = Vq*rhov;
-        Eq    = Vq*E;
+        rhoq  = rho;
+        rhouq = rhou;
+        rhovq = rhov;
+        Eq    = E;
         
         % project to entropy variables
         q1 = Pq*V1(rhoq,rhouq,rhovq,Eq);
@@ -301,7 +332,8 @@ for i = 1:Nsteps
         
         % extra LF flux info?
         QM{1} = rhoM;
-        QM{2} = rhouM;  QM{3} = rhovM;
+        QM{2} = rhouM;  
+        QM{3} = rhovM;
         QM{4} = EM;
         [rhs1 rhs2 rhs3 rhs4]  = RHS2D(rhoq,uq,vq,Eq,rhoM,uM,vM,EM,QM);
         
@@ -317,9 +349,12 @@ for i = 1:Nsteps
         
     end;
     
+    Sq = -rho.*s(rho,rhou,rhov,E);
+    S(i) = sum(sum(wJq.*Sq));
+    
     if mod(i,10)==0 || i==Nsteps
         clf
-        pp = rho;
+        pp = Pq*rho;
         vv = real(Vp*pp);
         color_line3(xp,yp,vv,vv,'.');
         axis equal
@@ -333,22 +368,26 @@ for i = 1:Nsteps
 end
 
 [rhoex uex vex pex] = vortexSolution(xq,yq,FinalTime);
+rhoex = rho0;
 
-err = wJq.*(Vq*rho-rhoex).^2;
+
+err = wJq.*(rho-rhoex).^2;
 L2err = sqrt(sum(err(:)))
 
-return
 figure(2)
-semilogy(dt*(1:Nsteps),energy,'--')
+dS = abs(S-S(1));
+dS(end)
+semilogy(dt*(1:Nsteps),dS(1:Nsteps),'--','linewidth',2)
 hold on
-semilogy(dt*(1:Nsteps),abs(rhstest),'x')
-
+ylabel('$\Delta U(t)$','fontsize',15,'Interpreter','latex')
+xlabel('Time','fontsize',15)
+set(gca,'fontsize',15)
 
 function [rhs1 rhs2 rhs3 rhs4] = RHS2D(rhoq,uq,vq,Eq,rhoM,uM,vM,EM,QM)
 
 Globals2D;
 
-global Vq Pq Lq Lqf Vfqf Vfq Pfqf
+global Vq Pq Lq Lqf Vfqf Vfq Pfqf VqPq
 % global Drq Dsq Lrq Lsq
 global rxJ sxJ ryJ syJ rxJf sxJf ryJf syJf
 global nxJ nyJ nrJ nsJ nrJq nsJq
@@ -356,6 +395,8 @@ global mapPq
 global fxS1 fyS1 fxS2 fyS2 fxS3 fyS3 fxS4 fyS4
 global pfun beta pavg plogmean vnormavg avg
 global Drq Dsq VfPq VqLq
+
+Nq = size(Drq,2);
 
 rhoP = rhoM(mapPq);
 uP = uM(mapPq);
@@ -391,10 +432,15 @@ fSf2 = nxJ.*fxS2(rhoM,uM,vM,EM,rhoP,uP,vP,EP) + nyJ.*fyS2(rhoM,uM,vM,EM,rhoP,uP,
 fSf3 = nxJ.*fxS3(rhoM,uM,vM,EM,rhoP,uP,vP,EP) + nyJ.*fyS3(rhoM,uM,vM,EM,rhoP,uP,vP,EP);
 fSf4 = nxJ.*fxS4(rhoM,uM,vM,EM,rhoP,uP,vP,EP) + nyJ.*fyS4(rhoM,uM,vM,EM,rhoP,uP,vP,EP);
 
-rhs1 = zeros(Np,K);
-rhs2 = zeros(Np,K);
-rhs3 = zeros(Np,K);
-rhs4 = zeros(Np,K);
+fSf1 = fSf1  - .25*Lf1;
+fSf2 = fSf2  - .25*Lf2;
+fSf3 = fSf3  - .25*Lf3;
+fSf4 = fSf4  - .25*Lf4;
+
+rhs1 = zeros(Nq,K);
+rhs2 = zeros(Nq,K);
+rhs3 = zeros(Nq,K);
+rhs4 = zeros(Nq,K);
 for e = 1:K
     
     % local aritrhoMetic operations - form on the fly for GPU
@@ -426,12 +472,7 @@ for e = 1:K
     f4aux = rholog./(2*(gamma-1)*logmean(betax,betay)) + pa + .5*rholog.*vnavg;
     FxS4 = f4aux.*uavg;
     FyS4 = f4aux.*vavg;
-    
-    %     FxS1 = fxS1(rhox,ux,vx,Ex,rhoy,uy,vy,Ey);  FyS1 = fyS1(rhox,ux,vx,Ex,rhoy,uy,vy,Ey);
-    %     FxS2 = fxS2(rhox,ux,vx,Ex,rhoy,uy,vy,Ey);  FyS2 = fyS2(rhox,ux,vx,Ex,rhoy,uy,vy,Ey);
-    %     FxS3 = fxS3(rhox,ux,vx,Ex,rhoy,uy,vy,Ey);  FyS3 = fyS3(rhox,ux,vx,Ex,rhoy,uy,vy,Ey);
-    %     FxS4 = fxS4(rhox,ux,vx,Ex,rhoy,uy,vy,Ey);  FyS4 = fyS4(rhox,ux,vx,Ex,rhoy,uy,vy,Ey);
-    
+        
     % premultiply by geofacs
     FrS1 = rxJK.*FxS1 + ryJK.*FyS1;     FsS1 = sxJK.*FxS1 + syJK.*FyS1;
     FrS2 = rxJK.*FxS2 + ryJK.*FyS2;     FsS2 = sxJK.*FxS2 + syJK.*FyS2;
@@ -439,18 +480,13 @@ for e = 1:K
     FrS4 = rxJK.*FxS4 + ryJK.*FyS4;     FsS4 = sxJK.*FxS4 + syJK.*FyS4;
     
     % bulk of GPU work: application of local operators
-    divF1 = sum(Drq.*FrS1,2) + sum(Dsq.*FsS1,2);
-    divF2 = sum(Drq.*FrS2,2) + sum(Dsq.*FsS2,2);
-    divF3 = sum(Drq.*FrS3,2) + sum(Dsq.*FsS3,2);
-    divF4 = sum(Drq.*FrS4,2) + sum(Dsq.*FsS4,2);
+    divF1v = sum(Drq.*FrS1,2) + sum(Dsq.*FsS1,2);
+    divF2v = sum(Drq.*FrS2,2) + sum(Dsq.*FsS2,2);
+    divF3v = sum(Drq.*FrS3,2) + sum(Dsq.*FsS3,2);
+    divF4v = sum(Drq.*FrS4,2) + sum(Dsq.*FsS4,2);
     
     %% flux/volume combos
-    
-    %     FxSf1 = fxS1(rhofx,ufx,vfx,Efx,rhofy,ufy,vfy,Efy);  FySf1 = fyS1(rhofx,ufx,vfx,Efx,rhofy,ufy,vfy,Efy);
-    %     FxSf2 = fxS2(rhofx,ufx,vfx,Efx,rhofy,ufy,vfy,Efy);  FySf2 = fyS2(rhofx,ufx,vfx,Efx,rhofy,ufy,vfy,Efy);
-    %     FxSf3 = fxS3(rhofx,ufx,vfx,Efx,rhofy,ufy,vfy,Efy);  FySf3 = fyS3(rhofx,ufx,vfx,Efx,rhofy,ufy,vfy,Efy);
-    %     FxSf4 = fxS4(rhofx,ufx,vfx,Efx,rhofy,ufy,vfy,Efy);  FySf4 = fyS4(rhofx,ufx,vfx,Efx,rhofy,ufy,vfy,Efy);
-    
+        
     % optimized evaluations
     [betax betay] = meshgrid(betafq(:,e),betaq(:,e));
     rholog = logmean(rhofx,rhofy);
@@ -463,7 +499,7 @@ for e = 1:K
     [rxJ1 rxJ2] = meshgrid(rxJ(:,e),rxJf(:,e)); rxJK = avg(rxJ1,rxJ2)';
     f4aux = rholog./(2*(gamma-1)*logmean(betax,betay)) + pa + .5*rholog.*vnavg;
     
-    FxSf1 = rholog.*uavg;      FySf1 = rholog.*vavg;
+    FxSf1 = rholog.*uavg;       FySf1 = rholog.*vavg;
     FxSf2 = FxSf1.*uavg + pa;   FySf2 = FySf1.*uavg;
     FxSf3 = FySf2;              FySf3 = FySf1.*vavg + pa;
     
@@ -473,7 +509,7 @@ for e = 1:K
     [ryJ1 ryJ2] = meshgrid(ryJ(:,e),ryJf(:,e)); ryJK = avg(ryJ1,ryJ2)';
     [syJ1 syJ2] = meshgrid(syJ(:,e),syJf(:,e)); syJK = avg(syJ1,syJ2)';
     
-    Nq = size(FxSf1,1);
+%     Nq = size(FxSf1,1);
     FxSf1r = FxSf1.*nrJq; FxSf1s = FxSf1.*nsJq;
     FxSf2r = FxSf2.*nrJq; FxSf2s = FxSf2.*nsJq;
     FxSf3r = FxSf3.*nrJq; FxSf3s = FxSf3.*nsJq;
@@ -488,33 +524,53 @@ for e = 1:K
     FSf2 = rxJK.*FxSf2r + ryJK.*FySf2r + sxJK.*FxSf2s + syJK.*FySf2s;
     FSf3 = rxJK.*FxSf3r + ryJK.*FySf3r + sxJK.*FxSf3s + syJK.*FySf3s;
     FSf4 = rxJK.*FxSf4r + ryJK.*FySf4r + sxJK.*FxSf4s + syJK.*FySf4s;
+            
+    divF1 = divF1v + .5*sum(VqLq.*FSf1,2);
+    divF2 = divF2v + .5*sum(VqLq.*FSf2,2);
+    divF3 = divF3v + .5*sum(VqLq.*FSf3,2);
+    divF4 = divF4v + .5*sum(VqLq.*FSf4,2);
+       
     
     % bulk of GPU work: application of local operators
-    fSproj1 = sum(VfPq.*FSf1',2);
-    fSproj2 = sum(VfPq.*FSf2',2);
-    fSproj3 = sum(VfPq.*FSf3',2);
-    fSproj4 = sum(VfPq.*FSf4',2);
+    fSproj1 = -.5*sum(VfPq.*FSf1',2);
+    fSproj2 = -.5*sum(VfPq.*FSf2',2);
+    fSproj3 = -.5*sum(VfPq.*FSf3',2);
+    fSproj4 = -.5*sum(VfPq.*FSf4',2);
+   
     
-    % intermediate fluxes - form on the fly on GPU    
-    f1 = FSf1 + repmat((fSf1(:,e) - fSproj1 - .25*Lf1(:,e))',Nq,1) ;
-    f2 = FSf2 + repmat((fSf2(:,e) - fSproj2 - .25*Lf2(:,e))',Nq,1) ;
-    f3 = FSf3 + repmat((fSf3(:,e) - fSproj3 - .25*Lf3(:,e))',Nq,1) ;
-    f4 = FSf4 + repmat((fSf4(:,e) - fSproj4 - .25*Lf4(:,e))',Nq,1) ;
+%     % intermediate fluxes - form on the fly on GPU    
+%     f1 = FSf1 + repmat((fSf1(:,e) - fSproj1)',Nq,1) ;
+%     f2 = FSf2 + repmat((fSf2(:,e) - fSproj2)',Nq,1) ;
+%     f3 = FSf3 + repmat((fSf3(:,e) - fSproj3)',Nq,1) ;
+%     f4 = FSf4 + repmat((fSf4(:,e) - fSproj4)',Nq,1) ;
     
     %% project back to polynomial space - can incorporate WADG here
+        
     
-    rhs1(:,e) =  Pq*(divF1 + .5*sum(VqLq.*f1,2));    
-    rhs2(:,e) =  Pq*(divF2 + .5*sum(VqLq.*f2,2));
-    rhs3(:,e) =  Pq*(divF3 + .5*sum(VqLq.*f3,2));
-    rhs4(:,e) =  Pq*(divF4 + .5*sum(VqLq.*f4,2));
+    f1 = .5*fSf1(:,e)+fSproj1;
+    f2 = .5*fSf2(:,e)+fSproj2;
+    f3 = .5*fSf3(:,e)+fSproj3;
+    f4 = .5*fSf4(:,e)+fSproj4;
+    keyboard
+    rhs1(:,e) =  VqPq*divF1 + VqLq*(f1);
+    rhs2(:,e) =  VqPq*divF2 + VqLq*(f2);
+    rhs3(:,e) =  VqPq*divF3 + VqLq*(f3);
+    rhs4(:,e) =  VqPq*divF4 + VqLq*(f4);
+    
+%     VqPq*[divF1 divF2 divF3 divF4] + VqLq*[(.5*fSf1(:,e)+fSproj1) (.5*fSf2(:,e)+fSproj2) (.5*fSf3(:,e)+fSproj3) (.5*fSf4(:,e)+fSproj4)]
+%     keyboard
+    
+%     rhs1(:,e) =  VqPq*(divF1 + .5*sum(VqLq.*f1,2));    
+%     rhs2(:,e) =  VqPq*(divF2 + .5*sum(VqLq.*f2,2));
+%     rhs3(:,e) =  VqPq*(divF3 + .5*sum(VqLq.*f3,2));
+%     rhs4(:,e) =  VqPq*(divF4 + .5*sum(VqLq.*f4,2));
     
 end
 
-% keyboard
-rhs1 = -2*Pq*((Vq*rhs1)./J);
-rhs2 = -2*Pq*((Vq*rhs2)./J);
-rhs3 = -2*Pq*((Vq*rhs3)./J);
-rhs4 = -2*Pq*((Vq*rhs4)./J);
+rhs1 = -2*VqPq*(rhs1./J);
+rhs2 = -2*VqPq*(rhs2./J);
+rhs3 = -2*VqPq*(rhs3./J);
+rhs4 = -2*VqPq*(rhs4./J);
 
 end
 
@@ -546,11 +602,10 @@ p = rho.^gamma;
 % p = ones(size(x));
 
 % % pulse condition
-% x0 = 0;
-% rho = 2 + (abs(x-x0) < .5);
+% x0 = 0; y0 = 0;
+% rho = 2 + (abs(x-x0) < .5).*(abs(y-y0) < .5);
 % u = 0*rho;
-% m = rho.*u;
+% v = u;
 % p = rho.^gamma;
-% E = p/(gamma-1) + .5*rho.*u.^2;
 
 end

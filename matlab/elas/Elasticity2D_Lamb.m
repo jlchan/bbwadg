@@ -12,6 +12,8 @@ end
 c_flag = 0;
 FinalTime = 5;
 
+tau0 = 0
+
 % filename = 'Grid/Other/block2.neu';
 % [Nv, VX, VY, K, EToV] = MeshReaderGambit2D(filename);
 [Nv, VX, VY, K, EToV] = unif_tri_mesh(2*K1D,K1D);
@@ -19,6 +21,7 @@ VY = (VY+1)/2-.5;
 % VX = 2*VX;
 
 StartUp2D;
+
 
 
 BuildPeriodicMaps2D(2,0);
@@ -73,7 +76,7 @@ rho = 1;
 lambda = 2;
 mu = 1;
 
-tau0 = 1;
+
 
 % rhoF = .5*(rho(vmapM)+rho(vmapP));
 % muF = .5*(mu(vmapM)+mu(vmapP));

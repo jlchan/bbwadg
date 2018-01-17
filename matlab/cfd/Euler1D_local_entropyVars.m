@@ -1,10 +1,11 @@
 clear
 Globals1D;
 
-CFL = .125;
-N = 1;
-K1D = 64;
-FinalTime = 2;
+CFL = .125/4;
+% CFL = .125;
+N = 4;
+K1D = 40;
+FinalTime = 1.8;
 % FinalTime = .2;
 opt = 3;
 
@@ -15,7 +16,7 @@ r = JacobiGL(0,0,N);
 % r = JacobiGQ(0,0,N);
 
 [rq wq] = JacobiGL(0,0,N); rq = .9999999999*rq;
-% [rq wq] = JacobiGQ(0,0,N);
+[rq wq] = JacobiGQ(0,0,N+1);
 
 % % include boundary nodes for extraction
 rq = [-(1-1e-11);rq;(1-1e-11)];
@@ -192,6 +193,10 @@ elseif opt==3
     rhoL = 3.857143; rhoR = rhoRex(x(end));
     uL   = 2.629369; uR = 0;
     pL   = 10.3333;  pR = 1;
+
+% rhoL = 4; rhoR = rhoRex(x(end));
+% uL   = 2; uR = 0;
+% pL   = 8;  pR = 1;
         
     rhoex = @(x) rhoL*(x < -4) + (rhoRex(x)).*(x >= -4);
     uex = @(x) uL*(x < -4);
@@ -224,7 +229,21 @@ q3 = Pq*V3(rhoex(xq),mex(xq),Eex(xq));
 wJq = diag(wq)*(Vq*J);
 
 figure(1)
-for i = 1:Nsteps
+for i = 1:Nsteps  
+    
+    if (i < 150)
+        CFL = .125/4;
+        dt = CFL*h/CN;
+        Nsteps = ceil(FinalTime/dt);
+        dt = FinalTime/Nsteps;
+    elseif i == 150
+        CFL = .125/2.5;
+        dt = CFL*h/N;        
+    end
+    if (dt*i > FinalTime)
+        dt = FinalTime-(i-1)*dt;        
+        i=Nsteps;
+    end
     
     for INTRK = 1:5
         
@@ -278,7 +297,7 @@ for i = 1:Nsteps
     Sq = -rhoq.*sq/(gamma-1);
     energy(i) = sum(sum(wJq.*Sq));
     
-    if mod(i,5)==0 || i==Nsteps
+    if mod(i,10)==0 || i==Nsteps
         
         q1p = Vp*q1;
         q2p = Vp*q2;
@@ -306,7 +325,7 @@ for i = 1:Nsteps
         plot(xp0,u0,'ro','linewidth',2)
         plot(xp0,p0,'ko','linewidth',2)
         
-        title(sprintf('Time = %f',dt*i))
+        title(sprintf('Time = %f, step = %d out of %d',dt*i,i,Nsteps))
         %         axis([-5 5 -1 7])
         hold off
         drawnow

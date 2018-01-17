@@ -13,6 +13,7 @@ if nargin==0
     K1D = 4;
     N = 4;
     FinalTime = 5;
+    tau0 = 1;
 end
 
 % for convergence results
@@ -20,6 +21,7 @@ if nargin==2
     mu = 1;
     lambda = 1;
     FinalTime = 5;
+    tau0 = 0
 elseif nargin==4
     mu = muin;
     lambda = lambdain;
@@ -101,7 +103,7 @@ rho = 1;
 %           0       0                mu];
 
 % plot3(x,y,mu,'.');return
-tau0 = 1;
+
 for fld = 1:5
     tau{fld} = tau0;
     if fld > 2

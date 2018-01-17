@@ -1,11 +1,13 @@
 clear
 Globals1D;
 
-smoothKnots = 75;'opt';
+smoothKnots = 75;
+% smoothKnots = 'opt';
 
 K1D = 1;
 
 NB = 4;  Ksub = 16;
+% NB = 3; Ksub = 8;
 % NB = 8; Ksub = 1;
 
 N = NB+Ksub-1; % number of sub-mesh splines
@@ -55,31 +57,38 @@ PBq = M\(Bq'*spdiag(wq));
 Vq = Vandermonde1D(NB,rq)/Vandermonde1D(NB,JacobiGL(0,0,NB));
 Pq = (Vq'*spdiag(wq)*Vq)\(Vq'*spdiag(wq));
 
-kvec = linspace(1/N,N,1000);
+kvec = linspace(1,N+1,250);
+% kvec = 1:N+1;
 sk = 1;
 for k = kvec
     
     %uex = @(x) cos(k*pi*x/2);
-    uex = @(x) sin(k*pi*x);
+%     uex = @(x) sin(k*pi*x);
+uex = @(x) cos((2*k-1)/2*pi*x);
     uB = PBq*uex(xq); % initialize w/lsq fit
     err = Bq*uB-uex(xq);
     err = spdiag(wq)*(err.^2).*J(1);
+%     clf;plot(xq,Bq*uB);hold on;plot(xq,uex(xq),'--');axis([-1,1,-1,1]);title(sprintf('k= %d',k));pause(.1)
     L2errB(sk) = sqrt(sum(err(:)));
     sk = sk + 1;
 end
 
 % error / number of wavelengths
+% hold on
 if smoothKnots==0
-    semilogy(kvec/N,L2errB,'-','linewidth',2)
+    semilogy(kvec/(N+1),L2errB,'-','linewidth',2)
 elseif strcmp(smoothKnots,'opt')==1
-    semilogy(kvec/N,L2errB,'--','linewidth',2)
+    semilogy(kvec/(N+1),L2errB,'--','linewidth',2)
 else
-    semilogy(kvec/N,L2errB,'-.','linewidth',2)
+    semilogy(kvec/(N+1),L2errB,'-.','linewidth',2)
 end
 hold on
 set(gca,'fontsize',15);grid on
 ylabel('L^2 error','fontsize',15)
-axis([0 .5 10^-14 1])
+xlabel('Wavenumber (k) per dof','fontsize',15)
+%axis([0 1 10^-14 1])
+axis([0 1 10^-5 2])
+h = legend('Uniform knots','Optimal knots','Smoothed knots'); set(h,'fontsize',14)
 return
 
 

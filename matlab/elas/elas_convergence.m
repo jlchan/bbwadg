@@ -3,35 +3,43 @@ clc
 
 % L2 errors
 Kvec = [2 4 8 16];
-for N = 5;1:5
+for N = 1:5
     for i = 1:length(Kvec);
         K1D = Kvec(i);
         h(i) = 1/K1D;
         disp(sprintf('======== on N = %d, K1D = %d\n',N,K1D));
         
-        harmonic_err{N}(i) = Elasticity2D(N,K1D) % harmonic sol
-        
-        rayleigh_err{N}(i) = Elasticity2D_RayleighWave(N,K1D) % mu = 1
-        
-        lamb_err{N}(i) = Elasticity2D_Lamb(N,K1D)        
+%         harmonic_err{N}(i) = Elasticity2D(N,K1D) % harmonic sol
+% %         
+%         rayleigh_err{N}(i) = Elasticity2D_RayleighWave(N,K1D) % mu = 1
+%         
+%         lamb_err{N}(i) = Elasticity2D_Lamb(N,K1D)        
 
-        stonely_err{N}(i) = Elasticity2D_Stonely(N,K1D)
+%        stonely_err{N}(i) = Elasticity2D_Stonely(N,K1D)
+%         stonely_err_unfitted{N}(i) = Elasticity2D_Stonely(N,K1D)
+        
+        manufactured_err_tau1{N}(i) = ElasticityManufacturedSolution2D(N,K1D,1);
+        manufactured_err_tau0{N}(i) = ElasticityManufacturedSolution2D(N,K1D,0);
         
 %         ref_err{N}(i) = ElasticityReferenceSolution2D(N,K1D);                
     end            
 end
 %%
+
 for N = 1:5
 %     err = harmonic_err{N};
 %     err = rayleigh_err{N};    
 %     err = lamb_err{N};
-    err = stonely_err{N};
+    %err = stonely_err{N};
+%     err = stonely_err_unfitted{N};
+    %err = manufactured_err{N};
+    err = manufactured_err_tau1{N}(1:end);
     
-    loglog(h,err,'o--')
+    loglog(h,err,'o--','linewidth',2)
     hold on
-    r = N+1/2;
+    r = N+1;
     scale = err(1)/h(1)^(r);
-    loglog(h,scale*h.^(r),'k--')
+    loglog(h,scale*h.^(r),'k--','linewidth',2)
     C(N) = (log(err(end))-log(err(end-1))) / (log(h(end))-log(h(end-1)));
     a = 1;
     C2=[ones(a+1,1) log(h(end-a:end))']\log(err(end-a:end)'); C(N) = C2(2);

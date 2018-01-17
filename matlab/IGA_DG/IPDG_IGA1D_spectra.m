@@ -1,4 +1,28 @@
-function rho = IPDG_IGA(NB,Ksub,K1D,smoothKnots)
+clear
+Nvec = 2:5;
+K1D = 1;
+Kvec = 32:32:256;
+smoothKnots = 75;
+sk1 =1;
+for NB = Nvec    
+    sk2 = 1;
+    for Ksub = Kvec
+        rho(sk1,sk2) = IPDG_IGA(NB,Ksub,K1D,smoothKnots);
+        sk2 = sk2 + 1;
+    end
+    
+%     plot(Kvec,sqrt(rho),'o--')
+%     hold on
+%     h = 1./Kvec(:);
+    C = [Kvec(:).^0 Kvec(:)]\(sqrt(rho(sk1,:)'));
+    slope(NB) = C(2);
+%     plot(Kvec,Kvec*C(2),'x--')
+    sk1 = sk1+1;
+end
+
+
+
+function rho = IPDG_IGA(NBin,Ksub,K1D,smoothKnots)
 
 % Driver script for solving IPDG wave equation
 Globals1D;
@@ -8,10 +32,11 @@ global NB
 % Order of polymomials used for approximation
 if nargin==0
     NB = 4;
-Ksub = 32;
-K1D = 1;
-smoothKnots = 50;
+    Ksub = 32;
+    K1D = 1;
+    smoothKnots = 50;
 else
+    NB=NBin;
 end
 
 
@@ -32,7 +57,7 @@ StartUp1D;
 Vq = Vandermonde1D(N, rq)/V;
 xq = Vq*x;
 wJq = diag(wq)*(Vq*J);
-    
+
 %% penalty constant stuff
 
 global tau
@@ -66,12 +91,12 @@ if 1
     Mf(1,1) = 1;
     Mf(N+1,2) = 1;
     LIFT = M\Mf;
-        
+    
     xq = Vandermonde1D(N,rBq)/V * x;
     rq = rBq;
     wq = wBq;
-    wJq = diag(wq)*(Vandermonde1D(N,rBq)/V*J); 
-    Vq = Bq;        
+    wJq = diag(wq)*(Vandermonde1D(N,rBq)/V*J);
+    Vq = Bq;
     
     Vp = bsplineVDM(NB,Ksub,rp,smoothKnots);
     
@@ -97,15 +122,15 @@ if 1
         
         A(:,i) = rhsu(:);
     end
-%     MM = kron(diag(J(1,:)),M); % global mass matrix
-%     A = MM*A; % remove implicit mass matrix inverse
+    %     MM = kron(diag(J(1,:)),M); % global mass matrix
+    %     A = MM*A; % remove implicit mass matrix inverse
     A(abs(A)<1e-8) = 0;
     
-%     A = Brq'*diag(wq)*Brq;
-%     A = -MM\A;
-%     % A(1,:) = 0; A(:,1) = 0; A(1,1) = 1;
-%     % A(end,:) = 0; A(:,end) = 0; A(end,end) = 1;
-%     A = A(2:end-1,2:end-1);
+    %     A = Brq'*diag(wq)*Brq;
+    %     A = -MM\A;
+    %     % A(1,:) = 0; A(:,1) = 0; A(1,1) = 1;
+    %     % A(end,:) = 0; A(:,end) = 0; A(end,end) = 1;
+    %     A = A(2:end-1,2:end-1);
     
     rho = max(abs(eig(A)));
     return
@@ -154,10 +179,11 @@ while (time<FinalTime)
         
         drawnow
     end
-        
+    
 end
 
 % keyboard
+end
 
 function [rhsu] = IPDGRHS(u,time)
 
@@ -188,5 +214,4 @@ fluxq = nx.*(dq + tau*nx.*du);
 rhsu = rx.*(Dr*q) - LIFT*(Fscale.*fluxq);
 % rhsu(1) = 0;
 % rhsu(end) = 0;
-return
-
+end

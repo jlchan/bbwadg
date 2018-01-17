@@ -6,17 +6,36 @@ clear -global *
 Globals2D
 
 if nargin==0
-    K1D = 2;
-    N = 4;
+    K1D = 4;
+    N = 3;
 end
 c_flag = 0;
 FinalTime = 5;
 
-% filename = 'Grid/Other/block2.neu';
-% [Nv, VX, VY, K, EToV] = MeshReaderGambit2D(filename);
-aa = 2;
-% [Nv, VX, VY, K, EToV] = unif_tri_mesh(aa*K1D,K1D);
-[Nv, VX, VY, K, EToV] = unif_tri_mesh(3*K1D,aa*K1D);
+tau0 = 0;
+
+aa = 2;    
+if 1
+    if K1D==2
+        filename = 'Grid/Maxwell2D/Maxwell1.neu';
+    elseif K1D==4
+        filename = 'Grid/Maxwell2D/Maxwell05.neu';
+    elseif K1D==8
+        filename = 'Grid/Maxwell2D/Maxwell025.neu';
+    elseif K1D==16
+        filename = 'Grid/Maxwell2D/Maxwell0125.neu';
+    elseif K1D==32
+        filename = 'Grid/Maxwell2D/Maxwell00625.neu';
+    end
+    [Nv, VX, VY, K, EToV] = MeshReaderGambit2D(filename);
+else
+    [Nv, VX, VY, K, EToV] = unif_tri_mesh(3*K1D,aa*K1D+1);
+%     a = .1/K1D;
+%     ids = find(abs(abs(VX)-1) > 1e-8 & abs(abs(VY)-1) > 1e-8);
+%     VX(ids) = VX(ids) + a*randn(size(ids));
+%     VY(ids) = VY(ids) + a*randn(size(ids));
+    
+end
 VY = aa*VY;
 VX = pi*VX;
 
@@ -122,7 +141,6 @@ lambda(ids) = lambda1;
 % rho = Pq*rho;
 % mu = Pq*mu;
 % lambda = Pq*lambda;
-tau0 = 1/2;
 % rhoF = max(rho(vmapM),rho(vmapP));
 % muF = max(mu(vmapM),mu(vmapP));
 % lambdaF = max(lambda(vmapM),lambda(vmapP));

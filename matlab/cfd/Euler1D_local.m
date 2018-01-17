@@ -278,7 +278,7 @@ for i = 1:Nsteps
         if projectV
             rhoq = U1(q1,q2,q3);
             mq   = U2(q1,q2,q3);
-            Eq   = U3(q1,q2,q3); 
+            Eq   = U3(q1,q2,q3);             
         end
         
         [rhs1 rhs2 rhs3] = rhsEuler(rhoq,mq,Eq,INTRK);
@@ -310,6 +310,7 @@ for i = 1:Nsteps
         hold on
         plot(xq,uq,'r-','linewidth',2)
         plot(xq,pq,'k-','linewidth',2)
+        
 %             rhop = Vp*rho;
 %             mp = Vp*m;
 %             Ep = Vp*E;

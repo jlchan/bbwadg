@@ -1,14 +1,14 @@
 % function advec1D_dispersion
 
 clear
-smoothKnots = 50;
+smoothKnots = 0; 50;
 for Ksub = [1 4 8 16]
     NB = 4;
     K1D = 1;
     N = NB+Ksub-1;
     
     global alpha
-    alpha = 0; % 0 = upwinding
+    alpha = 1; % 0 = upwinding
     
     ndofs = (N+1)*K1D;
     

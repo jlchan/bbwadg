@@ -4,7 +4,7 @@ Globals1D;
 NB = 4; Ksub = 8; K1D = 1;
 % NB = 4; Ksub = 1; K1D = 4;
 % NB = 11; Ksub = 1; K1D = 1;
-smoothKnots = 25;
+smoothKnots = 0;
 N = NB+Ksub-1;
 
 FinalTime = .5;

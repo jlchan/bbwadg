@@ -1,6 +1,6 @@
 clear
 
-N = 3;
+N = 4;
 
 
 r = JacobiGL(0,0,N);
@@ -37,7 +37,11 @@ VfPq = Vf*Pq;
 
 nrJ = [-1;1];
 DNr = [Drq-.5*Vq*Lq*diag(nrJ)*VfPq .5*VqLq*diag(nrJ); -.5*diag(nrJ)*VfPq .5*diag(nrJ)*eye(2)];
+
 W = diag([wq;1;1]);
+
+Ef = (Vf*Pq)'*diag([1;1]);
+% Pq = eye(length(rq));
 
 %% build shu operators
 

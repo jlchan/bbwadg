@@ -1,6 +1,6 @@
 Globals2D
 
-N = 3;
+N = 2;
 K1D = 1;
 
 [Nv, VX, VY, K, EToV] = unif_tri_mesh(K1D);
@@ -11,7 +11,8 @@ StartUp2D;
 % [Vr Vs] = GradVandermonde2D(N,r,s);
 % Dr = Vr/V; Ds = Vs/V;
 
-[rq sq wq] = Cubature2D(2*N+1);
+Nq = 2*N+1;
+[rq sq wq] = Cubature2D(Nq);
 Vq = Vandermonde2D(N,rq,sq)/V;
 
 M = Vq'*diag(wq)*Vq;

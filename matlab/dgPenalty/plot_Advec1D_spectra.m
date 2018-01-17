@@ -47,7 +47,7 @@ T = kron(eye(K),V);
 % M = blkdiag(M,M);
 dhist = [];
 
-dtau = 1e-3;
+dtau = 1e-2;
 tmax = 8;
 tauvec = 0:dtau:tmax;
 % tauvec = tmax*tauvec.^2/(tmax)^2;
@@ -129,7 +129,7 @@ axis equal
 set(gca,'fontsize',15)
 grid on
 %print(gcf,'-dpng','trackedEigs.png')
-keyboard
+% keyboard
 
 %% sort eigs by adjacency ids
 

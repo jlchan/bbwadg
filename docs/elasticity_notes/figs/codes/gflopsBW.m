@@ -1,64 +1,31 @@
-
-N = 2:5;
+N = (1:7)';
 Np = (N+1).*(N+2).*(N+3)/6; 
-Nfields = 4;
-K = 49748; %10087; 
+Nfields = 9;
+K = 9918;
 
-gflopsU = [ 124867480, 521110300,1636957940,4313897820];
-bwU = [89.283+48.331,47.350+25.108, 55.729+29.223,40.666+21.136];
-dofTimeU = [1.709e-10                 2.856e-10                 2.697e-10                 3.652e-10];
+flopsU = [9346260 45804528  188283942 587290704 1542030798 3524953740 7343819868]';
+flopsV = [9896040 50187060  185197320 546756210 1373570352 3057876360 6200575920]';
+flopsS = [14796936 50092812 140272440 337996890 723070656  1408096536 2544130512]';
+
+bwU = [70.251+39.375, 76.168+42.614,55.421+30.569, 37.920+20.755, 33.752+18.348, 28.664+15.520, 16.265+8.7676]';
+bwV = [40.408+56.772, 57.966+52.889,49.888+47.655, 33.635+32.756, 23.767+23.353, 16.553+16.343, 11.601+11.483]';
+bwS = [55.879+26.452, 75.624+22.578,95.730+23.234, 101.88+22.483, 98.656+21.492, 74.419+16.396, 66.842+14.767]';
+
+dofTimeU = min(KblkU,[],2)/2.5;
+dofTimeV = min(KblkV,[],2)/2.5;
+dofTimeS = min(KblkS,[],2)/2.5;
+
+
 timeU = dofTimeU.*K.*Np*Nfields;
-
-% gflopsU = gflopsU./timeU/1e9
-bwU
-
-%% strong
-
-bwV = [121.86+28.377,64.829+8.2766,34.887+3.1257,12.326+275.17*1e-3];
-gflopsV = [249933952,1920869776,8403233168,9.0950e+10];
-bwS = [133.40+13.911,110.80+10.833,60.906+5.7574, 20.539+1.9310];
-gflopsS = [339082368,1261609280,3783235904,9139304576];
-dofTimeV = [1.588e-10                  5.32e-10                 1.313e-09                 1.483e-08];
-dofTimeS = [3.223e-10                 4.003e-10                 7.079e-10                 2.105e-09];
 timeV = dofTimeV.*K.*Np*Nfields;
 timeS = dofTimeS.*K.*Np*Nfields;
-gflopsStrong = [gflopsV;gflopsS; gflopsU]./[timeV;timeS;timeU]/1e9
-gflopsStrong = [2:5; gflopsStrong]'
-bwStrong = [2:5;bwV;bwS;bwU]'
-timeStrong = [timeV;timeS]
-timeStrongTotal = dofTimeV + dofTimeS + dofTimeU
-print_pgf_coordinates(2:5,timeStrongTotal)
-print_pgf_coordinates(2:5,dofTimeV)
-print_pgf_coordinates(2:5,dofTimeS)
+gflops = [flopsV flopsS flopsU]./[timeV timeS timeU]/1e9
+gflops = [N gflops]
+bw = [N bwV bwS bwU]
+time = [timeV timeS]
+timeTotal = dofTimeV + dofTimeS + dofTimeU
+% print_pgf_coordinates(N,timeTotal)
+print_pgf_coordinates(N,dofTimeV)
+print_pgf_coordinates(N,dofTimeS)
+print_pgf_coordinates(N,dofTimeU)
 
-
-%% skew
-
-bwS = [146.12+13.499,141.33+12.802,118.56+14.328,119.02+16.076];
-gflopsS = [149086952,558262440,1160834184,2646761376];
-bwQ = [26.534+72.564,34.780+103.08, 43.400+93.589,42.090+83.818];
-gflopsQ = [66861312,238790400,453701760,936058368];
-bwV = [109.60+25.572, 61.286+12.856, 43.482+8.6943,27.571+5.3064];
-gflopsV = [196305608,804375412,2499488764,6547284532];
-
-dofTimeV = [ 1.754e-10                 3.448e-10                 4.656e-10                 7.611e-10];
-dofTimeS = [ 3.298e-10                  3.34e-10                  2.83e-10                 2.518e-10];
-dofTimeQ = [ 1.652e-10                 1.285e-10                 9.354e-11                 9.656e-11];
-timeV = dofTimeV.*K.*Np*Nfields;
-timeS = dofTimeS.*K.*Np*Nfields;
-timeQ = dofTimeQ.*K.*Np*Nfields;
-
-gflopsSkew = [gflopsV;gflopsS;gflopsQ]./[timeV;timeS;timeQ]/1e9
-gflopsSkew = [2:5;gflopsSkew]'
-bwSkew = [2:5;bwV;bwS;bwQ]'
-
-timeSkew = [timeV;timeS+timeQ]
-
-timeSkewTotal = dofTimeV + dofTimeS + dofTimeQ + dofTimeU
-print_pgf_coordinates(2:5,timeSkewTotal)
-
-print_pgf_coordinates(2:5,dofTimeV)
-print_pgf_coordinates(2:5,dofTimeS)
-print_pgf_coordinates(2:5,dofTimeQ)
-
-% print_pgf_coordinates(2:5,timeSkewTotal)

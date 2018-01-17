@@ -17,6 +17,8 @@ StartUp2D
 M = Vq'*diag(w)*Vq;
 invM = inv(M);
 
+
+
 %%
 Emat = zeros(Np, Nfp*Nfaces);
 

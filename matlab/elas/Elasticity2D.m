@@ -9,6 +9,7 @@ if nargin==0
     K1D = 8;
     N = 5;
 end
+tau0 = 0
 c_flag = 0;
 FinalTime = 5;
 
@@ -71,7 +72,7 @@ lambda0 = lambda(1);
 % lambda(:,ids) = 10*lambda(:,ids);
 
 % plot3(x,y,mu,'.');return
-tau0 = 1;
+
 for fld = 1:5
     tau{fld} = tau0;
     if fld > 2

@@ -7,14 +7,14 @@ for smoothKnots = [0 50];
     % Order of polymomials used for approximation
     global NB Ksub
     NB = 4;
-    Ksub = 8;
-    K1D = 8;
+    Ksub = 32;
+    K1D = 1;
     
     N = NB+Ksub-1;
     
     FinalTime = 1;
     
-    dofs = (N+1)*K1D
+    dofs = (N+1)*K1D;
     
     [Nv, VX, K, EToV] = MeshGen1D(-1,1,K1D);
     
@@ -83,27 +83,28 @@ for smoothKnots = [0 50];
     
     %% check matrix symmetry
     if 1
-        MM = kron(diag(J(1,:)),M); % global mass matrix
+%         MM = kron(diag(J(1,:)),M); % global mass matrix
+%         
+%         u = zeros(Np,K);
+%         A = zeros(Np*K);
+%         for i = 1:Np*K
+%             u(i) = 1;
+%             [rhsu] = IPDGRHS(u,0);
+%             u(i) = 0;
+%             
+%             A(:,i) = rhsu(:);
+%         end
+%         A = -MM*A; % remove implicit mass matrix inverse
+%         A(abs(A)<1e-10) = 0;
         
-        u = zeros(Np,K);
-        A = zeros(Np*K);
-        for i = 1:Np*K
-            u(i) = 1;
-            [rhsu] = IPDGRHS(u,0);
-            u(i) = 0;
-            
-            A(:,i) = rhsu(:);
-        end
-        A = -MM*A; % remove implicit mass matrix inverse
-        A(abs(A)<1e-10) = 0;
-        
-%         A = Brq'*diag(wq)*Brq;
+MM = Bq'*diag(wq)*Bq;
+        A = Brq'*diag(wq)*Brq;
 %         A(1,:) = 0; A(:,1) = 0; A(1,1) = 1;
 %         A(end,:) = 0; A(:,end) = 0; A(end,end) = 1;
-[W D] = eig(A,MM);
+%         [W D] = eig(A,MM);
         
-%         [W D] = eig(A(2:end-1,2:end-1),MM(2:end-1,2:end-1));
-%         W = [zeros(1,size(W,2));W;zeros(1,size(W,2))];
+        [W D] = eig(A(2:end-1,2:end-1),MM(2:end-1,2:end-1));
+        W = [zeros(1,size(W,2));W;zeros(1,size(W,2))];
         
         [lam p] = sort(diag(D));
         W = W(:,p);
@@ -116,8 +117,14 @@ for smoothKnots = [0 50];
             wexq = wex(xq);
             
             % L2 project exact onto discrete eig            
-            wwq = Vq*reshape(W(:,k),N+1,K); c = (wwq(:)'*(wJq(:).*wexq(:)))./(wJq(:)'*wwq(:));  wDG = W(:,k)*c;
-            
+            wwq = Vq*reshape(W(:,k),N+1,K);
+            c = (wwq(:)'*(wq(:).*wexq(:)))./(wq(:)'*wwq(:).^2);
+            %             c = 1./(wJq(:)'*wwq(:).^2);            
+%             c = c/sqrt(W(:,k)'*MM*W(:,k));
+            wDG = W(:,k)*c;
+    if k==32
+%         keyboard
+    end
             
             err = wJq.*(wexq - Vq*reshape(wDG,Np,K)).^2;
             werr2(k) = sum(err(:));

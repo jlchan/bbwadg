@@ -66,7 +66,7 @@ p = Pq*pex(xq,0);
 u = zeros(size(x));
 
 %% compute eigs
-if 0
+if 1
     U = zeros(Np*K,2);
     A = zeros(2*Np*K);
     for i = 1:2*Np*K
@@ -77,7 +77,7 @@ if 0
     end
     
     lam = eig(A);
-    rho = max(abs(lam));
+    rho = max(abs(lam))
     return
 end
 %% Solve Problem

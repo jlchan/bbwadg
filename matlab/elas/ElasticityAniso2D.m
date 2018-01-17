@@ -175,7 +175,7 @@ end
 
 % compute time step size
 CN = (N+1)^2/2; % guessing...
-dt = 2/(Cmax*CN*max(Fscale(:)))
+dt = 1/(Cmax*CN*max(Fscale(:)))
 ceil(FinalTime/dt)
 
 % outer time step loop

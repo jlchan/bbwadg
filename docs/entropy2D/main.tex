@@ -266,6 +266,7 @@ legend style={font=\small}
 
 \newcommand{\LK}{L^2\LRp{D^k}}
 \newcommand{\LdK}{L^2\LRp{\partial D^k}}
+\renewcommand{\d}{\partial}
 \newcommand{\Dhat}{\widehat{D}}
 \newcommand{\Lhat}{L^2\LRp{\Dhat}}
 
@@ -308,7 +309,11 @@ Let $\bm{G}$ denote the Jacobian of the geometric mapping
 \]
 and let $J$ denote the determinant of $\bm{G}$.  One can show (Kopriva?) that
 \[
-\hat{\Grad} \cdot \LRp{J\bm{G}} = 0.  
+\hat{\Grad} \cdot \LRp{J\bm{G}^T} = 0.  
+\]
+We also have that the mapped normals obey the property
+\[
+J\bm{G} \hat{\bm{n}}\hat{J}^f = \bm{n}J^f.
 \]
 At the continuous level, the physical gradient and divergence satisfy
 \[
@@ -326,6 +331,43 @@ It is possible to remove the effect of geometric aliasing by evaluating the abov
 \[
 \LRp{\LRl{\hat{\Grad} \cdot \bm{F}^k_S(\bm{U}(\bm{x}),\bm{U}(\bm{x}'))}_{\bm{x}' = \bm{x}}}_{\hat{D}}, \qquad \bm{F}^k_S = \avg{J\bm{G}}\bm{F}_S\LRp{\bm{U}(\bm{x}),\bm{U}(\bm{x}')}
 \]
+
+We can evaluate the new geometrically de-aliased flux using the discrete gradient of Chen and Shu
+\[
+\LRp{\Grad_h \cdot \bm{u},v}_{\Omega} = \sum_k \LRp{\hat{\Grad} \cdot J\bm{G}^T\Pi_N \bm{u},v }_{\hat{D}} + \frac{1}{2}\LRa{J\bm{G}^T\bm{u}^+ - \Pi_N J\bm{G}^T\bm{u}, v \hat{\bm{n}}}_{\d \hat{D}} + \frac{1}{2}\LRa{J\bm{G}^T\bm{u} - \Pi_N J\bm{G}^T\bm{u}, \Pi_N\LRp{v\hat{\bm{n}}}}_{\d \hat{D}}
+\]
+
+Another alternative is to treat curvilinear grids using a direct skew-symmetric form.  
+
+\section{Limiting}
+
+Ignoring high order terms in the Taylor expansion, we have
+\[
+u\LRp{\Pi_N v} - u = \pd{u}{v} \LRp{\Pi_Nv - v}.
+\]
+We want to limit $u$ with a compression towards the mean $u = \bar{u} + \theta(u-\bar{u})$ such that $\LRb{u\LRp{\Pi_N v}} \leq C\LRb{u}$.  
+
+\subsection{Option 1}
+
+One option: ensure $\LRb{u\LRp{\Pi_N v} - u(\bar{v})} \approx \LRb{u - u(\bar{v})}$ based on Taylor series. 
+\[
+u\LRp{\Pi_N v} - u(\bar{v})
+\]
+
+Limit $\tilde{u} = \bar{u} + \theta(u-\bar{u})$ such that 
+\[
+\min \Pi_N v \geq \min v, \qquad \max \Pi_N v \leq \max v.
+\]
+
+Another option: estimate or filter $\Pi_N v$ 
+
+\subsection{Other options}
+\begin{itemize}
+\item Adaptively choose time-step size?
+\item Expensive option: bisection or Newton algorithm for finding theta.  
+\end{itemize}
+
+
 
 \bibliographystyle{unsrt}
 \bibliography{dg}

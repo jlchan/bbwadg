@@ -6,10 +6,10 @@ function rho = Wave1D_IGA(NB,Ksub,K1D,smoothKnots,tauin)
 Globals1D;
 
 if nargin==0    
-    NB = 4;
-    Ksub = 1; %ceil(N/2);
-    K1D = 4; 
-    smoothKnots = 0;
+    NB = 7;
+    Ksub = 32; %ceil(N/2);
+    K1D = 1; 
+    smoothKnots = 50;
 end
 
 global tau
@@ -74,10 +74,24 @@ end
 
 lam = eig(A);
 rho = max(abs(lam));
+rho
 if nargin==0
-    plot(lam,'o')
+%     plot(lam,'o')
     hold on
+    if abs(tau-1)<1e-8
+        plot(lam,'o','linewidth',2,'markersize',8)
+    elseif abs(tau)<1e-8
+        plot(lam,'x','linewidth',2,'markersize',8)
+    else
+        plot(lam,'^','linewidth',2,'markersize',8)
+    end
 end
+
+grid on
+set(gca,'fontsize',14)
+axis([-100 50 -110 110])
+
+
 return
 %% Solve Problem
 FinalTime = 2;

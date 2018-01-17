@@ -1,4 +1,4 @@
-function Wave2D
+% function Wave2D
 
 % clear all, clear
 clear -global *
@@ -6,7 +6,9 @@ clear -global *
 Globals2D
 
 N = 4;
-K1D = 8;
+K1D = 16;
+tau0 = 1;
+
 c_flag = 0;
 cfun = @(x,y) ones(size(x));
 % cfun = @(x,y) 1 + (x > 0);
@@ -27,7 +29,7 @@ global Pq cq Vq
 Vp = Vandermonde2D(N,rp,sp)/V;
 xp = Vp*x; yp = Vp*y;
 
-Nq = 2*N+1;
+Nq = 2*N;
 [rq sq wq] = Cubature2D(Nq); % integrate u*v*c
 Vq = Vandermonde2D(N,rq,sq)/V;
 Pq = V*V'*Vq'*diag(wq); % J's cancel out
@@ -40,8 +42,11 @@ cq = cfun(xq,yq);
 
 % clf; vv = Vp*Pq*cq; color_line3(xp,yp,vv,vv,'.');axis equal;axis tight;return
 
-% FinalTime = 2/min(cq(:));
-FinalTime = 2;
+% FinalTime = 2;
+FinalTime = 1.5/min(cq(:));
+
+tau = tau0*ones(Nfp*Nfaces,K);
+tau(mapB) = 1;
 
 %% params setup
 
@@ -99,7 +104,6 @@ dt = 2/CNh;
 Nstep = ceil(FinalTime/dt);
 dt = FinalTime/Nstep;
 
-tau = 1;
 
 %% generate synthetic data
 
@@ -111,7 +115,7 @@ Ubc{2} = zeros(length(mapB(:)),NstepRK);
 time = 0;
 for i = 1:Nstep
     for INTRK = 1:5
-        [rhsp, rhsu, rhsv,UbcI] = acousticsRHS2D(p,u,v,tau,'abc');
+        [rhsp, rhsu, rhsv,UbcI] = acousticsRHS2D(p,u,v,1,'abc');
         resp = rk4a(INTRK)*resp + dt*rhsp;
         resu = rk4a(INTRK)*resu + dt*rhsu;
         resv = rk4a(INTRK)*resv + dt*rhsv;
@@ -125,13 +129,14 @@ for i = 1:Nstep
         Ubc{2}(:,NstepRK - id0) = UbcI{2};
     end;
     
-    %     if mod(i,10)==0
-    %         vv = Vp*p;
-    %         clf; color_line3(xp,yp,vv,vv,'.');
-    %         axis equal; axis tight; colorbar
-    %         title(sprintf('time = %f, max solution val = %f',time,max(abs(vv(:)))))
-    %         drawnow
-    %     end
+%     if mod(i,10)==0
+%         vv = Vp*p;
+%         clf; color_line3(xp,yp,vv,vv,'.');
+%         axis equal; axis tight; colorbar
+%         title(sprintf('time = %f, max solution val = %f',time,max(abs(vv(:)))))
+%         drawnow
+%     end
+    
     time = i * dt;
     if (mod(i,ceil(Nstep/10))==0)
         disp(sprintf('generating synthetic data: tstep %d out of %d\n',i,Nstep))
@@ -139,6 +144,7 @@ for i = 1:Nstep
 end
 
 disp('Synthetic data generated. ')
+% return
 
 
 %% playback : reverse propagate to generate Rm from pressure boundary data
@@ -183,7 +189,7 @@ Rm = p;
 % initalize pressure condition
 p0 = Rm;
 
-for iter = 1:5
+for iter = 1:25
     
     p = p0; u = zeros(Np,K); v = zeros(Np,K);
     resp = zeros(Np,K); resu = resp; resv = resp;
@@ -249,24 +255,29 @@ for iter = 1:5
     p0 = p + Rm;
     
     % plot initial cond
-    err = diag(wq)*(Vq*J).*(Vq*p0-pex(xq,yq)).^2;
-    L2err(iter) = sqrt(sum(err(:)));
     uq = diag(wq)*(Vq*J).*pex(xq,yq).^2;
     Unorm = sqrt(sum(uq(:)));
+    err = diag(wq)*(Vq*J).*(Vq*p0-pex(xq,yq)).^2;
+    L2err(iter) = sqrt(sum(err(:)));
+    L2u(iter) = Unorm;
     
     disp(['iter ' num2str(iter) ', L2 err in recon = ',num2str(L2err/Unorm)])
     %     pause
 end
 
-keyboard
+plot(L2err,'o--')
+hold on
+
+% keyboard
 
 figure
 vv = pex(xp,yp)-Vp*p0;
+% vv = Vp*p0;
 clf; color_line3(xp,yp,vv,vv,'.');
 axis equal; axis tight; colorbar
 title(sprintf('iter = %d, reconstruction error = %f',iter,L2err(iter)))
 
-return
+
 
 
 function [rhsp, rhsu, rhsv, UbcO] = acousticsRHS2D(p,u,v,tau,bcOpt,Ubc)
@@ -306,8 +317,8 @@ end
 UbcO{1} = p(vmapB);
 UbcO{2} = ndotdU(mapB);
 
-fluxp =  tau*dp - ndotdU;
-fluxu =  (tau*ndotdU - dp);
+fluxp =  tau.*dp - ndotdU;
+fluxu =  (tau.*ndotdU - dp);
 
 
 pr = Dr*p; ps = Ds*p;
@@ -324,5 +335,5 @@ global Pq cq Vq
 rhsp = Pq*(cq.*(Vq*rhsp));
 
 
-return;
+end
 

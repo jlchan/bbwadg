@@ -5,9 +5,10 @@ function  Wave2D_curved
 
 Globals2D;
 
-N = 5;
-nref = 1;
+N = 3;
+nref = 0;
 useJprojection = 1;
+FinalTime = 1;
 
 Nq = 2*N+1;
 
@@ -39,8 +40,19 @@ end
 % Push all boundary faces to unit cylinder
 if (useJprojection >= 0)
     MakeCylinder2D([k,f], 1, 0, 0);
+
+    a = 2/16;
+    r = sqrt(x.^2+y.^2);
+    x = x + a*cos(3*pi*r/2);
+    y = y + a*cos(3*pi*r/2);
+%     plot(x(Fmask(:),:),y(Fmask(:),:),'o'); return
+% vv = cos(3*pi*r/2);
+%     color_line3(x,y,vv,vv,'.')
+% return
+
 end
 cinfo = BuildCurvedOPS2D_opt(Nq,useJprojection);
+%     return
 
 % PlotMesh2D
 
@@ -66,6 +78,7 @@ rfq = [rq1D, -rq1D, -ones(size(rq1D))];
 sfq = [-ones(size(rq1D)), rq1D, -rq1D];
 rfq = rfq(:); sfq = sfq(:);
 wfq = repmat(wq1D,Nfaces,1);
+
 Vfq = Vandermonde2D(N,rfq,sfq)/V;
 [Vrfq Vsfq] = GradVandermonde2D(N,rfq,sfq);
 Vrfq = Vrfq/V;
@@ -107,13 +120,12 @@ for e = 1:K
     Jfq(:,e) = JfqK;
 end
 
-
 global tau;
-tau = 1;
+tau = 0;
 
 
 %%
-if 0 && nargin==0
+if 1 && nargin==0
     
     e = zeros(3*Np*K,1);
     A = zeros(3*Np*K);
@@ -166,19 +178,21 @@ alpha0 = alpha(2); rad = sqrt(x.^2+y.^2);
 
 p = besselj(0, alpha0*rad);
 
-d = 25; x0 = -1/3; y0 = 1/3;
-p = exp(-d*sqrt((x-x0).^2 + (y-y0).^2)) + exp(-10*sqrt((x+x0).^2 + (y+y0).^2));
-
+% d = 25; x0 = -1/3; y0 = 1/3;
+% p = exp(-d*sqrt((x-x0).^2 + (y-y0).^2)) + exp(-10*sqrt((x+x0).^2 + (y+y0).^2));
+p = exp(-25*(x.^2 + y.^2));
 u = zeros(Np, K); v = zeros(Np, K);
 
-FinalTime = 2;
 
 % setup
 resu = zeros(Np,K); resv = zeros(Np,K); resp = zeros(Np,K);
 rLGL = JacobiGQ(0,0,N); rmin = abs(rLGL(1)-rLGL(2));
-dtscale = dtscale2D;
+% dtscale = dtscale2D;
+CN = (N+1)^2/2;
+h = 1/min(min(sJ./J(Fmask(:),:)));
+dtscale = h/CN;
 
-dt = .75*min(dtscale)*rmin;
+dt = .5*min(dtscale)*rmin;
 
 % outer time step loop
 time = 0; tstep = 0;
@@ -188,18 +202,20 @@ while (time<FinalTime)
     for INTRK = 1:5
         % compute right hand side of TM-mode acoustics's equations        
 %         [rhsu, rhsv, rhsp] = acousticsRHS2D(u,v,p);
-        [rhsu, rhsv, rhsp] = acousticsRHS2D_JC(u,v,p);                
-        
+        %[rhsu, rhsv, rhsp] = acousticsRHS2D_JC(u,v,p);                
+        [rhsu, rhsv, rhsp] = acousticsRHS2D_skew(u,v,p);                
+                
         % initiate and increment Runge-Kutta residuals
         resp = rk4a(INTRK)*resp + dt*rhsp;
         resu = rk4a(INTRK)*resu + dt*rhsu;
-        resv = rk4a(INTRK)*resv + dt*rhsv;
+        resv = rk4a(INTRK)*resv + dt*rhsv;        
         
         % update fields
         u = u+rk4b(INTRK)*resu;
         v = v+rk4b(INTRK)*resv;
         p = p+rk4b(INTRK)*resp;
     end;
+        
     
     if 1 && mod(tstep,10)==0
         clf

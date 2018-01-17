@@ -329,7 +329,7 @@ title style={font=\footnotesize}
 
 %% =================================================
 
-\section{High order DG methods}
+\section{High order DG methods: linear problems}
 
 \frame{
 \frametitle{High order methods for hyperbolic PDEs}
@@ -370,9 +370,9 @@ title style={font=\footnotesize}
 }
 \only<4-5>{
 \vspace{1em}
-\includegraphics[width=.95\textwidth]{figs/turbulent1.png}\\
-\vspace{1em}
-\includegraphics[width=.95\textwidth]{figs/turbulent2.png}
+\includegraphics[width=.975\textwidth]{figs/turbulent1.png}\\
+\vspace{.5em}
+\includegraphics[width=.975\textwidth]{figs/turbulent2.png}
 \caption*{\tiny Figure courtesy of Per-Olof Persson.}
 }
 
@@ -412,19 +412,18 @@ title style={font=\footnotesize}
 \frametitle{High order DG methods for linear problems}% and nonlinear conservation laws}
 
 \begin{itemize}
-\item Constant \note{linear} advection on $[-1,1]$
+\item Constant \note{linear} advection on $\Omega = [-1,1]$
 \[
-\pd{u}{t} + \pd{u}{x} = 0, \qquad u(-1) = u(1).
+\pd{u}{t} + \pd{u}{x} = 0, \qquad u(-1) = u(1), \qquad \Longrightarrow \pd{}{t}\nor{u}_{L^2(\Omega)}^2 = 0.  
 \]
-\item 
-\only<1>{
-Semi-discrete form: let $\jump{u} = u^+ - u$ and $\tau \geq 0$%$\avg{u} = \frac{u^+ + u}{2}, \quad \jump{u} = u^+ - u$.
+\item Local DG formulation on element $D^k$: let $\jump{u} = u^+ - u$ and $\tau \geq 0$%$\avg{u} = \frac{u^+ + u}{2}, \quad \jump{u} = u^+ - u$.
 \begin{align*}
-\sum_k\int_{D^k} \LRp{\pd{u}{t} + \pd{u}{x}}v + 
-\int_{\partial D^k} \frac{n_x-\tau\LRb{n_x}}{2} \jump{u}v  = 0, \qquad \forall v \in V_h.
-%\int_{\partial D^k} (\avg{u}-u) v n_x - \tau\frac{\LRb{n_x}}{2}\jump{u}v  = 0.% \qquad \forall v\in V_h
+%\sum_k 
+\LRp{ {\pd{u}{t} + \pd{u}{x}},v}_{D^k} + 
+\LRa{\frac{n_x-\tau\LRb{n_x}}{2} \jump{u},v}_{\partial D^k}  = 0, \qquad \forall v \in P^N(D^k).
+%\sum_k\int_{D^k} \LRp{\pd{u}{t} + \pd{u}{x}}v + 
+%\int_{\partial D^k} \frac{n_x-\tau\LRb{n_x}}{2} \jump{u}v  = 0, \qquad \forall v \in V_h.
 \end{align*}
-}
 %\only<2>{
 %Method of lines: system of ODEs for dofs $\bm{u}$ (explicit time-stepping)
 %\[
@@ -449,18 +448,18 @@ Semi-discrete form: let $\jump{u} = u^+ - u$ and $\tau \geq 0$%$\avg{u} = \frac{
 \frametitle{DG energy estimates for linear advection }
 
 \begin{itemize}
-\item Let $V_h = \bigoplus_k P^N\LRp{D^k}$, define global DG derivative $D^x_h: V_h \rightarrow V_h$:
+\item Let $V_h = \bigoplus_k P^N(D^k)$, define global DG derivative $D^x_h: V_h \rightarrow V_h$:
 \begin{align*}
-\LRp{D^x_h u,v}_{\Omega} &= \sum_{D^k} \LRp{\pd{u}{x},v}_{D^k} + \frac{1}{2}\LRa{\jump{u},v}_{\partial D^k}, \qquad v\in V_h,\\
-\LRp{D^x_h u,v}_{\Omega} &= \LRa{ u,v}_{\partial \Omega} - \LRp{u, D^x_hv}_{\Omega}, \qquad \text{(integration-by-parts)}.
+\LRp{D^x_h u,v}_{\Omega} &= \sum_{k} \LRp{\pd{u}{x},v}_{D^k} + \frac{1}{2}\LRa{\jump{u},vn_x}_{\partial D^k}, \qquad v\in V_h,
 \end{align*}
-\item Advection formulation: semi-definite penalization $s(u,v)$
+\item Advection formulation: positive semi-definite penalization $s_\tau(u,v)$
 \[
-\LRp{\pd{u}{t} + D^x_h u,v}_{\Omega} + \underbrace{\sum_{k} \LRa{-\tau\frac{\LRb{n_x}}{2} \jump{u},v}_{\partial D^k}}_{s(u,v) \text{, pos.\ semi-def.}}.
+\LRp{\pd{u}{t} + D^x_h u,v}_{\Omega} + \underbrace{\sum_{k} \LRa{-\tau\frac{\LRb{n_x}}{2} \jump{u},v}_{\partial D^k}}_{s_\tau(u,v) } = 0. %\text{, pos.\ semi-def.}
 \]
-\item Energy method (periodic domains): take $v = u$, integrate by parts
+\item Energy method (periodic domains): integrate by parts, take $v = u$.  
 \begin{align*}
-\frac{1}{2}\pd{}{t} \nor{u}^2_{L^2\LRp{\Omega}} = -s(u,u) \leq 0.
+\LRp{D^x_h u,v}_{\Omega} &= \LRa{ u,v}_{\partial \Omega} - \LRp{u, D^x_hv}_{\Omega}, \qquad \text{(integration-by-parts)} \\
+&\Longrightarrow \frac{1}{2}\pd{}{t} \nor{u}^2_{L^2\LRp{\Omega}} = -s_{\tau}(u,u) \leq 0.
 \end{align*}
 
 \end{itemize}
@@ -468,7 +467,7 @@ Semi-discrete form: let $\jump{u} = u^+ - u$ and $\tau \geq 0$%$\avg{u} = \frac{
 
 %% =================================================
 
-\section{Nonlinear stability for conservation laws} 
+\section{Entropy stability for nonlinear conservation laws} 
 
 \frame[noframenumbering]{
 \frametitle{Talk outline}
@@ -480,12 +479,12 @@ Semi-discrete form: let $\jump{u} = u^+ - u$ and $\tau \geq 0$%$\avg{u} = \frac{
 \begin{itemize}
 \item System of nonlinear conservation laws, convex \note{entropy} $S(\bm{u})$
 \[
-\pd{\bm{u}}{t} + \pd{\bm{f}(\bm{u})}{x} = 0, \qquad \bm{v} = \pd{S}{\bm{u}}.  
+\pd{\bm{u}}{t} + \pd{\bm{f}(\bm{u})}{x} = 0.  
 \]
 \item \textcolor{red}{Nonlinear} entropy inequality: chain rule + entropy potential $\psi$
 \begin{align*}
-&\bm{v}^T\LRp{\pd{\bm{u}}{t} + \pd{\bm{f}(\bm{u})}{x}} = 0 \\
-&\Longrightarrow {\pd{S(\bm{u})}{t} + \LRu{\LRp{\bm{v}^T\bm{f}(\bm{u}) - \psi(\bm{u})}}_{-1}^1 \leq 0}.
+&\bm{v}^T\LRp{\pd{\bm{u}}{t} + \pd{\bm{f}(\bm{u})}{x}} = 0, \qquad \bm{v} = \pd{S}{\bm{u}} \\
+&\Longrightarrow \int_{\Omega}\pd{S(\bm{u})}{t} + \LRu{\LRp{\bm{v}^T\bm{f}(\bm{u}) - \psi(\bm{u})}}_{-1}^1 \leq 0.
 \end{align*}
 \item Periodic linear advection: square entropy, $\bm{v} = \bm{u}$
 \[
@@ -503,7 +502,7 @@ Semi-discrete form: let $\jump{u} = u^+ - u$ and $\tau \geq 0$%$\avg{u} = \frac{
 \begin{itemize}
 \item How to differentiate $f({u})$?  Burgers' equation: $f(u) = u^2/2$
 \[
-\pd{u}{t} + \frac{1}{2}\pd{u^2}{x} = 0, \qquad u \in V_h, \quad u^2 \not\in V_h.
+\pd{u}{t} + \frac{1}{2}\pd{u^2}{x} = 0, \qquad u \in P^N(D^k), \quad u^2 \not\in P^N(D^k).
 \]
 %\[
 %\pd{u}{t} + \frac{1}{2}\pd{u^2}{x} = \pd{u}{t} + u\pd{u}{x} = 0.%, \qquad 
@@ -515,7 +514,7 @@ Semi-discrete form: let $\jump{u} = u^+ - u$ and $\tau \geq 0$%$\avg{u} = \frac{
 %%&\\
 %%&\Longrightarrow \pd{}{t}\int_{-1}^1 \frac{u^2}{2} + \LRu{\frac{u^3}{3}}_{-1}^1 = 0&
 %\end{align*}
-\item Loss of chain rule with $L^2$ projection $P_N$ or inexact quadrature.  
+\item Loss of chain rule with $L^2$ projection $P_N$ and inexact quadrature.  
 \[
 \LRp{\pd{u}{t} + \frac{1}{2}D^x_h P_N u^2,v}_{\Omega} = 0, \qquad \frac{1}{2}\pd{P_N u^2}{x} \neq P_N \LRp{u \pd{u}{x}}
 \]
@@ -537,18 +536,64 @@ Semi-discrete form: let $\jump{u} = u^+ - u$ and $\tau \geq 0$%$\avg{u} = \frac{
 \end{figure}
 }
 
+
+%% =================================================
+
+\section{Entropy stable formulations} 
+
+\frame[noframenumbering]{
+\frametitle{Talk outline}
+\tableofcontents[currentsection]
+}
+
+\frame{
+\frametitle{Burgers' equation: energy stable formulations}
+\setcounter{subfigure}{0}
+\begin{itemize}
+\item \note{Split} formulation (replace $\pd{}{x}$ with $D^x_h P_N $ + stabilization).
+\begin{align*}
+&\pd{u}{t} + \frac{1}{3}\LRp{\pd{u^2}{x} + {u\pd{u}{x}}} = 0\\
+%&\Longrightarrow \LRp{\pd{u}{t} + \frac{1}{3}\LRp{D^x_h P_N u^2 + P_N\LRp{uD^x_h u}},v} + s_\tau(u,v) = 0. %\\
+\Longrightarrow &\LRp{\pd{u}{t} + \frac{1}{3}\LRp{D^x_h P_N u^2 + uD^x_h u},v} + s_\tau(u,v) = 0. %\\
+%&\Longrightarrow \frac{1}{2}\pd{}{t}\nor{u}^2_{L^2(\Omega)} + \frac{1}{3}
+%\LRp{\LRp{\pd{P_N u^2}{x},u} - \LRp{u,\pd{P_N u^2}{x}} + 
+%{\LRa{u^2,u}_{\partial \Omega}}  = 0.
+\end{align*}
+\end{itemize}
+%\vspace{-.25em}
+\begin{figure}
+\begin{overlayarea}{\textwidth}{.5\textheight}
+%\begin{overprint}
+\centering
+\foreach \id in {1,2,3,4,5,6,7,8}{%
+\only<\id>{
+\subfloat[$\tau = 0$]{\includegraphics[width=.35\textwidth]{figs/burgersStableEC_\id.png}}\hspace{2em}%
+\subfloat[$\tau = 1$]{\includegraphics[width=.35\textwidth]{figs/burgersStableLF_\id.png}}
+}% \only
+}% for
+\only<9>{
+\subfloat[Energy conservative ($\tau = 0$)]{\includegraphics[width=.425\textwidth]{figs/burgersSplitEnergyEC.png}}\hspace{1em}%
+\subfloat[Energy stable ($\tau = 1$)]{\includegraphics[width=.425\textwidth]{figs/burgersSplitEnergyLF.png}}
+}
+%\end{overprint}
+\end{overlayarea}
+\end{figure}
+}
+
 %% =================================================
 
 \frame{
-\frametitle{Entropy stable (ES) summation-by-parts (SBP) methods}
+\frametitle{Entropy conservative summation-by-parts (SBP) methods}
 
 \begin{itemize}
-\item Entropy {conservation}: needs \note{mass lumping, nodal collocation}!  %$\bm{u}$
-%(let $\bm{u}(x) \in \mathbb{R}^n$, $\bm{M},\bm{S},\bm{B} \rightarrow \bm{I}_n \otimes \LRp{\bm{M},\bm{S},\bm{B}}$)
-\begin{align*}
-&\LRp{\bm{I}_n\otimes \bm{M}}\pd{\bm{u}}{t} + \LRp{2\LRp{\bm{I}_n\otimes \bm{S}}\circ \bm{F}_S}\bm{1} = 0,& &\text{(Semi-discrete form)}&\\
-&\Longrightarrow \bm{1}^T\LRp{\bm{M}\pd{S}{t} + \bm{B}\LRp{\bm{v}^T\bm{f} - \bm{\psi}}} = 0,& &\text{(Entropy conservation)}&
-\end{align*}
+\item Pioneering work relies on \note{mass lumping, nodal collocation + SBP}.  
+%\item Construction using \note{nodal collocation} at quadrature points.  
+\item Need at least $2N-1$ accurate volume and surface quadrature! 
+\item Difficult to generalize beyond polynomials (splines, pyramids, etc).  
+%\begin{align*}
+%&\LRp{\bm{I}_n\otimes \bm{M}}\pd{\bm{u}}{t} + \LRp{2\LRp{\bm{I}_n\otimes \bm{M}\bm{D}}\circ \bm{F}_S}\bm{1} = 0,& &\text{(Semi-discrete form)}&\\
+%&\Longrightarrow \bm{1}^T\LRp{\bm{M}\pd{S}{t} + \bm{B}\LRp{\bm{v}^T\bm{f} - \bm{\psi}}} = 0,& &\text{(Entropy conservation)}&
+%\end{align*}
 %\item Relies on diagonal norm SBP finite differences (e.g.\ DG-SEM).
 %\[
 %\bm{M} = {\rm diag}(\bm{w}),
@@ -659,47 +704,6 @@ Semi-discrete form: let $\jump{u} = u^+ - u$ and $\tau \geq 0$%$\avg{u} = \frac{
 
 %% =================================================
 
-\section{Continuous entropy stable formulations} 
-
-\frame[noframenumbering]{
-\frametitle{Talk outline}
-\tableofcontents[currentsection]
-}
-
-\frame{
-\frametitle{Burgers' equation: energy stable formulations}
-\setcounter{subfigure}{0}
-\begin{itemize}
-\item Split formulation (replace $\pd{}{x}$ with some $D^x_h$ + stabilization for DG).
-\begin{align*}
-&\pd{u}{t} + \frac{1}{3}\LRp{\pd{u^2}{x} + {u\pd{u}{x}}} \Longrightarrow \pd{u}{t} + \frac{1}{3}\LRp{D^x_h P_N u^2 + P_N\LRp{uD^x_h u}} = 0\\
-&\Longrightarrow \frac{1}{2}\pd{}{t}\nor{u}^2_{L^2(\Omega)} + \frac{1}{3}
-%\LRp{\LRp{\pd{P_N u^2}{x},u} - \LRp{u,\pd{P_N u^2}{x}} + 
-{\LRa{u^2,u}_{\partial \Omega}}  = 0.
-\end{align*}
-\end{itemize}
-%\vspace{-.25em}
-\begin{figure}
-\begin{overlayarea}{\textwidth}{.5\textheight}
-%\begin{overprint}
-\centering
-\foreach \id in {1,2,3,4,5,6,7,8}{%
-\only<\id>{
-\subfloat[$\tau = 0$]{\includegraphics[width=.35\textwidth]{figs/burgersStableEC_\id.png}}\hspace{2em}%
-\subfloat[$\tau = 1$]{\includegraphics[width=.35\textwidth]{figs/burgersStableLF_\id.png}}
-}% \only
-}% for
-\only<9>{
-\subfloat[Energy conservative ($\tau = 0$)]{\includegraphics[width=.425\textwidth]{figs/burgersSplitEnergyEC.png}}\hspace{1em}%
-\subfloat[Energy stable ($\tau = 1$)]{\includegraphics[width=.425\textwidth]{figs/burgersSplitEnergyLF.png}}
-}
-%\end{overprint}
-\end{overlayarea}
-\end{figure}
-}
-%% =================================================
-
-
 \frame{
 \frametitle{Flux differencing: split formulations and beyond}
 
@@ -712,15 +716,18 @@ Semi-discrete form: let $\jump{u} = u^+ - u$ and $\tau \geq 0$%$\avg{u} = \frac{
 \end{align*}
 \item<2-> Easy example: Burgers' equation, let $u_L = u(x), u_R = u(y)$
 \begin{align*}
-&f_S(u_L,u_R) = \frac{1}{6}\LRp{u(x)^2 + u(x)u(y) + u(y)^2},\\ %\qquad \bm{v} = u, \qquad \psi = \frac{u^3}{3}\\
-\pd{{f}({u})}{x} &\Longrightarrow \note{\LRu{2\pd{f_S\LRp{u_x,u_y}}{x}}_{y=x}} = \frac{1}{3}\pd{u^2}{x} + \frac{1}{3}u\pd{u}{x} + \frac{1}{3}u^2\cancel{ \pd{1}{x}}.
+%&f_S(u_L,u_R) = \frac{1}{6}\LRp{u(x)^2 + u(x)u(y) + u(y)^2},\\ 
+\only<1-2>{&f_S(u_L,u_R) = \frac{1}{6}\LRp{u_L^2 + u_Lu_R + u_R^2},\\ }
+\only<3->{&f_S(u(x),u(y)) = \frac{1}{6}\LRp{u(x)^2 + u(x)u(y) + u(y)^2},\\ }
+\uncover<1,4->{\pd{{f}({u})}{x} &\Longrightarrow \note{\LRu{2\pd{f_S\LRp{u(x),u(y)}}{x}}_{y=x}} = \frac{1}{3}\pd{u^2}{x} + \frac{1}{3}u\pd{u}{x} + \frac{1}{3}u^2\cancel{ \pd{1}{x}}}.
 \end{align*}
-\item<3> Harder example: compressible Euler (entropy conservative mass flux)
+\item<5> Harder example: compressible Euler (entropy conservative mass flux)
 \[
 f^{\rho}_S(\bm{u}_L,\bm{u}_R) = \avg{\rho}^{\log} \avg{u}, \qquad \avg{u}^{\log} = \frac{u_L - u_R}{\log{u_L}- \log{u_R}}.
 \]
 \end{itemize}
 
+\let\thefootnote\relax\footnotetext{\tiny Tadmor, Eitan (1987). \textit{The numerical viscosity of entropy stable schemes for systems of conservation laws. I.}}
 \let\thefootnote\relax\footnotetext{\tiny Chandrashekar (2013). \textit{Kinetic energy preserving and entropy stable FV schemes for compressible Euler and NS equations.}}
 }
 
@@ -735,7 +742,7 @@ Let $\bm{u}_{x} =  \bm{u}\LRp{(P_N \bm{v})(x)}, \bm{u}_{y} = \bm{u}\LRp{(P_N \bm
 \[
 \LRp{\pd{\bm{u}}{t} + \left.\LRp{2 D^x_h \bm{f}_S(\bm{u}_x,\bm{u}_y)}\right|_{y=x},\bm{w}}_{\Omega} = 0, \qquad \forall \bm{w}\in V_h.
 \]
-Then $\bm{u}$ satisfies $\int_{\Omega} \pd{S(\bm{u})}{t} + \int_{\partial \Omega} P_N\bm{v}^T\bm{f}(\bm{u}_x) - \psi(\bm{u}_x) = 0.$%a quadrature-based conservation of entropy.
+Then $\bm{u}$ satisfies $\int_{\Omega} \pd{S(\bm{u})}{t} + \int_{\partial \Omega} \LRp{P_N\bm{v}^T\bm{f}(\bm{u}_x) - \psi(\bm{u}_x)}n_x = 0.$%a quadrature-based conservation of entropy.
 %\[
 %\int_{\Omega} \pd{S}{t} + \int_{\partial \Omega} \bm{v}^T\bm{f}(\bm{u}) - \psi(\bm{u}) = 0.
 %\]
@@ -743,9 +750,9 @@ Then $\bm{u}$ satisfies $\int_{\Omega} \pd{S(\bm{u})}{t} + \int_{\partial \Omega
 \only<2-4>{
 \begin{proofsketch}
 \only<2>{
-Step 1 (time term): take $\bm{w} = P_N \bm{v}(\bm{u})$.  For method of lines, $\pd{\bm{u}}{t} \in V_h$.
+Step 1 (time term): take $\bm{w} = P_N \bm{v}(\bm{u})$.  Assume continuity in time and method of lines s.t.\ $\pd{\bm{u}}{t} \in V_h$.
 \[
-\LRp{\pd{\bm{u}}{t},P_N\bm{v}}_{\Omega} = \LRp{\pd{\bm{u}}{t},\bm{v}}_{\Omega} = \LRp{\pd{S}{\bm{u}}\pd{\bm{u}}{t},1}_{\Omega} = \LRp{\pd{S(\bm{u})}{t},1}_{\Omega}.
+\LRp{\pd{\bm{u}}{t},P_N\bm{v}}_{\Omega} = \LRp{\pd{\bm{u}}{t},\bm{v}}_{\Omega} = \LRp{\pd{S}{\bm{u}}\pd{\bm{u}}{t},1}_{\Omega} = \LRp{\pd{S(\bm{u})}{t},1}_{\Omega}
 \]
 }
 
@@ -754,7 +761,7 @@ Step 2 (spatial term): integrate by parts.
 \vspace{-.5em}
 \begin{align*}
 &\LRp{\LRu{\LRp{D^x_h \bm{f}_S(\bm{u}_x,\bm{u}_y)}}_{y=x},P_N\bm{v}}_{\Omega}\\
-&+ \LRa{\bm{f}_S\LRp{\bm{u}_x,\bm{u}_x}, (P_N \bm{v})\bm{n}_x }_{\partial \Omega} - \LRp{\LRu{D^x_h \LRp{\bm{f}_S(\bm{u}_x,\bm{u}_y)\LRp{P_N\bm{v}}(x)}}_{y=x},1}_{\Omega}.
+&+ \LRa{\bm{f}_S\LRp{\bm{u}_x,\bm{u}_x}, (P_N \bm{v})n_x }_{\partial \Omega} - \LRp{\LRu{D^x_h \LRp{\bm{f}_S(\bm{u}_x,\bm{u}_y)\LRp{P_N\bm{v}}(x)}}_{y=x},1}_{\Omega}.
 \end{align*}
 }
 
@@ -776,7 +783,7 @@ Step 2 (spatial term):  gather volume terms, use conservation and IBP.
 \bm{f}_S(\bm{u}_x,\bm{u}_y)\LRp{\LRp{P_N\bm{v}}(x)-\LRp{P_N\bm{v}}(y)}
 }
 }}}_{y=x},1}_{\Omega}\\
-&=  \LRp{\LRu{{D^x_h \LRp{\psi(\bm{u}_x)-\psi(\bm{u}_y)}}}_{y=x},1}_{\Omega} = \LRa{\psi(\bm{u}_x),1\bm{n}_x}_{\partial \Omega}.
+&=  \LRp{\LRu{{D^x_h \LRp{\psi(\bm{u}_x)-\psi(\bm{u}_y)}}}_{y=x},1}_{\Omega} = \LRa{\psi(\bm{u}_x),1n_x}_{\partial \Omega}.
 \end{align*}
 }
 %\only<4>{
@@ -805,7 +812,7 @@ Need $\bm{u} = \bm{u}\LRp{P_N \bm{v}}$ for
 \]
 %\item \note{Diag $y=x$ formulation, $\bm{u}_x = \bm{u}_{\bm{v}}(x), \bm{u}_y = \bm{u}_{\bm{v}}(y)$}
 \item Proof requires only (inexact) quadrature-based $L^2$ projection + IBP.  
-\item Jump stabilization $s(u,v)$ gives entropy \note{inequality}. 
+\item Jump stabilization $s_\tau(u,v)$ (e.g.\ Lax-Friedrichs) for entropy \note{inequality}. 
 \end{itemize}
 }
 \end{overlayarea}
@@ -831,19 +838,20 @@ Need $\bm{u} = \bm{u}\LRp{P_N \bm{v}}$ for
 \frametitle{Entropy stable high order DG: implementation}
 
 \begin{itemize}
-\item Efficient reformulation (Hadamard product: low-memory evaluation)
-\begin{align*}
-&P_N \LRp{\LRu{\pd{P_N \bm{f}_S(\bm{u}_x,\bm{u}_y)}{x}}_{y=x}} \\
-&= \bm{P}_q {\rm diag}\LRp{\bm{V}_q\bm{D}\bm{P}_q \bm{F}_S} =  \bm{P}_q \LRp{\LRp{\bm{V}_q\bm{D}\bm{P}_q \circ \bm{F}_S}\bm{1}}.\\
-\end{align*}
-\vspace{-2em}
 \item Explicit time-stepping right hand side evaluation:
 \begin{enumerate}
 \item Compute $P_N\LRp{\bm{v}(\bm{u})}$.
-\item Evaluate $\bm{u} = \bm{u}(P_N\LRp{\bm{v}(\bm{u})})$ at volume, face quadratures.
-\item Compute $\bm{RHS}(\bm{u}) = 2\LRp{\bm{D}_h \circ \bm{F}_S\LRp{\bm{u}_x,\bm{u}_y}}\bm{1}$
+\item Evaluate $ \bm{u}(P_N\LRp{\bm{v}(\bm{u})})$ at volume, face quadratures.
+\item Compute $\bm{RHS}(\bm{u}) = 2\LRp{\bm{D}^x_h \circ \bm{f}_S\LRp{\bm{u}_x,\bm{u}_y}}\bm{1}$
+%\item Compute $\bm{RHS}(\bm{u}) = 2\LRp{\bm{D}_h \circ \bm{F}_S}\bm{1}$
 \end{enumerate}
-\vspace{1.5em}
+\vspace{1em}
+\item Efficient reformulation (Hadamard product: low-memory evaluation)
+\begin{align*}
+&P_N \LRp{\LRu{\pd{P_N \bm{f}_S(\bm{u}_x,\bm{u}_y)}{x}}_{y=x}} \\
+&= \bm{P}_q {\rm diag}\LRp{\bm{V}_q\bm{D}\bm{P}_q \bm{F}_S} =  \bm{P}_q \LRp{\LRp{(\bm{V}_q\bm{D}\bm{P}_q) \circ \bm{F}_S}\bm{1}}.\\
+\end{align*}
+\vspace{-2.5em}
 \item Simplifications for diag-norm SBP (nodal collocation): avoid computing projections, combine volume + surface operations.
 \end{itemize}
 
@@ -877,9 +885,10 @@ Need $\bm{u} = \bm{u}\LRp{P_N \bm{v}}$ for
 \frametitle{Numerical experiments: compressible Euler equations}
 
 \begin{itemize}
+\item Gauss-Legendre-Lobatto (GLL) vs Gauss (GQ) quadratures. 
 \item Entropy conservative (EC) and Lax-Friedrichs (LF) fluxes.  
 \item No additional stabilization, filtering, or limiting.
-\item $L^2$ rates: odd/even decoupling for EC, $O(h^{N+1})$ for LF.
+%\item $L^2$ rates: odd/even decoupling for EC, $O(h^{N+1})$ for LF.
 \end{itemize} 
 \vspace{-1em}
 \begin{figure}
@@ -1043,7 +1052,7 @@ coordinates{(0.5,0.000547621)(0.25,8.7194e-06)(0.125,1.47105e-07)(0.0625,2.34345
 \begin{figure}
 \centering
 \only<1>{\includegraphics[width=.8\textwidth]{figs/sodGLL.png}\caption*{$N=4, K = 32$, $(N+1)$ point Gauss-Lobatto-Legendre quadrature.}}
-\only<2>{\includegraphics[width=.8\textwidth]{figs/sodGQ2.png}\caption*{$N=4, K = 32$, $(N+2)$ point Gaussian quadrature.}}
+\only<2>{\includegraphics[width=.8\textwidth]{figs/sodGQ2.png}\caption*{$N=4, K = 32$, $(N+2)$ point Gauss quadrature.}}
 \end{figure}
 
 }
@@ -1052,13 +1061,13 @@ coordinates{(0.5,0.000547621)(0.25,8.7194e-06)(0.125,1.47105e-07)(0.0625,2.34345
 \frametitle{Numerical experiments: sine-shock interaction}
 
 \begin{itemize}
-\item Reference solution, smaller CFL (.05 vs .125) for GQ-$(N+2)$.  
+\item GQ-$(N+2)$ needs smaller CFL (.05 vs .125) for stability.  
 \end{itemize}
 
 \begin{figure}
 \centering
-\only<1>{\includegraphics[width=.8\textwidth]{figs/sineShockGLL.png}\caption*{$N=4, K = 40$, $(N+1)$ point Gauss-Lobatto-Legendre quadrature.}}
-\only<2>{\includegraphics[width=.8\textwidth]{figs/sineShockGQ2.png}\caption*{$N=4, K = 40$, $(N+2)$ point Gaussian quadrature.}}
+\only<1>{\includegraphics[width=.8\textwidth]{figs/sineShockGLL.png}\caption*{$N=4, K = 40, CFL = .05$, $(N+1)$ point Gauss-Lobatto-Legendre quadrature.}}
+\only<2>{\includegraphics[width=.8\textwidth]{figs/sineShockGQ2.png}\caption*{$N=4, K = 40, CFL = .05$, $(N+2)$ point Gauss quadrature.}}
 \end{figure}
 
 }
@@ -1286,8 +1295,8 @@ Thank you!  Questions?
 \item Let $v\in V_h$, $u, w\not\in V_h$ with $u,w$ bounded; modified $D^x_h$
 \begin{align*}
 \LRp{D^x_h u, vw}_{\Omega} &= \sum_k \LRp{\pd{P_N u}{x},vw}_{D^k} \\
-& + \frac{1}{2} \LRa{u^+ - P_N u,vw\bm{n}_x}_{\partial D^k} \\
-&+ \frac{1}{2} \LRa{u - P_N u,P_N\LRp{vw}\bm{n}_x}_{\partial D^k}.
+& + \frac{1}{2} \LRa{u^+ - P_N u,vwn_x}_{\partial D^k} \\
+&+ \frac{1}{2} \LRa{u - P_N u,P_N\LRp{vw}n_x}_{\partial D^k}.
 \end{align*}
 \item Integration-by-parts property
 \[

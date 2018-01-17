@@ -1,28 +1,64 @@
-clear
-Globals2D
 
-N = 4;
+N = 3;
 K1D = 8;
-FinalTime = 5;
-CFL = .4;
+
+CFL = .25; tau = 0;
+[err1 entropy rhstest dt Nsteps rho1 rhou1 rhov1 E1] = Euler2D_curved(N,K1D,1,CFL,tau);
+dS = abs(entropy-entropy(1));
+figure(2)
+semilogy(dt*(1:Nsteps),dS,'o--');hold on
+semilogy(dt*(1:Nsteps),abs(rhstest),'o--');hold on
+return
+
+% CFL = .25; tau = 0;
+CFL = .25; tau = 1;
+[err1 entropy rhstest dt Nsteps rho1 rhou1 rhov1 E1] = Euler2D_curved(N,K1D,0,CFL,tau);
+[err2 entropy rhstest dt Nsteps rho2 rhou2 rhov2 E2] = Euler2D_curved(N,K1D,1,CFL,tau);
+err1
+err2
+sqrt(sum(sum(wJq.*((Vq*(rho1-rho2)).^2  + (Vq*(rhou1-rhou2)).^2 + (Vq*(rhov1-rhov2)).^2 + (Vq*(E1-E2)).^2))))
+
+%%
+
+
+
+%%
+
+function [L2err entropy rhstest dt Nsteps rho rhou rhov E Vq2 wJq2] = Euler2D_curved(N,K1D,wadgEntropyVars,CFL,tau)
+
+% clear;clear global
+Globals2D
 global tau
-tau = 1;
-a = 0/16; % curv warping
 
-Lx = 10; Ly = 5;
+if nargin==0
+    N = 3;
+    K1D = 16;
+    wadgEntropyVars = 1;
+    
+    CFL = .5;
+    tau = 0;
+end
 
-[Nv, VX, VY, K, EToV] = unif_tri_mesh(K1D,round(K1D*Ly/Lx));
-VX = VX/max(abs(VX));  VY = VY/max(abs(VY)); 
-VX = VX*Lx + Lx; VY = VY*Ly;
+a = 1/8; % warping factor
+FinalTime = 1;
+
+% Lx = 7.5; Ly = 5; ratiox = 3/4; ratioy = .5;
+Lx = 10; Ly = 5; ratiox = 1; ratioy = Ly/Lx;
+
+[Nv, VX, VY, K, EToV] = unif_tri_mesh(round(ratiox*K1D),round(K1D*ratioy));
+VX = VX/max(abs(VX));  VY = VY/max(abs(VY));
+VX = (VX+1)*Lx; VY = VY*Ly;
 
 StartUp2D;
 BuildPeriodicMaps2D(max(VX)-min(VX),max(VY)-min(VY));
+
+% PlotMesh2D;axis on;return
 
 % plotting nodes
 [rp sp] = EquiNodes2D(15); [rp sp] = xytors(rp,sp);
 Vp = Vandermonde2D(N,rp,sp)/V;
 xp = Vp*x; yp = Vp*y;
-% plot(xp,yp,'o'); return
+% PlotMesh2D; axis on;return
 
 global Vq Pq Lq Lqf Vfqf Vfq Pfqf
 global rxJ sxJ ryJ syJ rxJf sxJf ryJf syJf
@@ -42,7 +78,7 @@ rxJ = Vq*rxJ; sxJ = Vq*sxJ;
 ryJ = Vq*ryJ; syJ = Vq*syJ;
 J = Vq*J;
 
-[rq1D wq1D] = JacobiGQ(0,0,ceil(Nq/2));
+[rq1D wq1D] = JacobiGQ(0,0,N);
 rfq = [rq1D; -rq1D; -ones(size(rq1D))];
 sfq = [-ones(size(rq1D)); rq1D; -rq1D];
 wfq = [wq1D; wq1D; wq1D];
@@ -77,7 +113,7 @@ Drq = (Vq*Dr*Pq - .5*Vq*Lq*diag(nrJ)*Vfq*Pq);
 Dsq = (Vq*Ds*Pq - .5*Vq*Lq*diag(nsJ)*Vfq*Pq);
 VfPq = (Vfq*Pq);
 VqLq = Vq*Lq;
-
+VqPq = Vq*Pq;
 
 %% make quadrature face maps
 
@@ -124,8 +160,9 @@ end
 
 %% make curvilinear mesh (still unstable?)
 
-x0 = Lx; y0 = 0; 
-x = x + Lx*a*cos(1/2*pi*(x-x0)/Lx).*cos(3/2*pi*(y-y0)/Ly);
+x0 = Lx; y0 = 0;
+% x0 = 0; y0 = 0; Lx = 1; Ly = 1;
+% x = x + Lx*a*cos(1/2*pi*(x-x0)/Lx).*cos(3/2*pi*(y-y0)/Ly);
 y = y + Ly*a*sin(3/2*pi*(x-x0)/Lx).*cos(1/2*pi*(y-y0)/Ly);
 
 xq = Vq*x; yq = Vq*y;
@@ -138,6 +175,7 @@ if 0
     xfp = Vfp*x(Fmask(:),:);
     yfp = Vfp*y(Fmask(:),:);
     plot(xfp,yfp,'k.')
+    L2err = nan;
     return
 end
 
@@ -168,12 +206,7 @@ sJ = sqrt(nx.^2 + ny.^2);
 nx = nx./sJ; ny = ny./sJ;
 sJ = sJ.*Jf;
 
-xf = Vfq*x;
-yf = Vfq*y;
-% plot(xf,yf,'o')
-% hold on
-% quiver(xf,yf,nxJ,nyJ)
-% keyboard
+
 %% fluxes
 global gamma
 gamma = 1.4;
@@ -195,23 +228,13 @@ U4 = @(V1,V2,V3,V4) rhoeV(V1,V2,V3,V4).*(1-(V2.^2+V3.^2)./(2*V4));
 
 global fxS1 fyS1 fxS2 fyS2 fxS3 fyS3 fxS4 fyS4
 global pfun beta pavg plogmean vnormavg avg
+
 avg = @(x,y) .5*(x+y);
 pfun = @(rho,u,v,E) (gamma-1)*(E-.5*rho.*(u.^2+v.^2));
 beta = @(rho,u,v,E) rho./(2*pfun(rho,u,v,E));
 pavg     = @(rhoL,uL,vL,EL,rhoR,uR,vR,ER)     avg(rhoL,rhoR)./(2*avg(beta(rhoL,uL,vL,EL),beta(rhoR,uR,vR,ER)));
 plogmean = @(rhoL,uL,vL,EL,rhoR,uR,vR,ER) logmean(rhoL,rhoR)./(2*logmean(beta(rhoL,uL,vL,EL),beta(rhoR,uR,vR,ER)));
 vnormavg = @(uL,vL,uR,vR) 2*(avg(uL,uR).^2 + avg(vL,vR).^2) - (avg(uL.^2,uR.^2) + avg(vL.^2,vR.^2));
-
-% % shallow water test
-% fxS4 = @(rhoL,uL,vL,EL,rhoR,uR,vR,ER) avg(rhoL,rhoR).*avg(uL,uR);
-% fxS2 = @(rhoL,uL,vL,EL,rhoR,uR,vR,ER) avg(rhoL,rhoR).*avg(uL,uR).^2 + .5*avg(rhoL.^2,rhoR.^2);
-% fxS3 = @(rhoL,uL,vL,EL,rhoR,uR,vR,ER) avg(rhoL,rhoR).*avg(uL,uR).*avg(vL,vR);
-% fxS1 = @(rhoL,uL,vL,EL,rhoR,uR,vR,ER) 0*rhoL;
-%
-% fyS4 = @(rhoL,uL,vL,EL,rhoR,uR,vR,ER) avg(rhoL,rhoR).*avg(vL,vR);
-% fyS2 = @(rhoL,uL,vL,EL,rhoR,uR,vR,ER) avg(rhoL,rhoR).*avg(uL,uR).*avg(vL,vR);
-% fyS3 = @(rhoL,uL,vL,EL,rhoR,uR,vR,ER) avg(rhoL,rhoR).*avg(vL,vR).^2 + .5*avg(rhoL.^2,rhoR.^2);
-% fyS1 = @(rhoL,uL,vL,EL,rhoR,uR,vR,ER) 0*rhoL;
 
 fxS1 = @(rhoL,uL,vL,EL,rhoR,uR,vR,ER) logmean(rhoL,rhoR).*avg(uL,uR);
 fxS2 = @(rhoL,uL,vL,EL,rhoR,uR,vR,ER) logmean(rhoL,rhoR).*avg(uL,uR).^2 + pavg(rhoL,uL,vL,EL,rhoR,uR,vR,ER);
@@ -249,7 +272,7 @@ E    = Pq*(pq/(gamma-1) + .5*rhoq.*(uq.^2+vq.^2));
 % rhou = 0*x;
 % rhov = 0*x;
 % E = 0*x;
-
+% keyboard
 % vv = Vp*rho; color_line3(xp,yp,vv,vv,'.'); return
 
 %%
@@ -281,10 +304,17 @@ for i = 1:Nsteps
         Eq    = Vq*E;
         
         % project to entropy variables
-        q1 = Pq*V1(rhoq,rhouq,rhovq,Eq);
-        q2 = Pq*V2(rhoq,rhouq,rhovq,Eq);
-        q3 = Pq*V3(rhoq,rhouq,rhovq,Eq);
-        q4 = Pq*V4(rhoq,rhouq,rhovq,Eq);
+        if wadgEntropyVars
+            q1 = Pq*(VqPq*(V1(rhoq,rhouq,rhovq,Eq).*J)./J);
+            q2 = Pq*(VqPq*(V2(rhoq,rhouq,rhovq,Eq).*J)./J);
+            q3 = Pq*(VqPq*(V3(rhoq,rhouq,rhovq,Eq).*J)./J);
+            q4 = Pq*(VqPq*(V4(rhoq,rhouq,rhovq,Eq).*J)./J);
+        else
+            q1 = Pq*V1(rhoq,rhouq,rhovq,Eq);
+            q2 = Pq*V2(rhoq,rhouq,rhovq,Eq);
+            q3 = Pq*V3(rhoq,rhouq,rhovq,Eq);
+            q4 = Pq*V4(rhoq,rhouq,rhovq,Eq);            
+        end
         
         % evaluate at quad/surface points
         q1q = Vq*q1;  q1M = Vfq*q1;
@@ -305,6 +335,10 @@ for i = 1:Nsteps
         QM{4} = EM;
         [rhs1 rhs2 rhs3 rhs4]  = RHS2D(rhoq,uq,vq,Eq,rhoM,uM,vM,EM,QM);
         
+        if (INTRK==5)
+            rhstest(i) = sum(sum(wJq.*(q1q.*(Vq*rhs1) + q2q.*(Vq*rhs2) + q3q.*(Vq*rhs3) + q4q.*(Vq*rhs4))));
+        end
+        
         res1 = rk4a(INTRK)*res1 + dt*rhs1;
         res2 = rk4a(INTRK)*res2 + dt*rhs2;
         res3 = rk4a(INTRK)*res3 + dt*rhs3;
@@ -317,7 +351,11 @@ for i = 1:Nsteps
         
     end;
     
-    if mod(i,10)==0 || i==Nsteps
+    rhoq = Vq*rho;
+    Sq = -rhoq.*s(rhoq,Vq*rhou,Vq*rhov,Vq*E);
+    entropy(i) = sum(sum(wJq.*Sq));
+    
+    if  (mod(i,5)==0 || i==Nsteps)
         clf
         pp = rho;
         vv = real(Vp*pp);
@@ -325,23 +363,46 @@ for i = 1:Nsteps
         axis equal
         axis tight
         colorbar
-        title(sprintf('time = %f',dt*i))
-%         view(3)
+        title(sprintf('time = %f, N = %d, K1D = %d',dt*i,N,K1D))
+        %                 view(3)
         drawnow
     end
     
 end
 
-[rhoex uex vex pex] = vortexSolution(xq,yq,FinalTime);
+[rq2 sq2 wq2] = Cubature2D(Nq+2);
+Vq2 = Vandermonde2D(N,rq2,sq2)/V;
+xq2 = Vq2*x; yq2 = Vq2*y;
+wJq2 = diag(wq2)*(Vq2*Pq*J);
+[rhoex uex vex pex] = vortexSolution(xq2,yq2,FinalTime);
 
-err = wJq.*(Vq*rho-rhoex).^2;
-L2err = sqrt(sum(err(:)))
+rhouex = rhoex.*uex;
+rhovex = rhoex.*vex;
+% p = (gamma-1)*(E-.5*rho*(u^2+v^2));
+Eex = pex/(gamma-1) + .5*rhoex.*(uex.^2+vex.^2);
 
-return
-figure(2)
-semilogy(dt*(1:Nsteps),energy,'--')
-hold on
-semilogy(dt*(1:Nsteps),abs(rhstest),'x')
+rhoq = Vq2*rho;
+rhouq = Vq2*rhou;
+rhovq = Vq2*rhov;
+Eq = Vq2*E;
+err = wJq2.*((rhoq-rhoex).^2 + (rhouq-rhouex).^2 + (rhovq-rhovex).^2 + (Eq-Eex).^2);
+L2err = sqrt(sum(err(:)));
+
+end
+% 
+% rhotmp = rho;
+% rhoutmp = rhou;
+% rhovtmp = rhov;
+% Etmp = E;
+% save tmpvars rhotmp rhoutmp rhovtmp Etmp 
+% 
+% figure(2)
+% dS = abs(entropy-entropy(1));
+% 
+% semilogy(dt*(1:Nsteps),dS,'.-')
+% hold on
+% % hold on
+% % semilogy(dt*(1:Nsteps),abs(rhstest),'x')
 
 
 function [rhs1 rhs2 rhs3 rhs4] = RHS2D(rhoq,uq,vq,Eq,rhoM,uM,vM,EM,QM)
@@ -397,7 +458,7 @@ rhs3 = zeros(Np,K);
 rhs4 = zeros(Np,K);
 for e = 1:K
     
-    % local aritrhoMetic operations - form on the fly for GPU
+    % local arithmetic operations - form on the fly for GPU
     [rhox rhoy] = meshgrid(rhoq(:,e)); [rhofx rhofy] = meshgrid(rhoM(:,e),rhoq(:,e));
     [ux uy]     = meshgrid(uq(:,e));       [ufx ufy] = meshgrid(uM(:,e),uq(:,e));
     [vx vy]     = meshgrid(vq(:,e));       [vfx vfy] = meshgrid(vM(:,e),vq(:,e));
@@ -432,6 +493,10 @@ for e = 1:K
     %     FxS3 = fxS3(rhox,ux,vx,Ex,rhoy,uy,vy,Ey);  FyS3 = fyS3(rhox,ux,vx,Ex,rhoy,uy,vy,Ey);
     %     FxS4 = fxS4(rhox,ux,vx,Ex,rhoy,uy,vy,Ey);  FyS4 = fyS4(rhox,ux,vx,Ex,rhoy,uy,vy,Ey);
     
+% if norm(rhoq(:,e) - mean(rhoq(:,e)),'fro')>1e-1
+%     keyboard
+% end
+    
     % premultiply by geofacs
     FrS1 = rxJK.*FxS1 + ryJK.*FyS1;     FsS1 = sxJK.*FxS1 + syJK.*FyS1;
     FrS2 = rxJK.*FxS2 + ryJK.*FyS2;     FsS2 = sxJK.*FxS2 + syJK.*FyS2;
@@ -457,18 +522,19 @@ for e = 1:K
     rhoavg = avg(rhofx,rhofy);
     uavg = avg(ufx,ufy); vavg = avg(vfx,vfy);
     pa = rhoavg./(2*avg(betax,betay));
+    % vnavg = vnormavg(ufx,vfx,ufy,vfy);
     vnavg = 2*(uavg.^2 + vavg.^2) - (avg(ufx.^2,ufy.^2) + avg(vfx.^2,vfy.^2));
-    
-    % averaging to prevent geometric aliasing
-    [rxJ1 rxJ2] = meshgrid(rxJ(:,e),rxJf(:,e)); rxJK = avg(rxJ1,rxJ2)';
-    f4aux = rholog./(2*(gamma-1)*logmean(betax,betay)) + pa + .5*rholog.*vnavg;
     
     FxSf1 = rholog.*uavg;      FySf1 = rholog.*vavg;
     FxSf2 = FxSf1.*uavg + pa;   FySf2 = FySf1.*uavg;
     FxSf3 = FySf2;              FySf3 = FySf1.*vavg + pa;
     
+    f4aux = rholog./(2*(gamma-1)*logmean(betax,betay)) + pa + .5*rholog.*vnavg;
     FxSf4 = f4aux.*uavg;
     FySf4 = f4aux.*vavg;
+    
+    % averaging to prevent geometric aliasing?
+    [rxJ1 rxJ2] = meshgrid(rxJ(:,e),rxJf(:,e)); rxJK = avg(rxJ1,rxJ2)';
     [sxJ1 sxJ2] = meshgrid(sxJ(:,e),sxJf(:,e)); sxJK = avg(sxJ1,sxJ2)';
     [ryJ1 ryJ2] = meshgrid(ryJ(:,e),ryJf(:,e)); ryJK = avg(ryJ1,ryJ2)';
     [syJ1 syJ2] = meshgrid(syJ(:,e),syJf(:,e)); syJK = avg(syJ1,syJ2)';
@@ -495,7 +561,7 @@ for e = 1:K
     fSproj3 = sum(VfPq.*FSf3',2);
     fSproj4 = sum(VfPq.*FSf4',2);
     
-    % intermediate fluxes - form on the fly on GPU    
+    % intermediate fluxes - form on the fly on GPU
     f1 = FSf1 + repmat((fSf1(:,e) - fSproj1 - .25*Lf1(:,e))',Nq,1) ;
     f2 = FSf2 + repmat((fSf2(:,e) - fSproj2 - .25*Lf2(:,e))',Nq,1) ;
     f3 = FSf3 + repmat((fSf3(:,e) - fSproj3 - .25*Lf3(:,e))',Nq,1) ;
@@ -503,14 +569,13 @@ for e = 1:K
     
     %% project back to polynomial space - can incorporate WADG here
     
-    rhs1(:,e) =  Pq*(divF1 + .5*sum(VqLq.*f1,2));    
+    rhs1(:,e) =  Pq*(divF1 + .5*sum(VqLq.*f1,2));
     rhs2(:,e) =  Pq*(divF2 + .5*sum(VqLq.*f2,2));
     rhs3(:,e) =  Pq*(divF3 + .5*sum(VqLq.*f3,2));
     rhs4(:,e) =  Pq*(divF4 + .5*sum(VqLq.*f4,2));
     
 end
 
-% keyboard
 rhs1 = -2*Pq*((Vq*rhs1)./J);
 rhs2 = -2*Pq*((Vq*rhs2)./J);
 rhs3 = -2*Pq*((Vq*rhs3)./J);
@@ -520,18 +585,18 @@ end
 
 
 
+
 function [rho u v p] = vortexSolution(x,y,t)
 
 global gamma
 x0 = 5;
 y0 = 0;
 beta = 5;
-r = sqrt((x-x0-t).^2 + (y-y0).^2);
+r2 = (x-x0-t).^2 + (y-y0).^2;
 
-u = 1 - beta*exp(1-r.^2).*(y-y0)/(2*pi);
-v = beta*exp(1-r.^2).*(x-x0-t)/(2*pi);
-% rho = 1 - (gamma-1)/(16*gamma*pi^2)*beta^2*exp(2*(1-r.^2));
-rho = 1 - (1/(8*gamma*pi^2))*(gamma-1)/2*(beta*exp(1-r.^2)).^2;
+u = 1 - beta*exp(1-r2).*(y-y0)/(2*pi);
+v = beta*exp(1-r2).*(x-x0-t)/(2*pi);
+rho = 1 - (1/(8*gamma*pi^2))*(gamma-1)/2*(beta*exp(1-r2)).^2;
 rho = rho.^(1/(gamma-1));
 p = rho.^gamma;
 
@@ -540,17 +605,13 @@ p = rho.^gamma;
 % v = zeros(size(x));
 % p = ones(size(x));
 
-% rho = ones(size(x));
-% u = ones(size(x));
-% v = zeros(size(x));
-% p = ones(size(x));
-
-% % pulse condition
-% x0 = 0;
-% rho = 2 + (abs(x-x0) < .5);
-% u = 0*rho;
-% m = rho.*u;
-% p = rho.^gamma;
-% E = p/(gamma-1) + .5*rho.*u.^2;
+if 1
+    % pulse condition
+    x0 = 10;
+    rho = 2 + (abs(x-x0) < 5);
+    u = 0*rho;
+    v = 0*rho;
+    p = rho.^gamma;
+end
 
 end

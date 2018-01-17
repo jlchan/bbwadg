@@ -5,7 +5,7 @@ clear -global *
 
 Globals2D
 
-K1D = 64;
+K1D = 128;
 N = 5;
 c_flag = 0;
 FinalTime = 30; % microseconds
@@ -142,7 +142,7 @@ Cnorm = .5*(Cnorm(vmapM) + Cnorm(vmapP));
 %     Crow{fld} = .5*(Crow{fld}(vmapM) + Crow{fld}(vmapP));
 % end
 
-tau0 = .5;
+tau0 = 1;
 for fld = 1:5
     tau{fld} = tau0*ones(size(mapM));
     if fld > 2        
@@ -188,7 +188,7 @@ end
 
 % compute time step size
 CN = (N+1)^2/2; % guessing...
-dt = 10/(Cmax*CN*max(Fscale(:)))
+dt = 5/(Cmax*CN*max(Fscale(:)))
 % dt = .0206;
 % dt = 2/(Cmax*CN*max(Fscale(:)))
 % ceil(2*tR/(1/(Cmax*CN*max(Fscale(:)))))

@@ -27,5 +27,6 @@ end
 dmodeds = dmodeds+fa.*tmp;
 
 % Normalize
-dmodedr = 2^(id+0.5)*dmodedr; dmodeds = 2^(id+0.5)*dmodeds;
+dmodedr = 2^(id+0.5)*dmodedr; 
+dmodeds = 2^(id+0.5)*dmodeds;
 return;

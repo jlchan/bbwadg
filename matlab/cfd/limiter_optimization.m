@@ -88,8 +88,8 @@ J = @(t) (S(U1v(Vf1,lim(rhoq,t(1)),lim(mq,t(2)),lim(Eq,t(3))),...
 %     Vf1*Pq*V2(lim(rhoq,t(1)),lim(mq,t(2)),lim(Eq,t(3))),...
 %     Vf1*Pq*V3(lim(rhoq,t(1)),lim(mq,t(2)),lim(Eq,t(3)))- T0)^2;
 
-% [t,fval,flag,out] = fminsearch(@(t) J(t) + .1*norm(t-1)^2,t);
-t = .9*t;
+[t,fval,flag,out] = fminsearch(@(t) J(t) + .1*norm(t-1)^2,t);
+% t = .9*t;
 rhoq = lim(rhoq,t(1));
 mq = lim(mq,t(2));
 Eq = lim(Eq,t(3));

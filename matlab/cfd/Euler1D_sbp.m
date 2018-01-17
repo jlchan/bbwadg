@@ -2,17 +2,18 @@ clear -global
 Globals1D;
 
 projectV = 1;
-CFL = .125;
+CFL = .125/2;
 % CFL = .125/2.5;
 % CFL = .125/4;
 N = 4;
-K1D = 40;
+K1D = 16;
 
-useSBP = 0;
+useSBP = 1;
 
 FinalTime = 1.8;
-% FinalTime = 1;
-opt = 3;
+FinalTime = .2;
+% FinalTime = 2;
+opt = 1;
 
 global tau
 tau = 1;
@@ -21,8 +22,8 @@ r = JacobiGL(0,0,N);
 % r = JacobiGQ(0,0,N);
 
 [rq wq] = JacobiGL(0,0,N); rq = rq*(1-1e-11);
-% [rq wq] = JacobiGL(0,0,N+4); rq = rq*(1-1e-11);
-% [rq wq] = JacobiGQ(0,0,N);
+[rq wq] = JacobiGL(0,0,N+4); rq = rq*(1-1e-11);
+% [rq wq] = JacobiGQ(0,0,N+1);
 
 Nq = length(rq);
 
@@ -193,6 +194,7 @@ elseif opt==2
     % BCs
     rhoL = 1; rhoR = .125;
     pL = 1; pR = .1;
+%     rhoR = .1; pR = .05;
     uL = 0; uR = 0;
     mL = 0; mR = 0;
     EL = pL/(gamma-1) + .5*rhoL*uL.^2;
@@ -258,9 +260,15 @@ xq2 = Vandermonde1D(N,[-1;rq;1])/V*x;
 
 wJq = diag(wq)*((Vandermonde1D(N,rq)/V)*J);
 
+dt0 = dt;
+
 figure(1)
 for i = 1:Nsteps
-    
+%     if i < 50
+%         dt = dt0/4;
+%     else
+%         dt = dt0;
+%     end
     for INTRK = 1:5
         
         % interpolate to quadrature
@@ -290,6 +298,8 @@ for i = 1:Nsteps
         mq2 = [Vf(1,:);Vq;Vf(2,:)]*m;
         Eq1 = Eq([Nq+1,1:Nq,Nq+2],:);
         Eq2 = [Vf(1,:);Vq;Vf(2,:)]*E;
+        pq1 = (gamma-1)*(Eq1-.5*mq1.^2./rhoq1);
+        pq2 = (gamma-1)*(Eq2-.5*mq2.^2./rhoq2);
         
         SU = @(rho,m,E) -rho.*s(rho,m,E);
         S1 = SU(rhoq1,mq1,Eq1);
@@ -299,9 +309,9 @@ for i = 1:Nsteps
         %             keyboard
         %         end
         
-        if 1 %INTRK==1 && mod(i-1,5)==0
+        if INTRK==1 && mod(i-1,5)==0
             clf
-            subplot(2,1,1)
+%             subplot(2,1,1)
             hold on
             plot(xq2,rhoq1,'ro--','linewidth',2)
             plot(xq2,rhoq2,'b-','linewidth',2)
@@ -309,13 +319,16 @@ for i = 1:Nsteps
             wq0 = [0;wq;0];
             plot(.5*wq0'*xq2,.5*wq0'*rhoq1,'s','linewidth',2)
             plot(.5*wq0'*xq2,.5*wq0'*rhoq2,'x','linewidth',2)
-            plot(xq2,Eq1,'g^--','linewidth',2)
-            plot(xq2,Eq2,'k-','linewidth',2)
-            plot(.5*wq0'*xq2,.5*wq0'*Eq1,'s','linewidth',2)
-            plot(.5*wq0'*xq2,.5*wq0'*Eq2,'x','linewidth',2)
+%             plot(xq2,Eq1,'g^--','linewidth',2)
+%             plot(xq2,Eq2,'k-','linewidth',2)
+%             plot(.5*wq0'*xq2,.5*wq0'*Eq1,'s','linewidth',2)
+%             plot(.5*wq0'*xq2,.5*wq0'*Eq2,'x','linewidth',2)
+            plot(xq2,pq1,'g^--','linewidth',2)
+            plot(xq2,pq2,'k-','linewidth',2)
+            plot(.5*wq0'*xq2,.5*wq0'*pq1,'s','linewidth',2)
+            plot(.5*wq0'*xq2,.5*wq0'*pq2,'x','linewidth',2)
             
-            
-            subplot(2,1,2)
+%             subplot(2,1,2)
 %             hold on
 %             plot(xq2,V1(rhoq2,mq2,Eq2),'ro--','linewidth',2)
 %             plot(xq2,VqPq2*V1(rhoq2,mq2,Eq2),'b-','linewidth',2)
@@ -328,14 +341,15 @@ for i = 1:Nsteps
             %
             %             %semilogy(xq2,repmat(.5*[wq;0;0]'*max(0,S1-S2),Nq+2,1),'o','linewidth',2)
             % %             semilogy(xq2,repmat(.5*[wq;0;0]'*abs(S1-S2),Nq+2,1),'o','linewidth',2)
-            semilogy(.5*wq0'*xq2,.5*wq0'*max(1e-14,S1-S2),'bx','linewidth',2)
+%             semilogy(.5*wq0'*xq2,.5*wq0'*max(1e-14,S1-S2),'bx','linewidth',2)
 %                         semilogy(xq2,abs(S1-S2),'b-','linewidth',2)
             %             semilogy(xq2,abs(rhoq1-rhoq2).^2 + abs(mq1-mq2).^2 + abs(Eq1-Eq2).^2,'b-','linewidth',2)
             % %             hold on
             % %             plot(xq2,abs(Eq1-Eq2),'r-','linewidth',2)
-            
+%             axis([-.5 .5 1e-11 .25])
+
             title(sprintf('timestep %d out of %d, RK step %d,time %f',i,Nsteps,INTRK,dt*i))
-                        axis([-.5 .5 1e-11 .25])
+                        
             % pause
             
             if (i==1 && INTRK==1)
@@ -351,7 +365,7 @@ for i = 1:Nsteps
         end
         
         [rhs1 rhs2 rhs3] = rhsEuler(rhoq,mq,Eq,rho,m,E,i,INTRK);
-        
+        rhsmax(INTRK+5*(i-1)) = max([max(abs(rhs1(:))),max(abs(rhs2(:))),max(abs(rhs3(:)))]);
         if 0
             rhoM = rhoq(end-1:end,:);
             mM = mq(end-1:end,:);
@@ -391,7 +405,7 @@ for i = 1:Nsteps
     mq = Vq*m;
     Eq = Vq*E;
     Sq = -rhoq.*s(rhoq,mq,Eq);
-    Si = sum(sum(wJq.*Sq));
+    S(i) = sum(sum(wJq.*Sq));
     %     S(i)
     
     if 0
@@ -409,12 +423,16 @@ for i = 1:Nsteps
         % plot(xq,VqPq*V2(rhoq,mq,Eq),'r-','linewidth',2)
         % plot(xq,VqPq*V3(rhoq,mq,Eq),'k-','linewidth',2)
         
-        title(sprintf('Time = %f, entropy = %f',dt*i,Si))
+        title(sprintf('Time = %f, entropy = %f',dt*i,S(i)))
         %         axis([-5 5 -1 7])
         hold off
         drawnow
     end
 end
+
+abs(S(Nsteps)-S(1))
+% figure
+% plot(rhsmax,'o')
 
 if opt==0
     % sine solution
