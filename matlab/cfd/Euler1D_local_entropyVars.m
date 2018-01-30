@@ -1,10 +1,10 @@
 clear
 Globals1D;
 
-CFL = .125/4;
-% CFL = .125;
-N = 4;
-K1D = 40;
+CFL = .125/2.5;
+% CFL = .125/4;
+N = 2;
+K1D = 100;
 FinalTime = 1.8;
 % FinalTime = .2;
 opt = 3;
@@ -16,7 +16,7 @@ r = JacobiGL(0,0,N);
 % r = JacobiGQ(0,0,N);
 
 [rq wq] = JacobiGL(0,0,N); rq = .9999999999*rq;
-[rq wq] = JacobiGQ(0,0,N+1);
+% [rq wq] = JacobiGQ(0,0,N+1);
 
 % % include boundary nodes for extraction
 rq = [-(1-1e-11);rq;(1-1e-11)];
@@ -31,7 +31,8 @@ rq2 = rq; wq2 = wq;
 if opt==1 || opt==0
     [Nv, VX, K, EToV] = MeshGen1D(-1,1,K1D);
 elseif opt==2
-    [Nv, VX, K, EToV] = MeshGen1D(-.5,.5,K1D);
+    [Nv, VX, K, EToV] = MeshGen1D(-.5,.5,K1D);    
+%     VX = VX*8;
 elseif opt==3
     [Nv, VX, K, EToV] = MeshGen1D(-5,5,K1D);
 elseif opt==4
@@ -111,7 +112,7 @@ f3 = @(rhoL,rhoR,uL,uR,EL,ER) f1(rhoL,rhoR,uL,uR,EL,ER)...
     + avg(uL,uR).*f2(rhoL,rhoR,uL,uR,EL,ER);
 
 
-% Jacobian on time derivative
+% Jacobian on time derivative: inv(dU/dV) = dV/dU
 dVdU11 = @(rho,m,E)(1.0./(E.*rho.*2.0-m.^2).^2.*(gamma.*m.^4+m.^4+E.^2.*gamma.*rho.^2.*4.0-E.*gamma.*m.^2.*rho.*4.0))./rho;
 dVdU12 = @(rho,m,E)m.^3.*1.0./(E.*rho.*2.0-m.^2).^2.*-2.0;
 dVdU13 = @(rho,m,E)rho.*(E.*rho-m.^2).*1.0./(E.*rho.*2.0-m.^2).^2.*-4.0;
@@ -119,12 +120,12 @@ dVdU22 = @(rho,m,E)rho.*(E.*rho.*2.0+m.^2).*1.0./(E.*rho.*2.0-m.^2).^2.*2.0;
 dVdU23 = @(rho,m,E)m.*rho.^2.*1.0./(E.*rho.*2.0-m.^2).^2.*-4.0;
 dVdU33 = @(rho,m,E)rho.^3.*1.0./(E.*rho.*2.0-m.^2).^2.*4.0;
 
-% dUdV11 = @(V1,V2,V3)-(V3.*exp(-(-V1+gamma+(V2.^2.*(1.0./2.0))./V3)./(gamma-1.0)).*((-V3).^(-gamma).*(gamma-1.0)).^(1.0./(gamma-1.0)))./(gamma-1.0);
-% dUdV12 = @(V1,V2,V3)(V2.*exp(-(-V1+gamma+(V2.^2.*(1.0./2.0))./V3)./(gamma-1.0)).*((-V3).^(-gamma).*(gamma-1.0)).^(1.0./(gamma-1.0)))./(gamma-1.0);
-% dUdV13 = @(V1,V2,V3)(exp((V1.*V3-V3.*gamma-V2.^2.*(1.0./2.0))./(V3.*(gamma-1.0))).*((-V3).^(-gamma).*(gamma-1.0)).^(1.0./(gamma-1.0)).*(V3.*2.0-V2.^2).*(1.0./2.0))./(V3.*(gamma-1.0));
-% dUdV22 = @(V1,V2,V3)-(exp((V1.*V3-V3.*gamma-V2.^2.*(1.0./2.0))./(V3.*(gamma-1.0))).*((-V3).^(-gamma).*(gamma-1.0)).^(1.0./(gamma-1.0)).*(V3-V3.*gamma+V2.^2))./(V3.*(gamma-1.0));
-% dUdV23 = @(V1,V2,V3)(V2.*1.0./V3.^2.*exp((V1.*V3-V3.*gamma-V2.^2.*(1.0./2.0))./(V3.*(gamma-1.0))).*((-V3).^(-gamma).*(gamma-1.0)).^(1.0./(gamma-1.0)).*(V3.*gamma.*2.0-V2.^2).*(-1.0./2.0))./(gamma-1.0);
-% dUdV33 = @(V1,V2,V3)(1.0./V3.^3.*exp((V1.*V3-V3.*gamma-V2.^2.*(1.0./2.0))./(V3.*(gamma-1.0))).*((-V3).^(-gamma).*(gamma-1.0)).^(1.0./(gamma-1.0)).*(V3.^2.*gamma.*4.0+V2.^4-V2.^2.*V3.*gamma.*4.0).*(-1.0./4.0))./(gamma-1.0);
+dUdV11 = @(V1,V2,V3)-(V3.*exp(-(-V1+gamma+(V2.^2.*(1.0./2.0))./V3)./(gamma-1.0)).*((-V3).^(-gamma).*(gamma-1.0)).^(1.0./(gamma-1.0)))./(gamma-1.0);
+dUdV12 = @(V1,V2,V3)(V2.*exp(-(-V1+gamma+(V2.^2.*(1.0./2.0))./V3)./(gamma-1.0)).*((-V3).^(-gamma).*(gamma-1.0)).^(1.0./(gamma-1.0)))./(gamma-1.0);
+dUdV13 = @(V1,V2,V3)(exp((V1.*V3-V3.*gamma-V2.^2.*(1.0./2.0))./(V3.*(gamma-1.0))).*((-V3).^(-gamma).*(gamma-1.0)).^(1.0./(gamma-1.0)).*(V3.*2.0-V2.^2).*(1.0./2.0))./(V3.*(gamma-1.0));
+dUdV22 = @(V1,V2,V3)-(exp((V1.*V3-V3.*gamma-V2.^2.*(1.0./2.0))./(V3.*(gamma-1.0))).*((-V3).^(-gamma).*(gamma-1.0)).^(1.0./(gamma-1.0)).*(V3-V3.*gamma+V2.^2))./(V3.*(gamma-1.0));
+dUdV23 = @(V1,V2,V3)(V2.*1.0./V3.^2.*exp((V1.*V3-V3.*gamma-V2.^2.*(1.0./2.0))./(V3.*(gamma-1.0))).*((-V3).^(-gamma).*(gamma-1.0)).^(1.0./(gamma-1.0)).*(V3.*gamma.*2.0-V2.^2).*(-1.0./2.0))./(gamma-1.0);
+dUdV33 = @(V1,V2,V3)(1.0./V3.^3.*exp((V1.*V3-V3.*gamma-V2.^2.*(1.0./2.0))./(V3.*(gamma-1.0))).*((-V3).^(-gamma).*(gamma-1.0)).^(1.0./(gamma-1.0)).*(V3.^2.*gamma.*4.0+V2.^4-V2.^2.*V3.*gamma.*4.0).*(-1.0./4.0))./(gamma-1.0);
 
 
 %%
@@ -225,65 +226,209 @@ q3 = Pq*V3(rhoex(xq),mex(xq),Eex(xq));
 % mapP(1) = mapM(end); mapP(end) = mapM(1);
 % vmapP(1) = vmapM(end); vmapP(end) = vmapM(1);
 
+% F = V*(diag([1; zeros(Np-1,1)])/V);
+% q1 = F*q1;
+% q2 = F*q2;
+% q3 = F*q3;
 
 wJq = diag(wq)*(Vq*J);
 
 figure(1)
 for i = 1:Nsteps  
     
-    if (i < 150)
-        CFL = .125/4;
-        dt = CFL*h/CN;
-        Nsteps = ceil(FinalTime/dt);
-        dt = FinalTime/Nsteps;
-    elseif i == 150
-        CFL = .125/2.5;
-        dt = CFL*h/N;        
-    end
-    if (dt*i > FinalTime)
-        dt = FinalTime-(i-1)*dt;        
-        i=Nsteps;
-    end
-    
     for INTRK = 1:5
         
         % interpolate to quadrature
         q1q = Vq*q1;
         q2q = Vq*q2;
-        q3q = Vq*q3;
+        q3q = Vq*q3;                                           
+                         
+        rhoq = U1(q1q,q2q,q3q);
+        mq   = U2(q1q,q2q,q3q);
+        Eq   = U3(q1q,q2q,q3q);
+        
+        A11 = dUdV11(q1q, q2q, q3q);
+        A12 = dUdV12(q1q, q2q, q3q);
+        A13 = dUdV13(q1q, q2q, q3q);
+        A22 = dUdV22(q1q, q2q, q3q);
+        A23 = dUdV23(q1q, q2q, q3q);
+        A33 = dUdV33(q1q, q2q, q3q);               
+                        
+        if 0 % compute q using WADG projection: q= P(inv(W)*P(Wq))
+            iA11 = dVdU11(rhoq,mq,Eq);
+            iA12 = dVdU12(rhoq,mq,Eq);
+            iA13 = dVdU13(rhoq,mq,Eq);
+            iA22 = dVdU22(rhoq,mq,Eq);
+            iA23 = dVdU23(rhoq,mq,Eq);
+            iA33 = dVdU33(rhoq,mq,Eq);
+            
+            q1t = VqPq*(A11.*q1q + A12.*q2q + A13.*q3q);
+            q2t = VqPq*(A12.*q1q + A22.*q2q + A23.*q3q);
+            q3t = VqPq*(A13.*q1q + A23.*q2q + A33.*q3q);
+            q1q = VqPq*(iA11.*q1t + iA12.*q2t + iA13.*q3t);
+            q2q = VqPq*(iA12.*q1t + iA22.*q2t + iA23.*q3t);
+            q3q = VqPq*(iA13.*q1t + iA23.*q2t + iA33.*q3t);
+                        
+        end
+        
+        % limiting - preserv positivity of q1, -q3
+        tol = 1e-8;
+        eids = find(any(q1q < tol,1));
+        q1avg = repmat(.5*wq'*(q1q),Nq,1);        
+        for e = eids
+            t = min((q1avg(1,e) - tol) / (q1avg(1,e)-min(q1q(:,e))),1);
+            q1q(:,e) = q1avg(:,e) + t*(q1q(:,e)-q1avg(:,e));            
+        end
+                
+        eids = find(any(q3q > -tol,1));
+        q3avg = repmat(.5*wq'*(q3q),Nq,1);
+        for e = eids
+            t = min((q3avg(1,e) - tol) / (q1avg(3,e)-max(q3q(:,e))),1);
+            q3q(:,e) = q3avg(:,e) + t*(q3q(:,e)-q3avg(:,e));
+        end        
         
         rhoq = U1(q1q,q2q,q3q);
         mq   = U2(q1q,q2q,q3q);
         Eq   = U3(q1q,q2q,q3q);
         
         [rhs1 rhs2 rhs3] = rhsEuler(rhoq,mq,Eq,q1q,q2q,q3q);
+                
+%         if i==5 && INTRK==4
+%             keyboard
+%         end
         
-        % apply WADG
-        r1 = Vq*rhs1;
-        r2 = Vq*rhs2;
-        r3 = Vq*rhs3;
-              
-%         F = Vq*Pq;
-        F = eye(Nq); 
-        A11 = F*dVdU11(rhoq,mq,Eq);
-        A12 = F*dVdU12(rhoq,mq,Eq);
-        A13 = F*dVdU13(rhoq,mq,Eq);
-        A22 = F*dVdU22(rhoq,mq,Eq);
-        A23 = F*dVdU23(rhoq,mq,Eq);
-        A33 = F*dVdU33(rhoq,mq,Eq);
+%         rhs1 = F*rhs1;
+%         rhs2 = F*rhs2;
+%         rhs3 = F*rhs3;
         
-        rhs1 = Pq*(A11.*r1 + A12.*r2 + A13.*r3);
-        rhs2 = Pq*(A12.*r1 + A22.*r2 + A23.*r3);
-        rhs3 = Pq*(A13.*r1 + A23.*r2 + A33.*r3);                        
+        option = 1;
+        if option==1 % apply WADG
+            
+            r1 = Vq*rhs1;
+            r2 = Vq*rhs2;
+            r3 = Vq*rhs3;
+            
+            iA11 = dVdU11(rhoq,mq,Eq);
+            iA12 = dVdU12(rhoq,mq,Eq);
+            iA13 = dVdU13(rhoq,mq,Eq);
+            iA22 = dVdU22(rhoq,mq,Eq);
+            iA23 = dVdU23(rhoq,mq,Eq);
+            iA33 = dVdU33(rhoq,mq,Eq);
+            
+            % compute PW*rhs
+            rhs1t = VqPq*(iA11.*r1 + iA12.*r2 + iA13.*r3);
+            rhs2t = VqPq*(iA12.*r1 + iA22.*r2 + iA23.*r3);
+            rhs3t = VqPq*(iA13.*r1 + iA23.*r2 + iA33.*r3);
+
+            if 1 % conservative correction
+                
+                % subtract off weighted mean from RHS: int(u - W*PW(u))
+                %                 Adr1 = wq'*(r1 - (A11.*rhs1t + A12.*rhs2t + A13.*rhs3t));
+                %                 Adr2 = wq'*(r2 - (A12.*rhs1t + A22.*rhs2t + A23.*rhs3t));
+                %                 Adr3 = wq'*(r3 - (A13.*rhs1t + A23.*rhs2t + A33.*rhs3t));
+                ravg1 = wq'*r1;
+                ravg2 = wq'*r2;
+                ravg3 = wq'*r3;
+                Adr1 = wq'*(A11.*rhs1t + A12.*rhs2t + A13.*rhs3t);
+                Adr2 = wq'*(A12.*rhs1t + A22.*rhs2t + A23.*rhs3t);
+                Adr3 = wq'*(A13.*rhs1t + A23.*rhs2t + A33.*rhs3t);
+                
+                % compute average of int(W) to invert
+                a11 = wq'*A11; a12 = wq'*A12; a13 = wq'*A13;
+                a22 = wq'*A22; a23 = wq'*A23;
+                a33 = wq'*A33;
+                
+                % apply local correction + limiting
+                for e = 1:K
+                    A0 = [a11(e) a12(e) a13(e); a12(e) a22(e) a23(e); a13(e) a23(e) a33(e)];
+                    %             kappaA0(e) = cond(A0);
+                    pravg = A0\[Adr1(e);Adr2(e);Adr3(e)];
+                    ravg = A0\[ravg1(e);ravg2(e);ravg3(e)];
+                    
+                    aa = .85;
+                    rhs1(:,e) = Pq*(aa*(rhs1t(:,e) - pravg(1)) + ravg(1));
+                    rhs2(:,e) = Pq*((rhs2t(:,e) - pravg(2)) + ravg(2));
+                    rhs3(:,e) = Pq*(aa*(rhs3t(:,e) - pravg(3)) + ravg(3));
+                end                                                
+            end                        
+           
+            
+        elseif option==2
+            
+            for e = 1:K
+                MA = [Vq'*diag(wq.*A11(:,e))*Vq Vq'*diag(wq.*A12(:,e))*Vq Vq'*diag(wq.*A13(:,e))*Vq ;
+                    Vq'*diag(wq.*A12(:,e))*Vq Vq'*diag(wq.*A22(:,e))*Vq Vq'*diag(wq.*A23(:,e))*Vq ;
+                    Vq'*diag(wq.*A13(:,e))*Vq Vq'*diag(wq.*A23(:,e))*Vq Vq'*diag(wq.*A33(:,e))*Vq ];
+                rhs = MA\(kron(eye(3),M)*[rhs1(:,e);rhs2(:,e);rhs3(:,e)]);
+                rhs = reshape(rhs,Np,3);
+                rhs1(:,e) = rhs(:,1);
+                rhs2(:,e) = rhs(:,2);
+                rhs3(:,e) = rhs(:,3);
+            end
+        end
         
-%         keyboard
+        rhs = [rhs1;rhs2;rhs3];
+        if any(isnan(rhs(:))) || norm(rhs,'fro')>1e9
+            beep
+            keyboard
+        end
         
         res1 = rk4a(INTRK)*res1 + dt*rhs1;
         res2 = rk4a(INTRK)*res2 + dt*rhs2;
         res3 = rk4a(INTRK)*res3 + dt*rhs3;
         q1 = q1 + rk4b(INTRK)*res1;
         q2 = q2 + rk4b(INTRK)*res2;
-        q3 = q3 + rk4b(INTRK)*res3;
+        q3 = q3 + rk4b(INTRK)*res3;                                 
+                
+        if 0
+            q1p = Vp*q1;
+            q2p = Vp*q2;
+            q3p = Vp*q3;
+            
+            rhop = U1(q1p,q2p,q3p);
+            mp = U2(q1p,q2p,q3p);
+            Ep = U3(q1p,q2p,q3p);
+            up = mp./rhop;
+            
+            subplot(2,1,1)
+            pp = (gamma-1)*(Ep-.5*rhop.*up.^2);
+            plot(xp,rhop,'b-','linewidth',2)
+            hold on
+            plot(xp,up,'r-.','linewidth',2)
+            plot(xp,pp,'k--','linewidth',2)
+            
+            q1q = Vq*q1;
+            q2q = Vq*q2;
+            q3q = Vq*q3;
+            rho0 = sum(wJq.*U1(q1q,q2q,q3q),1)./sum(wJq,1);
+            m0 = sum(wJq.*U2(q1q,q2q,q3q),1)./sum(wJq,1);
+            E0 = sum(wJq.*U3(q1q,q2q,q3q),1)./sum(wJq,1);
+            u0 = m0./rho0;
+            p0 = (gamma-1)*(E0-.5*rho0.*u0.^2);
+            plot(xp0,rho0,'bo','linewidth',2)
+            plot(xp0,u0,'ro','linewidth',2)
+            plot(xp0,p0,'ko','linewidth',2)
+            
+            title(sprintf('Time = %f, step = %d out of %d, INTRK = %d',dt*i,i,Nsteps,INTRK))
+            %         axis([-5 5 -1 7])
+            hold off
+            
+            subplot(2,1,2)
+            plot(xp,q1p,'b-','linewidth',2)
+            hold on
+            plot(xp,q2p,'r-.','linewidth',2)
+            plot(xp,q3p,'k--','linewidth',2)
+            hold off
+            
+            drawnow
+        end
+        
+%         % check if problem
+%         if any(q1(:) < 1e-8) || any(q3(:)>-1e-8)
+%             beep
+%             keyboard
+%         end   
+        
         
     end
     
@@ -297,16 +442,18 @@ for i = 1:Nsteps
     Sq = -rhoq.*sq/(gamma-1);
     energy(i) = sum(sum(wJq.*Sq));
     
-    if mod(i,10)==0 || i==Nsteps
+    if mod(i,5)==0 || i==Nsteps
         
         q1p = Vp*q1;
         q2p = Vp*q2;
         q3p = Vp*q3;
-        
+                
         rhop = U1(q1p,q2p,q3p);
         mp = U2(q1p,q2p,q3p);
         Ep = U3(q1p,q2p,q3p);
         up = mp./rhop;
+        
+        subplot(2,1,1)
         pp = (gamma-1)*(Ep-.5*rhop.*up.^2);
         plot(xp,rhop,'b-','linewidth',2)
         hold on
@@ -328,10 +475,22 @@ for i = 1:Nsteps
         title(sprintf('Time = %f, step = %d out of %d',dt*i,i,Nsteps))
         %         axis([-5 5 -1 7])
         hold off
+        
+        subplot(2,1,2)
+        plot(xp,q1p,'b-','linewidth',2)
+        hold on
+        plot(xp,q2p,'r-.','linewidth',2)
+        plot(xp,q3p,'k--','linewidth',2)
+        hold off
+        
         drawnow
     end
 end
 
+load handel
+sound(y,Fs);
+
+return
 % sine solution
 t = FinalTime;
 rhoex = @(x) (2 + sin(pi*(x - t)));
