@@ -1,20 +1,37 @@
-function [rho lam] = advec_spectra(NB,Ksub,K1D,smoothKnots,alphain)
+% rhoN = zeros(5,3);
+% for NB = 2:5
+%     sk = 1;
+%     Kvec = 2.^(5:9);
+%     for Ksub = Kvec
+%         alpha = 1;
+%         smoothKnots = 0*25;
+%         K1D = 1;        
+%         [rho lam] = advec1D_spectra(NB,Ksub,K1D,smoothKnots,alpha);
+%         rhoN(NB,sk) = rho;
+%         sk = sk + 1;
+%     end
+%     NB
+%     plot(Kvec,rhoN(NB,:),'o--','linewidth',2,'DisplayName',sprintf('N=%d',NB))
+%     hold on
+% end
+% title('Spectral radius of M^{-1}(A+S)','fontsize',16)
+% title('Spectral radius of M^{-1}A','fontsize',16)
+% grid on
+% axis equal
+% set(gca,'fontsize',16)
+% xlabel('Number of elements K','fontsize',15)
+%%
+
 
 Globals1D;
 
-if nargin==0    
-    NB = 6;
-    Ksub = 32; %ceil(N/2);
-    K1D = 1; 
-    smoothKnots = 0;
-end
+NB = 6;
+Ksub = 128; %ceil(N/2);
+K1D = 1;
+smoothKnots = 0;
 global alpha
-if nargin < 5
-    alpha = 1;
-else 
-    alpha = alphain;
-end
-    
+alpha = 1.0;
+
 FinalTime = 1;
 
 N = NB+Ksub-1; % number of sub-mesh splines
@@ -66,38 +83,56 @@ a(:,1) = 1;
 
 %% check eigs
 
-if 1
-    A = zeros((N+1)*K);
-    u = zeros(N+1,K);
-    for i = 1:(N+1)*K
-        u(i) = 1;
-        rhsu = AdvecRHS1D(u);
-%         keyboard
-        A(:,i) = rhsu(:);
-        u(i) = 0;
-    end    
-    [W D] = eig(A);
-    lam = diag(D);
- 
-    [rho id] = max(abs(lam));
-    return
+As = zeros((N+1)*K);
+u = zeros(N+1,K);
+for i = 1:(N+1)*K
+    u(i) = 1;
+    rhsu = AdvecRHS1D(u);    
+    As(:,i) = rhsu(:);
+    u(i) = 0;
+end
+
+alpha = 0;
+A = zeros((N+1)*K);
+u = zeros(N+1,K);
+for i = 1:(N+1)*K
+    u(i) = 1;
+    rhsu = AdvecRHS1D(u);    
+    A(:,i) = rhsu(:);
+    u(i) = 0;
+end
+
+S = As-A;
+MM = kron(diag(J(1,:)),M);
+
+[W D] = eig(As);
+lam = diag(D);
+
+[rho id] = max(abs(lam));
+rho
 tau = alpha;
-    hold on
-    if abs(tau-1)<1e-8
-        plot(lam,'o','linewidth',2,'markersize',8)
-    elseif abs(tau)<1e-8
-        plot(lam,'x','linewidth',2,'markersize',8)
-    else
-        plot(lam,'^','linewidth',2,'markersize',8)
-    end
+
+A = MM*A;
+A(abs(A)<1e-10) = 0;
+S = MM*S;
+S(abs(S)<1e-10) = 0;
+A = A+S;
+return
+hold on
+if abs(tau-1)<1e-8
+    plot(lam,'o','linewidth',2,'markersize',8)
+elseif abs(tau)<1e-8
+    plot(lam,'x','linewidth',2,'markersize',8)
+else
+    plot(lam,'^','linewidth',2,'markersize',8)
+end
 %     keyboard
+axis equal
 
 plot(rp,Vp*W(:,id))
 
-    return
+return
 
-%     keyboard
-end
 
 % h = legend('\tau = 0','\tau = 1/2','\tau = 1');set(h,'fontsize',14)
 grid on
@@ -111,7 +146,7 @@ axis([-100 50 -110 110])
 % % u = uex(x);
 % % u = BVDM\uex(xB); % initialize w/lsq fit
 % u = M\(Bq'*diag(wq)*uex(xq));
-% 
+%
 % % plot(xp,uex(xp));return
 
 function [rhsu] = AdvecRHS1D(u)
@@ -133,5 +168,5 @@ du(:) = (a(vmapP).*u(vmapP)-a(vmapM).*u(vmapM)).*nx(:)/2-(alpha)*1/2*(a(vmapP).*
 % compute right hand sides of the semi-discrete PDE
 rhsu = -a.*rx.*(Dr*u) - LIFT*(Fscale.*(du));
 
-return
+end
 

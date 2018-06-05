@@ -125,7 +125,7 @@ tau = 0;
 
 
 %%
-if 1 && nargin==0
+if 0 && nargin==0
     
     e = zeros(3*Np*K,1);
     A = zeros(3*Np*K);

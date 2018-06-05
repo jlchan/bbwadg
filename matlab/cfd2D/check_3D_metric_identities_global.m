@@ -1,6 +1,6 @@
 %%
 Globals3D
-N = 5;
+N = 4;
 
 filename = 'Grid/cube1.msh';
 [Nv, VX, VY, VZ, K, EToV] = MeshReaderGmsh3D(filename);
@@ -13,7 +13,7 @@ StartUp3D;
 % y = y + a*cos(.5*pi*x).*cos(.5*pi*y).*cos(.5*pi*z);
 % z = z + a*cos(.5*pi*x).*cos(.5*pi*y).*cos(.5*pi*z);
 
-a = .05;
+a = .1;
 x = r - a*(r+s).^N;
 y = s + a/2*(s+t).^N;
 z = t + a/3*(r+t).^N;
@@ -41,6 +41,30 @@ Lq = M\(Vfq'*diag(wfq));
 Drfq = Vfq*Dr;
 Dsfq = Vfq*Ds;
 Dtfq = Vfq*Dt;
+
+Nfqf = length(rqtri);
+e = ones(Nfqf,1); zz = zeros(Nfqf,1);
+nrJ = [zz;zz;e;-e];
+nsJ = [zz;-e;e;zz];
+ntJ = [-e;zz;e;zz];
+
+DNr = [Vq*Dr*Pq - .5*Vq*Lq*diag(nrJ)*Vfq*Pq .5*Vq*Lq*diag(nrJ);
+    -.5*diag(nrJ)*Vfq*Pq .5*diag(nrJ)];
+DNs = [Vq*Ds*Pq - .5*Vq*Lq*diag(nsJ)*Vfq*Pq .5*Vq*Lq*diag(nsJ);
+    -.5*diag(nsJ)*Vfq*Pq .5*diag(nsJ)];
+DNt = [Vq*Dt*Pq - .5*Vq*Lq*diag(ntJ)*Vfq*Pq .5*Vq*Lq*diag(ntJ);
+    -.5*diag(ntJ)*Vfq*Pq .5*diag(ntJ)];
+WN = diag([wq;wfq]);
+
+DNr_skew = [Vq*Dr*Pq - .5*Vq*Lq*diag(nrJ)*Vfq*Pq .5*Vq*Lq*diag(nrJ);
+    -.5*diag(nrJ)*Vfq*Pq 0*.5*diag(nrJ)];
+QNr_skew = WN*DNr_skew;
+
+QNr = WN*DNr;
+QNs = WN*DNs;
+QNt = WN*DNt;
+% WN = diag([wq;wfq]);
+% Qr = [Drq - .5*Vq*Lq*diag(nrJ)];
 
 %%
 
@@ -104,40 +128,70 @@ nz = nz./sJ;
 
 sJ = sJ.*Jf;    
 
-%% div-free projection
-% min (1/2)*||G-Gh||^2_L2 = .5*(G,G) - (G,Gh) + .5*(Gh,Gh)
-% st        (Gh,grad(v)) = L*(nx)
-ids = 1:Np;
-
-Div = [Dr'*M Ds'*M Dt'*M]; % weak divergence: linearly dependent cols
-MM = blkdiag(M,M,M);
-
-UDF = null(Div); % div-free V
-[Uu, ~, ~] = svd(MM*UDF);
-UD = Uu(:,size(UDF,2)+1:end); % L2 orthogonal component to UD
-[Utest,~,~] = svd(M*ones(Np,1)); % remove constant mode from nodal basis
-Utest = Utest(:,2:end);
-
-fx = [rxJ;sxJ;txJ];
-gx = nxJ;
-
-UDFPq = UDF*((UDF'*MM*UDF)\(UDF'*kron(eye(3),Vq'*diag(wq))));
-UDPq = UD*((Utest'*Div*UD)\(Utest'*Vfq'*diag(wfq)));
-u_divfree = UDFPq*fx; % L2 projection
-u_div = UDPq*gx; % weak lift with null space removed
-ux = u_div + u_divfree;
-
-norm(kron(eye(3),Vq)*ux - [rxJ;sxJ;txJ],'fro') % constrained projection
-norm(kron(eye(3),Vq*Pq)*[rxJ;sxJ;txJ] - [rxJ;sxJ;txJ],'fro') % L2 projection
-
-rxJ = ux(ids,:);
-sxJ = ux(ids+Np,:);
-txJ = ux(ids+2*Np,:);
-
-Vq*[rxJ sxJ txJ]
-
-%% apply derivatives of constant u
+if 0
+    %% div-free projection
+    % min (1/2)*||G-Gh||^2_L2 = .5*(G,G) - (G,Gh) + .5*(Gh,Gh)
+    % st        (Gh,grad(v)) = L*(nx)
+    ids = 1:Np;
     
-% norm(Dr'*M*rxJ + Ds'*M*sxJ + Dt'*M*txJ - M*Lq*nxJ,'fro')
+    Div = [Dr'*M Ds'*M Dt'*M]; % weak divergence: linearly dependent cols
+    MM = blkdiag(M,M,M);
+    
+    UDF = null(Div); % div-free V
+    [Uu, ~, ~] = svd(MM*UDF);
+    UD = Uu(:,size(UDF,2)+1:end); % L2 orthogonal component to UD
+    [Utest,~,~] = svd(M*ones(Np,1)); % remove constant mode from nodal basis
+    Utest = Utest(:,2:end);
+    
+    fx = [rxJ;sxJ;txJ];
+    gx = nxJ;
+    
+    UDFPq = UDF*((UDF'*MM*UDF)\(UDF'*kron(eye(3),Vq'*diag(wq))));
+    UDPq = UD*((Utest'*Div*UD)\(Utest'*Vfq'*diag(wfq)));
+    u_divfree = UDFPq*fx; % L2 projection
+    u_div = UDPq*gx; % weak lift with null space removed
+    ux = u_div + u_divfree;
+    
+    norm(kron(eye(3),Vq)*ux - [rxJ;sxJ;txJ],'fro') % constrained projection
+    norm(kron(eye(3),Vq*Pq)*[rxJ;sxJ;txJ] - [rxJ;sxJ;txJ],'fro') % L2 projection
+    
+    rxJ = ux(ids,:);
+    sxJ = ux(ids+Np,:);
+    txJ = ux(ids+2*Np,:);
+
+    norm(Dr*rxJ + Ds*sxJ + Dt*txJ,'fro')
+    
+    % Vq*[rxJ sxJ txJ]
+end
+
+% new div-free projection
+if 1
+    Drq = Dr*Pq-.5*Lq*diag(nrJ)*Vfq*Pq;
+    Dsq = Ds*Pq-.5*Lq*diag(nsJ)*Vfq*Pq;
+    Dtq = Dt*Pq-.5*Lq*diag(ntJ)*Vfq*Pq;
+
+    Div = M*[Drq Dsq Dtq];
+    c = -.5*M*Lq*nxJ;
+    JG = [rxJ;sxJ;txJ];
+    JGnew = JG - pinv(Div)*(Div*JG - c);
+    
+end
+
+
+% %% check SBP version
+% 
+% rxJN = [rxJ;rxJf];
+% sxJN = [sxJ;sxJf];
+% txJN = [txJ;txJf];
+% 
+% [rxJa rxJb] = meshgrid(rxJN);
+% [sxJa sxJb] = meshgrid(sxJN);
+% [txJa txJb] = meshgrid(txJN);
+% 
+% rxJa = .5*(rxJa +rxJb);
+% sxJa = .5*(sxJa +sxJb);
+% txJa = .5*(txJa +txJb);
+
+
 
 

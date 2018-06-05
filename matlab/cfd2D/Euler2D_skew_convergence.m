@@ -1,57 +1,112 @@
-N = 4;
-K1D = 8;
+% N = 2;
+% K1D = 16;
+% 
+% CFL = .125/2; tau = 0;
+% [err1 entropy rhstest dt Nsteps rho1 rhou1 rhov1 E1] = Euler2D_curved(N,K1D,1,CFL,tau);
+% dS = abs(entropy-entropy(1));
+% figure(2)
+% semilogy(dt*(1:Nsteps),dS,'o--');hold on
+% semilogy(dt*(1:Nsteps),abs(rhstest),'x--');hold on
+% legend('dS','rhstest')
+% return
+% 
+% CFL = .5; tau = 0;
+% CFL = .25; tau = 1;
+% [err1 entropy rhstest dt Nsteps rho1 rhou1 rhov1 E1 Vq Pq wJq] = Euler2D_curved(N,K1D,0,CFL,tau);
+% [err2 entropy rhstest dt Nsteps rho2 rhou2 rhov2 E2] = Euler2D_curved(N,K1D,1,CFL,tau);
+% [err1,err2]
+% sqrt(sum(sum(wJq.*((Vq*Pq*(rho1-rho2)).^2  + (Vq*Pq*(rhou1-rhou2)).^2 + (Vq*Pq*(rhov1-rhov2)).^2 + (Vq*Pq*(E1-E2)).^2))))
+% 
+% 
+% 
+% %%
+% 
 
-CFL = 1; tau = 0;
-[err1 entropy rhstest dt Nsteps rho1 rhou1 rhov1 E1] = Euler2D_curved(N,K1D,0,CFL,tau);
-dS = abs(entropy-entropy(1));
-% dS = entropy;
-figure(2)
-step = 2*round(.5/CFL);
-semilogy(dt*(1:step:Nsteps),dS(1:step:end),'o--');hold on
-semilogy(dt*(1:step:Nsteps),abs(rhstest(1:step:end)),'x--');hold on
-legend('dS','rhstest')
+% % for N = 3
+% L2errGQ = [0.161169514322894   0.015174238368569   0.000931006467250   0.000051170789907];
+% L2errGLL = [0.228676597233913   0.033670604552765   0.002884317141712 0.000360771482792];
+% print_pgf_coordinates(h,L2errGQ)
+% print_pgf_coordinates(h,L2errGLL)
 
-print_pgf_coordinates(dt*(1:step:Nsteps),dS(1:step:end))
-print_pgf_coordinates(dt*(1:step:Nsteps),abs(rhstest(1:step:end)))
+N = 4; K1D = 16;
+
+% test
+tau = 0;
+FinalTime = 1;
+useGLL = 1;
+[~,Sskew] = Euler2D_curved(N,K1D,useGLL,1,tau,FinalTime);
 return
 
-CFL = .5; tau = 0;
-CFL = .25; tau = 1;
-[err1 entropy rhstest dt Nsteps rho1 rhou1 rhov1 E1 Vq Pq wJq] = Euler2D_curved(N,K1D,0,CFL,tau);
-[err2 entropy rhstest dt Nsteps rho2 rhou2 rhov2 E2] = Euler2D_curved(N,K1D,1,CFL,tau);
-[err1,err2]
-sqrt(sum(sum(wJq.*((Vq*Pq*(rho1-rho2)).^2  + (Vq*Pq*(rhou1-rhou2)).^2 + (Vq*Pq*(rhov1-rhov2)).^2 + (Vq*Pq*(E1-E2)).^2))))
+tau = 0;
+FinalTime = 10;
+[~,S, dt] = Euler2D_curved(N,K1D,1,0,tau,FinalTime);
+[~,Sskew] = Euler2D_curved(N,K1D,1,1,tau,FinalTime);
+% FinalTime = 11;
+% [~,Sskew2] = Euler2D_curved(N,K1D,1,1,tau,FinalTime);
+
+figure
+S0 = 1-S(1);
+Nsteps = length(Sskew);
+dS = S + S0;
+dSskew = Sskew + S0;
+semilogy(dt*(1:Nsteps),dS,'o--','linewidth',2)
+hold on
+semilogy(dt*(1:length(Sskew)),dSskew,'x--','linewidth',2)
+
+% dSskew2 = Sskew2 + S0;
+% semilogy(dt*(1:length(Sskew2)),dSskew2,'s--','linewidth',2)
+
+grid on
+set(gca,'fontsize',16)
+set(gca,'TickLabelInterpreter', 'latex');
+xlabel('Time','fontsize',18,'Interpreter','latex')
+ylabel('Entropy','fontsize',18,'Interpreter','latex')
+% ylim([1e-10 1e55])
+legend({'Strong form','Skew form'},'Interpreter','latex')
+ylim([1e-1,1e6])
+
+return
 
 
+Kvec = [16 32 64 128];
+FinalTime = 1;
+tau = 1; CFL = .5; useSkew = 1;
+for i = 1:length(Kvec)
+%     L2errGQ(i) = Euler2D_curved(N,Kvec(i),0,useSkew,tau,FinalTime);
+    L2errGLL(i) = Euler2D_curved(N,Kvec(i),1,useSkew,tau,FinalTime);
+end
 
-%%
+function [L2err entropy dt] = Euler2D_curved(Nin,K1D,useGLL,useSkew_opt,tau,FinalTime)
 
-function [L2err entropy rhstest dt Nsteps rho rhou rhov E Vq2 Pq wJq2] = Euler2D_curved(Nin,K1D,wadgProjEntropyVars,CFL,tauin)
+% clear; clear global
 
-% clear;clear global
 Globals2D
-global tau
 
-a = 1/4; % warping factor
-FinalTime = 2;
 
+a = 1/8; % warping factor
+% FinalTime = 10;
 
 if nargin==0
-    N = 4;
-    K1D = 16;
-    wadgProjEntropyVars = 1;
-    
-    CFL = .5;
-    tau = 0;
+    N = 3;
+    K1D = 64;    
 else
-    N = Nin;
-    tau = tauin;
+    N = Nin;    
+end
+
+
+wadgProjEntropyVars = abs(a)>1e-8;
+CFL = .25;
+global tau
+tau = 0;
+global useSkew;
+useSkew = 1;
+if nargin>=4
+    useSkew=useSkew_opt;
 end
 
 
 % Lx = 7.5; Ly = 5; ratiox = 3/4; ratioy = .5;
 Lx = 10; Ly = 5; ratiox = 1; ratioy = Ly/Lx;
-
 [Nv, VX, VY, K, EToV] = unif_tri_mesh(round(ratiox*K1D),round(K1D*ratioy));
 
 % ids = abs(abs(VX)-1)>1e-8 & abs(abs(VY)-1)>1e-8;
@@ -65,7 +120,7 @@ VX = (VX+1)*Lx; VY = VY*Ly;
 StartUp2D;
 BuildPeriodicMaps2D(max(VX)-min(VX),max(VY)-min(VY));
 
-PlotMesh2D;axis on;return
+% PlotMesh2D;axis on;return
 
 % plotting nodes
 [rp sp] = EquiNodes2D(15); [rp sp] = xytors(rp,sp);
@@ -73,7 +128,7 @@ Vp = Vandermonde2D(N,rp,sp)/V;
 xp = Vp*x; yp = Vp*y;
 % PlotMesh2D; axis on;return
 
-global M Vq Pq Lq Vfqf Vfq Pfqf VqPq
+global M Vq Pq Lq Vfqf Vfq Pfqf VqPq VqLq
 global rxJ sxJ ryJ syJ rxJf sxJf ryJf syJf
 global nxJ nyJ nrJ nsJ nrJq nsJq wfq
 global mapPq
@@ -92,7 +147,11 @@ rxJ = Vq*rxJ; sxJ = Vq*sxJ;
 ryJ = Vq*ryJ; syJ = Vq*syJ;
 J = Vq*J;
 
-[rq1D wq1D] = JacobiGQ(0,0,N);
+if useGLL
+    [rq1D wq1D] = JacobiGL(0,0,N);
+else
+    [rq1D wq1D] = JacobiGQ(0,0,N);
+end
 rfq = [rq1D; -rq1D; -ones(size(rq1D))];
 sfq = [-ones(size(rq1D)); rq1D; -rq1D];
 wfq = [wq1D; wq1D; wq1D];
@@ -105,8 +164,8 @@ Vfqf = kron(eye(3),Vq1D);
 Mf = Vfq'*diag(wfq)*Vfq;
 Lq = M\(Vfq'*diag(wfq));
 
-Pq1D = (Vq1D'*diag(wq1D)*Vq1D) \ (Vq1D'*diag(wq1D));
-Pfqf = kron(eye(3),Pq1D);
+% Pq1D = (Vq1D'*diag(wq1D)*Vq1D) \ (Vq1D'*diag(wq1D));
+% Pfqf = kron(eye(3),Pq1D);
 
 nx = Vfqf*nx;
 ny = Vfqf*ny;
@@ -123,22 +182,36 @@ nrJq = repmat(nrJ',Nq,1);
 nsJq = repmat(nsJ',Nq,1);
 
 % flux differencing operators
-global Drq Dsq VfPq VqLq
+
 Drq = (Vq*Dr*Pq - .5*Vq*Lq*diag(nrJ)*Vfq*Pq);
 Dsq = (Vq*Ds*Pq - .5*Vq*Lq*diag(nsJ)*Vfq*Pq);
 VfPq = (Vfq*Pq);
 VqLq = Vq*Lq;
 VqPq = Vq*Pq;
 
-global DNr DNs WN
+global DNr DNs WN 
 DNr = [Drq .5*VqLq*diag(nrJ);
-    -.5*diag(nrJ)*VfPq 0*.5*diag(nrJ)];
+    -.5*diag(nrJ)*VfPq .5*diag(nrJ)];
 DNs = [Dsq .5*VqLq*diag(nsJ);
-    -.5*diag(nsJ)*VfPq 0*.5*diag(nsJ)];
+    -.5*diag(nsJ)*VfPq .5*diag(nsJ)];
 WN = diag([wq;wfq]);
-% Qr = WN*DNr;
-% Qs = WN*DNs;
+
+% weak derivative operators
+Drqw = (Vq*(M\(Dr'*Vq'*diag(wq))) - .5*Vq*Lq*diag(nrJ)*Vfq*Pq);
+Dsqw = (Vq*(M\(Ds'*Vq'*diag(wq))) - .5*Vq*Lq*diag(nsJ)*Vfq*Pq);
+
+DNrw = [Drqw -.5*VqLq*diag(nrJ);
+    .5*diag(nrJ)*VfPq .5*diag(nrJ)];
+DNsw = [Dsqw -.5*VqLq*diag(nsJ);
+    .5*diag(nsJ)*VfPq .5*diag(nsJ)];
+
+if useSkew
+    DNr = .5*(DNr - diag(1./[wq;wfq])*(WN*DNr)');
+    %DNr = .5*(DNr-DNrw);
+    DNs = .5*(DNs-DNsw);
+end
 % keyboard
+% return
 %% make quadrature face maps
 
 xf = Vfq*x;
@@ -166,7 +239,6 @@ for e = 1:K
             
             % NOTE - does not work if K1D is too small!!
             if length(p) == 0
-%                 keyboard
                 % assume periodic boundary, find match in x,y
                 [px,~] = find(DX<1e-8);
                 [py,~] = find(DY<1e-8);
@@ -185,7 +257,7 @@ for e = 1:K
 end
 
 
-%% make curvilinear mesh (still unstable?)
+%% make curvilinear mesh 
 
 x0 = Lx; y0 = 0;
 % x0 = 0; y0 = 0; Lx = 1; Ly = 1;
@@ -207,10 +279,8 @@ if 0
     yfp = Vfp*y(Fmask(:),:);
     plot(xfp,yfp,'k.')
     hold on
-%     plot(x,y,'o')
-    axis off
-    axis equal
-    keyboard
+    plot(x,y,'o')
+    L2err = nan;
     return
 end
 
@@ -240,42 +310,6 @@ ny = nyJ./Jf;
 sJ = sqrt(nx.^2 + ny.^2);
 nx = nx./sJ; ny = ny./sJ;
 sJ = sJ.*Jf;
-
-% % check compatibility of normals with geofacs
-% xf = Vfq*x;
-% yf = Vfq*y;
-
-% vv = (nx(mapMq)+nx(mapPq)).^2 + (ny(mapMq)+ny(mapPq)).^2;
-% color_line3(xf,yf,vv,vv,'.')
-% return
-
-% e = 1;
-% [rxJ1 rxJ2] = meshgrid([rxJ(:,e);rxJf(:,e)]);
-% [ryJ1 ryJ2] = meshgrid([ryJ(:,e);ryJf(:,e)]);
-
-% Dx = DNr.*(.5*(rxJ1+rxJ2) + .5*(ryJ1+ryJ2));
-% diag(wfq.*nrJ.*(rxJf(:,e) + ryJf(:,e)))
-% diag(wfq.*nxJ(:,e))
-% keyboard
-
-% norm(Dr*Pq*rxJ + Ds*Pq*sxJ,'fro')
-% norm(Dr*Pq*ryJ + Ds*Pq*syJ,'fro')
-
-% for i = 1:Nfq*Nfaces*K
-%     clf
-%     rp1D = linspace(-1,1,100)';
-%     Vp1D = Vandermonde1D(N,rp1D)/Vandermonde1D(N,JacobiGL(0,0,N));
-%     Vfp = kron(eye(Nfaces),Vp1D);
-%     xfp = Vfp*x(Fmask(:),:);
-%     yfp = Vfp*y(Fmask(:),:);
-%     plot(xfp,yfp,'k.')
-%     hold on
-%
-%     plot(xf,yf,'o')
-%     plot(xf(i),yf(i),'.','markersize',16)
-%     plot(xf(mapPq(i)),yf(mapPq(i)),'x','markersize',16)
-%     pause
-% end
 
 
 %% fluxes
@@ -328,41 +362,6 @@ psix = @(rho,rhou,rhov,E) (gamma-1)*rhou;
 psiy = @(rho,rhou,rhov,E) (gamma-1)*rhov;
 
 
-%% test 2 point flux condition
-
-% rhoL = rand+1;
-% uL = randn;
-% vL = randn;
-% EL = 1 + .5*rhoL.*(uL.^2+vL.^2);
-% rhoR = 2;
-% uR = 3;
-% vR = 4;
-% ER = 1 + .5*rhoR.*(uR.^2+vR.^2);
-%
-% V1L = V1(rhoL,rhoL*uL,rhoL*vL,EL);  V1R = V1(rhoR,rhoR*uR,rhoR*vR,ER);
-% V2L = V2(rhoL,rhoL*uL,rhoL*vL,EL);  V2R = V2(rhoR,rhoR*uR,rhoR*vR,ER);
-% V3L = V3(rhoL,rhoL*uL,rhoL*vL,EL);  V3R = V3(rhoR,rhoR*uR,rhoR*vR,ER);
-% V4L = V4(rhoL,rhoL*uL,rhoL*vL,EL);  V4R = V4(rhoR,rhoR*uR,rhoR*vR,ER);
-%
-%
-% val1 = (V1L - V1R)*fxS1(rhoL,uL,vL,EL,rhoR,uR,vR,ER) + ...
-%     (V2L - V2R)*fxS2(rhoL,uL,vL,EL,rhoR,uR,vR,ER) + ...
-%     (V3L - V3R)*fxS3(rhoL,uL,vL,EL,rhoR,uR,vR,ER) + ...
-%     (V4L - V4R)*fxS4(rhoL,uL,vL,EL,rhoR,uR,vR,ER);
-%
-% val2 = psix(rhoL,rhoL*uL,rhoL*vL,EL) - psix(rhoR,rhoR*uR,rhoR*vR,ER);
-%
-% norm(val1-val2)
-% val1 = (V1L - V1R)*fyS1(rhoL,uL,vL,EL,rhoR,uR,vR,ER) + ...
-%     (V2L - V2R)*fyS2(rhoL,uL,vL,EL,rhoR,uR,vR,ER) + ...
-%     (V3L - V3R)*fyS3(rhoL,uL,vL,EL,rhoR,uR,vR,ER) + ...
-%     (V4L - V4R)*fyS4(rhoL,uL,vL,EL,rhoR,uR,vR,ER);
-%
-% val2 = psiy(rhoL,rhoL*uL,rhoL*vL,EL) - psiy(rhoR,rhoR*uR,rhoR*vR,ER);
-%
-% norm(val1-val2)
-% keyboard
-
 %% problem params setup
 
 x0 = 0; y0 = 0;
@@ -404,12 +403,12 @@ res3 = zeros(Nq,K);
 res4 = zeros(Nq,K);
 
 % compute time step size
-CN = (N+1)*(N+2)/2; % guessing...
+CN = (N+1)^2/2; % guessing...
 CNh = max(CN*max(sJ(:)./Jf(:)));
-dt = CFL*1/CNh;
+dt = CFL*2/CNh;
 
 Nsteps = ceil(FinalTime/dt);
-dt = FinalTime/Nsteps;
+% dt = FinalTime/Nsteps;
 
 figure(1)
 for i = 1:Nsteps
@@ -420,13 +419,12 @@ for i = 1:Nsteps
         rhovq = rhov;
         Eq    = E;
         
-        % project to entropy variables
+        % project to entropy variables for curvilinear
         if wadgProjEntropyVars
             q1 = Pq*((VqPq*(V1(rhoq,rhouq,rhovq,Eq).*J))./J);
             q2 = Pq*((VqPq*(V2(rhoq,rhouq,rhovq,Eq).*J))./J);
             q3 = Pq*((VqPq*(V3(rhoq,rhouq,rhovq,Eq).*J))./J);
             q4 = Pq*((VqPq*(V4(rhoq,rhouq,rhovq,Eq).*J))./J);
-%             keyboard
         else
             q1 = Pq*V1(rhoq,rhouq,rhovq,Eq);
             q2 = Pq*V2(rhoq,rhouq,rhovq,Eq);
@@ -450,16 +448,11 @@ for i = 1:Nsteps
         % extra LF flux info
         QM{1} = rhoM;       QM{2} = rhouM;
         QM{3} = rhovM;      QM{4} = EM;
-        [rhs1 rhs2 rhs3 rhs4]  = RHS2Dsimple(rhoq,uq,vq,Eq,rhoM,uM,vM,EM,QM);
-        %         [rhs1 rhs2 rhs3 rhs4]  = RHS2D(rhoq,uq,vq,Eq,rhoM,uM,vM,EM,QM);
+        [rhs1 rhs2 rhs3 rhs4]  = RHS2Dsimple(rhoq,uq,vq,Eq,rhoM,uM,vM,EM,QM);        
         
         if (INTRK==5)
             rhstest(i) = 0;
             for e = 1:K
-                %                 rr = wJq(:,e).*(q1q(:,e).*(rhs1(:,e)) + q2q(:,e).*(rhs2(:,e)) + q3q(:,e).*(rhs3(:,e)) + q4q(:,e).*(rhs4(:,e)));
-                %                 rhstest(i) = rhstest(i) + sum(rr);               
-%                 sum(wJq(:,e).*q1q(:,e).*rhs1(:,e))
-                
                 r1 = M*((Vq'*diag(wq./J(:,e))*Vq)\(M*Pq*rhs1(:,e)));
                 r2 = M*((Vq'*diag(wq./J(:,e))*Vq)\(M*Pq*rhs2(:,e)));
                 r3 = M*((Vq'*diag(wq./J(:,e))*Vq)\(M*Pq*rhs3(:,e)));
@@ -467,9 +460,6 @@ for i = 1:Nsteps
                 rhstest(i) = rhstest(i) + sum((q1(:,e)'*(r1) + q2(:,e)'*(r2) + q3(:,e)'*(r3) + q4(:,e)'*(r4)));                               
 
             end
-            
-
-            %             keyboard
         end
         
         res1 = rk4a(INTRK)*res1 + dt*rhs1;
@@ -498,8 +488,7 @@ for i = 1:Nsteps
         title(sprintf('time = %f, N = %d, K1D = %d',dt*i,N,K1D))
         %                 view(3)
         drawnow
-    end
-    
+    end    
 end
 
 [rq2 sq2 wq2] = Cubature2D(Nq+2);
@@ -520,15 +509,19 @@ Eq = Vq2*Pq*E;
 err = wJq2.*((rhoq-rhoex).^2 + (rhouq-rhouex).^2 + (rhovq-rhovex).^2 + (Eq-Eex).^2);
 L2err = sqrt(sum(err(:)));
 
+dS = abs(entropy-entropy(1));
+dS = entropy + max(abs(entropy));
+figure(2)
+semilogy(dt*(1:Nsteps),dS,'o--');hold on
+semilogy(dt*(1:Nsteps),abs(rhstest),'x--');hold on
+legend('dS','rhstest')
 end
-
 
 function [rhs1 rhs2 rhs3 rhs4] = RHS2Dsimple(rhoq,uq,vq,Eq,rhoM,uM,vM,EM,QM)
 
 Globals2D;
 
-global M Vq Pq Lq Lqf Vfqf Vfq Pfqf VqPq
-% global Drq Dsq Lrq Lsq
+global M Vq Pq Lq Lqf Vfqf Vfq VqPq VqLq
 global rxJ sxJ ryJ syJ rxJf sxJf ryJf syJf
 global nxJ nyJ nrJ nsJ nrJq nsJq
 global mapPq
@@ -630,10 +623,18 @@ for e = 1:K
 
 end
 
-rhs1 = 2*[VqPq VqLq]*divF1 + VqLq*(fSf1-0*f1);
-rhs2 = 2*[VqPq VqLq]*divF2 + VqLq*(fSf2-0*f2);
-rhs3 = 2*[VqPq VqLq]*divF3 + VqLq*(fSf3-0*f3);
-rhs4 = 2*[VqPq VqLq]*divF4 + VqLq*(fSf4-0*f4);
+global useSkew
+if useSkew
+    f1 = 0;
+    f2 = 0;
+    f3 = 0;
+    f4 = 0;
+end
+rhs1 = 2*[VqPq VqLq]*divF1 + VqLq*(fSf1-f1);
+rhs2 = 2*[VqPq VqLq]*divF2 + VqLq*(fSf2-f2);
+rhs3 = 2*[VqPq VqLq]*divF3 + VqLq*(fSf3-f3);
+rhs4 = 2*[VqPq VqLq]*divF4 + VqLq*(fSf4-f4);
+
 
 % apply wadg
 rhs1 = -VqPq*(rhs1./J);
@@ -670,6 +671,7 @@ if 1
     u = 0*rho;
     v = 0*rho;
     p = rho.^gamma;
+    
 end
 
 end

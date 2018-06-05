@@ -1,20 +1,12 @@
-function [rho lam] = advec_spectra(NB,Ksub,K1D,smoothKnots,alphain)
 
 Globals1D;
 
-if nargin==0    
-    NB = 6;
-    Ksub = 32; %ceil(N/2);
-    K1D = 1; 
-    smoothKnots = 0;
-end
-global alpha
-if nargin < 5
-    alpha = 1;
-else 
-    alpha = alphain;
-end
-    
+NB = 4;
+Ksub = 16; %ceil(N/2);
+K1D = 1;
+smoothKnots = 0;
+alpha = 1;
+
 FinalTime = 1;
 
 N = NB+Ksub-1; % number of sub-mesh splines
@@ -68,41 +60,52 @@ a(:,1) = 1;
 
 if 1
     A = zeros((N+1)*K);
+    AS = zeros((N+1)*K);
     u = zeros(N+1,K);
     for i = 1:(N+1)*K
         u(i) = 1;
-        rhsu = AdvecRHS1D(u);
-%         keyboard
+        rhsu = AdvecRHS1D(u,0);
         A(:,i) = rhsu(:);
+        rhsu = AdvecRHS1D(u,1);
+        AS(:,i) = rhsu(:);
         u(i) = 0;
-    end    
-    [W D] = eig(A);
-    lam = diag(D);
- 
-    [rho id] = max(abs(lam));
-    return
-tau = alpha;
-    hold on
-    if abs(tau-1)<1e-8
-        plot(lam,'o','linewidth',2,'markersize',8)
-    elseif abs(tau)<1e-8
-        plot(lam,'x','linewidth',2,'markersize',8)
-    else
-        plot(lam,'^','linewidth',2,'markersize',8)
     end
-%     keyboard
-
-plot(rp,Vp*W(:,id))
-
-    return
-
-%     keyboard
+    S = AS-A;
+    
+%     [W D] = eig(A);
+%     lam = diag(D);        
+    
+    clf
+    hold on
+    grid on
+    set(gca,'fontsize',14)
+    z = exp(1i*linspace(0,2*pi,1000));
+    lam0 = eig(A);
+    lam1 = eig(AS);
+    r = max(abs(lam1));
+    plot(r*z,'-')
+    axis equal
+    ax = axis; axis(2*ax);
+    for tau = 0:.01:1
+        lam = eig(A+tau*S);
+        plot(lam,'.','linewidth',2,'markersize',8)
+        h = plot(lam,'o','linewidth',2,'markersize',8);
+        title(sprintf('tau = %2.2f, rho = %2.2f, rho central = %2.2f, rho upw = %2.2f\n',tau,max(abs(lam)),max(abs(lam0)),r))
+        drawnow
+        delete(h)
+    end
+    
+    
+%     figure(2)
+%     plot(rp,Vp*W(:,id),'linewidth',2)
+%     hold on
+    
+    
+    %     keyboard
 end
 
 % h = legend('\tau = 0','\tau = 1/2','\tau = 1');set(h,'fontsize',14)
-grid on
-set(gca,'fontsize',14)
-axis([-100 50 -110 110])
+
 
 % % Set initial conditions
 % % uex = @(x) exp(-10*sin(2*pi*x).^2);
@@ -111,10 +114,10 @@ axis([-100 50 -110 110])
 % % u = uex(x);
 % % u = BVDM\uex(xB); % initialize w/lsq fit
 % u = M\(Bq'*diag(wq)*uex(xq));
-% 
+%
 % % plot(xp,uex(xp));return
 
-function [rhsu] = AdvecRHS1D(u)
+function [rhsu] = AdvecRHS1D(u,alpha)
 
 % function [rhsu] = AdvecRHS1D(u,time)
 % Purpose  : Evaluate RHS flux in 1D advection
@@ -123,7 +126,6 @@ Globals1D;
 
 % form field differences at faces
 global a
-global alpha
 du = zeros(Nfp*Nfaces,K);
 %du(:) = (a(vmapP).*u(vmapP)-a(vmapM).*u(vmapM)).*(nx(:)-(alpha)*abs(nx(:)))/2;
 du(:) = (a(vmapP).*u(vmapP)-a(vmapM).*u(vmapM)).*nx(:)/2-(alpha)*1/2*(a(vmapP).*u(vmapP)-a(vmapM).*u(vmapM));
@@ -133,5 +135,4 @@ du(:) = (a(vmapP).*u(vmapP)-a(vmapM).*u(vmapM)).*nx(:)/2-(alpha)*1/2*(a(vmapP).*
 % compute right hand sides of the semi-discrete PDE
 rhsu = -a.*rx.*(Dr*u) - LIFT*(Fscale.*(du));
 
-return
-
+end

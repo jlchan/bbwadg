@@ -5,7 +5,7 @@ clear -global *
 
 Globals2D
 
-N = 4;
+N = 3;
 global Pq cq Vq c2
 c2 = 1.5^2;
 cfun = @(x,y) c2*ones(size(x));
@@ -17,7 +17,7 @@ FinalTime = 12.2;
 % FinalTime = 15;
 
 % generate triangle
-nref = 6;
+nref = 5;
 yt = 13.243323833946539;
 % yt = 12.5 - (yt - 12.5)
 VX = [14.9071 35.3 -10]; VY = [0 yt yt]; 

@@ -7,7 +7,7 @@ Globals1D;
 
 if nargin==0    
     NB = 7;
-    Ksub = 32; %ceil(N/2);
+    Ksub = 16; %ceil(N/2);
     K1D = 1; 
     smoothKnots = 50;
 end

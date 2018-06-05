@@ -1,71 +1,78 @@
-N = 4;
-K1D = 8;
+% N = 4
+% Nq = 2N, cfl .25: coordinates{(5,0.463269)(2.5,0.169843)(1.25,0.017172)(0.625,0.000965)(0.3125,3.5e-05)};
+% Nq = 2N,   cfl = .125: 0.4632699776 0.1698427903 0.0171718768 0.0009649316 0.0000346351
+% Nq = 2N+1, cfl =   .5: 0.4352947316 0.1779291400 0.0163522383 0.0008799525 0.0000325676
+% Nq = 2N+1, cfl =  .25: 0.4353058191 0.1779312852 0.0163530100 0.0008799871 0.0000325703
 
-CFL = 1; tau = 0;
-[err1 entropy rhstest dt Nsteps rho1 rhou1 rhov1 E1] = Euler2D_curved(N,K1D,0,CFL,tau);
-dS = abs(entropy-entropy(1));
-% dS = entropy;
-figure(2)
-step = 2*round(.5/CFL);
-semilogy(dt*(1:step:Nsteps),dS(1:step:end),'o--');hold on
-semilogy(dt*(1:step:Nsteps),abs(rhstest(1:step:end)),'x--');hold on
-legend('dS','rhstest')
+% [0 15] x [-5 5] mesh
+% Nq = 2N+1, cfl = .125: 0.4366595270 0.1779305250 0.0163526811 0.0008799886 0.0000325704
 
-print_pgf_coordinates(dt*(1:step:Nsteps),dS(1:step:end))
-print_pgf_coordinates(dt*(1:step:Nsteps),abs(rhstest(1:step:end)))
-return
-
-CFL = .5; tau = 0;
-CFL = .25; tau = 1;
-[err1 entropy rhstest dt Nsteps rho1 rhou1 rhov1 E1 Vq Pq wJq] = Euler2D_curved(N,K1D,0,CFL,tau);
-[err2 entropy rhstest dt Nsteps rho2 rhou2 rhov2 E2] = Euler2D_curved(N,K1D,1,CFL,tau);
-[err1,err2]
-sqrt(sum(sum(wJq.*((Vq*Pq*(rho1-rho2)).^2  + (Vq*Pq*(rhou1-rhou2)).^2 + (Vq*Pq*(rhov1-rhov2)).^2 + (Vq*Pq*(E1-E2)).^2))))
+% [0 15] x [-5 5] mesh, eval err at Nq+2
+% Nq = 2N,     cfl =   .5: 0.4109478035 0.1800976503 0.0172740144 0.0009837092 0.0000351978
+% Nq = 2N+1,   cfl =   .5: 0.3954885702 0.1862497075 0.0163644949 0.0008932181 0.0000331323
 
 
+% Euler2D_curved(1,8);return
 
-%%
+% affine errors
+%     [2.889975731475834]    [2.011833210859580]    [0.712654443017382]    [0.087868890056382]    [0.010500338293331]
+%     [2.471842668168824]    [1.411435966402859]    [0.263179229755679]    [0.019562543846092]    []
+%     [1.940138489420046]    [1.025884433365262]    [0.092434459060102]    [0.004553631867806]    [1.588582624792090e-04]
 
-function [L2err entropy rhstest dt Nsteps rho rhou rhov E Vq2 Pq wJq2] = Euler2D_curved(Nin,K1D,wadgProjEntropyVars,CFL,tauin)
 
-% clear;clear global
+% curved errors
+%     [3.120538920449965]    [2.060939595659464]    [0.974224521121697]    [0.172557927798865]    [0.030116795222253]
+%     [2.530430669354729]    [1.578523311109037]    [0.381014546205607]    [0.051650939279328]    []
+%     [2.297761264467317]    [1.090112496217250]    [0.177119902414796]    [0.011790868254564]    [4.667416979237119e-04]
+
+L2err = cell(4,5);
+for N = 3
+    sk = 1;
+    for K1D = 64;[4 8 16 32 64]
+        disp(sprintf('N = %d, K1D = %d\n',N, K1D))
+        L2err{N,sk} = Euler2D_curved(N,K1D);
+        fprintf('%10.10f \n',[L2err{N,:}])
+        sk = sk + 1;
+    end
+end
+
+for i = 1:size(L2err,1)
+    for j = 1:size(L2err,2)
+        fprintf('%f ',L2err{i,j});
+    end
+    fprintf('\n')
+end
+
+function L2err = Euler2D_curved(Nin,K1D)
+
+clear -globals
 Globals2D
 global tau
 
-a = 1/4; % warping factor
-FinalTime = 2;
+N = Nin;
+a = 3/16; % warping factor
+a = 0;
+FinalTime = 5;
 
+wadgProjEntropyVars = abs(a) > 1e-10;
 
-if nargin==0
-    N = 4;
-    K1D = 16;
-    wadgProjEntropyVars = 1;
-    
-    CFL = .5;
-    tau = 0;
+if K1D==4
+    CFL = .125;
 else
-    N = Nin;
-    tau = tauin;
+    CFL=.5;
 end
-
+tau = 1;
 
 % Lx = 7.5; Ly = 5; ratiox = 3/4; ratioy = .5;
 Lx = 10; Ly = 5; ratiox = 1; ratioy = Ly/Lx;
 
 [Nv, VX, VY, K, EToV] = unif_tri_mesh(round(ratiox*K1D),round(K1D*ratioy));
-
-% ids = abs(abs(VX)-1)>1e-8 & abs(abs(VY)-1)>1e-8;
-% VY(ids) = VY(ids) + .05*randn(size(VX(ids)));
-
-
 VX = VX/max(abs(VX));  VY = VY/max(abs(VY));
 VX = (VX+1)*Lx; VY = VY*Ly;
 
-% VX = VX + randn(size(VX));
 StartUp2D;
 BuildPeriodicMaps2D(max(VX)-min(VX),max(VY)-min(VY));
 
-PlotMesh2D;axis on;return
 
 % plotting nodes
 [rp sp] = EquiNodes2D(15); [rp sp] = xytors(rp,sp);
@@ -77,6 +84,7 @@ global M Vq Pq Lq Vfqf Vfq Pfqf VqPq
 global rxJ sxJ ryJ syJ rxJf sxJf ryJf syJf
 global nxJ nyJ nrJ nsJ nrJq nsJq wfq
 global mapPq
+global wq
 Nq = 2*N+1;
 [rq sq wq] = Cubature2D(Nq); % integrate u*v*c
 Vq = Vandermonde2D(N,rq,sq)/V;
@@ -85,12 +93,6 @@ M = Vq'*diag(wq)*Vq;
 Pq = M\(Vq'*diag(wq)); % J's cancel out
 xq = Vq*x; yq = Vq*y;
 Jq = Vq*J;
-
-rxJ = rx.*J; sxJ = sx.*J;
-ryJ = ry.*J; syJ = sy.*J;
-rxJ = Vq*rxJ; sxJ = Vq*sxJ;
-ryJ = Vq*ryJ; syJ = Vq*syJ;
-J = Vq*J;
 
 [rq1D wq1D] = JacobiGQ(0,0,N);
 rfq = [rq1D; -rq1D; -ones(size(rq1D))];
@@ -108,19 +110,25 @@ Lq = M\(Vfq'*diag(wfq));
 Pq1D = (Vq1D'*diag(wq1D)*Vq1D) \ (Vq1D'*diag(wq1D));
 Pfqf = kron(eye(3),Pq1D);
 
-nx = Vfqf*nx;
-ny = Vfqf*ny;
-sJ = Vfqf*sJ;
-nxJ = (nx.*sJ);
-nyJ = (ny.*sJ);
-Fscale = Vfqf*Fscale;
-
 nrJ = [-zeros(size(rq1D)); ones(size(rq1D)); -ones(size(rq1D)); ];
 nsJ = [-ones(size(rq1D)); ones(size(rq1D)); -zeros(size(rq1D)); ];
 
 Nq = length(rq);
 nrJq = repmat(nrJ',Nq,1);
 nsJq = repmat(nsJ',Nq,1);
+
+% recompute geofacs
+rxJ = rx.*J; sxJ = sx.*J;
+ryJ = ry.*J; syJ = sy.*J;
+rxJ = Vq*rxJ; sxJ = Vq*sxJ;
+ryJ = Vq*ryJ; syJ = Vq*syJ;
+J = Vq*J;
+nx = Vfqf*nx;
+ny = Vfqf*ny;
+sJ = Vfqf*sJ;
+nxJ = (nx.*sJ);
+nyJ = (ny.*sJ);
+Fscale = Vfqf*Fscale;
 
 % flux differencing operators
 global Drq Dsq VfPq VqLq
@@ -131,13 +139,17 @@ VqLq = Vq*Lq;
 VqPq = Vq*Pq;
 
 global DNr DNs WN
+
+% skew formulation matrices
 DNr = [Drq .5*VqLq*diag(nrJ);
-    -.5*diag(nrJ)*VfPq 0*.5*diag(nrJ)];
+    -.5*diag(nrJ)*VfPq zeros(length(nrJ))];
 DNs = [Dsq .5*VqLq*diag(nsJ);
-    -.5*diag(nsJ)*VfPq 0*.5*diag(nsJ)];
+    -.5*diag(nsJ)*VfPq zeros(length(nrJ))];
 WN = diag([wq;wfq]);
-% Qr = WN*DNr;
-% Qs = WN*DNs;
+
+QNr = WN*DNr;
+QNs = WN*DNs;
+
 % keyboard
 %% make quadrature face maps
 
@@ -166,7 +178,6 @@ for e = 1:K
             
             % NOTE - does not work if K1D is too small!!
             if length(p) == 0
-%                 keyboard
                 % assume periodic boundary, find match in x,y
                 [px,~] = find(DX<1e-8);
                 [py,~] = find(DY<1e-8);
@@ -189,7 +200,7 @@ end
 
 x0 = Lx; y0 = 0;
 % x0 = 0; y0 = 0; Lx = 1; Ly = 1;
-% x = x + Lx*a*cos(1/2*pi*(x-x0)/Lx).*cos(3/2*pi*(y-y0)/Ly);
+x = x + .5*Lx*a*cos(1/2*pi*(x-x0)/Lx).*cos(3/2*pi*(y-y0)/Ly);
 y = y + Ly*a*sin(pi*(x-x0)/Lx).*cos(1/2*pi*(y-y0)/Ly);
 % y(abs(y)<1e-8 & abs(x-10)<1e-8) = y(abs(y)<1e-8 & abs(x-10)<1e-8) + 4*a;
 % keyboard
@@ -207,10 +218,10 @@ if 0
     yfp = Vfp*y(Fmask(:),:);
     plot(xfp,yfp,'k.')
     hold on
-%     plot(x,y,'o')
+    %     plot(x,y,'o')
     axis off
     axis equal
-    keyboard
+    %     keyboard
     return
 end
 
@@ -241,41 +252,8 @@ sJ = sqrt(nx.^2 + ny.^2);
 nx = nx./sJ; ny = ny./sJ;
 sJ = sJ.*Jf;
 
-% % check compatibility of normals with geofacs
-% xf = Vfq*x;
-% yf = Vfq*y;
-
-% vv = (nx(mapMq)+nx(mapPq)).^2 + (ny(mapMq)+ny(mapPq)).^2;
-% color_line3(xf,yf,vv,vv,'.')
-% return
-
-% e = 1;
-% [rxJ1 rxJ2] = meshgrid([rxJ(:,e);rxJf(:,e)]);
-% [ryJ1 ryJ2] = meshgrid([ryJ(:,e);ryJf(:,e)]);
-
-% Dx = DNr.*(.5*(rxJ1+rxJ2) + .5*(ryJ1+ryJ2));
-% diag(wfq.*nrJ.*(rxJf(:,e) + ryJf(:,e)))
-% diag(wfq.*nxJ(:,e))
-% keyboard
-
-% norm(Dr*Pq*rxJ + Ds*Pq*sxJ,'fro')
-% norm(Dr*Pq*ryJ + Ds*Pq*syJ,'fro')
-
-% for i = 1:Nfq*Nfaces*K
-%     clf
-%     rp1D = linspace(-1,1,100)';
-%     Vp1D = Vandermonde1D(N,rp1D)/Vandermonde1D(N,JacobiGL(0,0,N));
-%     Vfp = kron(eye(Nfaces),Vp1D);
-%     xfp = Vfp*x(Fmask(:),:);
-%     yfp = Vfp*y(Fmask(:),:);
-%     plot(xfp,yfp,'k.')
-%     hold on
-%
-%     plot(xf,yf,'o')
-%     plot(xf(i),yf(i),'.','markersize',16)
-%     plot(xf(mapPq(i)),yf(mapPq(i)),'x','markersize',16)
-%     pause
-% end
+% to ensure weight-adjusted DG is conservative
+% J = VqPq*J;
 
 
 %% fluxes
@@ -328,40 +306,6 @@ psix = @(rho,rhou,rhov,E) (gamma-1)*rhou;
 psiy = @(rho,rhou,rhov,E) (gamma-1)*rhov;
 
 
-%% test 2 point flux condition
-
-% rhoL = rand+1;
-% uL = randn;
-% vL = randn;
-% EL = 1 + .5*rhoL.*(uL.^2+vL.^2);
-% rhoR = 2;
-% uR = 3;
-% vR = 4;
-% ER = 1 + .5*rhoR.*(uR.^2+vR.^2);
-%
-% V1L = V1(rhoL,rhoL*uL,rhoL*vL,EL);  V1R = V1(rhoR,rhoR*uR,rhoR*vR,ER);
-% V2L = V2(rhoL,rhoL*uL,rhoL*vL,EL);  V2R = V2(rhoR,rhoR*uR,rhoR*vR,ER);
-% V3L = V3(rhoL,rhoL*uL,rhoL*vL,EL);  V3R = V3(rhoR,rhoR*uR,rhoR*vR,ER);
-% V4L = V4(rhoL,rhoL*uL,rhoL*vL,EL);  V4R = V4(rhoR,rhoR*uR,rhoR*vR,ER);
-%
-%
-% val1 = (V1L - V1R)*fxS1(rhoL,uL,vL,EL,rhoR,uR,vR,ER) + ...
-%     (V2L - V2R)*fxS2(rhoL,uL,vL,EL,rhoR,uR,vR,ER) + ...
-%     (V3L - V3R)*fxS3(rhoL,uL,vL,EL,rhoR,uR,vR,ER) + ...
-%     (V4L - V4R)*fxS4(rhoL,uL,vL,EL,rhoR,uR,vR,ER);
-%
-% val2 = psix(rhoL,rhoL*uL,rhoL*vL,EL) - psix(rhoR,rhoR*uR,rhoR*vR,ER);
-%
-% norm(val1-val2)
-% val1 = (V1L - V1R)*fyS1(rhoL,uL,vL,EL,rhoR,uR,vR,ER) + ...
-%     (V2L - V2R)*fyS2(rhoL,uL,vL,EL,rhoR,uR,vR,ER) + ...
-%     (V3L - V3R)*fyS3(rhoL,uL,vL,EL,rhoR,uR,vR,ER) + ...
-%     (V4L - V4R)*fyS4(rhoL,uL,vL,EL,rhoR,uR,vR,ER);
-%
-% val2 = psiy(rhoL,rhoL*uL,rhoL*vL,EL) - psiy(rhoR,rhoR*uR,rhoR*vR,ER);
-%
-% norm(val1-val2)
-% keyboard
 
 %% problem params setup
 
@@ -373,10 +317,11 @@ rhou = Pq*(rhoq.*uq);
 rhov = Pq*(rhoq.*vq);
 E    = Pq*(pq/(gamma-1) + .5*rhoq.*(uq.^2+vq.^2));
 
-% rho = Pq*(2 + exp(-5^2*(xq).^2));
-% rhou = 0*x;
-% rhov = 0*x;
-% E = 0*x;
+% rho = 2+0*Pq*(2 + exp(-5^2*(xq).^2));
+% rhou = 0+0*x;
+% rhov = 0+0*x;
+% pq = (2 + 0*exp(-5^2*(xq).^2)).^gamma;
+% E    = Pq*(pq/(gamma-1));
 % keyboard
 % vv = Vp*rho; color_line3(xp,yp,vv,vv,'.'); return
 
@@ -385,12 +330,6 @@ rhou = Vq*rhou;
 rhov = Vq*rhov;
 E = Vq*E;
 
-% test wadg curvi projection property
-% e = 1;
-% v = Vq*randn(Np,1);
-% vJ = VqPq*((VqPq*(v.*J(:,e)))./J(:,e));
-% norm(vJ'*diag(wq)*Vq*inv(Vq'*diag(wq./J(:,e))*Vq)*M-(v'*diag(wq.*J(:,e))*Vq))
-% keyboard
 
 %%
 
@@ -411,6 +350,7 @@ dt = CFL*1/CNh;
 Nsteps = ceil(FinalTime/dt);
 dt = FinalTime/Nsteps;
 
+clear Uavg UavgWADG rhsavg rhsavgWADG
 figure(1)
 for i = 1:Nsteps
     for INTRK = 1:5
@@ -426,7 +366,7 @@ for i = 1:Nsteps
             q2 = Pq*((VqPq*(V2(rhoq,rhouq,rhovq,Eq).*J))./J);
             q3 = Pq*((VqPq*(V3(rhoq,rhouq,rhovq,Eq).*J))./J);
             q4 = Pq*((VqPq*(V4(rhoq,rhouq,rhovq,Eq).*J))./J);
-%             keyboard
+            %             keyboard
         else
             q1 = Pq*V1(rhoq,rhouq,rhovq,Eq);
             q2 = Pq*V2(rhoq,rhouq,rhovq,Eq);
@@ -450,27 +390,8 @@ for i = 1:Nsteps
         % extra LF flux info
         QM{1} = rhoM;       QM{2} = rhouM;
         QM{3} = rhovM;      QM{4} = EM;
-        [rhs1 rhs2 rhs3 rhs4]  = RHS2Dsimple(rhoq,uq,vq,Eq,rhoM,uM,vM,EM,QM);
-        %         [rhs1 rhs2 rhs3 rhs4]  = RHS2D(rhoq,uq,vq,Eq,rhoM,uM,vM,EM,QM);
-        
-        if (INTRK==5)
-            rhstest(i) = 0;
-            for e = 1:K
-                %                 rr = wJq(:,e).*(q1q(:,e).*(rhs1(:,e)) + q2q(:,e).*(rhs2(:,e)) + q3q(:,e).*(rhs3(:,e)) + q4q(:,e).*(rhs4(:,e)));
-                %                 rhstest(i) = rhstest(i) + sum(rr);               
-%                 sum(wJq(:,e).*q1q(:,e).*rhs1(:,e))
-                
-                r1 = M*((Vq'*diag(wq./J(:,e))*Vq)\(M*Pq*rhs1(:,e)));
-                r2 = M*((Vq'*diag(wq./J(:,e))*Vq)\(M*Pq*rhs2(:,e)));
-                r3 = M*((Vq'*diag(wq./J(:,e))*Vq)\(M*Pq*rhs3(:,e)));
-                r4 = M*((Vq'*diag(wq./J(:,e))*Vq)\(M*Pq*rhs4(:,e)));                
-                rhstest(i) = rhstest(i) + sum((q1(:,e)'*(r1) + q2(:,e)'*(r2) + q3(:,e)'*(r3) + q4(:,e)'*(r4)));                               
-
-            end
-            
-
-            %             keyboard
-        end
+        [rhs1 rhs2 rhs3 rhs4]  = RHS2D(rhoq,uq,vq,Eq,rhoM,uM,vM,EM,QM,i*dt);
+        %         [rhs1 rhs2 rhs3 rhs4] = RHS2D(rhoq,uq,vq,Eq,rhoM,uM,vM,EM,QM);
         
         res1 = rk4a(INTRK)*res1 + dt*rhs1;
         res2 = rk4a(INTRK)*res2 + dt*rhs2;
@@ -484,10 +405,29 @@ for i = 1:Nsteps
         
     end;
     
+    %     rhstest(i) = 0;
+    %     rhsavgWADG(i) = 0;
+    %     UavgWADG(i) = 0;
+    %     for e = 1:K
+    %         r1 = M*((Vq'*diag(wq./J(:,e))*Vq)\(M*Pq*rhs1(:,e)));
+    %         r2 = M*((Vq'*diag(wq./J(:,e))*Vq)\(M*Pq*rhs2(:,e)));
+    %         r3 = M*((Vq'*diag(wq./J(:,e))*Vq)\(M*Pq*rhs3(:,e)));
+    %         r4 = M*((Vq'*diag(wq./J(:,e))*Vq)\(M*Pq*rhs4(:,e)));
+    %         rhstest(i) = rhstest(i) + sum((q1(:,e)'*(r1) + q2(:,e)'*(r2) + q3(:,e)'*(r3) + q4(:,e)'*(r4)));
+    %         UavgWADG(i) = UavgWADG(i) + sum(M*((Vq'*diag(wq./J(:,e))*Vq)\(M*Pq*(rho(:,e)+rhou(:,e)+rhov(:,e)+E(:,e)))));
+    %         rhsavgWADG(i) = rhsavgWADG(i) + sum(M*((Vq'*diag(wq./J(:,e))*Vq)\(M*Pq*(rhs1(:,e)+rhs2(:,e)+rhs3(:,e)+rhs4(:,e)))));
+    %     end
+    
+    %         rhsavg(i) = abs(sum(sum(wJq.*(rhs1)))) + abs(sum(sum(wJq.*(rhs2)))) + abs(sum(sum(wJq.*(rhs3)))) + abs(sum(sum(wJq.*(rhs4))));
+    rhsavg(i) = abs(sum(sum(wJq.*(rhs1+rhs2+rhs3+rhs4))));
+    %     Uavg(i) = sum(sum(wJq.*(rho+rhou+rhov+E)));
+    
+    
+    
     Sq = -rho.*s(rho,rhou,rhov,E);
     entropy(i) = sum(sum(wJq.*Sq));
     
-    if  (mod(i,5)==0 || i==Nsteps)
+    if  (mod(i,10)==0 || i==Nsteps)
         clf
         pp = rho;
         vv = real(Vp*Pq*pp);
@@ -496,6 +436,7 @@ for i = 1:Nsteps
         axis tight
         colorbar
         title(sprintf('time = %f, N = %d, K1D = %d',dt*i,N,K1D))
+        %title(sprintf('time = %f, N = %d, K1D = %d, entropy rhs = %g',dt*i,N,K1D,rhstest(i)))
         %                 view(3)
         drawnow
     end
@@ -518,12 +459,17 @@ rhouq = Vq2*Pq*rhou;
 rhovq = Vq2*Pq*rhov;
 Eq = Vq2*Pq*E;
 err = wJq2.*((rhoq-rhoex).^2 + (rhouq-rhouex).^2 + (rhovq-rhovex).^2 + (Eq-Eex).^2);
-L2err = sqrt(sum(err(:)));
+L2err = sqrt(sum(err(:)))
 
 end
 
+% figure(2)
+% semilogy(dt*(1:Nsteps),energy,'--')
+% hold on
+% semilogy(dt*(1:Nsteps),abs(rhstest),'x')
 
-function [rhs1 rhs2 rhs3 rhs4] = RHS2Dsimple(rhoq,uq,vq,Eq,rhoM,uM,vM,EM,QM)
+
+function [rhs1 rhs2 rhs3 rhs4] = RHS2D(rhoq,uq,vq,Eq,rhoM,uM,vM,EM,QM,time)
 
 Globals2D;
 
@@ -577,15 +523,10 @@ fSf2 = fSf2  - .25*Lf2;
 fSf3 = fSf3  - .25*Lf3;
 fSf4 = fSf4  - .25*Lf4;
 
-f1 = nxJ.*fxS1(rhoM,uM,vM,EM,rhoM,uM,vM,EM) + nyJ.*fyS1(rhoM,uM,vM,EM,rhoM,uM,vM,EM);
-f2 = nxJ.*fxS2(rhoM,uM,vM,EM,rhoM,uM,vM,EM) + nyJ.*fyS2(rhoM,uM,vM,EM,rhoM,uM,vM,EM);
-f3 = nxJ.*fxS3(rhoM,uM,vM,EM,rhoM,uM,vM,EM) + nyJ.*fyS3(rhoM,uM,vM,EM,rhoM,uM,vM,EM);
-f4 = nxJ.*fxS4(rhoM,uM,vM,EM,rhoM,uM,vM,EM) + nyJ.*fyS4(rhoM,uM,vM,EM,rhoM,uM,vM,EM);
-
 rho = [rhoq; rhoM];
 u = [uq; uM];
 v = [vq; vM];
-E = [Eq; EM];
+% E = [Eq; EM];
 divF1 = zeros(size(DNr,1),K);
 divF2 = zeros(size(DNr,1),K);
 divF3 = zeros(size(DNr,1),K);
@@ -627,22 +568,23 @@ for e = 1:K
     divF2(:,e) = sum(Dx.*FxS2,2) + sum(Dy.*FyS2,2);
     divF3(:,e) = sum(Dx.*FxS3,2) + sum(Dy.*FyS3,2);
     divF4(:,e) = sum(Dx.*FxS4,2) + sum(Dy.*FyS4,2);
-
+    
 end
 
-rhs1 = 2*[VqPq VqLq]*divF1 + VqLq*(fSf1-0*f1);
-rhs2 = 2*[VqPq VqLq]*divF2 + VqLq*(fSf2-0*f2);
-rhs3 = 2*[VqPq VqLq]*divF3 + VqLq*(fSf3-0*f3);
-rhs4 = 2*[VqPq VqLq]*divF4 + VqLq*(fSf4-0*f4);
+rhs1 = 2*[VqPq VqLq]*divF1 + VqLq*(fSf1);
+rhs2 = 2*[VqPq VqLq]*divF2 + VqLq*(fSf2);
+rhs3 = 2*[VqPq VqLq]*divF3 + VqLq*(fSf3);
+rhs4 = 2*[VqPq VqLq]*divF4 + VqLq*(fSf4);
 
-% apply wadg
 rhs1 = -VqPq*(rhs1./J);
 rhs2 = -VqPq*(rhs2./J);
 rhs3 = -VqPq*(rhs3./J);
 rhs4 = -VqPq*(rhs4./J);
 
-
 end
+
+
+
 
 function [rho u v p] = vortexSolution(x,y,t)
 
@@ -663,13 +605,12 @@ p = rho.^gamma;
 % v = zeros(size(x));
 % p = ones(size(x));
 
-if 1
-    % pulse condition
-    x0 = 5;
-    rho = 2 + (abs(x-x0) < 5);
-    u = 0*rho;
-    v = 0*rho;
-    p = rho.^gamma;
-end
+% % pulse condition
+% x0 = 0;
+% rho = 2 + (abs(x-x0) < .5);
+% u = 0*rho;
+% m = rho.*u;
+% p = rho.^gamma;
+% E = p/(gamma-1) + .5*rho.*u.^2;
 
 end

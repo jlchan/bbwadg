@@ -1,5 +1,5 @@
 Globals3D
-N = 3;
+N = 4;
 filename = 'Grid/cube1.msh';
 [Nv, VX, VY, VZ, K, EToV] = MeshReaderGmsh3D(filename);
 VX = VX*2; VY = VY*2; VZ = VZ*2; % map -1,1
@@ -24,12 +24,37 @@ tfq = Vfqf*t(Fmask(:));
 wfq = repmat(wqtri,4,1);
 Vfq = Vandermonde3D(N,rfq,sfq,tfq)/V;
 
+Drf = Vfq*Dr;
+Dsf = Vfq*Ds;
+Dtf = Vfq*Dt;
+
+Lq = M\(Vfq'*diag(wfq));
+
 Nfqf = length(rqtri);
 e = ones(Nfqf,1); z = zeros(Nfqf,1);
 nrJ = [z;z;e;-e];
 nsJ = [z;-e;e;z];
 ntJ = [-e;z;e;z];
 
+DNr = [Vq*Dr*Pq - .5*Vq*Lq*diag(nrJ)*Vfq*Pq .5*Vq*Lq*diag(nrJ);
+    -.5*diag(nrJ)*Vfq*Pq .5*diag(nrJ)];
+DNs = [Vq*Ds*Pq - .5*Vq*Lq*diag(nsJ)*Vfq*Pq .5*Vq*Lq*diag(nsJ);
+    -.5*diag(nsJ)*Vfq*Pq .5*diag(nsJ)];
+DNt = [Vq*Dt*Pq - .5*Vq*Lq*diag(ntJ)*Vfq*Pq .5*Vq*Lq*diag(ntJ);
+    -.5*diag(ntJ)*Vfq*Pq .5*diag(ntJ)];
+WN = diag([wq;wfq]);
+
+QNr = WN*DNr;
+QNs = WN*DNs;
+QNt = WN*DNt;
+
+Drh = [Vq;Vfq]*[Dr*Pq - Lq*diag(nrJ)*Vfq*Pq Lq*diag(nrJ)];
+Dsh = [Vq;Vfq]*[Ds*Pq - Lq*diag(nsJ)*Vfq*Pq Lq*diag(nsJ)];
+
+% D
+
+
+%% make curved elem
 [rp sp tp] = EquiNodes3D(25);
 Vp = Vandermonde3D(N,rp,sp,tp)/V;
 
@@ -38,7 +63,7 @@ x = r + a*cos(pi*(r+s));
 y = s - a*cos(pi*(s+t));
 z = t + a*cos(pi*(r+t));
 
-a = .05;
+a = .1/N;
 x = r - a*(r+s).^N;
 y = s + a/2*(s+t).^N;
 z = t + a/3*(r+t).^N;
@@ -88,9 +113,36 @@ rzJo = (xsq.*ytq - ysq.*xtq);
 szJo = -(xrq.*ytq - yrq.*xtq);
 tzJo = (xrq.*ysq - yrq.*xsq);
 
-% div-free projection
+% original cross product form
+xrf = Drf*x; xsf = Dsf*x; xtf = Dtf*x;
+yrf = Drf*y; ysf = Dsf*y; ytf = Dtf*y;
+zrf = Drf*z; zsf = Dsf*z; ztf = Dtf*z;
+rxJfo =  (ysf.*ztf - zsf.*ytf); 
+sxJfo = -(yrf.*ztf - zrf.*ytf); 
+txJfo =  (yrf.*zsf - zrf.*ysf); 
 
-blkdiag(L
+ryJfo = -(xsf.*ztf - zsf.*xtf); 
+syJfo =  (xrf.*ztf - zrf.*xtf); 
+tyJfo = -(xrf.*zsf - zrf.*xsf); 
+
+rzJfo = (xsf.*ytf - ysf.*xtf);
+szJfo = -(xrf.*ytf - yrf.*xtf);
+tzJfo = (xrf.*ysf - yrf.*xsf);
+
+Nfqf = length(rqtri);
+e = ones(Nfqf,1); zz = zeros(Nfqf,1);
+nrJ = [zz;zz;e;-e];
+nsJ = [zz;-e;e;zz];
+ntJ = [-e;zz;e;zz];
+
+nxJ = rxJfo.*nrJ + sxJfo.*nsJ + txJfo.*ntJ;
+nyJ = ryJfo.*nrJ + syJfo.*nsJ + tyJfo.*ntJ;
+nzJ = rzJfo.*nrJ + szJfo.*nsJ + tzJfo.*ntJ;
+
+return
+
+%% basic div-free projection
+
 Np = length(r);
 ids = 1:Np;
 Div = [Dr Ds Dt];
@@ -98,9 +150,6 @@ Div = [Dr Ds Dt];
 Vv = null(Div); % find divergence free basis
 wdivf = [wfq;wfq;wfq];
 nhat = [nrJ;nsJ;ntJ];
-Vdivfq = kron(eye(3),Vfq)*Vv; % divergence free basis evaluated on face
-
-
 
 Vdivq = kron(eye(3),Vq)*Vv;
 wdiv = [wq;wq;wq];
@@ -127,6 +176,19 @@ sqrt(sum(wq.*(Vq*rzJ-rzJo).^2))
 norm(Dr*rxJ + Ds*sxJ + Dt*txJ)
 norm(Dr*ryJ + Ds*syJ + Dt*tyJ)
 norm(Dr*rzJ + Ds*szJ + Dt*tzJ)
+
+% check normal agreement
+nxJc = nrJ.*(Vfq*rxJ) + nsJ.*(Vfq*sxJ) + ntJ.*(Vfq*txJ);
+nyJc = nrJ.*(Vfq*ryJ) + nsJ.*(Vfq*syJ) + ntJ.*(Vfq*tyJ);
+nzJc = nrJ.*(Vfq*rzJ) + nsJ.*(Vfq*szJ) + ntJ.*(Vfq*tzJ);
+norm(nxJ - nxJc,'fro')
+norm(nyJ - nyJc,'fro')
+norm(nzJ - nzJc,'fro')
+
+%% generalized div-free projection
+
+Div = [QNr' QNs' QNt'];
+Vv = null(Div); % find divergence free basis
 
 
 

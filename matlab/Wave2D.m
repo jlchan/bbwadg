@@ -1,15 +1,16 @@
 function Wave2D
 
-
+clear all -globals
 Globals2D
 
-N = 4;
-K1D = 16;
+N = 7;
+K1D = 8;
 c_flag = 0;
 FinalTime = .5;
+CFL = .5;
 cfun = @(x,y) ones(size(x));
-% cfun = @(x,y) 1 + .5*sin(pi*x).*sin(pi*y); % smooth velocity
-% cfun = @(x,y) (1 + .5*sin(2*pi*x).*sin(2*pi*y) + (y > 0)); % piecewise smooth velocity
+cfun = @(x,y) 1 + .5*sin(pi*x).*sin(pi*y); % smooth velocity
+cfun = @(x,y) (1 + .5*sin(2*pi*x).*sin(2*pi*y) + (y > 0)); % piecewise smooth velocity
 
 [Nv, VX, VY, K, EToV] = unif_tri_mesh(K1D);
 StartUp2D;
@@ -54,18 +55,18 @@ t0 = .1;
 
 k = 1; % frequency of solution
 W = (2*k-1)/2*pi;
-% p = cos(W*x).*cos(W*y);
+p = cos(W*x).*cos(W*y);
 x0 = 0; y0 = .1;
-% p = exp(-200*((x-x0).^2 + (y-y0).^2));
-p = zeros(Np, K); 
+p = exp(-200*((x-x0).^2 + (y-y0).^2));
+% p = zeros(Np, K); 
 u = zeros(Np, K); 
 v = zeros(Np, K);
 
-v = -exp(-30^2*((x-x0).^2 + (y-y0).^2));
+% v = -exp(-30^2*((x-x0).^2 + (y-y0).^2));
 
-x0 = 0;
-y0 = -.25;
-v = -exp(-10^2*((x-x0).^2 + (y-y0).^2));
+% x0 = 0;
+% y0 = -.25;
+% v = -exp(-10^2*((x-x0).^2 + (y-y0).^2));
 % p = exp(-50^2*((x-x0).^2));
 % u = zeros(Np, K);
 
@@ -116,7 +117,7 @@ resu = zeros(Np,K); resv = zeros(Np,K); resp = zeros(Np,K);
 CN = (N+1)^2/2; % guessing...
 %dt = 1/(CN*max(abs(sJ(:)))*max(abs(1./J(:))));
 CNh = max(CN*max(Fscale(:)));
-dt = 2/CNh;
+dt = CFL*2/CNh;
 
 % outer time step loop
 tstep = 0;
@@ -202,8 +203,7 @@ end
 % fluxu(mapB) = p(vmapM(mapB)).*nx(mapB);
 % fluxv(mapB) = p(vmapM(mapB)).*ny(mapB);
 
-
-tau = 1;
+tau = 0;
 fluxp =  tau*dp - ndotdU;
 fluxu =  (tau*ndotdU - dp).*nx;
 fluxv =  (tau*ndotdU - dp).*ny;
@@ -221,7 +221,8 @@ rhsu =  -dpdx + LIFT*(Fscale.*fluxu)/2.0;
 rhsv =  -dpdy + LIFT*(Fscale.*fluxv)/2.0;
 
 global Pq cq Vq
-rhsp = Pq*(cq.*(Vq*rhsp));
+% rhsp = Pq*(cq.*(Vq*rhsp));
+rhsp = rhsp.*(Pq*cq);
 
 
 
