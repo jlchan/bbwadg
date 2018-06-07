@@ -1,0 +1,24 @@
+\begin{thebibliography}{1}
+
+\bibitem{evans2009n}
+John~A Evans, Yuri Bazilevs, Ivo Babu{\v{s}}ka, and Thomas~JR Hughes.
+\newblock {$n$-Widths, sup-infs, and optimality ratios for the $k$-version of
+  the isogeometric finite element method}.
+\newblock {\em Computer Methods in Applied Mechanics and Engineering},
+  198(21):1726--1741, 2009.
+
+\bibitem{mercerat2015nodal}
+E~Diego Mercerat and Nathalie Glinsky.
+\newblock A nodal high-order discontinuous {Galerkin} method for elastic wave
+  propagation in arbitrary heterogeneous media.
+\newblock {\em Geophysical Journal International}, 201(2):1101--1118, 2015.
+
+\bibitem{chan2017weight}
+Jesse Chan.
+\newblock {Weight-adjusted discontinuous Galerkin methods: matrix-valued
+  weights and elastic wave propagation in heterogeneous media}.
+\newblock {\em International Journal for Numerical Methods in Engineering},
+  pages n/a--n/a.
+\newblock nme.5720.
+
+\end{thebibliography}

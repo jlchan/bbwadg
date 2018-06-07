@@ -1,0 +1,59 @@
+
+\documentclass[a4paper]{article} %
+\usepackage{graphicx,amssymb} %
+
+\textwidth=15cm \hoffset=-1.2cm %
+\textheight=25cm \voffset=-2cm %
+
+\pagestyle{empty} %
+
+\date{} %
+
+\def\keywords#1{\begin{center}{\bf Keywords}\\{#1}\end{center}} %
+
+
+
+% Please, do not change any of the above lines
+
+
+
+
+\begin{document}
+
+% Type down your paper title
+\title{Entropy stable discontinuous Galerkin methods using arbitrary bases and quadratures}
+
+% Authors
+\author{Jesse Chan, \\ %
+       Rice University (USA) \\ \\ % Affiliation 1
+       \tt{jesse.chan@rice.edu} % Only one corresponding e-mail
+       }%
+
+
+\maketitle
+
+\thispagestyle{empty}
+
+% The abstract
+
+\begin{abstract}
+High order discontinuous Galerkin (DG) methods offer several advantages in the approximation of solutions of nonlinear conservation laws, such as improved accuracy and low numerical dispersion/dissipation.  However, these methods also tend to suffer from instability in practice, requiring filtering, limiting, or artificial dissipation to prevent solution blow up.  Provably stable DG methods based on summation-by-parts (SBP) operators and flux differencing address this inherent instability by ensuring that the solution satisfies a semi-discrete entropy inequality.  
+
+Under specific combinations of basis functions or quadratures, nodal DG methods can be interpreted within an SBP framework.  In this talk, we discuss how to construct discretely entropy stable discontinuous Galerkin methods for general choices of basis and quadrature using discrete $L^2$ projection operators and ``decoupled'' SBP operators.  Extensions to curvilinear meshes and implementational aspects on Graphics Processing Units will be also discussed.  
+\end{abstract}
+
+\keywords{High order, discontinuous Galerkin, entropy stability} % Write down at least 3 Keywords
+
+
+
+
+
+
+% \section{Introduction}
+
+
+
+
+
+
+\end{document}

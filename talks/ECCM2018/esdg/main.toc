@@ -1,0 +1,3 @@
+\beamer@sectionintoc {1}{Summation by parts methods}{14}{0}{1}
+\beamer@sectionintoc {2}{Entropy stable formulations and flux differencing}{26}{0}{2}
+\beamer@sectionintoc {3}{Numerical experiments}{44}{0}{3}

@@ -1,0 +1,337 @@
+\relax 
+\providecommand\hyper@newdestlabel[2]{}
+\providecommand\HyperFirstAtBeginDocument{\AtBeginDocument}
+\HyperFirstAtBeginDocument{\ifx\hyper@anchor\@undefined
+\global\let\oldcontentsline\contentsline
+\gdef\contentsline#1#2#3#4{\oldcontentsline{#1}{#2}{#3}}
+\global\let\oldnewlabel\newlabel
+\gdef\newlabel#1#2{\newlabelxx{#1}#2}
+\gdef\newlabelxx#1#2#3#4#5#6{\oldnewlabel{#1}{{#2}{#3}}}
+\AtEndDocument{\ifx\hyper@anchor\@undefined
+\let\contentsline\oldcontentsline
+\let\newlabel\oldnewlabel
+\fi}
+\fi}
+\global\let\hyper@last\relax 
+\gdef\HyperFirstAtBeginDocument#1{#1}
+\providecommand\HyField@AuxAddToFields[1]{}
+\providecommand\HyField@AuxAddToCoFields[2]{}
+\emailauthor{Jesse.Chan@caam.rice.edu}{Jesse Chan\corref {cor1}}
+\emailauthor{John.A.Evans@colorado.edu}{John A.\ Evans}
+\Newlabel{cor1}{1}
+\citation{hughes2005isogeometric}
+\citation{hughes2008duality,evans2009n,hughes2014finite}
+\citation{hughes2008duality}
+\citation{hughes2014finite}
+\citation{langer2015multipatch}
+\citation{nguyen2014nitsche}
+\citation{canuto2012spectral}
+\Newlabel{rice}{a}
+\Newlabel{vt}{b}
+\@writefile{toc}{\contentsline {section}{\numberline {1}Introduction}{1}{section.1}}
+\citation{warburton2008taming}
+\citation{warburton2008taming,reyna2014operator}
+\citation{chan2015gpu}
+\citation{banks2016galerkin}
+\citation{melkman1978spline}
+\citation{cottrell2006isogeometric}
+\@writefile{toc}{\contentsline {section}{\numberline {2}Multi-patch discontinuous Galerkin formulations}{2}{section.2}}
+\newlabel{sec:form2}{{2}{2}{Multi-patch discontinuous Galerkin formulations}{section.2}{}}
+\citation{ciarlet1978finite,warburton2003constants}
+\citation{hesthaven2007nodal,langer2015multipatch}
+\newlabel{eq:waveeq}{{1}{3}{Multi-patch discontinuous Galerkin formulations}{equation.2.1}{}}
+\newlabel{eq:ineqs}{{2}{3}{Multi-patch discontinuous Galerkin formulations}{equation.2.2}{}}
+\citation{chan2016weight2}
+\citation{kopriva2014energy}
+\citation{chan2016weight1,chan2016weight2}
+\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces An example of a multi-patch geometry.\relax }}{4}{figure.caption.1}}
+\providecommand*\caption@xref[2]{\@setref\relax\@undefined{#1}}
+\newlabel{fig:multipatch_diagram}{{1}{4}{An example of a multi-patch geometry.\relax }{figure.caption.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.1}Formulation for linear advection}{4}{subsection.2.1}}
+\newlabel{eq:varformadvec}{{3}{4}{Formulation for linear advection}{equation.2.3}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.2}First order formulation of the acoustic wave equation}{4}{subsection.2.2}}
+\citation{kopriva2006metric}
+\citation{hesthaven2007nodal}
+\citation{chan2016short}
+\citation{warburton2013low,chan2017weight}
+\citation{arnold1982interior,langer2015multipatch}
+\newlabel{eq:varformwave1}{{4}{5}{First order formulation of the acoustic wave equation}{equation.2.4}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.3}Second order formulation of the acoustic wave equation}{5}{subsection.2.3}}
+\citation{Shahbazi:2005:SNE:1083044.1083046}
+\newlabel{eq:varformwave2}{{6}{6}{Second order formulation of the acoustic wave equation}{equation.2.6}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {3}B-spline bases}{6}{section.3}}
+\newlabel{sec:basis}{{3}{6}{B-spline bases}{section.3}{}}
+\citation{warburton2013low}
+\citation{bazilevs2006isogeometric,evans2013explicit}
+\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces {\color  {forestgreen} Illustrations of the patch size $H$, the mesh size $h$, and the number of elements per side $K$ for a particular patch $D^k$. The dashed lines represented the knot lines both on the parametric patch $\mathaccentV {hat}05E{D}$ and the physical patch $D^k$.}\relax }}{7}{figure.caption.2}}
+\newlabel{fig:definitions}{{2}{7}{{\color {forestgreen} Illustrations of the patch size $H$, the mesh size $h$, and the number of elements per side $K$ for a particular patch $D^k$. The dashed lines represented the knot lines both on the parametric patch $\hat {D}$ and the physical patch $D^k$.}\relax }{figure.caption.2}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.1}Higher dimensional splines and approximation spaces}{7}{subsection.3.1}}
+\citation{kolmogoroffOber1936,melkman1978spline,schumaker2007spline,evans2009n}
+\citation{melkman1978spline}
+\citation{brenner2007mathematical}
+\citation{evans2009n}
+\citation{gudi2011interior}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.2}Approximation properties and optimal knot vectors}{8}{subsection.3.2}}
+\newlabel{eq:nwidtheig}{{7}{8}{Approximation properties and optimal knot vectors}{equation.3.7}{}}
+\citation{johnson2005higher}
+\citation{canuto2012spectral}
+\citation{hughes2008duality}
+\citation{hughes2008duality}
+\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces Eigenfunctions $y_{r,n}(x)$ and their roots for $n = 8$ and various $r$. All eigenfunctions are approximated using a symmetric Galerkin formulation with degree $p = 8$ spline spaces of maximal continuity and $K = 64$ elements. \relax }}{9}{figure.caption.3}}
+\newlabel{fig:eigoptknots}{{3}{9}{Eigenfunctions $y_{r,n}(x)$ and their roots for $n = 8$ and various $r$. All eigenfunctions are approximated using a symmetric Galerkin formulation with degree $p = 8$ spline spaces of maximal continuity and $K = 64$ elements. \relax }{figure.caption.3}{}}
+\@writefile{lof}{\contentsline {subfigure}{\numberline{(a)}{\ignorespaces {$r = 2$}}}{9}{subfigure.3.1}}
+\@writefile{lof}{\contentsline {subfigure}{\numberline{(b)}{\ignorespaces {$r = 3$}}}{9}{subfigure.3.2}}
+\@writefile{lof}{\contentsline {subfigure}{\numberline{(c)}{\ignorespaces {$r = 4$}}}{9}{subfigure.3.3}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.3}Knot smoothing}{9}{subsection.3.3}}
+\@writefile{lof}{\contentsline {figure}{\numberline {4}{\ignorespaces Comparison of Greville abscissae for an $p=3, K = 8$ spline space when using uniform knots (shown in \leavevmode {\color  {blue}blue}) and knot positions $\mathaccentV {tilde}07E{\xi }_i$ defined by equation (\ref  {eq:newKnots}) (shown in \leavevmode {\color  {red}red}).\relax }}{10}{figure.caption.4}}
+\newlabel{fig:grevilleComparison}{{4}{10}{Comparison of Greville abscissae for an $p=3, K = 8$ spline space when using uniform knots (shown in \textcolor {blue}{blue}) and knot positions $\tilde {\xi }_i$ defined by equation (\ref {eq:newKnots}) (shown in \textcolor {red}{red}).\relax }{figure.caption.4}{}}
+\newlabel{eq:newKnots}{{8}{10}{Knot smoothing}{equation.3.8}{}}
+\newlabel{eq:knotiter}{{9}{10}{Knot smoothing}{equation.3.9}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {5}{\ignorespaces Knot locations for iterations $k = 0, \ldots  , 10$ for a spline space with $p = 3, K = 8$. Computed optimal knot positions and Greville abscissae are overlaid in \leavevmode {\color  {red}red}.\relax }}{11}{figure.caption.5}}
+\newlabel{fig:smoothedknots}{{5}{11}{Knot locations for iterations $k = 0, \ldots , 10$ for a spline space with $p = 3, K = 8$. Computed optimal knot positions and Greville abscissae are overlaid in \textcolor {red}{red}.\relax }{figure.caption.5}{}}
+\@writefile{lof}{\contentsline {subfigure}{\numberline{(a)}{\ignorespaces {Knot positions}}}{11}{subfigure.5.1}}
+\@writefile{lof}{\contentsline {subfigure}{\numberline{(b)}{\ignorespaces {Greville abscissae}}}{11}{subfigure.5.2}}
+\@writefile{lof}{\contentsline {figure}{\numberline {6}{\ignorespaces Normalized difference between the locations of smoothed and optimal knots for $p = 2, 3, 4$ and $K = 4, 8, 16, 32, 64$. \relax }}{11}{figure.caption.6}}
+\newlabel{fig:smoothedknoterror}{{6}{11}{Normalized difference between the locations of smoothed and optimal knots for $p = 2, 3, 4$ and $K = 4, 8, 16, 32, 64$. \relax }{figure.caption.6}{}}
+\@writefile{lof}{\contentsline {subfigure}{\numberline{(a)}{\ignorespaces {Normalized knot error $\delta _{\rm knot}$ }}}{11}{subfigure.6.1}}
+\@writefile{lof}{\contentsline {subfigure}{\numberline{(b)}{\ignorespaces {Normalized Greville error $\delta _{\rm Greville}$}}}{11}{subfigure.6.2}}
+\citation{auricchio2012isogeometric}
+\@writefile{toc}{\contentsline {section}{\numberline {4}Method of lines discretization in time}{12}{section.4}}
+\newlabel{sec:mol}{{4}{12}{Method of lines discretization in time}{section.4}{}}
+\newlabel{eq:mol}{{11}{12}{Method of lines discretization in time}{equation.4.11}{}}
+\newlabel{eq:mol_second}{{12}{12}{Method of lines discretization in time}{equation.4.12}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.1}Efficient inversion of mass matrices}{12}{subsection.4.1}}
+\newlabel{sec:wadg}{{4.1}{12}{Efficient inversion of mass matrices}{subsection.4.1}{}}
+\citation{gao2014fast}
+\citation{wathen2009chebyshev}
+\citation{auricchio2012isogeometric}
+\citation{patera1984spectral}
+\citation{cottrell2006isogeometric}
+\citation{auricchio2012isogeometric}
+\citation{evans2017explicit}
+\citation{chan2016weight1,chan2016weight2}
+\citation{chan2016weight1,chan2016weight2}
+\citation{chan2016weight1}
+\citation{hughes2010efficient,auricchio2012simple,schillinger2014reduced,hiemstra2017optimal}
+\citation{calabro2016fast}
+\citation{chan2017weight}
+\citation{hughes2005isogeometric}
+\citation{bazilevs2006isogeometric,evans2013explicit}
+\citation{marcus1992survey}
+\citation{chan2015gpu}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {4.1.1}NURBS basis functions and mass matrices}{14}{subsubsection.4.1.1}}
+\newlabel{sec:wadgnurbs}{{4.1.1}{14}{NURBS basis functions and mass matrices}{subsubsection.4.1.1}{}}
+\citation{chan2015gpu}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.2}Stable timestep restrictions}{15}{subsection.4.2}}
+\newlabel{sec:cfl}{{4.2}{15}{Stable timestep restrictions}{subsection.4.2}{}}
+\citation{warburton2003constants,hillewaert2011sharp,chan2015hp}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {4.2.1}Constants in trace and inverse inequalities for spline spaces}{16}{subsubsection.4.2.1}}
+\newlabel{eq:eigconst}{{13}{16}{Constants in trace and inverse inequalities for spline spaces}{equation.4.13}{}}
+\citation{warburton2003constants,ozisik2010constants,hillewaert2011sharp}
+\citation{takacs2016approximation}
+\citation{takacs2016approximation}
+\citation{kosloff1993modified}
+\citation{atcheson2013explicit}
+\citation{babuska1981p}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {4.2.2}Numerically computed constants}{17}{subsubsection.4.2.2}}
+\newlabel{sec:numconsts}{{4.2.2}{17}{Numerically computed constants}{subsubsection.4.2.2}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.3}On the CFL restriction for piecewise polynomial and spline finite elements: $h$ vs $p$ methods}{17}{subsection.4.3}}
+\@writefile{lof}{\contentsline {figure}{\numberline {7}{\ignorespaces Scaled constants in inverse inequalities for splines with various choices of $K$, along with corresponding constants for polynomials. \relax }}{18}{figure.caption.7}}
+\newlabel{fig:iconsts}{{7}{18}{Scaled constants in inverse inequalities for splines with various choices of $K$, along with corresponding constants for polynomials. \relax }{figure.caption.7}{}}
+\@writefile{lof}{\contentsline {subfigure}{\numberline{(a)}{\ignorespaces {$K = \delimiter "4264306 \frac {p}{2}\delimiter "5265307 $}}}{18}{subfigure.7.1}}
+\@writefile{lof}{\contentsline {subfigure}{\numberline{(b)}{\ignorespaces {$K = p$}}}{18}{subfigure.7.2}}
+\@writefile{lof}{\contentsline {subfigure}{\numberline{(c)}{\ignorespaces {$K = 2p$}}}{18}{subfigure.7.3}}
+\@writefile{lof}{\contentsline {figure}{\numberline {8}{\ignorespaces Scaled constants in trace inequalities for splines with various choices of $K$, along with corresponding constants for polynomials. \relax }}{18}{figure.caption.8}}
+\newlabel{fig:tconsts}{{8}{18}{Scaled constants in trace inequalities for splines with various choices of $K$, along with corresponding constants for polynomials. \relax }{figure.caption.8}{}}
+\@writefile{lof}{\contentsline {subfigure}{\numberline{(a)}{\ignorespaces {$K = \delimiter "4264306 \frac {p}{2}\delimiter "5265307 $}}}{18}{subfigure.8.1}}
+\@writefile{lof}{\contentsline {subfigure}{\numberline{(b)}{\ignorespaces {$K = p$}}}{18}{subfigure.8.2}}
+\@writefile{lof}{\contentsline {subfigure}{\numberline{(c)}{\ignorespaces {$K = 2p$}}}{18}{subfigure.8.3}}
+\@writefile{lot}{\contentsline {table}{\numberline {1}{\ignorespaces Comparison of constants in spline trace and inverse inequalities using smoothed and optimal knot vectors.\relax }}{18}{table.caption.9}}
+\newlabel{tab:consts}{{1}{18}{Comparison of constants in spline trace and inverse inequalities using smoothed and optimal knot vectors.\relax }{table.caption.9}{}}
+\@writefile{lot}{\contentsline {subtable}{\numberline{(a)}{\ignorespaces {Scaled trace constants $C_T/K$}}}{18}{subtable.1.1}}
+\@writefile{lot}{\contentsline {subtable}{\numberline{(b)}{\ignorespaces {Scaled inverse inequality constants $C_I/K$}}}{18}{subtable.1.2}}
+\citation{evans2009n}
+\citation{carpenter1994fourth}
+\@writefile{toc}{\contentsline {section}{\numberline {5}Numerical experiments}{19}{section.5}}
+\newlabel{sec:num}{{5}{19}{Numerical experiments}{section.5}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.1}One dimensional experiments}{19}{subsection.5.1}}
+\@writefile{lof}{\contentsline {figure}{\numberline {9}{\ignorespaces One-dimensional convergence of multi-patch DG methods under knot insertion and patch refinement. Uniform knots are used for all experiments. Results for refinement by knot insertion are denoted by circles, while results for patch refinement are denoted by squares.\relax }}{20}{figure.caption.10}}
+\newlabel{fig:hconvergence1D}{{9}{20}{One-dimensional convergence of multi-patch DG methods under knot insertion and patch refinement. Uniform knots are used for all experiments. Results for refinement by knot insertion are denoted by circles, while results for patch refinement are denoted by squares.\relax }{figure.caption.10}{}}
+\@writefile{lof}{\contentsline {subfigure}{\numberline{(a)}{\ignorespaces {First order formulation}}}{20}{subfigure.9.1}}
+\@writefile{lof}{\contentsline {subfigure}{\numberline{(b)}{\ignorespaces {Second order formulation}}}{20}{subfigure.9.2}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.2}Approximation of oscillatory functions using uniform, optimal, and smoothed knot vectors}{20}{subsection.5.2}}
+\newlabel{sec:approx}{{5.2}{20}{Approximation of oscillatory functions using uniform, optimal, and smoothed knot vectors}{subsection.5.2}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {10}{\ignorespaces Convergence under mesh refinement (knot insertion) of first and second order formulations of the 1D acoustic wave equation using multi-patch DG for $p = 2,\ldots  ,5$. Different markers correspond to patches refinement: two patches (circle), four patches (square), eight patches (triangle). \relax }}{21}{figure.caption.11}}
+\newlabel{fig:convergence1D}{{10}{21}{Convergence under mesh refinement (knot insertion) of first and second order formulations of the 1D acoustic wave equation using multi-patch DG for $p = 2,\ldots ,5$. Different markers correspond to patches refinement: two patches (circle), four patches (square), eight patches (triangle). \relax }{figure.caption.11}{}}
+\@writefile{lof}{\contentsline {subfigure}{\numberline{(a)}{\ignorespaces {First order formulation, uniform knots}}}{21}{subfigure.10.1}}
+\@writefile{lof}{\contentsline {subfigure}{\numberline{(b)}{\ignorespaces {First order formulation, smoothed knots}}}{21}{subfigure.10.2}}
+\@writefile{lof}{\contentsline {subfigure}{\numberline{(c)}{\ignorespaces {Second order formulation, uniform knots}}}{21}{subfigure.10.3}}
+\@writefile{lof}{\contentsline {subfigure}{\numberline{(d)}{\ignorespaces {Second order formulation, smoothed knots}}}{21}{subfigure.10.4}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.3}Two-dimensional experiments}{21}{subsection.5.3}}
+\newlabel{sec:twodimexp}{{5.3}{21}{Two-dimensional experiments}{subsection.5.3}{}}
+\citation{chan2016weight1}
+\@writefile{lof}{\contentsline {figure}{\numberline {11}{\ignorespaces $L^2$ error in approximating $u(x) = \qopname  \relax o{cos}\left ( \frac  {(2k-1)\pi x}{2} \right )$ at various $k$ with $p = 4, K = 16$.\relax }}{22}{figure.caption.12}}
+\newlabel{fig:ppw}{{11}{22}{$L^2$ error in approximating $u(x) = \cos \LRp {\frac {(2k-1)\pi x}{2}}$ at various $k$ with $p = 4, K = 16$.\relax }{figure.caption.12}{}}
+\@writefile{lof}{\contentsline {subfigure}{\numberline{(a)}{\ignorespaces {$L^2$ error vs wavelengths ($k$) per dof}}}{22}{subfigure.11.1}}
+\@writefile{lof}{\contentsline {subfigure}{\numberline{(b)}{\ignorespaces {Semi-log scale}}}{22}{subfigure.11.2}}
+\@writefile{lof}{\contentsline {figure}{\numberline {12}{\ignorespaces Comparison of $L^2$ errors for uniform and smooth knots as a function of wavenumber $k$ using $p = 3, K= 8$ splines.\relax }}{22}{figure.caption.13}}
+\newlabel{fig:wavelengthconverge}{{12}{22}{Comparison of $L^2$ errors for uniform and smooth knots as a function of wavenumber $k$ using $p = 3, K= 8$ splines.\relax }{figure.caption.13}{}}
+\@writefile{lof}{\contentsline {subfigure}{\numberline{(a)}{\ignorespaces {First order formulation}}}{22}{subfigure.12.1}}
+\@writefile{lof}{\contentsline {subfigure}{\numberline{(b)}{\ignorespaces {Second order formulation}}}{22}{subfigure.12.2}}
+\citation{chan2016weight2}
+\newlabel{subfig:mapped}{{13a}{23}{Subfigure 13a}{subfigure.13.1}{}}
+\newlabel{sub@subfig:mapped}{{(a)}{a}{Subfigure 13a\relax }{subfigure.13.1}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {13}{\ignorespaces Errors for $L^2$ and weight-adjusted projection when approximating $\qopname  \relax o{cos}\left ( \frac  {k\pi x}{2} \right )\qopname  \relax o{cos}\left ( \frac  {k\pi y}{2} \right )$ on a warped curvilinear mesh with $p = 4$ splines for $k = 1$ and $k=10$. \relax }}{23}{figure.caption.14}}
+\newlabel{fig:l2vswadg}{{13}{23}{Errors for $L^2$ and weight-adjusted projection when approximating $\cos \LRp {\frac {k\pi x}{2}}\cos \LRp {\frac {k\pi y}{2}}$ on a warped curvilinear mesh with $p = 4$ splines for $k = 1$ and $k=10$. \relax }{figure.caption.14}{}}
+\@writefile{lof}{\contentsline {subfigure}{\numberline{(a)}{\ignorespaces {Warped mesh, $\alpha = 1/8$}}}{23}{subfigure.13.1}}
+\@writefile{lof}{\contentsline {subfigure}{\numberline{(b)}{\ignorespaces {$L^2$ errors for $k = 1$}}}{23}{subfigure.13.2}}
+\@writefile{lof}{\contentsline {subfigure}{\numberline{(c)}{\ignorespaces {$L^2$ errors for $k = 10$}}}{23}{subfigure.13.3}}
+\newlabel{subfig:mapped2}{{14a}{23}{Subfigure 14a}{subfigure.14.1}{}}
+\newlabel{sub@subfig:mapped2}{{(a)}{a}{Subfigure 14a\relax }{subfigure.14.1}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {14}{\ignorespaces Errors for $L^2$ and weight-adjusted projection when approximating $\qopname  \relax o{cos}\left ( \frac  {k\pi x}{2} \right )\qopname  \relax o{cos}\left ( \frac  {k\pi y}{2} \right )$ on a more aggressively warped curvilinear mesh with $p = 4$ splines for $k = 1$ and $k=10$. \relax }}{23}{figure.caption.15}}
+\newlabel{fig:l2vswadg2}{{14}{23}{Errors for $L^2$ and weight-adjusted projection when approximating $\cos \LRp {\frac {k\pi x}{2}}\cos \LRp {\frac {k\pi y}{2}}$ on a more aggressively warped curvilinear mesh with $p = 4$ splines for $k = 1$ and $k=10$. \relax }{figure.caption.15}{}}
+\@writefile{lof}{\contentsline {subfigure}{\numberline{(a)}{\ignorespaces {Warped mesh, $\alpha = .28$}}}{23}{subfigure.14.1}}
+\@writefile{lof}{\contentsline {subfigure}{\numberline{(b)}{\ignorespaces {$L^2$ errors for $k = 1$}}}{23}{subfigure.14.2}}
+\@writefile{lof}{\contentsline {subfigure}{\numberline{(c)}{\ignorespaces {$L^2$ errors for $k = 10$}}}{23}{subfigure.14.3}}
+\@writefile{lof}{\contentsline {figure}{\numberline {15}{\ignorespaces $L^2$ best approximation errors for $\qopname  \relax o{cos}\left ( \frac  {k\pi x}{2} \right )\qopname  \relax o{cos}\left ( \frac  {k\pi y}{2} \right ), k = 1$ under different mesh warpings and degree refinement $p = 2,\ldots  , 8$. All results assume that spline spaces contain $K = p$ elements, except for the ``Polynomial'' curve, which assumes degree $p = 2,\ldots  , 12$ polynomial approximations over a single element. \relax }}{24}{figure.caption.16}}
+\newlabel{fig:mapped}{{15}{24}{$L^2$ best approximation errors for $\cos \LRp {\frac {k\pi x}{2}}\cos \LRp {\frac {k\pi y}{2}}, k = 1$ under different mesh warpings and degree refinement $p = 2,\ldots , 8$. All results assume that spline spaces contain $K = p$ elements, \reviewerTwo {except for the ``Polynomial'' curve, which assumes degree $p = 2,\ldots , 12$ polynomial approximations over a single element}. \relax }{figure.caption.16}{}}
+\@writefile{lof}{\contentsline {subfigure}{\numberline{(a)}{\ignorespaces {$L^2$ errors }}}{24}{subfigure.15.1}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {5.3.1}Approximation errors under degree refinement}{24}{subsubsection.5.3.1}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {5.3.2}$L^2$ errors for multi-patch DG solutions }{24}{subsubsection.5.3.2}}
+\citation{warburton2013low,chan2016weight1}
+\@writefile{lof}{\contentsline {figure}{\numberline {16}{\ignorespaces $L^2$ errors for the acoustic wave equation when inverting the curvilinear mass matrix and the weight-adjusted mass matrix. Uniform $p = 4$ splines are used, and the meshes are the two warped curvilinear meshes shown in Figures\nobreakspace  {}\ref  {fig:l2vswadg} and \ref  {fig:l2vswadg2}. \relax }}{25}{figure.caption.17}}
+\newlabel{fig:l2vswadgerror}{{16}{25}{$L^2$ errors for the acoustic wave equation when inverting the curvilinear mass matrix and the weight-adjusted mass matrix. Uniform $p = 4$ splines are used, and the meshes are the two warped curvilinear meshes shown in Figures~\ref {fig:l2vswadg} and \ref {fig:l2vswadg2}. \relax }{figure.caption.17}{}}
+\@writefile{lof}{\contentsline {subfigure}{\numberline{(a)}{\ignorespaces {First order formulation, $\alpha = 1/8$}}}{25}{subfigure.16.1}}
+\@writefile{lof}{\contentsline {subfigure}{\numberline{(b)}{\ignorespaces {Second order formulation, $\alpha = 1/8$}}}{25}{subfigure.16.2}}
+\@writefile{lof}{\contentsline {subfigure}{\numberline{(c)}{\ignorespaces {First order formulation, $\alpha = .28$}}}{25}{subfigure.16.3}}
+\@writefile{lof}{\contentsline {subfigure}{\numberline{(d)}{\ignorespaces {Second order formulation, $\alpha = .28$}}}{25}{subfigure.16.4}}
+\@writefile{lof}{\contentsline {figure}{\numberline {17}{\ignorespaces Convergence under mesh refinement (knot insertion) of first and second order formulations of the 2D acoustic wave equation using multi-patch DG for $p = 2$ and $p=5$ on a warped curved square domain with $\alpha = 1/8$. Different markers correspond to patches refinement: two patches (circle), four patches (square), eight patches (triangle). \relax }}{26}{figure.caption.18}}
+\newlabel{fig:convergence2D}{{17}{26}{Convergence under mesh refinement (knot insertion) of first and second order formulations of the 2D acoustic wave equation using multi-patch DG for $p = 2$ and $p=5$ on \reviewerOne {a warped curved square domain with $\alpha = 1/8$}. Different markers correspond to patches refinement: two patches (circle), four patches (square), eight patches (triangle). \relax }{figure.caption.18}{}}
+\@writefile{lof}{\contentsline {subfigure}{\numberline{(a)}{\ignorespaces {First order formulation, uniform knots}}}{26}{subfigure.17.1}}
+\@writefile{lof}{\contentsline {subfigure}{\numberline{(b)}{\ignorespaces {First order formulation, smoothed knots}}}{26}{subfigure.17.2}}
+\@writefile{lof}{\contentsline {subfigure}{\numberline{(c)}{\ignorespaces {Second order formulation, uniform knots}}}{26}{subfigure.17.3}}
+\@writefile{lof}{\contentsline {subfigure}{\numberline{(d)}{\ignorespaces {Second order formulation, smoothed knots}}}{26}{subfigure.17.4}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.4}Spectral properties of spline discretizations of the advection and first-order acoustic wave equation}{26}{subsection.5.4}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {5.4.1}Spectral radius of the discretization matrix}{26}{subsubsection.5.4.1}}
+\newlabel{sec:specadv}{{5.4.1}{26}{Spectral radius of the discretization matrix}{subsubsection.5.4.1}{}}
+\citation{hesthaven2007nodal}
+\@writefile{lof}{\contentsline {figure}{\numberline {18}{\ignorespaces Comparison of $L^2$ errors for uniform and smooth knots as a function of the warping parameter $\alpha $ using $p = 3, K= 8$ splines on a single patch.\relax }}{27}{figure.caption.19}}
+\newlabel{fig:warpingconverge}{{18}{27}{Comparison of $L^2$ errors for uniform and smooth knots as a function of the warping parameter $\alpha $ using $p = 3, K= 8$ splines on a single patch.\relax }{figure.caption.19}{}}
+\@writefile{lof}{\contentsline {subfigure}{\numberline{(a)}{\ignorespaces {First order formulation}}}{27}{subfigure.18.1}}
+\@writefile{lof}{\contentsline {subfigure}{\numberline{(b)}{\ignorespaces {Second order formulation}}}{27}{subfigure.18.2}}
+\@writefile{lof}{\contentsline {figure}{\numberline {19}{\ignorespaces Growth of $\rho \left ( \bm  {A}_h \right )$ for the advection equation using $\tau = .5$ and spline spaces of degree $p = 2, \ldots  , 5$. \relax }}{27}{figure.caption.20}}
+\newlabel{fig:rhoA}{{19}{27}{Growth of $\rho \LRp {\bm {A}_h}$ for the advection equation using $\tau = .5$ and spline spaces of degree $p = 2, \ldots , 5$. \relax }{figure.caption.20}{}}
+\@writefile{lof}{\contentsline {subfigure}{\numberline{(a)}{\ignorespaces {Uniform knots}}}{27}{subfigure.19.1}}
+\@writefile{lof}{\contentsline {subfigure}{\numberline{(b)}{\ignorespaces {Smoothed knots}}}{27}{subfigure.19.2}}
+\@writefile{lot}{\contentsline {table}{\numberline {2}{\ignorespaces Estimated rate of growth of $\rho \left ( \bm  {A}_h \right )$ for the advection equation with respect to $1/h$.\relax }}{27}{table.caption.21}}
+\newlabel{table:rhoA}{{2}{27}{Estimated rate of growth of $\rho \LRp {\bm {A}_h}$ for the advection equation with respect to $1/h$.\relax }{table.caption.21}{}}
+\citation{ainsworth2004dispersive}
+\citation{hesthaven2007nodal}
+\@writefile{lof}{\contentsline {figure}{\numberline {20}{\ignorespaces Growth of $\rho \left ( \bm  {A}_h \right )$ for the advection equation using an exact upwind flux ($\tau = 1$) and spline spaces of degree $p = 2, \ldots  , 8$. \relax }}{28}{figure.caption.22}}
+\newlabel{fig:rhoAupwind}{{20}{28}{Growth of $\rho \LRp {\bm {A}_h}$ for the advection equation using an exact upwind flux ($\tau = 1$) and spline spaces of degree $p = 2, \ldots , 8$. \relax }{figure.caption.22}{}}
+\@writefile{lof}{\contentsline {subfigure}{\numberline{(a)}{\ignorespaces {Uniform knots}}}{28}{subfigure.20.1}}
+\@writefile{lof}{\contentsline {subfigure}{\numberline{(b)}{\ignorespaces {Smoothed knots}}}{28}{subfigure.20.2}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {5.4.2}Discrete dispersion relations }{28}{subsubsection.5.4.2}}
+\newlabel{sec:disp}{{5.4.2}{28}{Discrete dispersion relations}{subsubsection.5.4.2}{}}
+\citation{ainsworth2004dispersive}
+\citation{hughes2008duality,hughes2014finite}
+\citation{hughes2014finite}
+\@writefile{lof}{\contentsline {figure}{\numberline {21}{\ignorespaces Spectra for the advection equation using a spline space with $p=7$, $K = 32$. \relax }}{29}{figure.caption.23}}
+\newlabel{fig:spectra}{{21}{29}{Spectra for the advection equation using a spline space with $p=7$, $K = 32$. \relax }{figure.caption.23}{}}
+\@writefile{lof}{\contentsline {subfigure}{\numberline{(a)}{\ignorespaces {Uniform knots, $\tau = 0,.5,1$}}}{29}{subfigure.21.1}}
+\@writefile{lof}{\contentsline {subfigure}{\numberline{(b)}{\ignorespaces {Uniform vs smoothed knots, $\tau = 1$}}}{29}{subfigure.21.2}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.5}Spectral properties of spline discretizations of the second-order acoustic wave equation}{29}{subsection.5.5}}
+\newlabel{sec:eigerr}{{5.5}{29}{Spectral properties of spline discretizations of the second-order acoustic wave equation}{subsection.5.5}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {3}{\ignorespaces Estimated rate of growth of $\sqrt  {\rho \left ( \bm  {A}_h \right )}$ for the second order wave equation with respect to $1/h$.\relax }}{29}{table.caption.26}}
+\newlabel{table:rhoA2}{{3}{29}{Estimated rate of growth of $\sqrt {\rho \LRp {\bm {A}_h}}$ for the second order wave equation with respect to $1/h$.\relax }{table.caption.26}{}}
+\citation{hughes2008duality}
+\newlabel{subfig:disp1}{{22a}{30}{Subfigure 22a}{subfigure.22.1}{}}
+\newlabel{sub@subfig:disp1}{{(a)}{a}{Subfigure 22a\relax }{subfigure.22.1}{}}
+\newlabel{subfig:disp2}{{22b}{30}{Subfigure 22b}{subfigure.22.2}{}}
+\newlabel{sub@subfig:disp2}{{(b)}{b}{Subfigure 22b\relax }{subfigure.22.2}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {22}{\ignorespaces Numerical dispersion relations and dispersion error $\left | {\rm  Re}(\omega ) - {\rm  Re}(\omega _h) \right |$ for spline spaces with $p = 4, K = 1, 4, 8, 16$ and $\tau = 1$. The exact dispersion relation is given as a black dotted line in Figure\nobreakspace  {}\ref  {subfig:disp1},  and the theoretical rate of convergence of the dispersion error (for $p=4$, this is $O(h^{11})$) is plotted as a black dotted line in Figure\nobreakspace  {}\ref  {subfig:disp2}. \relax }}{30}{figure.caption.24}}
+\newlabel{fig:eigerr1}{{22}{30}{Numerical dispersion relations and dispersion error $\LRb {{\rm Re}(\omega ) - {\rm Re}(\omega _h)}$ for spline spaces with $p = 4, K = 1, 4, 8, 16$ and $\tau = 1$. The exact dispersion relation is given as a black dotted line in Figure~\ref {subfig:disp1}, \reviewerOne { and the theoretical rate of convergence of the dispersion error (for $p=4$, this is $O(h^{11})$) is plotted as a black dotted line in Figure~\ref {subfig:disp2}}. \relax }{figure.caption.24}{}}
+\@writefile{lof}{\contentsline {subfigure}{\numberline{(a)}{\ignorespaces {Uniform knots}}}{30}{subfigure.22.1}}
+\@writefile{lof}{\contentsline {subfigure}{\numberline{(b)}{\ignorespaces {Smoothed knots}}}{30}{subfigure.22.2}}
+\@writefile{lof}{\contentsline {subfigure}{\numberline{(c)}{\ignorespaces {Dispersion errors (uniform knots)}}}{30}{subfigure.22.3}}
+\@writefile{lof}{\contentsline {subfigure}{\numberline{(d)}{\ignorespaces {Dispersion errors (smoothed knots)}}}{30}{subfigure.22.4}}
+\@writefile{lof}{\contentsline {figure}{\numberline {23}{\ignorespaces Growth of $\sqrt  {\rho \left ( \bm  {A}_h \right )}$ for the second order wave equation using spline spaces of degree $p = 2, \ldots  , 5$. \relax }}{31}{figure.caption.25}}
+\newlabel{fig:rhoA2}{{23}{31}{Growth of $\sqrt {\rho \LRp {\bm {A}_h}}$ for the second order wave equation using spline spaces of degree $p = 2, \ldots , 5$. \relax }{figure.caption.25}{}}
+\@writefile{lof}{\contentsline {subfigure}{\numberline{(a)}{\ignorespaces {Uniform knots}}}{31}{subfigure.23.1}}
+\@writefile{lof}{\contentsline {subfigure}{\numberline{(b)}{\ignorespaces {Smoothed knots}}}{31}{subfigure.23.2}}
+\@writefile{lof}{\contentsline {figure}{\numberline {24}{\ignorespaces Eigenvalue errors $\left | \lambda _k-\lambda _{h,k} \right |$ and eigenvector errors $\left \delimiter "026B30D  p_k-p_{h,k} \right \delimiter "026B30D _{L^2}^2$ for an $p = 4, K = 32$ spline space using uniform and smoothed knots. \relax }}{31}{figure.caption.27}}
+\newlabel{fig:eigerr2}{{24}{31}{Eigenvalue errors $\LRb {\lambda _k-\lambda _{h,k}}$ and eigenvector errors $\nor {p_k-p_{h,k}}_{L^2}^2$ for an $p = 4, K = 32$ spline space using uniform and smoothed knots. \relax }{figure.caption.27}{}}
+\@writefile{lof}{\contentsline {subfigure}{\numberline{(a)}{\ignorespaces {Eigenvalue errors}}}{31}{subfigure.24.1}}
+\@writefile{lof}{\contentsline {subfigure}{\numberline{(b)}{\ignorespaces {Eigenvector errors}}}{31}{subfigure.24.2}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.6}A three-dimensional problem on a multi-patch geometry}{31}{subsection.5.6}}
+\citation{hughes2010efficient,auricchio2012simple}
+\citation{calabro2016fast}
+\citation{hughes2008duality}
+\citation{buffa2010isogeometric,ratnani2012arbitrary}
+\citation{Warburton20063205,chan2016short}
+\@writefile{lof}{\contentsline {figure}{\numberline {25}{\ignorespaces A multi-patch model of a 3D pipe elbow, and pressure solution at time $T = 4$. \relax }}{32}{figure.caption.28}}
+\newlabel{fig:pipe3D}{{25}{32}{A multi-patch model of a 3D pipe elbow, and pressure solution at time $T = 4$. \relax }{figure.caption.28}{}}
+\@writefile{lof}{\contentsline {subfigure}{\numberline{(a)}{\ignorespaces {Multi-patch model}}}{32}{subfigure.25.1}}
+\@writefile{lof}{\contentsline {subfigure}{\numberline{(b)}{\ignorespaces {Pressure}}}{32}{subfigure.25.2}}
+\@writefile{lof}{\contentsline {subfigure}{\numberline{(c)}{\ignorespaces {Pressure (cut view)}}}{32}{subfigure.25.3}}
+\@writefile{toc}{\contentsline {section}{\numberline {6}Conclusions}{32}{section.6}}
+\newlabel{sec:conc}{{6}{32}{Conclusions}{section.6}{}}
+\bibstyle{unsrt}
+\bibdata{dgpenalty}
+\bibcite{hughes2005isogeometric}{{1}{}{{}}{{}}}
+\bibcite{hughes2008duality}{{2}{}{{}}{{}}}
+\bibcite{evans2009n}{{3}{}{{}}{{}}}
+\bibcite{hughes2014finite}{{4}{}{{}}{{}}}
+\bibcite{langer2015multipatch}{{5}{}{{}}{{}}}
+\bibcite{nguyen2014nitsche}{{6}{}{{}}{{}}}
+\bibcite{canuto2012spectral}{{7}{}{{}}{{}}}
+\bibcite{warburton2008taming}{{8}{}{{}}{{}}}
+\bibcite{reyna2014operator}{{9}{}{{}}{{}}}
+\bibcite{chan2015gpu}{{10}{}{{}}{{}}}
+\bibcite{banks2016galerkin}{{11}{}{{}}{{}}}
+\bibcite{melkman1978spline}{{12}{}{{}}{{}}}
+\@writefile{toc}{\contentsline {section}{\numberline {7}Acknowledgments}{33}{section.7}}
+\bibcite{cottrell2006isogeometric}{{13}{}{{}}{{}}}
+\bibcite{ciarlet1978finite}{{14}{}{{}}{{}}}
+\bibcite{warburton2003constants}{{15}{}{{}}{{}}}
+\bibcite{hesthaven2007nodal}{{16}{}{{}}{{}}}
+\bibcite{chan2016weight2}{{17}{}{{}}{{}}}
+\bibcite{kopriva2014energy}{{18}{}{{}}{{}}}
+\bibcite{chan2016weight1}{{19}{}{{}}{{}}}
+\bibcite{kopriva2006metric}{{20}{}{{}}{{}}}
+\bibcite{chan2016short}{{21}{}{{}}{{}}}
+\bibcite{warburton2013low}{{22}{}{{}}{{}}}
+\bibcite{chan2017weight}{{23}{}{{}}{{}}}
+\bibcite{arnold1982interior}{{24}{}{{}}{{}}}
+\bibcite{Shahbazi:2005:SNE:1083044.1083046}{{25}{}{{}}{{}}}
+\bibcite{bazilevs2006isogeometric}{{26}{}{{}}{{}}}
+\bibcite{evans2013explicit}{{27}{}{{}}{{}}}
+\bibcite{kolmogoroffOber1936}{{28}{}{{}}{{}}}
+\bibcite{schumaker2007spline}{{29}{}{{}}{{}}}
+\bibcite{brenner2007mathematical}{{30}{}{{}}{{}}}
+\bibcite{gudi2011interior}{{31}{}{{}}{{}}}
+\bibcite{johnson2005higher}{{32}{}{{}}{{}}}
+\bibcite{auricchio2012isogeometric}{{33}{}{{}}{{}}}
+\bibcite{gao2014fast}{{34}{}{{}}{{}}}
+\bibcite{wathen2009chebyshev}{{35}{}{{}}{{}}}
+\bibcite{patera1984spectral}{{36}{}{{}}{{}}}
+\bibcite{evans2017explicit}{{37}{}{{}}{{}}}
+\bibcite{hughes2010efficient}{{38}{}{{}}{{}}}
+\bibcite{auricchio2012simple}{{39}{}{{}}{{}}}
+\bibcite{schillinger2014reduced}{{40}{}{{}}{{}}}
+\bibcite{hiemstra2017optimal}{{41}{}{{}}{{}}}
+\bibcite{calabro2016fast}{{42}{}{{}}{{}}}
+\bibcite{marcus1992survey}{{43}{}{{}}{{}}}
+\bibcite{hillewaert2011sharp}{{44}{}{{}}{{}}}
+\bibcite{chan2015hp}{{45}{}{{}}{{}}}
+\bibcite{ozisik2010constants}{{46}{}{{}}{{}}}
+\bibcite{takacs2016approximation}{{47}{}{{}}{{}}}
+\bibcite{kosloff1993modified}{{48}{}{{}}{{}}}
+\bibcite{atcheson2013explicit}{{49}{}{{}}{{}}}
+\bibcite{babuska1981p}{{50}{}{{}}{{}}}
+\bibcite{carpenter1994fourth}{{51}{}{{}}{{}}}
+\bibcite{ainsworth2004dispersive}{{52}{}{{}}{{}}}
+\bibcite{buffa2010isogeometric}{{53}{}{{}}{{}}}
+\bibcite{ratnani2012arbitrary}{{54}{}{{}}{{}}}
+\bibcite{Warburton20063205}{{55}{}{{}}{{}}}
+\providecommand\NAT@force@numbers{}\NAT@force@numbers

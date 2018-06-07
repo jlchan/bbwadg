@@ -1,0 +1,3 @@
+\beamer@sectionintoc {1}{Spline spaces and optimal knot vectors }{9}{0}{1}
+\beamer@sectionintoc {2}{Curved domains and weight-adjusted mass matrices}{21}{0}{2}
+\beamer@sectionintoc {3}{Stable timestep restrictions}{28}{0}{3}
