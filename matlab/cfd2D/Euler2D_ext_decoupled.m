@@ -1,25 +1,23 @@
 clear
+clear -globals
 Globals2D
 
-a = 1/8; % warping factor
+a = 0/8; % warping factor
 % FinalTime = 10;
 
 N = 2;
-K1D = 8;
-FinalTime = 1.1;
+K1D = 16;
+FinalTime = 1;
 
 wadgProjEntropyVars = abs(a)>1e-8;
 CFL = .5;
 global tau
-tau = 0;
-global useSkew;
-useSkew = 1;
-useGLL = 0;
-
+tau = 1;
 
 % Lx = 7.5; Ly = 5; ratiox = 3/4; ratioy = .5;
 Lx = 10; Ly = 5; ratiox = 1; ratioy = Ly/Lx;
-[Nv, VX, VY, K, EToV] = unif_tri_mesh(round(ratiox*K1D),round(K1D*ratioy));
+%[Nv, VX, VY, K, EToV] = unif_tri_mesh(round(ratiox*K1D),round(K1D*ratioy));
+[Nv, VX, VY, K, EToV] = QuadMesh2D(round(ratiox*K1D),round(K1D*ratioy));
 
 % ids = abs(abs(VX)-1)>1e-8 & abs(abs(VY)-1)>1e-8;
 % VY(ids) = VY(ids) + .05*randn(size(VX(ids)));
@@ -41,103 +39,125 @@ xp = Vp*x; yp = Vp*y;
 % PlotMesh2D; axis on;return
 
 global M Vq Pq Lq Vfqf Vfq Pfqf VqPq VqLq
-global rxJ sxJ ryJ syJ rxJf sxJf ryJf syJf
-global nxJ nyJ nrJ nsJ nrJq nsJq wfq
-global mapPq
-Nq = 2*N+1;
-[rq sq wq] = Cubature2D(Nq); % integrate u*v*c
-[rq sq wq] = QNodes2D(N); if length(rq)~=Np;  keyboard; end
+global nrJ nsJ nrJq nsJq
+% Nq = 2*N+1;
+% [rq sq wq] = Cubature2D(Nq); % integrate u*v*c
+% [rq sq wq] = QNodes2D(N); if length(rq)~=Np;  keyboard; end
+[rq1D wq1D] = JacobiGQ(0,0,N);
+[rq sq] = meshgrid(rq1D);
+rq = rq(:); sq = sq(:);
+[wr ws] = meshgrid(wq1D);
+wq = wr(:).*ws(:);
+Nq = length(wq);
 
 Vq = Vandermonde2D(N,rq,sq)/V;
 M = Vq'*diag(wq)*Vq;
 
 Pq = M\(Vq'*diag(wq)); % J's cancel out
 xq = Vq*x; yq = Vq*y;
-Jq = Vq*J;
 
-rxJ = rx.*J; sxJ = sx.*J;
-ryJ = ry.*J; syJ = sy.*J;
-rxJ = Vq*rxJ; sxJ = Vq*sxJ;
-ryJ = Vq*ryJ; syJ = Vq*syJ;
-J = Vq*J;
-
-if useGLL
-    [rq1D wq1D] = JacobiGL(0,0,N);
-else
-    [rq1D wq1D] = JacobiGQ(0,0,N);
-end
-rfq = [rq1D; -rq1D; -ones(size(rq1D))];
-sfq = [-ones(size(rq1D)); rq1D; -rq1D];
-wfq = [wq1D; wq1D; wq1D];
-Vq1D = Vandermonde1D(N,rq1D)/Vandermonde1D(N,JacobiGL(0,0,N));
-% plot(rfq,sfq,'o')
+% face nodes
+[rq1D wq1D] = JacobiGQ(0,0,N+1);
 Nfq = length(rq1D);
-
+e = ones(size(rq1D));
+rfq = [rq1D; e; -rq1D; -e];
+sfq = [-e; rq1D; e; -rq1D];
+wfq = [wq1D; wq1D; wq1D; wq1D];
+V1D = Vandermonde1D(N,JacobiGL(0,0,N));
+Vq1D = Vandermonde1D(N,rq1D)/V1D;
+Vfqf = kron(eye(Nfaces),Vq1D);
 Vfq = Vandermonde2D(N,rfq,sfq)/V;
-Vfqf = kron(eye(3),Vq1D);
 Mf = Vfq'*diag(wfq)*Vfq;
 Lq = M\(Vfq'*diag(wfq));
 
-% Pq1D = (Vq1D'*diag(wq1D)*Vq1D) \ (Vq1D'*diag(wq1D));
-% Pfqf = kron(eye(3),Pq1D);
+% multi-layer decoupling - a "middle" layer
+[rq1Dmid wq1Dmid] = JacobiGQ(0,0,N);
+Nfqmid = length(rq1Dmid);
+emid = ones(size(rq1Dmid));
+rfqmid = [rq1Dmid; emid; -rq1Dmid; -emid];
+sfqmid = [-emid; rq1Dmid; emid; -rq1Dmid];
+wfqmid = [wq1Dmid; wq1Dmid; wq1Dmid; wq1Dmid];
+Vq1Dmid = Vandermonde1D(N,rq1Dmid)/V1D;
+VfPfmid = Vq1D*((Vq1Dmid'*diag(wq1Dmid)*Vq1Dmid)\(Vq1Dmid'*diag(wq1Dmid)));
+VfPfmid = kron(eye(Nfaces),VfPfmid);
+VfmidPf = Vq1Dmid*((Vq1D'*diag(wq1D)*Vq1D)\(Vq1D'*diag(wq1D)));
+VfmidPf = kron(eye(Nfaces),VfmidPf);
 
-nx = Vfqf*nx;
-ny = Vfqf*ny;
-sJ = Vfqf*sJ;
-nxJ = (nx.*sJ);
-nyJ = (ny.*sJ);
-Fscale = Vfqf*Fscale;
+global Cf Lqmid VqLqmid
+Cf = [zeros(length(rfqmid)) VfmidPf; -VfPfmid zeros(length(rfq))];
+Sf = diag([wfqmid;wfq])*Cf; % skew version 
+Vfqmid = Vandermonde2D(N,rfqmid,sfqmid)/V;
+Vfqfmid = kron(eye(Nfaces),Vq1Dmid);
+Lqmid = M\(Vfqmid'*diag(wfqmid));
+norm(Sf+Sf','fro')
 
-nrJ = [-zeros(size(rq1D)); ones(size(rq1D)); -ones(size(rq1D)); ];
-nsJ = [-ones(size(rq1D)); ones(size(rq1D)); -zeros(size(rq1D)); ];
-
-Nq = length(rq);
-nrJq = repmat(nrJ',Nq,1);
-nsJq = repmat(nsJ',Nq,1);
+nrJ = [0*e; e; 0*e; -e]; % sJ = 2 for all faces,
+nsJ = [-e; 0*e; e; 0*e];
+nrJmid = [0*emid; emid; 0*emid; -emid]; % sJ = 2 for all faces,
+nsJmid = [-emid; 0*emid; emid; 0*emid];
+nrJq = repmat(nrJmid',Nq,1);
+nsJq = repmat(nsJmid',Nq,1);
 
 % flux differencing operators
-
-Drq = (Vq*Dr*Pq - .5*Vq*Lq*diag(nrJ)*Vfq*Pq);
-Dsq = (Vq*Ds*Pq - .5*Vq*Lq*diag(nsJ)*Vfq*Pq);
-VfPq = (Vfq*Pq);
-VqLq = Vq*Lq;
 VqPq = Vq*Pq;
+VfmidPq = (Vfqmid*Pq);
+VqLqmid = Vq*Lqmid;
+VqLq = Vq*Lq;
 
-global DNr DNs WN 
-DNr = [Drq .5*VqLq*diag(nrJ);
-    -.5*diag(nrJ)*VfPq .5*diag(nrJ)];
-DNs = [Dsq .5*VqLq*diag(nsJ);
-    -.5*diag(nsJ)*VfPq .5*diag(nsJ)];
-WN = diag([wq;wfq]);
+global DNr DNs WN
+wN = [wq; wfqmid];
+WN = diag(wN);
 
-% weak derivative operators
-Drqw = (Vq*(M\(Dr'*Vq'*diag(wq))) - .5*Vq*Lq*diag(nrJ)*Vfq*Pq);
-Dsqw = (Vq*(M\(Ds'*Vq'*diag(wq))) - .5*Vq*Lq*diag(nsJ)*Vfq*Pq);
+Qr = diag(wq)*Vq*Dr*Pq;
+Qs = diag(wq)*Vq*Ds*Pq;
 
-DNrw = [Drqw -.5*VqLq*diag(nrJ);
-    .5*diag(nrJ)*VfPq .5*diag(nrJ)];
-DNsw = [Dsqw -.5*VqLq*diag(nsJ);
-    .5*diag(nsJ)*VfPq .5*diag(nsJ)];
+QNrskew = .5*[Qr-Qr' diag(wq)*VqLqmid*diag(nrJmid);
+    -diag(wfqmid.*nrJmid)*VfmidPq zeros(length(nsJmid))];
+QNsskew = .5*[Qs-Qs' diag(wq)*VqLqmid*diag(nsJmid);
+    -diag(wfqmid.*nsJmid)*VfmidPq zeros(length(nsJmid))];
 
-if useSkew
-    DNr = .5*(DNr - diag(1./[wq;wfq])*(WN*DNr)');
-    %DNr = .5*(DNr-DNrw);
-    DNs = .5*(DNs-DNsw);
-end
+% if 0
+%     wN = [wq; wfqmid; wfq];
+%     Z13 = zeros(size(Qr,1),size(VfmidPf,2));
+%     Z22 = zeros(length(nrJmid));
+%     Z33 = zeros(length(nrJ));
+%     QNrskew = .5*[Qr-Qr' diag(wq)*VqLq*diag(nrJmid) Z13;
+%         -diag(wfqmid.*nrJmid)*VfPq Z22 VfmidPf*diag(wfq.*nrJ);
+%         Z13' -diag(wfq)*VfPfmid*diag(nrJmid) Z33 ];
+%     
+%     QNsskew = .5*[Qs-Qs' diag(wq)*VqLq*diag(nsJmid) Z13;
+%         -diag(wfqmid.*nsJmid)*VfPq Z22 diag(wfqmid.*nsJmid)*VfmidPf;
+%         Z13' -diag(wfq)*VfPfmid*diag(nsJmid) Z33];
+%     
+%     % define face interpolation points as xf, yf. ASSUMES DISTINCT POINTS
+%     Vfq = [Vfqmid;Vfq];
+%     VqLq = Vq*(M\(Vfq'*diag([wfqmid;wfq])));
+%     nrJ = [nrJmid;nrJ];
+%     nsJ = [nsJmid;nsJ];
+%     midmask = [0*wfqmid;ones(size(wfq))];
+% end
 
-
-
-
-% keyboard
+% make skew symmetric diff matrices
+DNr = diag(1./wN)*QNrskew;
+DNs = diag(1./wN)*QNsskew;
 % return
+
+
 %% make quadrature face maps
+
+global mapPq
 
 xf = Vfq*x;
 yf = Vfq*y;
 
+% plot(xf,yf,'o');return
+
+Nfq = size(Vfq,1)/Nfaces; % redefine Nfq for enriched space
 mapMq = reshape(1:length(xf(:)),Nfq*Nfaces,K);
 mapPq = mapMq;
+% keyboard
 
+tol = 1e-10;
 for e = 1:K
     for f = 1:Nfaces
         enbr = EToE(e,f);
@@ -153,13 +173,13 @@ for e = 1:K
             DX = (X1-X2').^2;
             DY = (Y1-Y2').^2;
             D = DX + DY;
-            [p,~] = find(D<1e-8);
+            [p,~] = find(D<tol);
             
             % NOTE - does not work if K1D is too small!!
             if length(p) == 0
                 % assume periodic boundary, find match in x,y
-                [px,~] = find(DX<1e-8);
-                [py,~] = find(DY<1e-8);
+                [px,~] = find(DX<tol);
+                [py,~] = find(DY<tol);
                 if length(px)==0
                     p = py;
                 elseif length(py)==0
@@ -167,23 +187,20 @@ for e = 1:K
                 else
                     keyboard
                 end
-                
             end
-            mapPq(id1,e) = id2(p) + (enbr-1)*(Nfq*Nfaces);
+            fids = id2(p) + (enbr-1)*(Nfq*Nfaces);
+            mapPq(id1,e) = fids(:);
         end
     end
 end
 
 
-%% make curvilinear mesh 
+%% make curvilinear mesh
 
 x0 = Lx; y0 = 0;
 % x0 = 0; y0 = 0; Lx = 1; Ly = 1;
-% x = x + Lx*a*cos(1/2*pi*(x-x0)/Lx).*cos(3/2*pi*(y-y0)/Ly);
+x = x + Lx*a*cos(1/2*pi*(x-x0)/Lx).*cos(3/2*pi*(y-y0)/Ly);
 y = y + Ly*a*sin(pi*(x-x0)/Lx).*cos(1/2*pi*(y-y0)/Ly);
-% y(abs(y)<1e-8 & abs(x-10)<1e-8) = y(abs(y)<1e-8 & abs(x-10)<1e-8) + 4*a;
-% keyboard
-
 
 xq = Vq*x; yq = Vq*y;
 xp = Vp*x; yp = Vp*y;
@@ -202,33 +219,56 @@ if 0
     return
 end
 
+global rxJ sxJ ryJ syJ 
+global rxJf sxJf ryJf syJf
+global nxJ nyJ 
+
 rxJ = zeros(Nq,K); sxJ = zeros(Nq,K);
 ryJ = zeros(Nq,K); syJ = zeros(Nq,K);
 J = zeros(Nq,K);
-rxJf = zeros(Nfq*Nfaces,K); sxJf = zeros(Nfq*Nfaces,K);
-ryJf = zeros(Nfq*Nfaces,K); syJf = zeros(Nfq*Nfaces,K);
-Jf = zeros(Nfq*Nfaces,K);
+
+NfqNfaces = size(Vfq,1);
+rxJf = zeros(NfqNfaces,K); sxJf = zeros(NfqNfaces,K);
+ryJf = zeros(NfqNfaces,K); syJf = zeros(NfqNfaces,K);
+Jf = zeros(NfqNfaces,K);
+
+NfqNfaces = size(Vfqmid,1);
+rxJfmid = zeros(NfqNfaces,K); sxJfmid = zeros(NfqNfaces,K);
+ryJfmid = zeros(NfqNfaces,K); syJfmid = zeros(NfqNfaces,K);
+Jfmid = zeros(NfqNfaces,K);
+
 for e = 1:K
     [rxk,sxk,ryk,syk,Jk] = GeometricFactors2D(x(:,e),y(:,e),Vq*Dr,Vq*Ds);
     rxJ(:,e) = rxk.*Jk;    sxJ(:,e) = sxk.*Jk;
     ryJ(:,e) = ryk.*Jk;    syJ(:,e) = syk.*Jk;
-    J(:,e) = Jk;
+    J(:,e) = Jk;       
     
     [rxk,sxk,ryk,syk,Jk] = GeometricFactors2D(x(:,e),y(:,e),Vfq*Dr,Vfq*Ds);
-    rxJf(:,e) = rxk.*Jk;    sxJf(:,e) = sxk.*Jk;
-    ryJf(:,e) = ryk.*Jk;    syJf(:,e) = syk.*Jk;
+    rxJf(:,e) = rxk.*Jk;   sxJf(:,e) = sxk.*Jk;
+    ryJf(:,e) = ryk.*Jk;   syJf(:,e) = syk.*Jk;
     Jf(:,e) = Jk;
+    
+    [rxk,sxk,ryk,syk,Jk] = GeometricFactors2D(x(:,e),y(:,e),Vfqmid*Dr,Vfqmid*Ds);
+    rxJfmid(:,e) = rxk.*Jk;   sxJfmid(:,e) = sxk.*Jk;
+    ryJfmid(:,e) = ryk.*Jk;   syJfmid(:,e) = syk.*Jk;
+    Jfmid(:,e) = Jk;
 end
+
+global nxJmid nyJmid
+nxJmid = rxJfmid.*nrJmid + sxJfmid.*nsJmid;
+nyJmid = ryJfmid.*nrJmid + syJfmid.*nsJmid;
 
 nxJ = rxJf.*nrJ + sxJf.*nsJ;
 nyJ = ryJf.*nrJ + syJf.*nsJ;
+
+rxJf = rxJfmid; sxJf = sxJfmid;
+ryJf = ryJfmid; syJf = syJfmid;
 
 nx = nxJ./Jf;
 ny = nyJ./Jf;
 sJ = sqrt(nx.^2 + ny.^2);
 nx = nx./sJ; ny = ny./sJ;
 sJ = sJ.*Jf;
-
 
 %% fluxes
 global gamma
@@ -256,7 +296,7 @@ U4 = @(V1,V2,V3,V4) rhoeV(V1,V2,V3,V4).*(1-(V2.^2+V3.^2)./(2*V4));
 
 
 global fxS1 fyS1 fxS2 fyS2 fxS3 fyS3 fxS4 fyS4 psix psiy
-global pfun beta pavg plogmean vnormavg avg
+global pfun beta pavg plogmean vnormavg avg 
 
 avg = @(x,y) .5*(x+y);
 pfun = @(rho,u,v,E) (gamma-1)*(E-.5*rho.*(u.^2+v.^2));
@@ -351,22 +391,44 @@ for i = 1:Nsteps
         end
         
         % evaluate at quad/surface points
-        q1q = Vq*q1;  q1M = Vfq*q1;
-        q2q = Vq*q2;  q2M = Vfq*q2;
-        q3q = Vq*q3;  q3M = Vfq*q3;
-        q4q = Vq*q4;  q4M = Vfq*q4;
-        rhoq  = U1(q1q,q2q,q3q,q4q); rhoM  = U1(q1M,q2M,q3M,q4M);
-        rhouq = U2(q1q,q2q,q3q,q4q); rhouM = U2(q1M,q2M,q3M,q4M);
-        rhovq = U3(q1q,q2q,q3q,q4q); rhovM = U3(q1M,q2M,q3M,q4M);
-        Eq    = U4(q1q,q2q,q3q,q4q); EM    = U4(q1M,q2M,q3M,q4M);
+        q1q = Vq*q1;  
+        q2q = Vq*q2;  
+        q3q = Vq*q3;  
+        q4q = Vq*q4;  
         
-        uq = rhouq./rhoq; uM = rhouM./rhoM;
-        vq = rhovq./rhoq; vM = rhovM./rhoM;
+        rhoq  = U1(q1q,q2q,q3q,q4q); 
+        rhouq = U2(q1q,q2q,q3q,q4q); 
+        rhovq = U3(q1q,q2q,q3q,q4q); 
+        Eq    = U4(q1q,q2q,q3q,q4q); 
+        uq = rhouq./rhoq; 
+        vq = rhovq./rhoq; 
+        
+        % intermediate "middle layer" points
+        q1M = Vfqmid*q1;
+        q2M = Vfqmid*q2;
+        q3M = Vfqmid*q3;
+        q4M = Vfqmid*q4;                
+        rhof  = U1(q1M,q2M,q3M,q4M);
+        rhouf = U2(q1M,q2M,q3M,q4M);
+        rhovf = U3(q1M,q2M,q3M,q4M);
+        Ef    = U4(q1M,q2M,q3M,q4M);        
+        uf = rhouf./rhof;
+        vf = rhovf./rhof;
+        
+        % actual points
+        q1M = Vfq*q1;
+        q2M = Vfq*q2;
+        q3M = Vfq*q3;
+        q4M = Vfq*q4;                
+        rhoM  = U1(q1M,q2M,q3M,q4M);
+        rhouM = U2(q1M,q2M,q3M,q4M);
+        rhovM = U3(q1M,q2M,q3M,q4M);
+        EM    = U4(q1M,q2M,q3M,q4M);        
+        uM = rhouM./rhoM;
+        vM = rhovM./rhoM;
         
         % extra LF flux info
-        QM{1} = rhoM;       QM{2} = rhouM;
-        QM{3} = rhovM;      QM{4} = EM;
-        [rhs1 rhs2 rhs3 rhs4]  = RHS2Dsimple(rhoq,uq,vq,Eq,rhoM,uM,vM,EM,QM);        
+        [rhs1 rhs2 rhs3 rhs4]  = RHS2Dsimple(rhoq,uq,vq,Eq,rhof,uf,vf,Ef,rhoM,uM,vM,EM);
         
         if (INTRK==5)
             rhstest(i) = 0;
@@ -384,10 +446,7 @@ for i = 1:Nsteps
                 r2 = rhs2(:,e);
                 r3 = rhs3(:,e);
                 r4 = rhs4(:,e);
-
-                rhstest(i) = rhstest(i) + (q1e'*r1 + q2e'*r2 + q3e'*r3 + q4e'*r4);                               
-                
-
+                rhstest(i) = rhstest(i) + (q1e'*r1 + q2e'*r2 + q3e'*r3 + q4e'*r4);
             end
         end
         
@@ -417,7 +476,7 @@ for i = 1:Nsteps
         title(sprintf('time = %f, N = %d, K1D = %d',dt*i,N,K1D))
         %                 view(3)
         drawnow
-    end    
+    end
 end
 
 [rq2 sq2 wq2] = Cubature2D(Nq+2);
@@ -446,17 +505,16 @@ semilogy(dt*(1:Nsteps),abs(rhstest),'x--');hold on
 legend('dS','rhstest')
 
 
-function [rhs1 rhs2 rhs3 rhs4] = RHS2Dsimple(rhoq,uq,vq,Eq,rhoM,uM,vM,EM,QM)
+function [rhs1 rhs2 rhs3 rhs4] = RHS2Dsimple(rhoq,uq,vq,Eq,rhof,uf,vf,Ef,rhoM,uM,vM,EM)
 
 Globals2D;
 
-global M Vq Pq Lq Lqf Vfqf Vfq VqPq VqLq
+global M Vq Pq Lq Lqf Vfqf Vfq VfPq VqPq VqLq
 global rxJ sxJ ryJ syJ rxJf sxJf ryJf syJf
 global nxJ nyJ nrJ nsJ nrJq nsJq
 global mapPq
 global fxS1 fyS1 fxS2 fyS2 fxS3 fyS3 fxS4 fyS4
 global pfun beta pavg plogmean vnormavg avg
-global Drq Dsq VfPq VqLq
 
 global DNr DNs
 
@@ -466,8 +524,8 @@ vP = vM(mapPq);
 EP = EM(mapPq);
 
 betaq = beta(rhoq,uq,vq,Eq);
-betafq = beta(rhoM,uM,vM,EM);
-betaN = [betaq;betafq];
+betafq = beta(rhof,uf,vf,Ef);
+betaM = beta(rhoM,uM,vM,EM);
 
 % Lax-Friedrichs flux
 global gamma tau
@@ -476,14 +534,12 @@ pM = (gamma-1)*(EM - .5*rhoM.*unorm2);
 cvel = sqrt(gamma*pM./rhoM);
 lam = sqrt(unorm2)+cvel;
 LFc = max(lam(mapPq),lam);
-QP{1} = QM{1}(mapPq); QP{2} = QM{2}(mapPq);
-QP{3} = QM{3}(mapPq); QP{4} = QM{4}(mapPq);
 
 % rhoUn = (rhoP.*uP-rhoM.*uM).*nx + (rhoP.*vP-rhoM.*vM).*ny;
-dQ1 = QP{1}-QM{1};
-dQ2 = QP{2}-QM{2};
-dQ3 = QP{3}-QM{3};
-dQ4 = QP{4}-QM{4};
+dQ1 = rhoP-rhoM; % QP{1}-QM{1};
+dQ2 = rhoP.*uP - rhoM.*uM; % QP{2}-QM{2};
+dQ3 = rhoP.*vP - rhoM.*vM; % QP{3}-QM{3};
+dQ4 = EP - EM; % QP{4}-QM{4};
 Lf1 = tau*LFc.*dQ1.*sJ;
 Lf2 = tau*LFc.*dQ2.*sJ;
 Lf3 = tau*LFc.*dQ3.*sJ;
@@ -499,15 +555,11 @@ fSf2 = fSf2  - .25*Lf2;
 fSf3 = fSf3  - .25*Lf3;
 fSf4 = fSf4  - .25*Lf4;
 
-f1 = nxJ.*fxS1(rhoM,uM,vM,EM,rhoM,uM,vM,EM) + nyJ.*fyS1(rhoM,uM,vM,EM,rhoM,uM,vM,EM);
-f2 = nxJ.*fxS2(rhoM,uM,vM,EM,rhoM,uM,vM,EM) + nyJ.*fyS2(rhoM,uM,vM,EM,rhoM,uM,vM,EM);
-f3 = nxJ.*fxS3(rhoM,uM,vM,EM,rhoM,uM,vM,EM) + nyJ.*fyS3(rhoM,uM,vM,EM,rhoM,uM,vM,EM);
-f4 = nxJ.*fxS4(rhoM,uM,vM,EM,rhoM,uM,vM,EM) + nyJ.*fyS4(rhoM,uM,vM,EM,rhoM,uM,vM,EM);
+rho = [rhoq; rhof];
+u = [uq; uf];
+v = [vq; vf];
+betaN = [betaq;betafq];
 
-rho = [rhoq; rhoM];
-u = [uq; uM];
-v = [vq; vM];
-E = [Eq; EM];
 divF1 = zeros(size(DNr,1),K);
 divF2 = zeros(size(DNr,1),K);
 divF3 = zeros(size(DNr,1),K);
@@ -517,24 +569,11 @@ for e = 1:K
     [rhox, rhoy] = meshgrid(rho(:,e));
     [ux, uy] = meshgrid(u(:,e));
     [vx, vy] = meshgrid(v(:,e));
-    %     [Ex, Ey] = meshgrid(E(:,e)); % no need - used in beta
     [betax, betay] = meshgrid(betaN(:,e));
     
     % optimized evaluations
-    rholog = logmean(rhox,rhoy);
-    rhoavg = avg(rhox,rhoy);
-    uavg = avg(ux,uy);
-    vavg = avg(vx,vy);
-    vnavg = 2*(uavg.^2 + vavg.^2) - (avg(ux.^2,uy.^2) + avg(vx.^2,vy.^2));
-    pa = rhoavg./(2*avg(betax,betay));
-    
-    FxS1 = rholog.*uavg;      FyS1 = rholog.*vavg;
-    FxS2 = FxS1.*uavg + pa;   FyS2 = FyS1.*uavg;
-    FxS3 = FyS2;              FyS3 = FyS1.*vavg + pa;
-    f4aux = rholog./(2*(gamma-1)*logmean(betax,betay)) + pa + .5*rholog.*vnavg;
-    FxS4 = f4aux.*uavg;
-    FyS4 = f4aux.*vavg;
-    
+    [FxS1 FxS2 FxS3 FxS4 FyS1 FyS2 FyS3 FyS4] = euler_flux(rhox,rhoy,ux,uy,vx,vy,betax,betay);
+        
     [rxJ1, rxJ2] = meshgrid([rxJ(:,e);rxJf(:,e)]);
     [sxJ1, sxJ2] = meshgrid([sxJ(:,e);sxJf(:,e)]);
     [ryJ1, ryJ2] = meshgrid([ryJ(:,e);ryJf(:,e)]);
@@ -545,26 +584,44 @@ for e = 1:K
     Dx = DNr.*rxJK + DNs.*sxJK;
     Dy = DNr.*ryJK + DNs.*syJK;
     
-    divF1(:,e) = sum(Dx.*FxS1,2) + sum(Dy.*FyS1,2);
+    divF1(:,e) = sum(Dx.*FxS1,2) + sum(Dy.*FyS1,2);    
     divF2(:,e) = sum(Dx.*FxS2,2) + sum(Dy.*FyS2,2);
     divF3(:,e) = sum(Dx.*FxS3,2) + sum(Dy.*FyS3,2);
-    divF4(:,e) = sum(Dx.*FxS4,2) + sum(Dy.*FyS4,2);
-
+    divF4(:,e) = sum(Dx.*FxS4,2) + sum(Dy.*FyS4,2);      
 end
 
-global useSkew
-if useSkew
-    f1 = 0;
-    f2 = 0;
-    f3 = 0;
-    f4 = 0;
-end
-rhs1 = 2*[VqPq VqLq]*divF1 + VqLq*(fSf1-f1);
-rhs2 = 2*[VqPq VqLq]*divF2 + VqLq*(fSf2-f2);
-rhs3 = 2*[VqPq VqLq]*divF3 + VqLq*(fSf3-f3);
-rhs4 = 2*[VqPq VqLq]*divF4 + VqLq*(fSf4-f4);
+global Cf VqLqmid nxJmid nyJmid
 
-% apply wadg
+VqPqLq = 2*[VqPq VqLqmid];
+rhs1 = VqPqLq*divF1 + VqLq*(fSf1);
+rhs2 = VqPqLq*divF2 + VqLq*(fSf2);
+rhs3 = VqPqLq*divF3 + VqLq*(fSf3);
+rhs4 = VqPqLq*divF4 + VqLq*(fSf4);
+
+for e = 1:K
+    [rhox rhoy] = meshgrid([rhof(:,e);rhoM(:,e)]);
+    [ux uy] = meshgrid([uf(:,e);uM(:,e)]);
+    [vx vy] = meshgrid([vf(:,e);vM(:,e)]);
+    [betax betay] = meshgrid([betafq(:,e);betaM(:,e)]);       
+    
+    [nx1 nx2] = meshgrid([nxJmid(:,e);nxJ(:,e)]);
+    [ny1 ny2] = meshgrid([nyJmid(:,e);nyJ(:,e)]);
+    nx = avg(nx1,nx2); ny = avg(ny1,ny2);
+    [FxS1 FxS2 FxS3 FxS4 FyS1 FyS2 FyS3 FyS4] = euler_flux(rhox,rhoy,ux,uy,vx,vy,betax,betay);
+    
+    FnS1 = FxS1.*nx + FyS1.*ny;
+    FnS2 = FxS2.*nx + FyS2.*ny;
+    FnS3 = FxS3.*nx + FyS3.*ny;
+    FnS4 = FxS4.*nx + FyS4.*ny;
+    VqLqLq = [VqLqmid VqLq];
+
+    rhs1(:,e) = rhs1(:,e) + VqLqLq*sum(Cf.*FnS1,2);
+    rhs2(:,e) = rhs2(:,e) + VqLqLq*sum(Cf.*FnS2,2);
+    rhs3(:,e) = rhs3(:,e) + VqLqLq*sum(Cf.*FnS3,2);
+    rhs4(:,e) = rhs4(:,e) + VqLqLq*sum(Cf.*FnS4,2);
+end
+
+% apply wadg at the end
 rhs1 = -VqPq*(rhs1./J);
 rhs2 = -VqPq*(rhs2./J);
 rhs3 = -VqPq*(rhs3./J);
@@ -592,7 +649,7 @@ p = rho.^gamma;
 % v = zeros(size(x));
 % p = ones(size(x));
 
-if 1
+if 0
     % pulse condition
     x0 = 5;
     rho = 2 + (abs(x-x0) < 5);
@@ -601,5 +658,24 @@ if 1
     p = rho.^gamma;
     
 end
+
+end
+
+function [FxS1 FxS2 FxS3 FxS4 FyS1 FyS2 FyS3 FyS4] = euler_flux(rhox,rhoy,ux,uy,vx,vy,betax,betay)
+
+global avg gamma
+rholog = logmean(rhox,rhoy);
+rhoavg = avg(rhox,rhoy);
+uavg = avg(ux,uy);
+vavg = avg(vx,vy);
+vnavg = 2*(uavg.^2 + vavg.^2) - (avg(ux.^2,uy.^2) + avg(vx.^2,vy.^2));
+pa = rhoavg./(2*avg(betax,betay));
+
+FxS1 = rholog.*uavg;      FyS1 = rholog.*vavg;
+FxS2 = FxS1.*uavg + pa;   FyS2 = FyS1.*uavg;
+FxS3 = FyS2;              FyS3 = FyS1.*vavg + pa;
+f4aux = rholog./(2*(gamma-1)*logmean(betax,betay)) + pa + .5*rholog.*vnavg;
+FxS4 = f4aux.*uavg;
+FyS4 = f4aux.*vavg;
 
 end

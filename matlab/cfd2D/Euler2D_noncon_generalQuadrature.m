@@ -4,7 +4,7 @@ clear
 % useQuads = 1;mypath
 
 Globals2D;
-N = 3;
+N = 1;
 K1D = 16;
 useSkew = 1;
 CFL = .25;
@@ -712,7 +712,7 @@ for e = 1:K
     
     Dx = DNr.*rxJK + DNs.*sxJK;
     Dy = DNr.*ryJK + DNs.*syJK;
-    
+
     divF1(:,e) = sum(Dx.*FxS1,2) + sum(Dy.*FyS1,2);
     divF2(:,e) = sum(Dx.*FxS2,2) + sum(Dy.*FyS2,2);
     divF3(:,e) = sum(Dx.*FxS3,2) + sum(Dy.*FyS3,2);
