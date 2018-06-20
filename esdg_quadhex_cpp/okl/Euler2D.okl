@@ -1,0 +1,160 @@
+#if USE_DOUBLE
+#define dfloat double
+#define dfloat4 double4
+#define LOGDF log
+#define POWDF pow
+#define EXPDF exp
+#else
+#define dfloat float
+#define dfloat4 float4
+#define LOGDF logf
+#define POWDF powf
+#define EXPDF expf
+#endif
+
+// helpful functions
+#define avg(a, b) .5f * (a + b)
+#define pfun(rho, u, v, E) ((p_gamma - 1.f) * (E - .5f * rho * (u * u + v * v)))
+#define beta(rho, u, v, E) (rho / (2.f * pfun(rho, u, v, E))) // inverse temp
+
+// map conservation to entropy vars
+#define pfun(rho, u, v, E) ((p_gamma - 1.f) * (E - .5f * rho * (u * u + v * v)))
+#define rhoeU(rho, rhou, rhov, E) (E - .5f * (rhou * rhou + rhov * rhov) / rho)
+#define sU(rho, rhou, rhov, E)						\
+  (LOGDF((p_gamma - 1.f) * rhoeU(rho, rhou, rhov, E) / POWDF(rho, p_gamma)))
+
+// map entropy to conservation vars
+#define sV(V1, V2, V3, V4) (p_gamma - V1 + (V2 * V2 + V3 * V3) / (2.f * V4))
+#define rhoeV(V1, V2, V3, V4)						\
+  (POWDF((p_gamma - 1.f) / POWDF(-V4, p_gamma), 1.f / (p_gamma - 1.f)) * \
+   EXPDF(-sV(V1, V2, V3, V4) / (p_gamma - 1.f)))
+
+// occa function
+dfloat logmean(dfloat aL, dfloat aR)
+{
+  const dfloat xi = aL / aR;
+  const dfloat f = (xi - 1.f) / (xi + 1.f);
+  const dfloat u = f * f;
+  const dfloat u2 = u * u;
+
+  dfloat F = LOGDF(xi) / 2.f / f;
+  if (fabs(u) < 1.fe-3)
+    {
+      F = 1.f + u / 3.f + u2 / 5.f + u2 * u / 7.f + u2 * u2 / 9.f;
+    }
+  return (aL + aR) / (2.f * F);
+}
+
+void VU(dfloat rho, dfloat rhou, dfloat rhov, dfloat E, dfloat &V1, dfloat &V2,
+        dfloat &V3, dfloat &V4)
+{
+
+  const dfloat rhoe = rhoeU(rho, rhou, rhov, E);
+  V1 = (-E + rhoe * (p_gamma + 1.f - sU(rho, rhou, rhov, E))) / rhoe;
+  V2 = rhou / rhoe;
+  V3 = rhov / rhoe;
+  V4 = (-rho) / rhoe;
+}
+
+void UV(dfloat V1, dfloat V2, dfloat V3, dfloat V4, dfloat &rho, dfloat &rhou,
+        dfloat &rhov, dfloat &E)
+{
+
+  const dfloat rhoe = rhoeV(V1, V2, V3, V4);
+  rho = rhoe * (-V4);
+  rhou = rhoe * (V2);
+  rhov = rhoe * (V3);
+  E = rhoe * (1.f - (V2 * V2 + V3 * V3) / (2.f * V4));
+}
+
+void euler2d_flux(dfloat rho_i, dfloat rho_j, dfloat u_i, dfloat u_j,
+                  dfloat v_i, dfloat v_j, dfloat E_i, dfloat E_j, dfloat beta_i,
+                  dfloat beta_j, dfloat &FxS1, dfloat &FyS1, dfloat &FxS2,
+                  dfloat &FyS2, dfloat &FxS3, dfloat &FyS3, dfloat &FxS4,
+                  dfloat &FyS4)
+{
+
+  const dfloat rholog = logmean(rho_i, rho_j);
+  const dfloat rhoavg = avg(rho_i, rho_j);
+  const dfloat uavg = avg(u_i, u_j);
+  const dfloat vavg = avg(v_i, v_j);
+  const dfloat vnavg = 2.f * (uavg * uavg + vavg * vavg) -
+    (avg(u_i * u_i, u_j * u_j) + avg(v_i * v_i, v_j * v_j));
+  const dfloat beta_avg = avg(beta_i, beta_j);
+
+  const dfloat pa = rhoavg / (2.f * beta_avg);
+  const dfloat f4aux =
+    rholog / (2.f * (p_gamma - 1.f) * logmean(beta_i, beta_j)) + pa +
+    .5f * rholog * vnavg;
+
+  FxS1 = rholog * uavg;
+  FyS1 = rholog * vavg;
+  FxS2 = FxS1 * uavg + pa;
+  FyS2 = FyS1 * uavg;
+  FxS3 = FyS2;
+  FyS3 = FyS1 * vavg + pa;
+  FxS4 = f4aux * uavg;
+  FyS4 = f4aux * vavg;
+}
+
+@kernel void volume(const int K,
+		    const int Np3,
+		    const dfloat *@restrict vgeo,
+		    const dfloat *@restrict vfgeo,
+		    const dfloat *@restrict D1D,
+		    const dfloat *@restrict Vf1D,
+		    const dfloat *@restrict wq1D,
+		    const dfloat *@restrict Q,
+		    dfloat *@restrict Qf,
+		    dfloat *@restrict rhsQ,
+		    dfloat *@restrict rhsQf){
+
+  for (int e = 0; e < K; ++e; @outer(0)){        
+    for (int i = 0; i < Np3; ++i; @inner(0)){
+      if (i==0){
+	printf("on thread 0 on elem %d\n",e);
+      }
+    }
+  }
+}
+
+@kernel void surface(const int K,
+		     const int NfpNfaces,
+		     const dfloat *@restrict fgeo,
+		     const int    *@restrict mapPq,		     
+		     const dfloat *@restrict Vf1D,
+		     const dfloat *@restrict wq1D,
+		     const dfloat *@restrict Qf,
+		     dfloat *@restrict rhsQ,
+		     const dfloat *@restrict rhsQf){
+
+  for (int e = 0; e < K; ++e; @outer(0)){        
+    for (int i = 0; i < NfpNfaces; ++i; @inner(0)){
+      if (i==0){
+	printf("on thread 0 on elem %d\n",e);
+      }
+    }
+  }
+}
+
+
+@kernel void update(const int K,
+		    const int Np3,
+		    const dfloat fa,
+		    const dfloat fb,
+		    const dfloat fdt,		    
+		    const dfloat *@restrict vgeo,
+		    const dfloat *@restrict Vf1D,
+		    dfloat *@restrict Q,
+		    dfloat *@restrict Qf,
+		    dfloat *@restrict rhsQ,
+		    dfloat *@restrict resQ){
+
+  for (int e = 0; e < K; ++e; @outer(0)){        
+    for (int i = 0; i < Np3; ++i; @inner(0)){
+      if (i==0){
+	printf("on thread 0 on elem %d\n",e);
+      }
+    }
+  }
+}

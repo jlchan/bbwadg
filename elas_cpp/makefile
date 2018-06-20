@@ -1,8 +1,8 @@
 PROJ_DIR:=$(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 ifndef OCCA_DIR
-  include $(PROJ_DIR)/../../../scripts/makefile
+  include $(PROJ_DIR)/../../../scripts/Makefile
 else
-  include ${OCCA_DIR}/scripts/makefile
+  include ${OCCA_DIR}/scripts/Makefile
 endif
 
 #flags += -DtFloat=float -DOCCA_GL_ENABLED=1 -Dp_N=$(N) -DNDG3d -g

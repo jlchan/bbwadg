@@ -7,14 +7,14 @@ Globals1D;
 
 if nargin==0
     N = 7;
-    K1D = 9;
+    K1D = 16;
 else
     N = Nin;
 end
-CFL = .25;
-FT = 2;1.06765;
+CFL = .125;
+FT = 1; % 1.06765;
 global tau
-tau = 0;
+tau = 1;
 [Nv, VX, K, EToV] = MeshGen1D(-1,1,K1D);
 
 % VX(2:end-1) = VX(2:end-1) + 1/K1D*randn;
@@ -30,12 +30,14 @@ rp = linspace(-1+1e-4,1-1e-4,50)';
 Vp = Vandermonde1D(N,rp)/V;
 xp=  Vp*x;
 
-global uex Vq Pq Prq shockSol
+global uex Vq Pq Prq shockSol Vf
+
+Vf = Vandermonde1D(N,[-1;1])/V;
  
 % Nq = ceil((3*N-1)/2); % exact integration
 % Nq = 2*N+2; % same as overkill integration
-Nq = N+1; % inexact integration
-[rq wq] = JacobiGQ(0,0,Nq);
+Nq = N; % inexact integration
+[rq wq] = JacobiGL(0,0,Nq);
 
 Vq = Vandermonde1D(N,rq)/V;
 Vrq = GradVandermonde1D(N,rq)/V;
@@ -48,10 +50,11 @@ M = inv(V*V');
 % LIFT = diag(1./sum(M,2))*(M*LIFT);
 % keyboard
 
-shockSol = 0;
+shockSol = 1;
 if shockSol
     uex = @(x) 1 + (x < (-1 + .25));
-    FinalTime = 1;
+    uex = @(x) -1 + (x>0)*2;    
+    FinalTime = 1/2;
 else
     uex = @(x) -sin(pi*x);
     FinalTime = FT;
@@ -90,7 +93,7 @@ for tstep=1:Nsteps
     
     time = (tstep-1)*dt;
     
-    if nargin==0 && (mod(tstep,1)==0 || tstep==Nsteps)
+    if nargin==0 && (mod(tstep,5)==0 || tstep==Nsteps)
         
         plot(xp,Vp*u,'b-','linewidth',2)
         if shockSol
@@ -102,7 +105,7 @@ for tstep=1:Nsteps
         set(gca,'fontsize',15);grid on
         title(sprintf('Time = %f\n',tstep*dt),'fontsize',15)
         
-%         drawnow
+        drawnow
         
 [val id] = min(abs(tstep-tvec));
         if val<1e-8
@@ -119,7 +122,7 @@ for tstep=1:Nsteps
     energy(tstep) = sum(sum(diag(wq)*(Vq*u).^2*J(1)));
     
 end;
-
+return
 % print(gcf,'-dpng',sprintf(tag,length(tvec)+1))
 % print(gcf,'-dpng',sprintf('~/Desktop/bbwadg/talks/TAMES2017/figs/burgersStable_%d.png',4))
 % print(gcf,'-dpng',sprintf('~/Desktop/bbwadg/talks/TAMES2017/figs/burgersUnstable_%d.png',4))
@@ -144,7 +147,7 @@ function [rhsu] = BurgersRHS1D(u)
 % Purpose  : Evaluate RHS flux in 1D advection
 
 Globals1D;
-global uex Pq Vq Prq shockSol
+global uex Pq Vq Prq shockSol Vf
 global tau
 % form field differences at faces
 alpha = 0;
@@ -160,7 +163,7 @@ if shockSol
     fend = uex(1).^2;
 end
 
-opt = 2;
+opt = 3;
 if opt==1 % conservative
     du(:) = .5*(uP-uM).*(uM.*nx - abs(uM.*nx));
     
@@ -205,12 +208,13 @@ elseif opt==3 % continuous split + discretization
     uDu = Pq*((Vq*u).*(Vq*(rx.*(Dr*u)))) + .5*LIFT*(Fscale.*du.*nx); % Dh*f    
         
     uavg(:) = .5*(uP.^2 + uM.^2);
-    Df = -rx.*(Prq*(Vq*u).^2) + LIFT*(Fscale.*uavg.*nx); % Dh*f
+    %Df = -rx.*(Prq*(Vq*u).^2) + LIFT*(Fscale.*uavg.*nx); % Dh*f
+    Df = rx.*(Dr*Pq*(Vq*u).^2) + LIFT*(Fscale.*(uavg - Vf*(Pq*(Vq*u).^2)).*nx); % Dh*f
     
     rhsu = -(uDu + Df)*1/3;    
     
     % lax friedrichs
-    du = (uP-uM).*abs(uM);
+    du = tau*(uP-uM).*abs(uM);
     rhsu = rhsu + .5*LIFT*(Fscale.*du);
     
 elseif opt==4 % discrete split + interpolation instead of quadrature    
@@ -234,7 +238,7 @@ elseif opt==4 % discrete split + interpolation instead of quadrature
     rhsu = -(uDu + Df)*1/3;
     
     % add lax friedrichs
-    du = .5*(uP-uM).*abs(uM);
+    du = tau*.5*(uP-uM).*abs(uM);
     rhsu = rhsu + LIFT*(Fscale.*du);
 
 elseif opt==5 % non-conservative part

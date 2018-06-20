@@ -4,6 +4,7 @@
 \usetheme{Warsaw}
 \usecolortheme{seagull}
 %\useoutertheme[subsection=false]{smoothbars}
+\usepackage{fancybox}
 
 \usepackage{stackengine}
 %\setbeamertemplate{caption}{\raggedright\insertcaption\par}
@@ -230,6 +231,7 @@ title style={font=\footnotesize}
 
 \newcommand{\uh}{\widehat{u}}
 \newcommand{\fnh}{\widehat{f}_n}
+\renewcommand{\hat}{\widehat}
 \renewcommand{\L}{L^2\LRp{\Omega}}
 \newcommand{\pO}{\partial\Omega}
 \newcommand{\Gh}{\Gamma_h}
@@ -305,7 +307,7 @@ title style={font=\footnotesize}
 
 
 \title[Multi-patch IGA]{Efficient explicit solvers for multipatch discontinuous Galerkin isogeometric analysis}
-\date[June 9-15, 2018]{ECCM-CFD 2018\\June 9-15, 2018}
+\date[June 9-15, 2018]{ECCM-ECFD 2018\\June 9-15, 2018}
 \author[Chan, Evans]{Jesse Chan\inst{1}, J. A. Evans\inst{2}}
 \institute[Rice CAAM]{\inst{1}Department of Computational and Applied Math, Rice University\\ \inst{2} Ann and H.J. Smead Aerospace Engineering Sciences, UC Boulder}
 
@@ -317,7 +319,7 @@ title style={font=\footnotesize}
 
 
 \frame{
-\frametitle{High order Galerkin methods for hyperbolic PDEs}
+\frametitle{High order methods for hyperbolic PDEs}
 \setcounter{subfigure}{0}
 \vspace{-1em}
 \begin{columns}
@@ -371,21 +373,24 @@ title style={font=\footnotesize}
 \begin{columns}
 \begin{column}{.5\textwidth}
 \begin{itemize}
-\item Model problem: (second order) acoustic wave equation 
-\begin{align*}
-%\only<1>{
-\frac{1}{c^2}\pdd{p}{t}{} - \Delta p &= f.
-%}
-%\only<2>{
-%\pd{v}{t}{} &= \sum_{D^k}\LRp{\Grad p,\grad w}_{D^k} + \LRa{\jump{p},w}\\
-%\pd{p}{t}{} &= v.
-%}
-\end{align*}
-\item Pressure-velocity system (first order formulation)
+\item Wave propagation problems (acoustics, Maxwells, elasticity).
+\vspace{.1em}
+%\begin{align*}
+%%\only<1>{
+%\frac{1}{c^2}\pdd{p}{t}{} - \Delta p &= f.
+%%}
+%%\only<2>{
+%%\pd{v}{t}{} &= \sum_{D^k}\LRp{\Grad p,\grad w}_{D^k} + \LRa{\jump{p},w}\\
+%%\pd{p}{t}{} &= v.
+%%}
+%\end{align*}
+\item Model problem: acoustic wave equation (both first and second order formulations)
 \begin{align*}
 \frac{1}{c^2}\pd{p}{t}{} + \Div \bm{u} &= f\\
 \pd{\bm{u}}{t}{} + \Grad p &= 0.
 \end{align*}
+%\item Results extend to second order formulation. 
+%\item Multiple geometric patches,\\IGA on each patch.  
 \end{itemize}
 \end{column}
 
@@ -400,36 +405,48 @@ title style={font=\footnotesize}
 
 \vspace{1em}
 \begin{itemize}
-\item Weak patch coupling through DG numerical flux (SIPG, upwind).  
+\item Multiple geometric patches, weak patch coupling through DG-like numerical interface flux (SIPG, upwind).  
 \end{itemize}
 
-\let\thefootnote\relax\footnotetext{\tiny Langer et al 2014. Multipatch discontinuous Galerkin isogeometric analysis.}
-\let\thefootnote\relax\footnotetext{\tiny Wilcox et al 2010. A high-order DG method for wave propagation through coupled elastic-acoustic media.}
+\let\thefootnote\relax\footnotetext{\tiny Langer et al (2014). \textit{Multipatch discontinuous Galerkin isogeometric analysis}.}
+\let\thefootnote\relax\footnotetext{\tiny Wilcox et al (2010). \textit{A high-order DG method for wave propagation through coupled elastic-acoustic media}.}
 }
 
 \frame{
-\frametitle{Method of lines multi-patch DG discretization}
-\vspace{-1em}
+\frametitle{Explicit solvers for multi-patch DG-IGA}
+%\vspace{-1em}
 \begin{itemize}
 \item Semi-discrete system:
 \[
 \bm{M}_h\td{\bm{u}}{t} = \bm{A}_h\bm{u} \quad \Rightarrow \quad \td{\bm{u}}{t} = \bm{M}_h^{-1}\bm{A}_h\bm{u}.
 \]
+\vspace{.125em}
 \item Global mass matrix $\bm{M}_h$ is (patch) block diagonal.  
-\vspace{1em}
-\item Tailored patch discretizations: explicit time-stepping, curved domains. 
-%\vspace{.25em}
+\vspace{1.5em}
+\item Challenges and questions: 
+\vspace{.5em}
 \begin{itemize}
-\item Efficient mass matrix inversion over each patch.
+\item<2-> How to efficiently invert 3D patch mass matrices while guaranteeing accuracy and \textcolor{red}{stability} (especially for explicit methods)?  
 \vspace{.5em}
-\item High order accuracy, energy stability on curved geometries.
+\item<3-> Do splines/IGA offer advantages over $C^0$-FEM/DG for explicit solvers?  
 \vspace{.5em}
-\item Improved stable timestep restriction (CFL).
+\item<4-> Can we tailor IGA discretizations towards explicit time-stepping?
 \end{itemize}
+
+%\vspace{1em}
+%\item Explicit time-stepping, curved domains. 
+%%\vspace{.25em}
+%\begin{itemize}
+%\item Efficient mass matrix inversion over each patch.
+%\vspace{.5em}
+%\item High order accuracy, energy stability on curved geometries.
+%\vspace{.5em}
+%\item Improved stable timestep restriction (CFL).
+%\end{itemize}
 \end{itemize}
 }
 
-\section{Spline spaces and optimal knot vectors }
+\section{Inverting IGA mass matrices }
 \frame[noframenumbering]{
 \frametitle{Outline}
 \only<1>{
@@ -440,19 +457,24 @@ title style={font=\footnotesize}
 }
 }
 
-
 \frame{
 \frametitle{B-splines: assumptions for this talk}
 
 \begin{itemize}
-\item Standard 1D B-splines: $B^0_i(x) = \mathbbm{1}_{\xi_i \leq x \leq \xi_{i+1}}$, 
+\item Reference coordinates $\hat{\bm{x}} \in \hat{D}$, physical coordinates $\bm{x} \in D^k$.  
+\vspace{.5em}
+\item Standard 1D B-splines: $B^0_i(\hat{x}) = \mathbbm{1}_{\xi_i \leq \hat{x} \leq \xi_{i+1}}$, 
 \[
-B^k_i(x) = \frac{x - \xi_i}{\xi_{i+p}-\xi_i}B^{k-1}_i(x) + \frac{\xi_{i+p+1}-x}{\xi_{i+p+1}-\xi_{i+1}}B^{k-1}_{i+1}(x).
+B^k_i(\hat{x}) = \frac{\hat{x} - \xi_i}{\xi_{i+p}-\xi_i}B^{k-1}_i(\hat{x}) + \frac{\xi_{i+p+1}-\hat{x}}{\xi_{i+p+1}-\xi_{i+1}}B^{k-1}_{i+1}(\hat{x}).
 \]
-\item Assume patches are mapped quads/cubes: tensor product basis
+\item Physical basis: mapping of tensor product basis on reference domain
+%\begin{overlayarea}{\textwidth}{.17\textheight}
 \[
-B^p_{ijk}(x,y,z) = B^p_{i}(x)B^p_{j}(y)B^p_{k}(z).
+%\only<1>{
+B^p_{ijk}(\hat{\bm{x}}) = B^p_{i}(\hat{x})B^p_{j}(\hat{y})B^p_{k}(\hat{z}).%, \qquad \text{(mapped B-splines)}}
+%\only<2>{B^p_{ijk}({\bm{x}}) = \frac{B^p_{i}(\hat{x})B^p_{j}(\hat{y})B^p_{k}(\hat{z})}{w_R(\hat{\bm{x}})}, \qquad \text{(NURBS)}}
 \]
+%\end{overlayarea}
 \item Assume maximally continuous, open knot vectors
 \begin{align*}
 %\bm{\Xi} &= \LRc{-1 = \xi_1,\ldots,\xi_{{2p}+K+1} = 1}, \qquad \xi_i \leq \xi_{i+1},\\
@@ -462,6 +484,324 @@ B^p_{ijk}(x,y,z) = B^p_{i}(x)B^p_{j}(y)B^p_{k}(z).
 \end{align*}
 \end{itemize}
 }
+
+
+\frame{
+\frametitle{IGA mass matrices: stability/accuracy vs efficiency}
+
+\begin{itemize}
+\item Energy stability: if \note{$\bm{u}^T\bm{A}_h\bm{u} \leq 0$}, semi-discrete solution won't blow up
+\[
+\bm{M}_h\td{\bm{u}}{t} = \bm{A}_h\bm{u} \quad \Longrightarrow \quad \td{}{t}\LRp{\bm{u}^T\bm{M}_h \bm{u}} =  \frac{1}{2}\pd{}{t}{}\nor{u}_{L^2}^2 \leq 0.
+\]
+\item Approximating $\bm{M}_h^{-1}$ impacts semi-discrete \textcolor{red}{stability} and \textcolor{red}{accuracy}.  
+\vspace{2em}
+\item<2-> Curved patch mass matrices $\bm{M}_J$: tensor product basis $B^p_{ijk}(\hat{\bm{x}})$
+\begin{overlayarea}{\textwidth}{.185\textheight}
+\[
+\only<1-2>{\LRp{\bm{M}_J}_{ijk,lmn} = \int_{\widehat{D}} B^p_{ijk}(\widehat{\bm{x}})B^p_{lmn}(\widehat{\bm{x}}) \textcolor{red}{J(\widehat{\bm{x}})}\diff{\widehat{\bm{x}}}, \qquad \text{(B-splines)}}
+\only<3>{\LRp{\bm{M}_J}_{ijk,lmn} = \int_{\widehat{D}} \frac{B^p_{ijk}(\widehat{\bm{x}})}{\textcolor{red}{w_R\LRp{\hat{\bm{x}}}}}\frac{B^p_{lmn}(\widehat{\bm{x}})}{\textcolor{red}{w_R\LRp{\hat{\bm{x}}}}} \textcolor{red}{{J(\widehat{\bm{x}})}}\diff{\widehat{\bm{x}}} \qquad \text{(NURBS)}}
+\only<4>{\LRp{\bm{M}_J}_{ijk,lmn} = \int_{\widehat{D}} B^p_{ijk}(\widehat{\bm{x}})B^p_{lmn}(\widehat{\bm{x}}) \textcolor{red}{\frac{J(\widehat{\bm{x}})}{w^2_R\LRp{\hat{\bm{x}}}}}\diff{\widehat{\bm{x}}} \qquad \text{(NURBS)}}
+\]
+\end{overlayarea}
+\item<2-> No Kronecker structure due to $J(\widehat{\bm{x}})$: $\bm{M}_h$ \textcolor{red}{expensive} to invert in 3D!
+
+\end{itemize}
+}
+
+\frame{
+\frametitle{Approximate mass matrix inversion}
+
+\begin{itemize}
+\item Mass lumping: loss of high order accuracy for IGA.
+\vspace{.75em}
+\item Preconditioning: 
+\vspace{.35em}
+\begin{itemize}
+\item Additional cost and complexity for a time-domain code.
+\vspace{.35em}
+\item Semi-discrete stability requires approximation of $\bm{M}_J^{-1}$ to induce a norm on $\bm{u}$ (e.g.\ a fixed symmetric positive-definite linear operator).
+\vspace{.35em}
+\item Example: Krylov methods approximate $\bm{M}_J^{-1}$ as a non-linear operator!
+\end{itemize}
+\vspace{.75em}
+\item Isogeometric collocation: restores tensor product structure, but semi-discrete stability is more difficult to prove.  
+\end{itemize}
+
+\let\thefootnote\relax\footnotetext{\tiny Gao and Calo (2014). \textit{Fast isogeometric solvers for explicit dynamics}.}
+\let\thefootnote\relax\footnotetext{\tiny Evans, Hiemstra, Hughes, Reali (2017).  \textit{Explicit higher-order accurate IG collocation methods for structural dynamics}.}
+\let\thefootnote\relax\footnotetext{\tiny Wathen and Rees (2009). \textit{Chebyshev semi-iteration in preconditioning for problems including the mass matrix}.}
+\let\thefootnote\relax\footnotetext{\tiny Auricchio et al (2012). \textit{Isogeometric collocation for elastostatics and explicit dynamics}.}
+}
+
+
+\frame{
+\frametitle{An energy stable and efficient approximation to $\bm{M}^{-1}$}
+
+\begin{itemize}
+\item Replace $\bm{M}_J$ with symmetric pos-def ``weight-adjusted'' approximation:
+\[
+%\td{}{t}
+ \bm{M}_J\bm{u} \Rightarrow %\td{}{t}
+ \textcolor{red}{\widehat{\bm{M}}\bm{M}_{1/J}^{-1}\widehat{\bm{M}}} \bm{u}, \qquad \LRp{\widehat{\bm{M}}}_{ijk,lmn} = \int_{\widehat{D}} B^p_{ijk}(\widehat{\bm{x}})B^p_{lmn}(\widehat{\bm{x}})\diff{\widehat{\bm{x}}}.
+\]
+%\vspace{.5em}
+\item Weight-adjusted inverse: Kronecker product, matrix-free eval.\ of $\bm{M}_{1/J}$
+\begin{align*}
+\bm{M}^{-1}_J &\approx \LRp{\widehat{\bm{M}}\bm{M}_{1/J}^{-1}\widehat{\bm{M}}}^{-1}  = \widehat{\bm{M}}^{-1} \bm{M}_{1/J} \widehat{\bm{M}}^{-1}\\
+\widehat{\bm{M}}^{-1} &= \widehat{\bm{M}}^{-1}_{\rm 1D} \otimes \widehat{\bm{M}}^{-1}_{\rm 1D} \otimes \widehat{\bm{M}}^{-1}_{\rm 1D}.
+\end{align*}
+\item Energy stability with respect to an \note{equivalent} norm 
+\[
+C_1(J) \nor{\bm{u}}_{\widehat{\bm{M}}\bm{M}_{1/J}^{-1}\widehat{\bm{M}}} \leq \nor{\bm{u}}_{\bm{M}_J} \leq C_2 \nor{\bm{u}}_{\widehat{\bm{M}}\bm{M}_{1/J}^{-1}\widehat{\bm{M}}}.
+\]
+\end{itemize}
+
+\let\thefootnote\relax\footnotetext{\tiny Chan, Hewett, Warburton (2016).  \textit{Weight-adjusted DG methods: wave prop.\ in heterogeneous media}. }
+\let\thefootnote\relax\footnotetext{\tiny Chan, Hewett, Warburton (2016).  \textit{Weight-adjusted DG methods: curvilinear meshes}. }
+}
+
+\frame{
+\frametitle{Accuracy: weighted vs weight-adjusted mass matrix}
+
+\begin{figure}
+\centering
+\only<1>{
+\subfloat[Warped mesh]{\includegraphics[width=.425\textwidth]{figs/mapped.png}}
+\subfloat[Error for acoustics (first order form)]{
+\begin{tikzpicture}
+\begin{loglogaxis}[
+    legend cell align=left,
+    legend style={legend pos=south east, font=\tiny},
+    width=.5\textwidth,
+     ymin=1e-17, ymax=2,    
+    xlabel={Mesh size $h$},
+    ylabel={$L^2$ error}, 
+    grid style=dashed,
+] 
+\addplot[color=blue,mark=*,semithick, mark options={solid,fill=markercolor}]
+coordinates{(0.5,0.154255)(0.25,0.0280139)(0.125,0.000775805)(0.0625,7.51259e-06)};
+\addplot[color=red,mark=x,semithick, mark options={solid,fill=markercolor}]
+coordinates{(0.5,0.154523)(0.25,0.0280342)(0.125,0.000775107)(0.0625,7.51217e-06)};
+\addplot[color=black,mark=triangle*,semithick, mark options={solid,fill=markercolor}]
+coordinates{(0.5,7.56052e-06)(0.25,1.32834e-07)(0.125,1.51285e-11)(0.0625,1.69165e-17)};
+
+\legend{$L^2$ projection,Weight-adjusted,Difference}
+%\legend{Uniform, Optimal, Smoothed}
+\end{loglogaxis}
+\end{tikzpicture}
+}
+%\subfloat[$L^2$ errors ]{
+%\begin{tikzpicture}
+%\begin{loglogaxis}[
+%    legend cell align=left,
+%    legend style={legend pos=south east, font=\tiny},
+%    width=.5\textwidth,
+%    xlabel={Mesh size $h$},
+%    ylabel={$L^2$ error}, 
+%             ymin=1e-10, ymax=2,    
+%    grid style=dashed,
+%] 
+%\addplot[color=blue,mark=*,semithick, mark options={solid,fill=markercolor}]
+%coordinates{(0.5,0.0110908)(0.25,0.00138298)(0.125,2.29018e-05)(0.0625,3.18561e-07)};
+%\addplot[color=red,mark=x,semithick, mark options={solid,fill=markercolor}]
+%coordinates{(0.5,0.0111346)(0.25,0.00138582)(0.125,2.30061e-05)(0.0625,3.18565e-07)};
+%\addplot[color=black,mark=triangle*,semithick, mark options={solid,fill=markercolor}]
+%coordinates{(0.5,0.000986363)(0.25,8.87776e-05)(0.125,2.18816e-06)(0.0625,1.65013e-09)};
+%\legend{$L^2$ projection,Weight-adjusted,Difference}
+%%\legend{Uniform, Optimal, Smoothed}
+%\end{loglogaxis}
+%\end{tikzpicture}}
+}
+\only<2>{
+\subfloat[Warped mesh]{\includegraphics[width=.425\textwidth]{figs/mapped2.png}}
+\subfloat[Error for acoustics (first order form)]{
+\begin{tikzpicture}
+\begin{loglogaxis}[
+    legend cell align=left,
+    legend style={legend pos=south east, font=\tiny},
+    width=.5\textwidth,
+     ymin=1e-17, ymax=2,    
+    xlabel={Mesh size $h$},
+    ylabel={$L^2$ error}, 
+    grid style=dashed,
+] 
+\addplot[color=blue,mark=*,semithick, mark options={solid,fill=markercolor}]
+coordinates{(0.5,0.338603)(0.25,0.143169)(0.125,0.0234825)(0.0625,0.00033695)};
+\addplot[color=red,mark=x,semithick, mark options={solid,fill=markercolor}]
+coordinates{(0.5,0.388935)(0.25,0.146233)(0.125,0.0235623)(0.0625,0.000336824)};
+\addplot[color=black,mark=triangle*,semithick, mark options={solid,fill=markercolor}]
+coordinates{(0.5,0.00977253)(0.25,0.000187168)(0.125,3.16763e-07)(0.0625,9.44863e-12)};
+
+\legend{$L^2$ projection,Weight-adjusted,Difference}
+%\legend{Uniform, Optimal, Smoothed}
+\end{loglogaxis}
+\end{tikzpicture}
+}
+%\subfloat[$L^2$ errors ]{
+%\begin{tikzpicture}
+%\begin{loglogaxis}[
+%    legend cell align=left,
+%    legend style={legend pos=south east, font=\tiny},
+%    width=.5\textwidth,
+%     ymin=1e-10, ymax=2,    
+%    xlabel={Mesh size $h$},
+%    ylabel={$L^2$ error}, 
+%    grid style=dashed,
+%] 
+%\addplot[color=blue,mark=*,semithick, mark options={solid,fill=markercolor}]
+%coordinates{(0.5,0.0444376)(0.25,0.0144725)(0.125,0.000702933)(0.0625,6.79061e-06)};
+%\addplot[color=red,mark=x,semithick, mark options={solid,fill=markercolor}]
+%coordinates{(0.5,0.1182)(0.25,0.017419)(0.125,0.000745669)(0.0625,6.79513e-06)};
+%\addplot[color=black,mark=triangle*,semithick, mark options={solid,fill=markercolor}]
+%coordinates{(0.5,0.109529)(0.25,0.00969371)(0.125,0.000248811)(0.0625,2.47881e-07)};
+%\legend{$L^2$ projection,Weight-adjusted,Difference}
+%%\legend{Uniform, Optimal, Smoothed}
+%\end{loglogaxis}
+%\end{tikzpicture}}
+}
+\caption{$L^2$ errors for the acoustic wave equation using weighted and weight-adjusted mass matrices for tensor product $p = 4$ splines. }
+
+\end{figure}
+}
+
+
+\frame{
+\frametitle{Accuracy of the weight-adjusted mass matrix}
+
+\begin{itemize}
+\item Difference between the weighted $L^2$ and weight-adjusted inner products is high order accurate: for $v(\bm{x})$ of degree $q$, 
+\begin{align*}
+&\LRb{ \bm{v}^T\bm{M}_J\bm{u} - \bm{v}^T\widehat{\bm{M}}\bm{M}_{1/J}^{-1}\widehat{\bm{M}}\bm{u}}\\
+&\leq C_{J} \nor{J}_{W^{p+1,\infty}\LRp{D^k}} h^{2p+2-q} \nor{u}_{W^{p+1,2}\LRp{D^k}}.
+\end{align*}
+\vspace{.5em}
+\item Difference between $L^2$ and weight-adjusted projection is \textcolor{red}{$O(h^{p+2})$}!
+\begin{align*}
+\nor{P_h u - \tilde{P}_h u}_{L^2\LRp{D^k}} &\lesssim \nor{\frac{1}{\sqrt{J}}}_{L^{\infty}}^2 \nor{J}_{W^{p+1,\infty}\LRp{D^k}} h^{p+2}\nor{u}_{W^{p+1,2}\LRp{D^k}}.
+\end{align*}
+\end{itemize}
+
+\let\thefootnote\relax\footnotetext{\tiny Chan, Wilcox (2018). \textit{On discretely entropy stable weight-adjusted discontinuous Galerkin methods: curvilinear meshes}.}
+}
+
+\section{Why splines vs $C^0$-FEM?  CFL restrictions}
+
+\frame[noframenumbering]{
+\tableofcontents[currentsection]
+}
+
+\frame{
+\frametitle{Estimating the CFL restriction}
+
+\begin{itemize}
+%\item Maximum stable timestep (CFL) depends on $h, p$, and wavespeed.
+\item For explicit time-stepping method: estimate $dt \propto \frac{1}{\max\LRb{\lambda_j}}$
+\[
+\bm{M}_h \bm{v} = \lambda \bm{A}_h\bm{v}.
+\]
+\item Bendixon-Hirsch lemma: bound ${\rm Re}\LRp{\lambda_j}, {\rm Im}\LRp{\lambda_j}$ using the symmetric and skew-symmetric parts  of $\bm{A}_h$
+\[
+\underbrace{\frac{1}{2}\LRp{\bm{A}_h+\bm{A}_h^T}}_{\bm{A}_{\rm sym}}+ \underbrace{\frac{1}{2}\LRp{\bm{A}_h-\bm{A}_h^T}}_{\bm{A}_{\rm skew}}, \qquad
+\begin{array}{c}
+\LRb{{\rm Re}\LRp{\lambda_j}} \leq \rho\LRp{\bm{M}^{-1}_h\bm{A}_{\rm sym}},\\
+\LRb{{\rm Im}\LRp{\lambda_j}} \leq \rho\LRp{\bm{M}^{-1}_h\bm{A}_{\rm skew}}.
+\end{array}
+\]
+\item $\rho\LRp{\bm{M}_h^{-1}\bm{A}_{\rm sym}}, \rho\LRp{\bm{M}_h^{-1}\bm{A}_{\rm skew}}$: generalized Rayleigh quotients
+\[
+\rho\LRp{\bm{M}_h^{-1}\bm{A}_{\rm sym}} = \frac{\bm{u}^T\bm{A}_{\rm sym}\bm{u}}{\bm{u}^T\bm{M}_h\bm{u}}, \qquad 
+\rho\LRp{\bm{M}_h^{-1}\bm{A}_{\rm skew}} = \frac{\LRb{\bm{u}^* (i\bm{A}_{\rm skew})\bm{u}}}{\bm{u}^*\bm{M}_h\bm{u}}
+\]
+\end{itemize}
+}
+
+\frame{
+\frametitle{CFL: constants in trace and inverse inequalities}
+\begin{itemize}
+\item For hyperbolic problems (advection, acoustics), can bound
+\begin{align*}
+&\frac{\bm{u}^T\bm{A}_{\rm sym}\bm{u}}{\bm{u}^T\bm{M}_h\bm{u}} \lesssim \frac{\nor{u}_{L^2\LRp{\partial D^k}}^2}{\nor{u}_{L^2\LRp{D^k}}^2} \lesssim \frac{C_T}{h}, \\
+&\frac{\LRb{\bm{u}^* (i\bm{A}_{\rm skew})\bm{u}}}{\bm{u}^*\bm{M}_h\bm{u}} \lesssim \frac{\nor{\Grad u}_{L^2\LRp{D^k}}}{\nor{u}_{L^2\LRp{D^k}}} \lesssim \frac{C_I}{h}.
+\end{align*}
+\item $C_T, C_I$: \note{$p$-dependent constants} in trace, inverse inequalities
+\[
+\nor{\Grad u}_{L^2\LRp{\hat{D}}} \leq C_I \nor{u}_{L^2\LRp{\hat{D}}} , \qquad \nor{u}_{L^2\LRp{\partial \hat{D}}}^2 \leq C_T \nor{u}_{L^2\LRp{\hat{D}}}^2.
+\]
+\item Summary: $dt \propto \frac{1}{\max\LRb{\lambda_j}} \leq \frac{h}{\max{C_T, C_I}}$.  What do $C_T, C_I$ look like?  Can compute $C_T, C_I$ using a generalized eigenvalue problem.    %For $C^0$-FEM and DG, $dt \leq O\LRp{\frac{h}{p^2}}$.
+\end{itemize}
+}
+
+\frame{
+\frametitle{Trace and inverse inequality constants: $C^0$-FEM vs splines}
+\vspace{-.5em}
+\begin{figure}
+\centering
+\only<1>{\includegraphics[width=\textwidth]{figs/Definitions.pdf}
+\caption{A parametric patch has $K$ elements per side, while a physical patch has size $H$.  The mesh resolution is $h = H/K$.}}
+\only<2->{
+\setcounter{subfigure}{0}
+\subfloat[Inverse constants, $K = 2p$]{
+\begin{tikzpicture}
+\begin{axis}[
+width=.45\textwidth,
+    xlabel={Degree of approximation $p$},   
+%    ylabel={$C_I / K$},
+    xmin=.5, xmax=12.5,
+    ymax=0,ymax=90,    
+    legend pos=north west, legend cell align=left, legend style={font=\tiny},	
+    xmajorgrids=true,  ymajorgrids=true, grid style=dashed,
+] 
+
+\addplot[color=blue,mark=*,semithick, mark options={fill=markercolor}]
+coordinates{(1,2)(2,4.5)(3,8)(4,12.5)(5,18)(6,24.5)(7,32)(8,40.5)(9,50)(10,60.5)(11,72)(12,84.5)};
+\addplot[color=red,mark=square*,semithick, mark options={fill=markercolor}]
+coordinates{(1,2)(2,3.42857)(3,5.27022)(4,7.3491)(5,9.61122)(6,12.0258)(7,14.5716)(8,17.233)(9,19.9977)(10,22.8559)(11,25.7995)(12,28.8217)};
+%\addplot[color=black,mark=triangle*,semithick, mark options={fill=markercolor}]
+%coordinates{(1,2)(2,3.15356)(3,4.41024)(4,5.72791)(5,7.09105)(6,8.48919)(7,9.91299)(8,11.3583)(9,12.8221)(10,14.3019)(11,15.796)(12,17.3028)};
+
+\legend{Polynomial $C_I$, Spline $C_I/K$}%, Smoothed $C_I/K$ }
+\end{axis}
+\end{tikzpicture}
+}
+\hspace{1em}
+\subfloat[Trace constants, $K = 2p$]{
+\begin{tikzpicture}
+\begin{axis}[
+width=.45\textwidth,
+    xlabel={Degree of approximation $p$},   
+    xmin=.5, xmax=12.5,
+    ymax=0,ymax=65,    
+    legend pos=north west, legend cell align=left, legend style={font=\tiny},	
+    xmajorgrids=true,  ymajorgrids=true, grid style=dashed,
+] 
+
+\addplot[color=blue,mark=*,semithick, mark options={fill=markercolor}]
+coordinates{(1,1.73205)(2,3.87298)(3,6.5216)(4,9.74981)(5,13.5914)(6,18.0596)(7,23.1598)(8,28.894)(9,35.2634)(10,42.2685)(11,49.9096)(12,58.187)};
+\addplot[color=red,mark=square*,semithick, mark options={fill=markercolor}]
+coordinates{(1,1.73205)(2,2.43668)(3,3.48657)(4,4.75661)(5,6.16327)(6,7.6751)(7,9.27477)(8,10.9506)(9,12.694)(10,14.4983)(11,16.3578)(12,18.2682)};
+%\addplot[color=black,mark=triangle*,semithick, mark options={fill=markercolor}]
+%coordinates{(1,1.73205)(2,2.32019)(3,2.9916)(4,3.77273)(5,4.61001)(6,5.4806)(7,6.37331)(8,7.28317)(9,8.20701)(10,9.14265)(11,10.0885)(12,11.0432)};
+
+\legend{Polynomial $C_T$, Spline $C_T/K$}%, Smoothed $C_T/K$ }
+\end{axis}
+\end{tikzpicture}
+}
+\caption*{Polynomial constants are $O(p^2)$, observed spline constants \textcolor{red}{$O(p)$} for $K \geq O(1/p)$.}
+\let\thefootnote\relax\footnotetext{\tiny Takacs, Takacs (2016). \textit{Approximation error estimates and inverse inequalities for B-splines of maximum smoothness}.}
+}
+\end{figure}
+\only<2->{\uncover<3->{
+\begin{center}
+\ovalbox{\textcolor{red}{$dt \propto \frac{h}{p^2}$} for $C^0$-FEM and DG, \textcolor{red}{$dt \propto \frac{h}{p}$} for IGA!}
+\end{center}}}
+}
+
+\section{Optimizing splines for explicit solvers}
+\frame[noframenumbering]{
+\tableofcontents[currentsection]
+}
+
 \frame{
 \frametitle{B-spline bases and optimal spline spaces}
 \vspace{-1em}
@@ -484,7 +824,7 @@ X = \LRc{f \in L^2([-1,1]): \pd{f}{x}{p-1} \text{ continuous}, \quad \nor{f}_{L^
 \]
 \end{itemize}
 
-\let\thefootnote\relax\footnotetext{\tiny Melkman and Micchelli 1978. Spline spaces are optimal for $L^2$ $n$-width.}
+\let\thefootnote\relax\footnotetext{\tiny Melkman and Micchelli (1978). \textit{Spline spaces are optimal for $L^2$ $n$-width}.}
 }
 
 \frame{
@@ -520,60 +860,60 @@ X = \LRc{f \in L^2([-1,1]): \pd{f}{x}{p-1} \text{ continuous}, \quad \nor{f}_{L^
 \hspace{2em}
 \subfloat[Greville abscissae $\tau_j$]{\includegraphics[width=.375\textwidth]{figs/greville.png}}
 }
-\only<3>{
-\setcounter{subfigure}{0}
-\subfloat{
-\begin{tikzpicture}
-\begin{axis}[
-width=.425\textwidth,
-    xlabel={Number of elements $K$},   
-        ylabel={Max knot error},
-    xmin=2, xmax=66,
-    ymax=0,ymax=0.0125,    
-    legend pos=north east, legend cell align=left, legend style={font=\tiny},	
-       xmajorgrids=true,  ymajorgrids=true, grid style=dashed,
-] 
-
-\addplot[color=blue,mark=*,semithick, mark options={fill=markercolor}]
-coordinates{(4,0.0121)(8,0.0075)(16,0.0046)(32,0.0023)(64,0.0012)};
-
-\addplot[color=red,mark=square*,semithick, mark options={fill=markercolor}]
-coordinates{(4,0.009)(8,0.0041)(16,0.0028)(32,0.002)(64,0.0012)};
-
-\addplot[color=black,mark=triangle*,semithick, mark options={fill=markercolor}]
-coordinates{(4,0.0016)(8,0.0101)(16,0.0074)(32,0.0048)(64,0.0028)};
-
-\legend{$p = 2$, $p=3$, $p=4$}
-\end{axis}
-\end{tikzpicture}
-}
-\hspace{2em}
-\subfloat{
-\begin{tikzpicture}
-\begin{axis}[
-width=.425\textwidth,
-    xlabel={Number of elements $K$},   
-    ylabel={Max Greville error},
-    xmin=2, xmax=66,
-    ymax=0,ymax=0.0125,    
-    legend pos=north east, legend cell align=left, legend style={font=\tiny},	
-       xmajorgrids=true,  ymajorgrids=true, grid style=dashed,
-] 
-
-\addplot[color=blue,mark=*,semithick, mark options={fill=markercolor}]
-coordinates{(4,0.006)(8,0.0038)(16,0.0024)(32,0.0011)(64,0.00058806)};
-
-\addplot[color=red,mark=square*,semithick, mark options={fill=markercolor}]
-coordinates{(4,0.003)(8,0.002)(16,0.0018)(32,0.0012)(64,0.00067857)};
-
-\addplot[color=black,mark=triangle*,semithick, mark options={fill=markercolor}]
-coordinates{(4,0.000401)(8,0.0025)(16,0.0016)(32,0.00089352)(64,0.00063901)};
-
-\legend{$p = 2$, $p=3$, $p=4$}
-\end{axis}
-\end{tikzpicture}
-}
-}
+%\only<3>{
+%\setcounter{subfigure}{0}
+%\subfloat{
+%\begin{tikzpicture}
+%\begin{axis}[
+%width=.425\textwidth,
+%    xlabel={Number of elements $K$},   
+%        ylabel={Max knot error},
+%    xmin=2, xmax=66,
+%    ymax=0,ymax=0.0125,    
+%    legend pos=north east, legend cell align=left, legend style={font=\tiny},	
+%       xmajorgrids=true,  ymajorgrids=true, grid style=dashed,
+%] 
+%
+%\addplot[color=blue,mark=*,semithick, mark options={fill=markercolor}]
+%coordinates{(4,0.0121)(8,0.0075)(16,0.0046)(32,0.0023)(64,0.0012)};
+%
+%\addplot[color=red,mark=square*,semithick, mark options={fill=markercolor}]
+%coordinates{(4,0.009)(8,0.0041)(16,0.0028)(32,0.002)(64,0.0012)};
+%
+%\addplot[color=black,mark=triangle*,semithick, mark options={fill=markercolor}]
+%coordinates{(4,0.0016)(8,0.0101)(16,0.0074)(32,0.0048)(64,0.0028)};
+%
+%\legend{$p = 2$, $p=3$, $p=4$}
+%\end{axis}
+%\end{tikzpicture}
+%}
+%\hspace{2em}
+%\subfloat{
+%\begin{tikzpicture}
+%\begin{axis}[
+%width=.425\textwidth,
+%    xlabel={Number of elements $K$},   
+%    ylabel={Max Greville error},
+%    xmin=2, xmax=66,
+%    ymax=0,ymax=0.0125,    
+%    legend pos=north east, legend cell align=left, legend style={font=\tiny},	
+%       xmajorgrids=true,  ymajorgrids=true, grid style=dashed,
+%] 
+%
+%\addplot[color=blue,mark=*,semithick, mark options={fill=markercolor}]
+%coordinates{(4,0.006)(8,0.0038)(16,0.0024)(32,0.0011)(64,0.00058806)};
+%
+%\addplot[color=red,mark=square*,semithick, mark options={fill=markercolor}]
+%coordinates{(4,0.003)(8,0.002)(16,0.0018)(32,0.0012)(64,0.00067857)};
+%
+%\addplot[color=black,mark=triangle*,semithick, mark options={fill=markercolor}]
+%coordinates{(4,0.000401)(8,0.0025)(16,0.0016)(32,0.00089352)(64,0.00063901)};
+%
+%\legend{$p = 2$, $p=3$, $p=4$}
+%\end{axis}
+%\end{tikzpicture}
+%}
+%}
 \end{overlayarea}
 %\caption{Knot locations for iterations $k = 0, \ldots, 10$ for a spline space with $p = 3, K = 8$.  Computed optimal knot positions and Greville abscissae are overlaid in \textcolor{red}{red}.}
 \label{fig:smoothedknots}
@@ -599,24 +939,16 @@ x = \sum_{1\leq j \leq p+K} \tau_j B^p_j(x), \qquad \tau_j = \frac{1}{p}\sum_{1\
 }
 
 \frame{
-\frametitle{Approximation properties: oscillatory functions}
+\frametitle{Approximation properties in 1D: oscillatory functions}
 \setcounter{subfigure}{0}
 
 \vspace{-1em}
 \begin{figure}
 \centering
-\begin{overlayarea}{\textwidth}{.7\textheight}
-\only<1>{
-\subfloat[$L^2$ error vs $k/N_{\rm dofs}$ ($\cos\LRp{\frac{k\pi x}{2}}$)]{\includegraphics[width=.49\textwidth]{figs/splineapprox.png}}
-\hspace{.25em}
-\subfloat[Semi-log scale]{\includegraphics[width=.49\textwidth]{figs/splineapproxlog.png}}
-%\caption{}
-}
-\only<2>{
 \subfloat[First order formulation]{
 \begin{tikzpicture}
 \begin{semilogyaxis}[
-width=.45\textwidth,
+width=.475\textwidth,
     xlabel={Wavelength $k$},   
     ylabel={$L^2$ error},
     ymin=1e-5, ymax=2,    
@@ -634,7 +966,7 @@ coordinates{(1,5.56475e-05)(3,0.00612773)(5,0.0351819)(7,0.405041)(9,0.772862)(1
 \subfloat[Second order formulation]{
 \begin{tikzpicture}
 \begin{semilogyaxis}[
-width=.45\textwidth,
+width=.475\textwidth,
     xlabel={Wavelength $k$},   
     ylabel={$L^2$ error},
     ymin=1e-5, ymax=2,    
@@ -650,71 +982,59 @@ coordinates{(1,1.78285e-05)(3,0.00465007)(5,0.107561)(7,0.751711)(9,0.864029)(11
 \end{semilogyaxis}
 \end{tikzpicture}
 }
-%\caption{Comparison of $L^2$ errors for uniform and smooth knots as a function of wavenumber $k$ using $p = 3, K= 8$ splines.}
-}
-\end{overlayarea}
+\caption{$L^2$ errors for 1D acoustics using uniform and smoothed knot vectors: smoothed knots emphasize high frequencies over low frequencies. }
 \end{figure}
-\vspace{-3em}
-\begin{itemize}
-\item<1-> $L^2$ best approximations with smoothed knots (fixed $p,K$): decreased high frequency errors, increased low frequency errors.   
-\item<2-> Similar errors approximating solution $\cos\LRp{\frac{k\pi x}{2}}\cos\LRp{\frac{k\pi t}{2}}$ ($k$ odd).  
-\end{itemize}
-
 }
 
-\frame{
-\frametitle{Spectral properties of $\bm{A}_h$}
-\setcounter{subfigure}{0}
-\vspace{.5em}
-\only<2>{
-Constant 1D advection: numerical dispersion error $\LRb{{\rm Re}(\omega) - {\rm Re}(\omega_h)}$
-\[
-\pd{u}{t}{} + \pd{u}{x}{} = 0, \qquad u(x,t) = e^{i(kx - \omega t)}, \quad u_h(x,t) = e^{i(kx-\omega_h t)}.
-\]
-\vspace{-2em}
-\begin{figure}
-\centering
-\subfloat[Dispersion errors (uniform knots)]{
-\includegraphics[width=.45\textwidth]{figs/dispersionErrUnif.png}
-}
-\subfloat[Dispersion errors (smoothed knots)]{
-\includegraphics[width=.45\textwidth]{figs/dispersionErrSmooth.png}
-}
-\caption{Dispersion errors using full upwinding, $p = 4$, and $K = 1, 4, 8$. } %The exact dispersion relation is given as a black dotted line.}% in Figures~\ref{subfig:disp1}, \ref{subfig:disp2}.  }
-%\label{fig:eigerr1}
-\end{figure}
 
-}
-\only<1>{
-Eigenvalues, eigenfunctions of 1D Laplacian: uniform vs smoothed knots.
-\[
-\LRb{\lambda_k-\lambda_{h,k}}, \qquad \nor{w_k(x)-w_{h,k}(x)}_{L^2}^2
-\]
-\vspace{-1.5em}
+%\frame{
+%\frametitle{Spectral properties of $\bm{A}_h$}
+%\setcounter{subfigure}{0}
+%\vspace{.5em}
+%\only<2>{
+%Constant 1D advection: numerical dispersion error $\LRb{{\rm Re}(\omega) - {\rm Re}(\omega_h)}$
 %\[
-%-\pd{u}{x}{2} = \lambda u, \qquad \LRp{\Grad u, \Grad v}_{\Omega} = \lambda_h \LRp{u,v}_{\Omega}, \quad \forall v\in V_h.
+%\pd{u}{t}{} + \pd{u}{x}{} = 0, \qquad u(x,t) = e^{i(kx - \omega t)}, \quad u_h(x,t) = e^{i(kx-\omega_h t)}.
 %\]
-\begin{figure}
-\centering
-\subfloat[Eigenvalue errors]{
-\includegraphics[width=.45\textwidth]{figs/eigvals2ndorder.png}
-}
-\subfloat[Eigenvector errors]{
-\includegraphics[width=.45\textwidth]{figs/eigfunc2ndorder.png}
-}
-\caption{Eigenvalue and eigenvector errors for $p = 4, K = 32$ splines. }
-\end{figure}
-}
-}
+%\vspace{-2em}
+%\begin{figure}
+%\centering
+%\subfloat[Dispersion errors (uniform knots)]{
+%\includegraphics[width=.45\textwidth]{figs/dispersionErrUnif.png}
+%}
+%\subfloat[Dispersion errors (smoothed knots)]{
+%\includegraphics[width=.45\textwidth]{figs/dispersionErrSmooth.png}
+%}
+%\caption{Dispersion errors using full upwinding, $p = 4$, and $K = 1, 4, 8$. } %The exact dispersion relation is given as a black dotted line.}% in Figures~\ref{subfig:disp1}, \ref{subfig:disp2}.  }
+%%\label{fig:eigerr1}
+%\end{figure}
+%
+%}
+%\only<1>{
+%Eigenvalues, eigenfunctions of 1D Laplacian: uniform vs smoothed knots.
+%\[
+%\LRb{\lambda_k-\lambda_{h,k}}, \qquad \nor{w_k(x)-w_{h,k}(x)}_{L^2}^2
+%\]
+%\vspace{-1.5em}
+%%\[
+%%-\pd{u}{x}{2} = \lambda u, \qquad \LRp{\Grad u, \Grad v}_{\Omega} = \lambda_h \LRp{u,v}_{\Omega}, \quad \forall v\in V_h.
+%%\]
+%\begin{figure}
+%\centering
+%\subfloat[Eigenvalue errors]{
+%\includegraphics[width=.45\textwidth]{figs/eigvals2ndorder.png}
+%}
+%\subfloat[Eigenvector errors]{
+%\includegraphics[width=.45\textwidth]{figs/eigfunc2ndorder.png}
+%}
+%\caption{Eigenvalue and eigenvector errors for $p = 4, K = 32$ splines. }
+%\end{figure}
+%}
+%}
 
-
-\section{Curved domains and weight-adjusted mass matrices}
-\frame[noframenumbering]{
-\tableofcontents[currentsection]
-}
 
 \frame{
-\frametitle{Approximation properties: curvilinear domains}
+\frametitle{Approximation properties in 2D/3D: curvilinear domains}
 
 \begin{overlayarea}{\textwidth}{\textheight}
 
@@ -727,13 +1047,13 @@ Eigenvalues, eigenfunctions of 1D Laplacian: uniform vs smoothed knots.
 \only<1>{
 \begin{figure}
 \centering
-\subfloat[Warped mesh, $\alpha = 1/8$]{\includegraphics[width=.51\textwidth]{figs/mapped.png}}
+\subfloat[Warped mesh, $\alpha = 1/8$]{\includegraphics[width=.375\textwidth]{figs/mapped.png}}
 \subfloat[$L^2$ errors ($\alpha = 1/64$) ]{
 \begin{tikzpicture}
 \begin{semilogyaxis}[
     legend cell align=left,
     legend style={legend pos=north east, font=\tiny},
-    width=.48\textwidth,
+    width=.49\textwidth,
     xlabel={Degrees of freedom},
     ylabel={$L^2$ error}, 
     grid style=dashed,
@@ -799,7 +1119,7 @@ coordinates{(0,0.0113237)(0.0125,0.0118539)(0.025,0.013336)(0.0375,0.0157542)(0.
 \end{semilogyaxis}
 \end{tikzpicture}
 }
-\caption{$L^2$ errors for increasing $\alpha$ ($p = 3, K= 8$ splines on a single patch).}
+\caption{$L^2$ errors  w.r.t.\ curved warping for 2D acoustics ($p = 3, K= 8$ splines).}
 \label{fig:warpingconverge}
 \end{figure}
 }
@@ -807,140 +1127,20 @@ coordinates{(0,0.0113237)(0.0125,0.0118539)(0.025,0.013336)(0.0375,0.0157542)(0.
 }
 
 \frame{
-\frametitle{Approximate mass matrix inversion}
+\frametitle{Smoothed knot vectors improve the CFL}
 
-\begin{itemize}
-\item Patch mass matrices $\bm{M}_J$: tensor product basis but no Kronecker structure due to $J(\widehat{\bm{x}})$, and mass lumping is inaccurate.
-\[
-\LRp{\bm{M}_J}_{ijk,lmn} = \int_{\widehat{D}} B^p_{ijk}(\widehat{\bm{x}})B^p_{lmn}(\widehat{\bm{x}}) \textcolor{red}{J(\widehat{\bm{x}})}\diff{\widehat{\bm{x}}}.
-\]
-%\vspace{.25em}
-\item Preconditioning: approximating $\bm{M}_J^{-1}$ impacts semi-discrete stability.  Note - Krylov methods approximate $\bm{M}_J^{-1}$ as a non-linear operator!
-\[
-\frac{1}{2}\td{}{t}\nor{u}_{L^2}^2 = \td{}{t}\LRp{\bm{u}^T\bm{M}_J \bm{u}} \leq 0.
-\]
-%\vspace{.25em}
-\item Isogeometric collocation: restores tensor product structure, but semi-discrete stability is more difficult to prove.  
-\end{itemize}
-
-\let\thefootnote\relax\footnotetext{\tiny Gao and Calo 2014. Fast isogeometric solvers for explicit dynamics.}
-%\let\thefootnote\relax\footnotetext{\tiny Evans et al 2017.  Explicit Isogeometric Collocation Methods for Structural Dynamics by Means of Predictor-Multicorrector Schemes}
-\let\thefootnote\relax\footnotetext{\tiny Wathen and Rees 2009. Chebyshev semi-iteration in preconditioning for problems including the mass matrix.}
-\let\thefootnote\relax\footnotetext{\tiny Auricchio et al 2012. Isogeometric collocation for elastostatics and explicit dynamics.}
-}
-
-
-\frame{
-\frametitle{Restoring Kronecker structure to $\bm{M}^{-1}$}
-
-\begin{itemize}
-\item Replace $\bm{M}_J$ with ``weight-adjusted'' approximation:
-\[
-\td{}{t} \bm{M}_J\bm{u} \Rightarrow \td{}{t}\textcolor{red}{\widehat{\bm{M}}\bm{M}_{1/J}^{-1}\widehat{\bm{M}}} \bm{u}, \qquad \LRp{\widehat{\bm{M}}}_{ijk,lmn} = \int_{\widehat{D}} B^p_{ijk}(\widehat{\bm{x}})B^p_{lmn}(\widehat{\bm{x}})\diff{\widehat{\bm{x}}}.
-\]
-%\vspace{.5em}
-\item Weight-adjusted inverse: tensor product + matrix-free eval.\ of $\bm{M}_{1/J}$
-\begin{align*}
-\bm{M}^{-1}_J &\approx \LRp{\widehat{\bm{M}}\bm{M}_{1/J}^{-1}\widehat{\bm{M}}}^{-1}  = \widehat{\bm{M}}^{-1} \bm{M}_{1/J} \widehat{\bm{M}}^{-1}\\
-\widehat{\bm{M}}^{-1} &= \widehat{\bm{M}}^{-1}_{\rm 1D} \otimes \widehat{\bm{M}}^{-1}_{\rm 1D} \otimes \widehat{\bm{M}}^{-1}_{\rm 1D}.
-\end{align*}
-\item Energy stability with respect to equivalent norm 
-\[
-C_1(J) \nor{\bm{u}}_{\widehat{\bm{M}}\bm{M}_{1/J}^{-1}\widehat{\bm{M}}} \leq \nor{\bm{u}}_{\bm{M}_J} \leq C_2 \nor{\bm{u}}_{\widehat{\bm{M}}\bm{M}_{1/J}^{-1}\widehat{\bm{M}}}.
-\]
-%\vspace{.5em}
-%\item The same approach has also been successfully applied to Galerkin difference methods.  
-\end{itemize}
-
-%\let\thefootnote\relax\footnotetext{\tiny Mantzaflaris et al 2016. Low rank tensor methods in Galerkin-based IGA.}
-%\let\thefootnote\relax\footnotetext{\tiny Kirby 2017. Fast inversion of the simplicial Bernstein mass matrix.}
-\let\thefootnote\relax\footnotetext{\tiny Chan, et al.\ 2016.  Weight-adjusted DG methods: wave prop.\ in heterogeneous media. (SISC).  }
-\let\thefootnote\relax\footnotetext{\tiny Chan, et al.\ 2016.  {Weight-adjusted DG methods: curvilinear meshes} (arXiv).  }
-\let\thefootnote\relax\footnotetext{\tiny Also applied to GD methods (Banks and Hagstrom 2016. On Galerkin difference methods).}
-}
-
-\frame{
-\frametitle{Weight-adjusted DG for curvilinear meshes}
-
-\begin{itemize}
-\item Weight-adjusted projection $\tilde{P}_h$ on curved domains
-\[
-\tilde{P}_h(u) \coloneqq \widehat{P}_h\LRp{\frac{1}{J}\widehat{P}_h\LRp{uJ}}.
-\]
-where $\widehat{P}_h$ is the $L^2$ projection onto the reference element.
-\vspace{1em}
-\item $L^2$ estimates for weight-adjusted projection:
-\begin{align*}
-\nor{u - \tilde{P}_h u}_{L^2\LRp{D^k}} &\lesssim \nor{\frac{1}{\sqrt{J}}}_{L^{\infty}}^2 \textcolor{red}{\nor{J}_{W^{N+1,\infty}\LRp{D^k}}} h^{N+1}\nor{u}_{W^{N+1,2}\LRp{D^k}}.
-\end{align*}
-High order Sobelev norm of $J$ - can lose accuracy if the geometric mapping is not sufficiently regular!
-\end{itemize}
-}
-
-\frame{
-\frametitle{$L^2$ vs weight-adjusted projection}
-
-\vspace{-1em}
 \begin{figure}
 \centering
-\subfloat[Warped mesh, $\alpha = 1/8$]{\includegraphics[width=.51\textwidth]{figs/mapped.png}}
-\subfloat[$L^2$ errors ]{
-\begin{tikzpicture}
-\begin{loglogaxis}[
-    legend cell align=left,
-    legend style={legend pos=south east, font=\tiny},
-    width=.475\textwidth,
-    xlabel={Mesh size $h$},
-    ylabel={$L^2$ error}, 
-    grid style=dashed,
-] 
-
-\addplot[color=blue,mark=*,semithick, mark options={solid,fill=markercolor}]
-coordinates{(1,0.00192384)(0.5,0.00050273)(0.25,1.98999e-05)(0.125,3.15657e-07)};
-\addplot[color=red,mark=x,semithick, mark options={solid,fill=markercolor}]
-coordinates{(1,0.0019422)(0.5,0.000506873)(0.25,1.9966e-05)(0.125,3.15663e-07)};
-\addplot[color=black,mark=triangle*,semithick, mark options={solid,fill=markercolor}]
-coordinates{(1,1.836e-05)(0.5,4.14359e-06)(0.25,6.60985e-08)(0.125,5.88659e-12)};
-
-\legend{$L^2$ projection,Weight-adjusted,Difference}
-%\legend{Uniform, Optimal, Smoothed}
-\end{loglogaxis}
-\end{tikzpicture}
-}
-\caption{$L^2$ vs weight-adjusted projection: $\cos\LRp{\frac{\pi x}{2}}\cos\LRp{\frac{\pi y}{2}}$, $p = 4$. }
-%\caption{$L^2$ vs weight-adjusted projection. }
-\end{figure}
-}
-
-\section{Stable timestep restrictions}
-\frame[noframenumbering]{
-\tableofcontents[currentsection]
-}
-
-\frame{
-\frametitle{Stable timestep restrictions: $h, p$ scaling}
-\setcounter{subfigure}{0}
-
-\begin{itemize}
-\item Estimate $dt \leq 1/\rho(\bm{M}_h^{-1}\bm{A}_h)$.  Bound $\rho(\bm{M}_h^{-1}\bm{A}_h)$ using Rayleigh quotients and Bendixon-Hirsch; depends on $h$ and \textbf{constants} $C_T, C_I$.
-\[
-\nor{u}_{L^2\LRp{\partial \widehat{D}}} \leq C_T \nor{u}_{L^2\LRp{\widehat{D}}}, \qquad \nor{\Grad u}_{L^2\LRp{\widehat{D}}} \leq C_I \nor{u}_{L^2\LRp{\widehat{D}}}.
-\]
-\item CFL: $O(h/ p^2)$ for polynomials, $\textcolor{red}{O(h/ p)}$ for splines if $h \leq O(1/p)$.  
-\end{itemize}
-\begin{overlayarea}{\textwidth}{.65\textheight}
 \only<1>{
-\vspace{-.5em}
-\begin{figure}
-\centering
-\subfloat[Inverse inequality, $K = 2p$]{
+\setcounter{subfigure}{0}
+\subfloat[Inverse constants, $K = 2p$]{
 \begin{tikzpicture}
 \begin{axis}[
-width=.45\textwidth,
+width=.475\textwidth,
     xlabel={Degree of approximation $p$},   
-        ylabel={$C_I(p)$},
+%    ylabel={$C_I / K$},
     xmin=.5, xmax=12.5,
-    ymax=0,ymax=100,    
+    ymax=0,ymax=90,    
     legend pos=north west, legend cell align=left, legend style={font=\tiny},	
     xmajorgrids=true,  ymajorgrids=true, grid style=dashed,
 ] 
@@ -952,19 +1152,18 @@ coordinates{(1,2)(2,3.42857)(3,5.27022)(4,7.3491)(5,9.61122)(6,12.0258)(7,14.571
 \addplot[color=black,mark=triangle*,semithick, mark options={fill=markercolor}]
 coordinates{(1,2)(2,3.15356)(3,4.41024)(4,5.72791)(5,7.09105)(6,8.48919)(7,9.91299)(8,11.3583)(9,12.8221)(10,14.3019)(11,15.796)(12,17.3028)};
 
-\legend{Polynomial $C_I$, Uniform $C_I/K$, Smoothed $C_I/K$ }
+\legend{Polynomial $C_I$, Spline $C_I/K$, Smoothed $C_I/K$ }
 \end{axis}
 \end{tikzpicture}
 }
 \hspace{1em}
-\subfloat[Trace inequality, $K = 2p$]{
+\subfloat[Trace constants, $K = 2p$]{
 \begin{tikzpicture}
 \begin{axis}[
-width=.45\textwidth,
+width=.475\textwidth,
     xlabel={Degree of approximation $p$},   
-    ylabel={$C_T(p)$},
     xmin=.5, xmax=12.5,
-    ymax=0,ymax=80,    
+    ymax=0,ymax=65,    
     legend pos=north west, legend cell align=left, legend style={font=\tiny},	
     xmajorgrids=true,  ymajorgrids=true, grid style=dashed,
 ] 
@@ -976,24 +1175,21 @@ coordinates{(1,1.73205)(2,2.43668)(3,3.48657)(4,4.75661)(5,6.16327)(6,7.6751)(7,
 \addplot[color=black,mark=triangle*,semithick, mark options={fill=markercolor}]
 coordinates{(1,1.73205)(2,2.32019)(3,2.9916)(4,3.77273)(5,4.61001)(6,5.4806)(7,6.37331)(8,7.28317)(9,8.20701)(10,9.14265)(11,10.0885)(12,11.0432)};
 
-\legend{Polynomial $C_T$, Uniform $C_T / K $, Smoothed $C_T/K$ }
+\legend{Polynomial $C_T$, Spline $C_T/K$, Smoothed $C_T/K$ }
 \end{axis}
-\end{tikzpicture}
-}
-\end{figure}
+\end{tikzpicture}}
+\caption{Knot smoothing results in roughly $2\times$ smaller trace, inverse constants.}
 }
 \only<2>{
-\vspace{-1em}
-\begin{figure}
-\centering
+\setcounter{subfigure}{0}
 \subfloat[Uniform knots]{
 \begin{tikzpicture}
 \begin{axis}[
-width=.45\textwidth,
+width=.475\textwidth,
     xlabel={Number of elements $K$},   
-    ylabel={$\rho\LRp{\bm{M}_h^{-1}\bm{A}_h}$},       
+    ylabel={$\rho\LRp{\bm{A}_h}$},       
     xmin=0, xmax=300,
-    ymax=0,ymax=1600,    
+    ymax=0,ymax=2100,    
     legend pos=north west, legend cell align=left, legend style={font=\tiny},	
        xmajorgrids=true,  ymajorgrids=true, grid style=dashed,
 ] 
@@ -1014,11 +1210,11 @@ coordinates{(32,184.614)(64,369.228)(96,553.842)(128,738.456)(160,923.07)(192,11
 \subfloat[Smoothed knots]{
 \begin{tikzpicture}
 \begin{axis}[
-width=.45\textwidth,
+width=.475\textwidth,
     xlabel={Number of elements $K$},   
 %    ylabel={$\rho\LRp{\bm{A}_h}$},   
     xmin=0, xmax=300,
-    ymax=0,ymax=1600,    
+    ymax=0,ymax=2100,    
     legend pos=north west, legend cell align=left, legend style={font=\tiny},	
        xmajorgrids=true,  ymajorgrids=true, grid style=dashed,
 ] 
@@ -1036,12 +1232,86 @@ coordinates{(32,121.298)(64,234.744)(96,348.126)(128,461.491)(160,574.85)(192,68
 \end{axis}
 \end{tikzpicture}
 }
-%\caption{Growth of $\rho\LRp{\bm{A}_h}$ for advection (partial upwinding) and $p = 2, 3, 4, 5$. }
-%\label{fig:rhoA}
+\caption{Growth of $\rho\LRp{\bm{A}_h}$ for advection using spline spaces of degree $p = 2, \ldots, 5$. }
+}
+\only<3>{
+\setcounter{subfigure}{0}
+\subfloat[Uniform knots]{
+\begin{tikzpicture}
+\begin{axis}[
+width=.475\textwidth,
+    xlabel={Number of elements $K$},   
+        ylabel={$\rho\LRp{\bm{A}_h}$},       
+    xmin=0, xmax=300,
+    ymax=0,ymax=700,    
+    legend pos=north west, legend cell align=left, legend style={font=\tiny},	
+       xmajorgrids=true,  ymajorgrids=true, grid style=dashed,
+] 
+\addplot+[semithick, mark options={solid,fill=markercolor}]
+coordinates{(32,32.9239)(64,66.339)(96,99.6489)(128,132.926)(160,166.191)(192,199.449)(224,232.703)(256,265.956)};
+\addplot+[semithick, mark options={solid,fill=markercolor}]
+coordinates{(32,36.0829)(64,72.8362)(96,109.357)(128,145.911)(160,182.425)(192,218.937)(224,255.45)(256,291.953)};
+\addplot+[semithick, mark options={solid,fill=markercolor}]
+coordinates{(32,51.525)(64,77.0896)(96,115.797)(128,154.475)(160,193.14)(192,231.798)(224,270.454)(256,309.109)};
+\addplot+[semithick, mark options={solid,fill=markercolor}]
+coordinates{(32,69.1513)(64,91.7232)(96,120.356)(128,160.533)(160,200.771)(192,240.95)(224,281.151)(256,321.333)};
+\addplot+[semithick, mark options={solid,fill=markercolor}]
+coordinates{(32,92.592)(64,121.947)(96,154.335)(128,198.112)(160,246.867)(192,296.187)(224,345.548)(256,394.912)};
+\addplot+[semithick, mark options={solid,fill=markercolor}]
+coordinates{(32,112.952)(64,150.924)(96,193.087)(128,254.178)(160,317.703)(192,381.243)(224,444.784)(256,508.325)};
+\addplot+[semithick, mark options={solid,fill=markercolor}]
+coordinates{(32,144.171)(64,189.195)(96,241.188)(128,311.773)(160,388.78)(192,466.469)(224,544.209)(256,621.953)};
+
+%\addplot[color=black,dashed,semithick, mark options={solid,fill=markercolor}]
+%coordinates{(32,32)(64,64)(96,96)(128,128)(160,160)(192,192)(224,224)(256,256)}; % O(2/h) line
+%\legend{$p = 2$, $p=3$, $p=4$, $p = 5$, $p = 6$, $p = 7$, $p=8$}
+%\legend{$\frac{1}{h}$, $\frac{1.5}{h}$}
+\end{axis}
+\end{tikzpicture}
+}
+\subfloat[Smoothed knots]{
+\begin{tikzpicture}
+\begin{axis}[
+width=.475\textwidth,
+    xlabel={Number of elements $K$},   
+%        ylabel={$\rho\LRp{\bm{A}_h}$},       
+    xmin=0, xmax=300,
+    ymax=0,ymax=700,    
+    legend pos=north west, legend cell align=left, legend style={font=\tiny},	
+       xmajorgrids=true,  ymajorgrids=true, grid style=dashed,
+] 
+
+%\addplot[color=black,semithick, mark options={solid,fill=markercolor}]
+%coordinates{(32,32)(64,64)(96,96)(128,128)(160,160)(192,192)(224,224)(256,256)};% [yshift=-3pt] node[below, pos=.95,color=black] {$y = 1/h$};% O(1/h) line
+%\addplot[color=red,semithick, mark options={solid,fill=markercolor}]
+%coordinates{(32,48)(64,96)(96,144)(128,192)(160,240)(192,288)(224,336)(256,384)}; %[yshift=3pt] node[above, pos=.95,color=black] {$y = 1.5/h$};
+%\pgfplotsset{cycle list set=0}
+\addplot+[semithick, mark options={solid,fill=markercolor}]
+coordinates{(32,33.8023)(64,67.3347)(96,100.665)(128,133.949)(160,167.218)(192,200.479)(224,233.737)(256,266.992)}; %p = 2
+\addplot+[semithick, mark options={solid,fill=markercolor}]
+coordinates{(32,37.5425)(64,74.8178)(96,111.545)(128,148.129)(160,184.671)(192,221.196)(224,257.712)(256,294.223)}; % p = 3
+\addplot+[semithick, mark options={solid,fill=markercolor}]
+coordinates{(32,40.4264)(64,80.3236)(96,119.264)(128,158.017)(160,196.716)(192,235.393)(224,274.059)(256,312.72)}; % p = 4
+\addplot+[semithick, mark options={solid,fill=markercolor}]
+coordinates{(32,50.3593)(64,84.3661)(96,125.088)(128,165.445)(160,205.705)(192,245.927)(224,286.133)(256,326.328)}; % p = 5
+\addplot+[semithick, mark options={solid,fill=markercolor}]
+coordinates{(32,64.6167)(64,86.4858)(96,129.798)(128,173.13)(160,216.469)(192,259.811)(224,303.155)(256,346.5)}; % p = 6
+\addplot+[semithick, mark options={solid,fill=markercolor}]
+coordinates{(32,76.7086)(64,97.5475)(96,133.384)(128,177.856)(160,222.354)(192,266.858)(224,311.365)(256,355.876)}; %p = 7
+\addplot+[semithick, mark options={solid,fill=markercolor}]
+coordinates{(32,94.4519)(64,116.577)(96,136.311)(128,181.68)(160,227.101)(192,272.535)(224,317.975)(256,363.42)};  % p =8
+%\addplot[color=black,dashed,semithick, mark options={solid,fill=markercolor}]
+%coordinates{(32,32)(64,64)(96,96)(128,128)(160,160)(192,192)(224,224)(256,256)}; % O(2/h) line
+%\legend{$p = 2$, $p=3$, $p=4$, $p = 5$, $p = 6$, $p = 7$, $p=8$}
+%\legend{${1}/{h}$, ${1.5}/{h}$}
+\end{axis}
+\end{tikzpicture}
+}
+\caption{Growth of $\rho\LRp{\bm{A}_h}$ using an \textcolor{red}{upwind flux} and spline spaces of degree $p = 2, \ldots, 8$.  \textcolor{red}{Nearly $p$-independent CFL observed for advection, acoustics}.}
+}
 \end{figure}
 }
-\end{overlayarea}
-}
+
 
 %\section{Numerical experiments}
 %\frame[noframenumbering]{
@@ -1051,7 +1321,7 @@ coordinates{(32,121.298)(64,234.744)(96,348.126)(128,461.491)(160,574.85)(192,68
 %
 
 \frame{
-\frametitle{A 3D multi-patch example}
+\frametitle{Acoustics: a 3D multi-patch example}
 \setcounter{subfigure}{0}
 \vspace{-1em}
 \begin{figure}
@@ -1073,7 +1343,7 @@ coordinates{(32,121.298)(64,234.744)(96,348.126)(128,461.491)(160,574.85)(192,68
 \vspace{.5em}
 \item Isotropic $p=6, K=16$ splines, smoothed knots on each patch.
 \end{itemize}
-\let\thefootnote\relax\footnotetext{\tiny Chan, Evans.\ 2017.  {Multi-patch discontinuous Galerkin spline FEM for time-domain wave propagation} (in preparation).}
+%\let\thefootnote\relax\footnotetext{\tiny Chan, Evans.\ 2017.  {Multi-patch discontinuous Galerkin spline FEM for time-domain wave propagation} (in preparation).}
 }
 
 
@@ -1081,25 +1351,26 @@ coordinates{(32,121.298)(64,234.744)(96,348.126)(128,461.491)(160,574.85)(192,68
 \frametitle{Summary and acknowledgements}
 
 \begin{itemize}
-\item Optimal/smoothed knot vectors for time-domain simulations.  
-%\vspace{1em}
-\item Restore Kronecker product with weight-adjusted mass matrix.  
-\vspace{1em}
-\item Future directions:
-\vspace{.5em}
-\begin{itemize}
-\item Conforming spaces for first order formulations.
-\vspace{.5em}
-\item Nonlinear systems (compressible flow).
+\item Weight-adjusted mass matrix: restore Kronecker structure while retaining energy stability and high order accuracy.  
+\vspace{.25em}
+\item Improved $O(h/p)$ CFL scaling for IGA, optimal $L^2$ convergence rates.  
+\vspace{.25em}
+\item Smoothed knots: improved CFL, better curved approximations.
+\vspace{.25em}
+\item Future directions: curl-conforming spline spaces (Maxwells).
+\vspace{.25em}
+\item This research is supported by DMS-1719818 and DMS-1712639.  
 \end{itemize}
-\end{itemize}
-\vspace{1em}
+\vspace{.5em}
 \begin{center}
-This research is supported by DMS-1712639 and TOTAL E\&P Research and Technology USA.
+Thank you!  Questions?
+\vspace{.25em}
+
+{\includegraphics[width=.15\textwidth]{figs/nsf.jpg}}
 \end{center}
 
-\let\thefootnote\relax\footnotetext{\tiny Chan, Evans.\ 2017.  {Multi-patch discontinuous Galerkin spline FEM for time-domain wave propagation} (in preparation).}
-\let\thefootnote\relax\footnotetext{\tiny Chan, et al.\ 2016.  {Weight-adjusted DG methods: curvilinear meshes} (arXiv).  }
+\let\thefootnote\relax\footnotetext{\tiny Chan, Evans (2018). \textit{Multi-patch discontinuous Galerkin isogeometric analysis for wave propagation: explicit time-stepping and efficient mass matrix inversion}.}
+%\let\thefootnote\relax\footnotetext{\tiny Chan, et al.\ 2016.  {Weight-adjusted DG methods: curvilinear meshes} (arXiv).  }
 %\let\thefootnote\relax\footnotetext{\tiny Chan 2017.  Weight-adjusted DG methods: matrix-valued weights and elastic wave prop.\ in heterogeneous media (arXiv).}
 %\let\thefootnote\relax\footnotetext{\tiny Chan, Warburton 2015. {GPU-accelerated Bernstein-Bezier DG methods for wave problems} (SISC).}
 }
@@ -1242,77 +1513,6 @@ coordinates{(0.25,0.000128353)(0.125,3.87921e-06)(0.0625,6.10617e-08)(0.03125,3.
 \end{figure}
 }
 
-\frame[noframenumbering]{
-\frametitle{Convergence of WADG on curvilinear meshes}
-
-\begin{figure}
-\centering
-\subfloat{\includegraphics[width=.375\textwidth]{figs/curved_mesh.png}}
-\hspace{.5em}
-\setcounter{subfigure}{0}
-\subfloat[$L^2$ errors for $N = 2,3,4$]{
-
-\begin{tikzpicture}
-\begin{loglogaxis}[
-	legend cell align=left,
-	width=.5\textwidth,
-%    title={Convergence},
-    xlabel={Mesh size $h$},
-    ylabel={$L^2$ error},
-    xmin=.01, xmax=10,
-    ymin=1e-9, ymax=1,        
-    legend pos=south east,
-    xmajorgrids=true,
-    ymajorgrids=true,
-    grid style=dashed,
-] 
-\addplot+[color=blue,mark=*,mark options={fill=markercolor},semithick]
-coordinates{(0.5,0.026045)(0.25,0.00661508)(0.125,0.000722446)(0.0625,9.5217e-05)};
-\addplot+[color=blue,mark=x,mark options={solid,fill=markercolor},semithick]
-coordinates{(0.5,0.0260431)(0.25,0.00661506)(0.125,0.000722445)(0.0625,9.5217e-05)};
-
-\addplot+[color=red,mark=square*,mark options={fill=markercolor},semithick]
-coordinates{(0.5,0.0101239)(0.25,0.000387682)(0.125,2.88879e-05)(0.0625,1.78875e-06)};
-\addplot+[color=red,mark=x,mark options={solid,fill=markercolor},semithick]
-coordinates{(0.5,0.0101238)(0.25,0.000387682)(0.125,2.88879e-05)(0.0625,1.78875e-06)};
-
-\addplot+[color=black,mark=triangle*,mark options={fill=markercolor},semithick]
-coordinates{(0.5,0.000483144)(0.25,4.84164e-05)(0.125,1.38952e-06)(0.0625,4.71587e-08)};
-\addplot+[color=black,mark=x,mark options={solid,fill=markercolor},semithick]
-coordinates{(0.5,0.000483096)(0.25,4.84162e-05)(0.125,1.38952e-06)(0.0625,4.71587e-08)};
-\legend{DG,WADG}
-\end{loglogaxis}
-\end{tikzpicture}
-}
-\caption{Optimal $L^2$ convergence rates observed for curvilinear meshes.  }
-\end{figure}
-}
-
-\frame[noframenumbering]{
-\frametitle{Curvilinear meshes: DG eigenvalues (circular domain)}
-\vspace{-1.5em}
-\begin{figure}
-\centering
-\subfloat[Central fluxes]{
-\includegraphics[width=.38\textwidth]{figs/eigstau0.png}
-}
-\subfloat[${\rm Im}\LRp{\lambda_i}$ for central fluxes]{
-\includegraphics[width=.38\textwidth]{figs/eigstau0imag.png}
-}\\
-\vspace{-.75em}
-\subfloat[Upwind fluxes]{
-\includegraphics[width=.38\textwidth]{figs/eigstau1.png}
-}
-%\caption{Spectra of discretized wave equation using DG and WADG for $N=3$.  Both central ($\tau = 0$) and dissipative ($\tau = 1$) numerical fluxes are shown.}
-\end{figure}
-%\begin{itemize}
-%\item Energy stability requires quadrature, skew-symmetric formulation
-%\begin{align*}
-%\int_{D^k}\pd{p}{t}{} q &= \int_{D^k} -\bm{u}\cdot \Grad q  + \frac{1}{2}\int_{\partial D^k} \LRp{2\avg{\bm{u}}\cdot{\bm{n}} + \tau_p\jump{p}} q\\
-%\int_{D^k}\pd{\bm{u}}{t}{} \bm{v} &= \int_{D^k} \Grad p \cdot \bm{v} + \frac{1}{2}\int_{\partial D^k} \LRp{\jump{p} + \tau_u\jump{\bm{u}}\cdot\bm{n}} \bm{v}
-%\end{align*}
-%\end{itemize}
-}
 
 \frame[noframenumbering]{
 \frametitle{Behavior of weight-adjusted $L^2$ projection}

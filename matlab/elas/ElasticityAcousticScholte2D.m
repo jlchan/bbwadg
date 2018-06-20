@@ -5,8 +5,8 @@ clear -global *
 
 Globals2D
 
-K1D = 8;
-N = 7;
+K1D = 4;
+N = 3;
 c_flag = 0;
 FinalTime = .4
 
@@ -86,7 +86,7 @@ lambda = 1;
 
 % mu(:,Ka) = 0;
 
-tau = 1;
+tau = 0;
 
 %% params setup
 
@@ -107,7 +107,7 @@ U{5} = u;
 
 %% exact sol scholte
 
-if 1
+if 0
     mu1 = 0; % acoustic
     mu2 = mu; % elastic
     

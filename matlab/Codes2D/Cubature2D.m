@@ -1,12 +1,15 @@
-function [cubR,cubS,cubW, Ncub] = Cubature2D(Corder)
+function [cubR,cubS,cubW, Ncub] = Cubature2D(Corder,useTP)
 
 % function [cubR,cubS,cubW, Ncub] = Cubature2D(Corder)
 % Purpose: provide multidimensional quadrature (i.e. cubature) 
 %          rules to integrate up to Corder polynomials
      
 CubatureData2D;
+if nargin == 1
+    useTP = 0;
+end
 
-if(Corder<=28)
+if(Corder<=28) & useTP==0
   cubR = cub2D{Corder}(:,1);
   cubS = cub2D{Corder}(:,2);
   cubW = cub2D{Corder}(:,3); 

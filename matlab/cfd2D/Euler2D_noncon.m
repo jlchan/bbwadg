@@ -4,8 +4,8 @@ clear
 % useQuads = 1;mypath
 
 Globals2D;
-N = 3;
-K1D = 16;
+N = 1;
+K1D = 2;
 useSkew = 1;
 CFL = .25;
 FinalTime = 1;
@@ -21,7 +21,7 @@ VX = (VX+1)*Lx; VY = VY*Ly;
 
 % [Nv, VX, VY, K, EToV] = QuadMesh2D(K1D,K1D);
 
-a = .0/K1D;
+a = 1/K1D;
 wadgProjEntropyVars = abs(a)>1e-8;
 
 ids = find(abs(abs(VX)-1) > 1e-8 & abs(abs(VY)-1) > 1e-8);
@@ -75,7 +75,7 @@ rxJ = Vq*rxJ; sxJ = Vq*sxJ;
 ryJ = Vq*ryJ; syJ = Vq*syJ;
 J = Vq*J;
 
-[rq1D wq1D] = JacobiGL(0,0,N);
+[rq1D wq1D] = JacobiGQ(0,0,N);
 % [rq1D wq1D] = JacobiGQ(0,0,N); % exact for 2N-1
 % [rq1D2 wq1D2] = JacobiGQ(0,0,N);
 % [rq1D wq1D] = JacobiGQ(0,0,N-1); % exact for 2N-1
@@ -361,32 +361,40 @@ if 0
     return
 end
 
-rxJ = zeros(Nq,K); sxJ = zeros(Nq,K);
-ryJ = zeros(Nq,K); syJ = zeros(Nq,K);
-J = zeros(Nq,K);
-rxJf = zeros(Nfq*Nfaces,K); sxJf = zeros(Nfq*Nfaces,K);
-ryJf = zeros(Nfq*Nfaces,K); syJf = zeros(Nfq*Nfaces,K);
-Jf = zeros(Nfq*Nfaces,K);
+[rxk,sxk,ryk,syk,J] = GeometricFactorsQuad2D(x,y,Vq*Dr,Vq*Ds);
+rxJ = rxk.*J;
+ryJ = ryk.*J;
+sxJ = sxk.*J;
+syJ = syk.*J;
+
+[rxk,sxk,ryk,syk,Jk] = GeometricFactorsQuad2D(x,y,Vfq*Dr,Vfq*Ds);
+rxJf = rxk.*Jk;    sxJf = sxk.*Jk;
+ryJf = ryk.*Jk;    syJf = syk.*Jk;
+Jf = Jk;
+
 for e = 1:K
-    [rxk,sxk,ryk,syk,Jk] = GeometricFactorsQuad2D(x(:,e),y(:,e),Vq*Dr,Vq*Ds);
-    rxJ(:,e) = rxk.*Jk;    sxJ(:,e) = sxk.*Jk;
-    ryJ(:,e) = ryk.*Jk;    syJ(:,e) = syk.*Jk;
-    J(:,e) = Jk;
+%     [rxk,sxk,ryk,syk,Jk] = GeometricFactorsQuad2D(x(:,e),y(:,e),Vq*Dr,Vq*Ds);
+%     rxJ(:,e) = rxk.*Jk;    sxJ(:,e) = sxk.*Jk;
+%     ryJ(:,e) = ryk.*Jk;    syJ(:,e) = syk.*Jk;
+%     J(:,e) = Jk;
     
-    [rxk,sxk,ryk,syk,Jk] = GeometricFactorsQuad2D(x(:,e),y(:,e),Vfq*Dr,Vfq*Ds);
-    rxJf(:,e) = rxk.*Jk;    sxJf(:,e) = sxk.*Jk;
-    ryJf(:,e) = ryk.*Jk;    syJf(:,e) = syk.*Jk;
-    Jf(:,e) = Jk;
+%     [rxk,sxk,ryk,syk,Jk] = GeometricFactorsQuad2D(x(:,e),y(:,e),Vfq*Dr,Vfq*Ds);
+%     rxJf(:,e) = rxk.*Jk;    sxJf(:,e) = sxk.*Jk;
+%     ryJf(:,e) = ryk.*Jk;    syJf(:,e) = syk.*Jk;
+%     Jf(:,e) = Jk;
 end
 
 nxJ = rxJf.*nrJ + sxJf.*nsJ;
 nyJ = ryJf.*nrJ + syJf.*nsJ;
 
-nx = nxJ./Jf;
-ny = nyJ./Jf;
-sJ = sqrt(nx.^2 + ny.^2);
-nx = nx./sJ; ny = ny./sJ;
-sJ = sJ.*Jf;
+sJ = sqrt(nxJ.^2 + nyJ.^2);
+nx = nxJ./sJ; ny = nyJ./sJ;
+return
+% nx = nxJ./Jf;
+% ny = nyJ./Jf;
+% sJ = sqrt(nx.^2 + ny.^2);
+% nx = nx./sJ; ny = ny./sJ;
+% sJ = sJ.*Jf;
 
 % e = 1;
 % DNx = .5*(diag([rxJ(:,e); rxJf(:,e)])*DNr + DNr*diag([rxJ(:,e); rxJf(:,e)]) ...

@@ -43,17 +43,6 @@ typedef struct foo {
   MatrixXi EToE;
   MatrixXi EToF;
   
-  VectorXi EToGmshE;
-
-  int **EToVC; /* element to global vertex list  */
-  int **EToEC; /* element to neighbor element (elements numbered by their proc) */
-  int **EToFC; /* element to neighbor face    (element local number 0,1,2) */
-  //dfloat **GX; /* x-coordinates of element vertices */
-  //dfloat **GY; /* y-coordinates of element vertices */
-  //dfloat **GZ; /* z-coordinates of element vertices (3d) */
-  MatrixXd GX,GY,GZ;
-
-
   // =============== reference elem stuff ===================
 
   int Nverts; /* number of vertices per element */
@@ -68,8 +57,9 @@ typedef struct foo {
   MatrixXi Fmask;
   int   **FmaskC; /* face node numbers in element volume data */
 
-  // 1D operators (tensor product)
-  VectorXd V1D, D1D, Vf1D;
+  // 1D operators (for tensor product)
+  VectorXd D1D, Vf1D, Lf1D;
+  VectorXd wq1D;
   
   // nodal points (GLL for quads/hexes)
   VectorXd r,s,t;
@@ -87,14 +77,34 @@ typedef struct foo {
   MatrixXd rxJ,ryJ,rzJ,sxJ,syJ,szJ,txJ,tyJ,tzJ,J; // geofacs
   MatrixXd nxJ,nyJ,nzJ,sJ; // surface geofacs
 
+  MatrixXi mapPq; // node map
+  
   // time stepping constants
-  dfloat *rk4a, *rk4b, *rk4c;
+  VectorXd rk4a, rk4b, rk4c;  
 
   // mesh size for dt - computed  
   double hMax; 
   double hMin;
-  
+ 
 }Mesh;
 
+
+// struct for occa arrays, kernels, etc
+typedef struct bar {
+
+  occa::device device;
+  occa::properties props; 
+  occa::kernel volume, surface, update; 
+
+  occa::memory o_D, o_Vf, o_Lf; // operators
+  occa::memory o_wq1D; // 1D weights (for lifting ops)
+
+  occa::memory o_Q, o_Qf; // solution and flux vals
+  occa::memory o_vgeo, o_fgeo; // geometric terms
+  occa::memory o_rhs, o_res; // rhs and RK residual
+  occa::memory o_mapPq; // node map
+
+  
+}App;
 
 #endif

@@ -1,17 +1,18 @@
+clear
 clear -global
 Globals1D;
 
 projectV = 1;
 CFL = .125;
-CFL = .125/2.5;
-% CFL = .125/4;
-N = 3;
+% CFL = .0025;
+N = 4;
 K1D = 16;
 
 useSBP = 0;
 
 FinalTime = 1.8;
 FinalTime = .2;
+% FinalTime = 25;
 opt = 2;
 
 global tau
@@ -32,7 +33,9 @@ elseif opt==2
     [Nv, VX, K, EToV] = MeshGen1D(-.5,.5,K1D);
 elseif opt==3
     [Nv, VX, K, EToV] = MeshGen1D(-5,5,K1D);
-elseif opt==4
+elseif opt==4 
+    [Nv, VX, K, EToV] = MeshGen1D(0,1,K1D);
+elseif opt==5
     [Nv, VX, K, EToV] = MeshGen1D(0,1,K1D);
 end
 
@@ -66,15 +69,15 @@ W = diag([wq;1;1]);
 
 Ef = zeros(2,length(rq)); Ef(1) = 1; Ef(end) = 1;
 
-global rp Vp
-rp = linspace(-1,1,25); F = eye(N+1);
+global Vp xp
+rp = linspace(-1,1,2*(N+1)); 
 Vp = Vandermonde1D(N,rp)/V;
 xp = Vandermonde1D(N,rp)/Vandermonde1D(N,JacobiGL(0,0,N))*x;
 
 % filtering
 global F
 d = ones(N+1,1);
-% d(1:3) = [1 .5 .25];
+d(2:end) = 0;
 F = V*(diag(d)/V);
 
 %% switch to SBP
@@ -141,6 +144,12 @@ f3 = @(rhoL,rhoR,uL,uR,EL,ER) f1(rhoL,rhoR,uL,uR,EL,ER)...
     .*(1./(2*(gamma-1).*logmean(beta(rhoL,uL,EL),beta(rhoR,uR,ER))) - .5*avg(uL.^2,uR.^2)) ...
     + avg(uL,uR).*f2(rhoL,rhoR,uL,uR,EL,ER);
 
+%% limiter stuff
+
+global SU lim
+lim = @(u,theta) .5*wq'*u + theta.*(u - .5*wq'*u);
+SU = @(U) Sfun(U(:,1),U(:,2),U(:,3));
+
 %%
 res1 = 0;
 res2 = 0;
@@ -192,6 +201,7 @@ elseif opt==1
 elseif opt==2
     
     % BCs
+    useBC = 2;
     rhoL = 1; rhoR = .125;
     pL = 1; pR = .1;
     uL = 0; uR = 0;
@@ -245,6 +255,16 @@ elseif opt==4 % modified sod
     EL = pL/(gamma-1) + .5*rhoL*uL.^2;
     ER = pR/(gamma-1) + .5*rhoR*uR.^2;
     
+elseif opt==5 % woodward/colella interacting blast waves
+    
+    useBC = 2; % reflective BCs
+    pL = 1000; pC = .01; pR = 100;
+%     pL = 10; pC = .1; pR = 1;
+    
+    rhoq = ones(size(xq));
+    uq = 0*xq;
+    pq = pL*(xq < .1) + pC*(xq > .1 & xq < .9) + pR*(xq > .9);
+        
 end
 
 rho = Pq*(rhoq);
@@ -258,6 +278,41 @@ xq2 = Vandermonde1D(N,[-1;rq;1])/V*x;
 % plot(xq2,VqPq2*([Vf(1,:);Vq;Vf(2,:)]*rho)); return
 
 wJq = diag(wq)*((Vandermonde1D(N,rq)/V)*J);
+
+%%
+
+if 0
+    U0 = [rho(:);m(:);E(:)];
+    
+    options = odeset('RelTol',1e-4,'AbsTol',1e-7);
+    [t,Uf] = ode45(@(t,U) rhs45(t,U),[0,FinalTime],U0,options);
+%     [t,Uf] = ode45(@(t,U) rhs45(t,U),[0,FinalTime],U0);
+        
+    U = Uf(end,:)';
+    ids = 1:Np*K;
+    rho = reshape(U(ids),Np,K);
+    m = reshape(U(ids + Np*K),Np,K);
+    E = reshape(U(ids + 2*Np*K),Np,K);
+    
+    rhoq45 = Vq*rho;
+    mq45 = Vq*m;
+    Eq45 = Vq*E;
+    
+    rhop45 = Vp*rho;
+    mp45 = Vp*m;
+    Ep45 = Vp*E;
+    up45 = mp45./rhop45;
+    pp45 = (gamma-1)*(Ep45-.5*rhop45.*up45.^2);
+    plot(xp,rhop45,'b-','linewidth',2)
+    hold on
+    plot(xp,up45,'r-.','linewidth',2)
+    plot(xp,pp45,'k--','linewidth',2)
+    
+    keyboard
+    return
+end
+%%
+
 
 figure(1)
 for i = 1:Nsteps
@@ -278,102 +333,90 @@ for i = 1:Nsteps
             rhoq = U1(q1,q2,q3);
             mq   = U2(q1,q2,q3);
             Eq   = U3(q1,q2,q3);
-            
-            global SU lim
+                        
             fids = size(Eq,1)-1:size(Eq,1);
             VV = @(U) [V1(U(:,1),U(:,2),U(:,3)),V2(U(:,1),U(:,2),U(:,3)),V3(U(:,1),U(:,2),U(:,3))];
             UU = @(V) [U1(V(:,1),V(:,2),V(:,3)),U2(V(:,1),V(:,2),V(:,3)),U3(V(:,1),V(:,2),V(:,3))];
-            Sfun = @(rho,m,E) -rho.*s(rho,m,E);
-            lim = @(u,theta) .5*wq'*u + theta.*(u - .5*wq'*u);
-            SU = @(U) Sfun(U(:,1),U(:,2),U(:,3));
+            Sfun = @(rho,m,E) -rho.*s(rho,m,E);            
             
             aa = 4;
-            ratio = max([max(rhoq,[],1)./max([Vq;Vf]*rho,[],1); max(Eq,[],1)./max([Vq;Vf]*E,[],1)],[],1);
-            %ratio = sum(abs(Sfun(rhoq(end-1:end,:),mq(end-1:end,:),Eq(end-1:end,:))),1)./sum(abs(Sfun(Vf*rho,Vf*m,Vf*E)),1);
-            
-            %             if any(ratio > aa)
-            %                 elist = find(ratio > aa);
-            %                 e = elist(1);
-            %                 keyboard
-            %
-            %                 rq2 = [rq;-1;1];
-            %                 Vq2 = [Vq;Vf];
-            %                 VU13 = @(rho,m,E) rho.*(E.*rho-m.^2)./(E.*rho.*2-m.^2).^2.*-4;
-            %                 VU23 = @(rho,m,E) m.*rho.^2./(E.*rho.*2-m.^2).^2.*-4;
-            %                 VU33 = @(rho,m,E) rho.^3./(E.*rho.*2-m.^2).^2.*4;
-            %
-            %                 u1 = rho(:,e);
-            %                 u2 = m(:,e);
-            %                 u3 = E(:,e);
-            %                 plot(rp,V3(Vp*u1,Vp*u2,Vp*u3),'b-')
-            %                 hold on
-            %                 plot(rp,Vp*Pq*V3(Vq*u1,Vq*u2,Vq*u3),'r-')
-            %
-            %                 t = [.5 1 1];
-            %                 plot(rp,Vp*Pq*V3(lim(Vq*u1,t(1)),lim(Vq*u2,t(2)),lim(Vq*u3,t(3))),'r--')
-            %
-            %                 plot(rp,V3(Vp*u1,Vp*u2,Vp*u3)-Vp*Pq*V3(Vq*u1,Vq*u2,Vq*u3),'b-')
-            %
-            %
-            %                 hold on
-            %                 plot(rp,Vp*[u1 u2 u3],'-')
-            %                 plot(rp,Vp*(V*diag([1;zeros(N,1)])/V)*[u1 u2 u3],'--')
-            %
-            %
-            %
-            %                 hold on
-            %                 plot(rp,VU13(Vp*u1,Vp*u2,Vp*u3),'b.-')
-            %                 plot(rp,VU23(Vp*u1,Vp*u2,Vp*u3),'r.-')
-            %                 plot(rp,VU33(Vp*u1,Vp*u2,Vp*u3),'k.-')
-            %             end
+            ratio = max([max(rhoq,[],1)./max([Vq;Vf]*rho,[],1); max(Eq,[],1)./max([Vq;Vf]*E,[],1)],[],1);            
             
             % limiter
-            if any(ratio > aa)
-                fprintf('limiting on tstep %d\n',i);
-                elist = find(ratio>aa);
-                for e = elist
+%             fprintf('limiting on tstep %d\n',i);
+            elist = find(ratio>aa);
+%             elist = 1:K;
+            for e = elist
+                
+                U = [rho(:,e) m(:,e) E(:,e)];
+                opt = 4;
+                
+                if opt==1
                     
-                    U = [rho(:,e) m(:,e) E(:,e)];
-                    opt = 1;
+                    [theta fval] = bisect_lim(U,aa);
+                    U = lim(Vq*U,theta);
                     
-                    if opt==1
-                                                
-                        theta = bisect_lim(U,aa);
-%                         theta = 0;
-                        U = lim(Vq*U,theta);
-                        
-                        rho(:,e) = Pq*U(:,1);
-                        m(:,e) = Pq*U(:,2);
-                        E(:,e) = Pq*U(:,3);
-                        
-                        % re-project entropy variables
-                        q1(:,e) = [Vq;Vf]*Pq*V1(U(:,1),U(:,2),U(:,3));
-                        q2(:,e) = [Vq;Vf]*Pq*V2(U(:,1),U(:,2),U(:,3));
-                        q3(:,e) = [Vq;Vf]*Pq*V3(U(:,1),U(:,2),U(:,3));
+                    rho(:,e) = Pq*U(:,1);
+                    m(:,e) = Pq*U(:,2);
+                    E(:,e) = Pq*U(:,3);
                     
-                    elseif opt==2 % filter projected entropy vars
-
-                        U = Vq*U;
-                        Uavg = .5*wq'*U;
-                        Vavg = repmat([V1(Uavg(:,1),Uavg(:,2),Uavg(:,3)) V2(Uavg(:,1),Uavg(:,2),Uavg(:,3)) V3(Uavg(:,1),Uavg(:,2),Uavg(:,3))],size(U,1),1);
-                        VVq = Vq*Pq*[V1(U(:,1),U(:,2),U(:,3)) V2(U(:,1),U(:,2),U(:,3)) V3(U(:,1),U(:,2),U(:,3))];
-
-                        t = 0;
-                        Vlim = Vavg + (VVq-Vavg)*diag([1 1 t]);
-                        q1(:,e) = [Vq;Vf]*Pq*Vlim(:,1);
-                        q2(:,e) = [Vq;Vf]*Pq*Vlim(:,2);
-                        q3(:,e) = [Vq;Vf]*Pq*Vlim(:,3);
-                        
-                        % apply same limiting to E
-                        Eavg = .5*wq'*Vq*E(:,e);
-                        E(:,e) = Eavg + t*(E(:,e)-Eavg);
-%                         [q1(:,e),q2(:,e),q3(:,e)]
-%                         keyboard
-                    end
+                    % re-project entropy variables
+                    q1(:,e) = [Vq;Vf]*Pq*V1(U(:,1),U(:,2),U(:,3));
+                    q2(:,e) = [Vq;Vf]*Pq*V2(U(:,1),U(:,2),U(:,3));
+                    q3(:,e) = [Vq;Vf]*Pq*V3(U(:,1),U(:,2),U(:,3));
+                    
+                elseif opt==2 % filter projected entropy vars
+                    
+                    U = Vq*U;
+                    Uavg = .5*wq'*U;
+                    %Vavg = repmat([V1(Uavg(:,1),Uavg(:,2),Uavg(:,3)) V2(Uavg(:,1),Uavg(:,2),Uavg(:,3)) V3(Uavg(:,1),Uavg(:,2),Uavg(:,3))],size(U,1),1);
+                    Vavg = .5*wq'*[V1(U(:,1),U(:,2),U(:,3)) V2(U(:,1),U(:,2),U(:,3)) V3(U(:,1),U(:,2),U(:,3))];
+                    VVq = Vq*Pq*[V1(U(:,1),U(:,2),U(:,3)) V2(U(:,1),U(:,2),U(:,3)) V3(U(:,1),U(:,2),U(:,3))];
+                    
+                    V1m = max(V1(U(:,1),U(:,2),U(:,3)));
+                    V1qm = max([Vq;Vf]*Pq*V1(U(:,1),U(:,2),U(:,3)));
+                    V2m = max(V2(U(:,1),U(:,2),U(:,3)));
+                    V2qm = max([Vq;Vf]*Pq*V2(U(:,1),U(:,2),U(:,3)));
+                    V3m = max(V3(U(:,1),U(:,2),U(:,3)));
+                    V3qm = max([Vq;Vf]*Pq*V3(U(:,1),U(:,2),U(:,3)));
+                    tol = 1e-8;
+                    t1 = 1;%min(1,(tol+V1m -Vavg(:,1))/(tol+V1qm-Vavg(:,1)));
+                    t2 = 1;%min(1,(tol+V2m -Vavg(:,2))/(tol+V2qm-Vavg(:,2)));
+                    t3 = 1; %min(1,(tol+V3m -Vavg(:,3))/(tol+V3qm-Vavg(:,3)));
+%                     keyboard
+                    Vlim = Vavg + (VVq-Vavg)*diag([t1 t2 t3]);
+                    q1(:,e) = [Vq;Vf]*Pq*Vlim(:,1);
+                    q2(:,e) = [Vq;Vf]*Pq*Vlim(:,2);
+                    q3(:,e) = [Vq;Vf]*Pq*Vlim(:,3);
+                    
+%                     [V3m,max(q3(:,e))]
+                    
+%                     % apply same limiting to E
+%                     Eavg = .5*wq'*Vq*E(:,e);
+%                     E(:,e) = Eavg + t*(E(:,e)-Eavg);
+                    %                         [q1(:,e),q2(:,e),q3(:,e)]
+                    %                         keyboard
+                
+                elseif opt==3
+                    % polynomial filtering                    
+                    U = Vq*F*U;
+                    fprintf('filtering on element %d\n',e)
+                    rho(:,e) = Pq*U(:,1);
+                    m(:,e) = Pq*U(:,2);
+                    E(:,e) = Pq*U(:,3);
+                    
+                    % re-project entropy variables
+                    q1(:,e) = [Vq;Vf]*Pq*V1(U(:,1),U(:,2),U(:,3));
+                    q2(:,e) = [Vq;Vf]*Pq*V2(U(:,1),U(:,2),U(:,3));
+                    q3(:,e) = [Vq;Vf]*Pq*V3(U(:,1),U(:,2),U(:,3));
+                                        
+                else
+                    % do nothing
                 end
-            end
+            end                        
         end
-                        
+        
+        
         
         rhoq = U1(q1,q2,q3);
         mq   = U2(q1,q2,q3);
@@ -396,21 +439,21 @@ for i = 1:Nsteps
         %             keyboard
         %         end
         
-        if INTRK==1 && mod(i-1,5)==0
+        if (INTRK==5 && mod(i-1,10)==0) || i==Nsteps
             clf
             subplot(2,1,1)
             hold on
             plot(xq2,rhoq1,'ro--','linewidth',2)
             plot(xq2,rhoq2,'b-','linewidth',2)
             
-            plot(xq2,Eq1,'g^--','linewidth',2)
-            plot(xq2,Eq2,'k-','linewidth',2)
+%             plot(xq2,Eq1,'g^--','linewidth',2)
+%             plot(xq2,Eq2,'k-','linewidth',2)
             
             wq0 = [0;wq;0];
             plot(.5*wq0'*xq2,.5*wq0'*rhoq1,'s','linewidth',2)
             plot(.5*wq0'*xq2,.5*wq0'*rhoq2,'x','linewidth',2)
-            plot(.5*wq0'*xq2,.5*wq0'*Eq1,'s','linewidth',2)
-            plot(.5*wq0'*xq2,.5*wq0'*Eq2,'x','linewidth',2)
+%             plot(.5*wq0'*xq2,.5*wq0'*Eq1,'s','linewidth',2)
+%             plot(.5*wq0'*xq2,.5*wq0'*Eq2,'x','linewidth',2)
             
             
             subplot(2,1,2)
@@ -446,7 +489,9 @@ for i = 1:Nsteps
         end
         
         [rhs1 rhs2 rhs3] = rhsEuler(rhoq,mq,Eq,rho,m,E,i,INTRK);
-        
+%         rhs1 = F*rhs1;
+%         rhs2 = F*rhs2;
+%         rhs3 = F*rhs3;
         if 0
             rhoM = rhoq(end-1:end,:);
             mM = mq(end-1:end,:);
@@ -478,13 +523,15 @@ for i = 1:Nsteps
         res3 = rk4a(INTRK)*res3 + dt*rhs3;
         rho = rho + rk4b(INTRK)*res1;
         m = m + rk4b(INTRK)*res2;
-        E = E + rk4b(INTRK)*res3;
+        E = E + rk4b(INTRK)*res3;                
         
     end
     
     rhoq = Vq*rho;
     mq = Vq*m;
     Eq = Vq*E;
+    
+    Uavg(i) = sum(sum(wJq.*(Vq*(rho+m+E))));
     Sq = -rhoq.*s(rhoq,mq,Eq);
     Si = sum(sum(wJq.*Sq));
     %     S(i)
@@ -494,11 +541,20 @@ for i = 1:Nsteps
         
         uq = mq./rhoq;
         pq = (gamma-1)*(Eq-.5*rhoq.*uq.^2);
-        plot(xq,VqPq*rhoq,'b-','linewidth',2)
+        rhop = VqPq*rhoq;
+        up = VqPq*uq;
+        pp = VqPq*pq;
+        h1 = plot(xq(:),rhop(:),'b--','linewidth',2,'DisplayName','Density');
         hold on
-        plot(xq,VqPq*uq,'r-','linewidth',2)
-        plot(xq,VqPq*pq,'k-','linewidth',2)
-        
+        h2 = plot(xq(:),up(:),'r-','linewidth',2,'DisplayName','Velocity');
+        h3 = plot(xq(:),pp(:),'k-.','linewidth',2,'DisplayName','Pressure');
+        legend('show')
+
+        plot(.5*wq'*xq,.5*wq'*rhoq,'s','linewidth',2,'markersize',8,'MarkerFaceColor',[.49 1 .63])
+        plot(.5*wq'*xq,.5*wq'*uq,'s','linewidth',2,'markersize',8,'MarkerFaceColor',[.49 1 .63])
+        plot(.5*wq'*xq,.5*wq'*pq,'s','linewidth',2,'markersize',8,'MarkerFaceColor',[.49 1 .63])        
+        grid on
+        set(gca,'fontsize',15);set(gca,'TickLabelInterpreter', 'latex');
         % plot(xq,VqPq*V1(rhoq,mq,Eq),'b-','linewidth',2)
         % hold on
         % plot(xq,VqPq*V2(rhoq,mq,Eq),'r-','linewidth',2)
@@ -510,6 +566,24 @@ for i = 1:Nsteps
         drawnow
     end
 end
+
+figure
+uq = mq./rhoq;
+pq = (gamma-1)*(Eq-.5*rhoq.*uq.^2);
+rhop = VqPq*rhoq;
+up = VqPq*uq;
+pp = VqPq*pq;
+h1 = plot(xq(:),rhop(:),'b--','linewidth',2,'DisplayName','Density');
+hold on
+h2 = plot(xq(:),up(:),'r-','linewidth',2,'DisplayName','Velocity');
+h3 = plot(xq(:),pp(:),'k-.','linewidth',2,'DisplayName','Pressure');
+lg = legend('show'); lg.FontSize = 32;
+axis([-.5 .5 -.4 1.4])
+grid on
+set(gca,'fontsize',15);set(gca,'TickLabelInterpreter', 'latex');
+
+figure
+plot(dt*(1:Nsteps),Uavg,'o--')
 
 if opt==0
     % sine solution
@@ -527,6 +601,38 @@ if opt==0
     L2err
 end
 
+function rhs = rhs45(t,U)
+
+Globals1D 
+global VqPq tf Dq Vq Vf Pq Dfq 
+global Vp xp
+global V1 V2 V3 U1 U2 U3
+ids = 1:Np*K;
+rho = reshape(U(ids),Np,K);
+m = reshape(U(ids + Np*K),Np,K);
+E = reshape(U(ids + 2*Np*K),Np,K);
+
+% interpolate to quadrature
+rhoq = Vq*rho;
+mq = Vq*m;
+Eq = Vq*E;
+
+% project entropy variables
+q1 = [Vq;Vf]*Pq*V1(rhoq,mq,Eq);
+q2 = [Vq;Vf]*Pq*V2(rhoq,mq,Eq);
+q3 = [Vq;Vf]*Pq*V3(rhoq,mq,Eq);
+rhoq = U1(q1,q2,q3);
+mq   = U2(q1,q2,q3);
+Eq   = U3(q1,q2,q3);
+
+if any(isnan([rhoq(:);mq(:);Eq(:)])) || any(norm(imag([rhoq(:);mq(:);Eq(:)]),'fro')>1e-10)
+    keyboard
+end
+
+[rhs1 rhs2 rhs3] = rhsEuler(rhoq,mq,Eq);
+rhs = [rhs1(:);rhs2(:);rhs3(:)];
+
+end
 
 function [rhs1 rhs2 rhs3] = rhsEuler(rhoq,mq,Eq,rho,m,E,i,INTRK)
 
@@ -551,11 +657,18 @@ mP = rhoP.*uP;
 pM = (gamma-1)*(EM-.5*rhoM.*uM.^2);
 
 global useBC
-if useBC
+if useBC==1
     rhoP(mapB) = [rhoL rhoR];
     uP(mapB) = [mL/rhoL mR/rhoR];
     mP(mapB) = [mL mR];
     EP(mapB) = [EL ER];
+elseif useBC==2 % mirrored velocity
+    
+    rhoP(mapB) = rhoM(mapB);%[rhoL rhoR];
+    uP(mapB) = -uM(mapB);
+    mP(mapB) = -uM(mapB).*rhoP(mapB);
+    EP(mapB) = EM(mapB);%[EL ER];
+    
 end
 
 % compute fluxes
@@ -644,17 +757,6 @@ else
     d3 = R31.*r1 + R32.*r2 + R33.*r3;
 end
 
-% d1 = -.5*d1;
-% d2 = -.5*d2;
-% d3 = -.5*d3;
-
-% if i==2 && INTRK==3
-%     keyboard
-% end
-
-% inverse eigs
-% lm = abs(uM)+cvel;
-% Lfc = 1.0;
 rhs1 = -2*rhs1 + .5*tau*Lq*(Fscale.*d1);
 rhs2 = -2*rhs2 + .5*tau*Lq*(Fscale.*d2);
 rhs3 = -2*rhs3 + .5*tau*Lq*(Fscale.*d3);
@@ -662,7 +764,7 @@ rhs3 = -2*rhs3 + .5*tau*Lq*(Fscale.*d3);
 end
 
 
-function theta = bisect_lim(U,aa)
+function [theta ff] = bisect_lim(U,aa)
 
 global U1 U2 U3 V1 V2 V3 SU
 global Vf Pq Vq wq lim rp Vp
@@ -681,11 +783,11 @@ if ff0*ff1 > 0
     
     VU = @(U) [V1(U(:,1),U(:,2),U(:,3)),V2(U(:,1),U(:,2),U(:,3)),V3(U(:,1),U(:,2),U(:,3))];
     UV = @(V) [U1(V(:,1),V(:,2),V(:,3)),U2(V(:,1),V(:,2),V(:,3)),U3(V(:,1),V(:,2),V(:,3))];
-
-    keyboard    
+    
+    keyboard
 end
 
-for i = 1:20
+for i = 1:10
     c = .5*(a+b);
     ff = bisect_lim_func(U,c,aa);
     if ff0*ff < 0
@@ -697,6 +799,7 @@ for i = 1:20
     end
 end
 theta = c;
+
 end
 
 function f = bisect_lim_func(U,theta,aa)

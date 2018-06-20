@@ -1,19 +1,20 @@
+clear
 clear -global
 Globals1D;
 
 projectV = 1;
-CFL = .125/2;
-% CFL = .125/2.5;
-% CFL = .125/4;
+CFL = .125;
+CFL = .125/2.5;
+% CFL = .125/10;
 N = 4;
-K1D = 16;
+K1D = 40;
 
-useSBP = 1;
+useSBP = 0;
 
 FinalTime = 1.8;
 FinalTime = .2;
-% FinalTime = 2;
-opt = 1;
+% FinalTime = .01;
+opt = 3;
 
 global tau
 tau = 1;
@@ -22,8 +23,8 @@ r = JacobiGL(0,0,N);
 % r = JacobiGQ(0,0,N);
 
 [rq wq] = JacobiGL(0,0,N); rq = rq*(1-1e-11);
-[rq wq] = JacobiGL(0,0,N+4); rq = rq*(1-1e-11);
-% [rq wq] = JacobiGQ(0,0,N+1);
+% [rq wq] = JacobiGL(0,0,N+4); rq = rq*(1-1e-11);
+[rq wq] = JacobiGQ(0,0,N+1);
 
 Nq = length(rq);
 
@@ -224,9 +225,11 @@ elseif opt==3
     %     mapP(1) = mapM(end); mapP(end) = mapM(1);
     %     vmapP(1) = vmapM(end); vmapP(end) = vmapM(1);
     
-    rhoq = rhoL*(xq < -4) + (rhoRex(xq)).*(xq >= -4);
-    uq = uL*(xq < -4);
-    pq = pL*(xq < -4) + pR*(xq >= -4);
+    a = -4;
+%     a = -2;
+    rhoq = rhoL*(xq < a) + (rhoRex(xq)).*(xq >= a);
+    uq = uL*(xq < a);
+    pq = pL*(xq < a) + pR*(xq >= a);
     
     mL = rhoL*uL; mR = rhoR*uR;
     EL = pL/(gamma-1) + .5*rhoL*uL.^2;
@@ -262,12 +265,10 @@ wJq = diag(wq)*((Vandermonde1D(N,rq)/V)*J);
 
 dt0 = dt;
 
-figure(1)
+figure
 for i = 1:Nsteps
-%     if i < 50
-%         dt = dt0/4;
-%     else
-%         dt = dt0;
+%     if i == 100
+%         dt = dt0*1.5;
 %     end
     for INTRK = 1:5
         
@@ -305,6 +306,10 @@ for i = 1:Nsteps
         S1 = SU(rhoq1,mq1,Eq1);
         S2 = SU(rhoq2,mq2,Eq2);
         
+        wq0 = [0;wq;0];
+        S1avg(i) = sum(J(1,:).*(.5*wq0'*S1));
+        S2avg(i) = sum(J(1,:).*(.5*wq0'*S2));
+
         %         if INTRK==4 && i==4
         %             keyboard
         %         end
@@ -316,7 +321,7 @@ for i = 1:Nsteps
             plot(xq2,rhoq1,'ro--','linewidth',2)
             plot(xq2,rhoq2,'b-','linewidth',2)
             
-            wq0 = [0;wq;0];
+            
             plot(.5*wq0'*xq2,.5*wq0'*rhoq1,'s','linewidth',2)
             plot(.5*wq0'*xq2,.5*wq0'*rhoq2,'x','linewidth',2)
 %             plot(xq2,Eq1,'g^--','linewidth',2)
@@ -348,7 +353,14 @@ for i = 1:Nsteps
             % %             plot(xq2,abs(Eq1-Eq2),'r-','linewidth',2)
 %             axis([-.5 .5 1e-11 .25])
 
-            title(sprintf('timestep %d out of %d, RK step %d,time %f',i,Nsteps,INTRK,dt*i))
+title(sprintf('timestep %d out of %d, RK step %d,time %f',i,Nsteps,INTRK,dt*i))
+
+clf
+plot(xq2,S1,'o--','linewidth',2)
+hold on
+plot(xq2,S2,'x--','linewidth',2)
+            title(sprintf('timestep %d out of %d, S1 = %f, S2 = %f',i,Nsteps,S1avg(i),S2avg(i)))
+            
                         
             % pause
             
@@ -430,9 +442,16 @@ for i = 1:Nsteps
     end
 end
 
-abs(S(Nsteps)-S(1))
-% figure
-% plot(rhsmax,'o')
+% load handel;sound(y,Fs)
+
+% abs(S(Nsteps)-S(1))
+figure
+plot(S1avg,'o')
+hold on
+plot(S2avg,'x')
+
+figure
+plot(dt*(2:Nsteps),diff(S2avg),'x--')
 
 if opt==0
     % sine solution

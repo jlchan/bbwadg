@@ -1,6 +1,6 @@
 clear
 N = 2;
-N2 = 1;
+N2 = 2;
 r1D1 = JacobiGL(0,0,N);
 [r1 s1 t1] = meshgrid(r1D1);
 r1 = r1(:); s1 = s1(:); t1 = t1(:);
@@ -25,9 +25,9 @@ x{1} = x{1} + a*randn(size(r1));
 y{1} = y{1} + a*randn(size(r1));
 z{1} = z{1} + a*randn(size(r1));
 
-x{2} = x{2} + 0*a*randn(size(r2));
+x{2} = x{2} + 1*a*randn(size(r2));
 y{2} = y{2} + 1*a*randn(size(r2));
-z{2} = z{2} + 0*a*randn(size(r2));
+z{2} = z{2} + 1*a*randn(size(r2));
 
 V1D1 = Vandermonde1D(N,r1D1);
 D1D1 = GradVandermonde1D(N,r1D1)/V1D1;

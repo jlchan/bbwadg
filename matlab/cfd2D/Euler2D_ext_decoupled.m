@@ -5,14 +5,14 @@ Globals2D
 a = 0/8; % warping factor
 % FinalTime = 10;
 
-N = 2;
-K1D = 16;
+N = 4;
+K1D = 8;
 FinalTime = 1;
 
 wadgProjEntropyVars = abs(a)>1e-8;
-CFL = .5;
+CFL = .25;
 global tau
-tau = 1;
+tau = 0;
 
 % Lx = 7.5; Ly = 5; ratiox = 3/4; ratioy = .5;
 Lx = 10; Ly = 5; ratiox = 1; ratioy = Ly/Lx;
@@ -33,7 +33,7 @@ BuildPeriodicMaps2D(max(VX)-min(VX),max(VY)-min(VY));
 % PlotMesh2D;axis on;return
 
 % plotting nodes
-[rp sp] = EquiNodes2D(15); [rp sp] = xytors(rp,sp);
+[rp sp] = EquiNodes2D(10); [rp sp] = xytors(rp,sp);
 Vp = Vandermonde2D(N,rp,sp)/V;
 xp = Vp*x; yp = Vp*y;
 % PlotMesh2D; axis on;return
@@ -57,7 +57,9 @@ Pq = M\(Vq'*diag(wq)); % J's cancel out
 xq = Vq*x; yq = Vq*y;
 
 % face nodes
-[rq1D wq1D] = JacobiGQ(0,0,N+1);
+% [rq1D wq1D] = JacobiGQ(0,0,N+1);
+rq1D = [-1 + (1+rq1D)/2; (1+rq1D)/2];
+wq1D = .5*[wq1D;wq1D];
 Nfq = length(rq1D);
 e = ones(size(rq1D));
 rfq = [rq1D; e; -rq1D; -e];
@@ -649,7 +651,7 @@ p = rho.^gamma;
 % v = zeros(size(x));
 % p = ones(size(x));
 
-if 0
+if 1
     % pulse condition
     x0 = 5;
     rho = 2 + (abs(x-x0) < 5);

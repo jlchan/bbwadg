@@ -5,17 +5,14 @@ Globals2D
 a = 0/8; % warping factor
 % FinalTime = 10;
 
-N = 4;
-K1D = 16;
+N = 1;
+K1D = 8;
 FinalTime = 1;
 
 wadgProjEntropyVars = abs(a)>1e-8;
-CFL = .5;
+CFL = .25;
 global tau
 tau = 1;
-global useSkew;
-useSkew = 1;
-
 
 % Lx = 7.5; Ly = 5; ratiox = 3/4; ratioy = .5;
 Lx = 10; Ly = 5; ratiox = 1; ratioy = Ly/Lx;
@@ -48,7 +45,7 @@ global mapPq
 % Nq = 2*N+1;
 % [rq sq wq] = Cubature2D(Nq); % integrate u*v*c
 % [rq sq wq] = QNodes2D(N); if length(rq)~=Np;  keyboard; end
-[rq1D wq1D] = JacobiGL(0,0,N);
+[rq1D wq1D] = JacobiGQ(0,0,N);
 [rq sq] = meshgrid(rq1D);
 rq = rq(:); sq = sq(:);
 [wr ws] = meshgrid(wq1D); 
@@ -67,30 +64,35 @@ rxJ = Vq*rxJ; sxJ = Vq*sxJ;
 ryJ = Vq*ryJ; syJ = Vq*syJ;
 J = Vq*J;
 
-[rq1D wq1D] = JacobiGL(0,0,N);
-% [rq1D wq1D] = JacobiGQ(0,0,N); % exact for 2N-1
-% [rq1D2 wq1D2] = JacobiGQ(0,0,N);
-% [rq1D wq1D] = JacobiGQ(0,0,N-1); % exact for 2N-1
-% [rq1D wq1D] = JacobiGQ(0,0,N-1); % exact for 2N-1
-% VV = Vandermonde1D(N,rq1D); 
-% rq1D = [-1+.5*(1+rq1D); .5*(1+rq1D)]; % split quadrature
-% wq1D = .5*[wq1D;wq1D];
+[rq1D wq1D] = JacobiGQ(0,0,N);
+Nfq = length(rq1D);
 
 e = ones(size(rq1D));
-rfq = [rq1D; e; -rq1D; -e]; sfq = [-e; rq1D; e; -rq1D]; wfq = [wq1D; wq1D; wq1D; wq1D];
-Vfqf = kron(eye(Nfaces),Vandermonde1D(N,rq1D)/Vandermonde1D(N,JacobiGL(0,0,N)));
-% rfq = [rq1D2; e; -rq1D2; -e]; sfq = [-e; rq1D; e; -rq1D]; wfq = [wq1D2; wq1D; wq1D2; wq1D];
-% Vfqf = blkdiag(Vandermonde1D(N,rq1D2)/Vandermonde1D(N,JacobiGL(0,0,N)),Vandermonde1D(N,rq1D)/Vandermonde1D(N,JacobiGL(0,0,N)),...
-%     Vandermonde1D(N,rq1D2)/Vandermonde1D(N,JacobiGL(0,0,N)),Vandermonde1D(N,rq1D)/Vandermonde1D(N,JacobiGL(0,0,N)));
-Nfq = length(rq1D);
-% plot(rfq,sfq,'o');return
-
-
+rfq = [rq1D; e; -rq1D; -e]; 
+sfq = [-e; rq1D; e; -rq1D]; 
+wfq = [wq1D; wq1D; wq1D; wq1D];
+V1D = Vandermonde1D(N,JacobiGL(0,0,N));
+Vq1D = Vandermonde1D(N,rq1D)/V1D;
+Vfqf = kron(eye(Nfaces),Vq1D);
 Vfq = Vandermonde2D(N,rfq,sfq)/V;
-
 Mf = Vfq'*diag(wfq)*Vfq;
 Lq = M\(Vfq'*diag(wfq));
 
+% multi-layer decoupling
+[rq1D2 wq1D2] = JacobiGQ(0,0,N+1);
+Nfq2 = length(rq1D2);
+e = ones(size(rq1D2));
+rfq2 = [rq1D2; e; -rq1D2; -e]; 
+sfq2 = [-e; rq1D2; e; -rq1D2]; 
+wfq2 = [wq1D2; wq1D2; wq1D2; wq1D2];
+
+Vq1D2 = Vandermonde1D(N,rq1D2)/V1D;
+Vf1Pf2 = Vq1D*((Vq1D2'*diag(wq1D2)*Vq1D2)\(Vq1D2'*diag(wq1D2)))
+Vf1Pf2 = kron(eye(Nfaces),Vf1Pf2);
+Vf2Pf1 = Vq1D2*((Vq1D'*diag(wq1D)*Vq1D)\(Vq1D'*diag(wq1D)))
+Vf2Pf1 = kron(eye(Nfaces),Vf2Pf1);
+Sf = diag([wfq;wfq2])*[zeros(length(rfq)) Vf1Pf2; -Vf2Pf1 zeros(length(rfq2))];
+return
 
 nx = Vfqf*nx;
 ny = Vfqf*ny;
@@ -135,11 +137,9 @@ DNsw = [Dsqw -.5*VqLq*diag(nsJ);
 QNrskew = .5*(WN*DNr - (WN*DNr)');
 QNsskew = .5*(WN*DNs - (WN*DNs)');
 
-if useSkew
-%     DNr = .5*(DNr - diag(1./[wq;wfq])*(WN*DNr)');
-    DNr = .5*(DNr-DNrw);
-    DNs = .5*(DNs-DNsw);
-end
+% make skew symmetric diff matrices
+DNr = diag(1./[wq;wfq])*QNrskew;
+DNs = diag(1./[wq;wfq])*QNsskew;
 
 % keyboard
 % return
@@ -576,21 +576,18 @@ for e = 1:K
     divF2(:,e) = sum(Dx.*FxS2,2) + sum(Dy.*FyS2,2);
     divF3(:,e) = sum(Dx.*FxS3,2) + sum(Dy.*FyS3,2);
     divF4(:,e) = sum(Dx.*FxS4,2) + sum(Dy.*FyS4,2);
+    
+    % apply correction term for faces
+    
+%     divF1(:,e) = divF1(:,e) + sum(Sfx.*Fx
 end
 
-global useSkew
-if useSkew
-    f1 = 0;
-    f2 = 0;
-    f3 = 0;
-    f4 = 0;
-end
-rhs1 = 2*[VqPq VqLq]*divF1 + VqLq*(fSf1-f1);
-rhs2 = 2*[VqPq VqLq]*divF2 + VqLq*(fSf2-f2);
-rhs3 = 2*[VqPq VqLq]*divF3 + VqLq*(fSf3-f3);
-rhs4 = 2*[VqPq VqLq]*divF4 + VqLq*(fSf4-f4);
+rhs1 = 2*[VqPq VqLq]*divF1 + VqLq*(fSf1);
+rhs2 = 2*[VqPq VqLq]*divF2 + VqLq*(fSf2);
+rhs3 = 2*[VqPq VqLq]*divF3 + VqLq*(fSf3);
+rhs4 = 2*[VqPq VqLq]*divF4 + VqLq*(fSf4);
 
-% apply wadg
+% apply wadg at the end
 rhs1 = -VqPq*(rhs1./J);
 rhs2 = -VqPq*(rhs2./J);
 rhs3 = -VqPq*(rhs3./J);

@@ -7,7 +7,7 @@ N = NB+Ksub-1;
 smoothKnots = 0;
 
 global alpha
-alpha = 0; % 0 = upwinding
+alpha = 1; % 0 = upwinding
 
 ndofs = (N+1)*K1D
 
@@ -51,16 +51,20 @@ end
 
 % keyboard
 
-% plot(Lvec,(ilamhist),'o');hold on;plot(Lvec,zeros(size(Lvec)),'k--')
-% figure(1)
-% plot(Lvec/pi,(rlamhist)/pi,'o-','linewidth',2);hold on;plot(Lvec/pi,Lvec/pi,'k--','linewidth',2)
-loglog(Lvec,abs(ilamhist),'x--');hold on
-% axis on
-% set(gca,'fontsize',14)
-% xlabel('Degrees of freedom per wavelength','fontsize',14)
-% ylabel('Dispersion relation','fontsize',14)
-% legend('Numerical','Exact')
-% return
-% hold on
-% figure(2)
-% loglog(Lvec,abs(rlamhist(:)-Lvec(:)),'o','DisplayName',sprintf('N = %d, Ksub = %d\n',NB,Ksub));hold on
+figure(1)
+plot(Lvec,(ilamhist),'o');hold on;plot(Lvec,zeros(size(Lvec)),'k--')
+axis on
+grid on
+set(gca,'fontsize',14)
+xlabel('Degrees of freedom per wavelength','fontsize',14)
+ylabel('Dissipation relation','fontsize',14)
+legend('Numerical','Exact')
+
+figure(2)
+plot(Lvec/pi,(rlamhist)/pi,'o-','linewidth',2);hold on;plot(Lvec/pi,Lvec/pi,'k--','linewidth',2)
+axis on
+grid on
+set(gca,'fontsize',14)
+xlabel('Degrees of freedom per wavelength','fontsize',14)
+ylabel('Dispersion relation','fontsize',14)
+legend('Numerical','Exact')

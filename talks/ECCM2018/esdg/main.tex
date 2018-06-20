@@ -358,9 +358,32 @@ title style={font=\footnotesize}
 \end{itemize}
 }
 
+\frame{
+\frametitle{Why discretely entropy stable (ES) schemes?}
 
-
-
+\begin{columns}
+\begin{column}{.5\textwidth}
+\begin{figure}
+\vspace{-1em}
+\centering
+\only<1>{\includegraphics[width=.95\textwidth]{figs/ndgFilter.pdf}}
+\only<2>{\includegraphics[width=.95\textwidth]{figs/ndgFilter2.pdf}}
+%\hspace{1em}
+%\visible<2>{\raisebox{2.5em}{\includegraphics[width=.49\textwidth]{figs/balancing.pdf}}}
+%\visible<5>{\includegraphics[width=.475\textwidth]{figs/ductTape.png}}
+\end{figure}
+\end{column}
+\begin{column}{.475\textwidth}
+\begin{itemize}
+\item<1-> Stability tied to smoothness, regularization, TVD, etc.
+\vspace{.75em}
+\item<1-> Can result in a balancing act between accuracy, stability, and robustness.  
+\vspace{.5em}
+\item<2-> Seek a stability which is \note{independent} of artificial viscosity, limiters, and quadrature accuracy.
+\end{itemize}
+\end{column}
+\end{columns}
+}
 
 %\frame{
 %\frametitle{Semi-discrete energy stability of DG methods}
@@ -1013,6 +1036,8 @@ f^{\rho}_S(\bm{u}_L,\bm{u}_R) = \avg{\rho}^{\log} \avg{u}, \qquad \avg{\rho}^{\l
 \end{itemize}
 
 \let\thefootnote\relax\footnotetext{\tiny Tadmor, Eitan (1987). \textit{The numerical viscosity of entropy stable schemes for systems of conservation laws. I.}}
+\let\thefootnote\relax\footnotetext{\tiny Chandrashekar (2013). \textit{Kinetic energy preserving and entropy stable FV schemes for compressible Euler and NS equations.}}
+
 }
 
 
@@ -1023,7 +1048,7 @@ f^{\rho}_S(\bm{u}_L,\bm{u}_R) = \avg{\rho}^{\log} \avg{u}, \qquad \avg{\rho}^{\l
 %\item Flux differencing necessary for general nonlinear conservation laws (compressible Euler), not for split forms (Burgers, shallow water).  
 \item Define ${\bm{F}_S}$ as evaluation of $\bm{f}_S$ at all combinations of quadrature points
 \[
-\LRp{\bm{F}_S}_{ij} = \LRp{u(\bm{x}_i),u(\bm{x}_j)}, \qquad \bm{x} = \LRs{\bm{x}^q,\bm{x}^f}^T.
+\LRp{\bm{F}_S}_{ij} = \bm{f}_S\LRp{u(\bm{x}_i),u(\bm{x}_j)}, \qquad \bm{x} = \LRs{\bm{x}^q,\bm{x}^f}^T.
 \]
 \item Replace $\pd{}{x}$ with $\bm{D}_N$ + projection and lifting matrices.
 \[
@@ -1037,8 +1062,8 @@ f^{\rho}_S(\bm{u}_L,\bm{u}_R) = \avg{\rho}^{\log} \avg{u}, \qquad \avg{\rho}^{\l
 \]
 \end{itemize}
 
-%\let\thefootnote\relax\footnotetext{\tiny Chandrashekar (2013). \textit{Kinetic energy preserving and entropy stable FV schemes for compressible Euler and NS equations.}}
 }
+
 
 %\frame{
 %\frametitle{Entropy stable high order DG: implementation}
@@ -1161,7 +1186,27 @@ Assuming continuity in time, $\bm{u}_h(\bm{x})$ satisfies the quadrature form of
 %\let\thefootnote\relax\footnotetext{\tiny Chan (2018). \textit{On discretely entropy conservative and entropy stable discontinuous Galerkin methods.}}
 \let\thefootnote\relax\footnotetext{\tiny Parsani et al.\  (2016). \emph{ES staggered grid disc.\ spectral collocation methods of any order for the comp.\ NS eqns.}}
 \let\thefootnote\relax\footnotetext{\tiny Shi and Shu (2017). \emph{On local conservation of numerical methods for conservation laws}.}
+}
 
+\frame{
+\frametitle{Sketch of proof of entropy conservation (one element)}
+
+\begin{itemize}
+\item Multiply by mass matrix on both sides, rewrite as
+\[
+\bm{M}\td{\hat{\bm{u}}}{t} +
+ \begin{bmatrix}\bm{V}_q\\ \bm{V}_f\end{bmatrix}^T \LRp{\bm{Q}_N\circ \bm{f}_S\LRp{ \begin{bmatrix}\bm{V}_q\\ \bm{V}_f\end{bmatrix}\bm{P}_q\bm{v}_q}}\bm{1}  = 0.
+% \begin{bmatrix}\bm{V}_q\\ \bm{V}_f\end{bmatrix}^T \LRp{\bm{Q}_N\circ \bm{F}_S}\bm{1} - \bm{V}_f^T\bm{W}_f \bm{f}_S(\tilde{\bm{u}}_f^+,\tilde{\bm{u}}) = 0.
+\]
+\item Test with $L^2$ projection of entropy variables $\bm{P}_q\bm{v}_q = \bm{M}^{-1}\bm{V}_q^T\bm{W}$.  
+\begin{align*}
+&\LRp{\bm{P}_q\bm{v}_q}^T\bm{M}\td{\hat{\bm{u}}}{t} = \bm{v}_q\bm{W}\bm{V}_q\bm{M}^{-1}\bm{M}\bm{V}_q\td{\hat{\bm{u}}}{t} \\
+&=  \bm{v}_q\bm{W}\td{(\bm{V}_q\hat{\bm{u}})}{t} = \bm{1}^T\bm{W}\td{S(\bm{u}_q)}{\bm{u}_q}\td{\bm{u}_q}{t} = \td{{S}(\bm{u}_q)}{t}.
+%\text{Spatial term: } \LRp{
+% \begin{bmatrix}\bm{V}_q\\ \bm{V}_f\end{bmatrix}\bm{P}_q\bm{v}_q}^T \LRp{\bm{Q}_N\circ \bm{f}_S\LRp{ \begin{bmatrix}\bm{V}_q\\ \bm{V}_f\end{bmatrix}\bm{P}_q\bm{v}_q}}\bm{1} = 0.
+\end{align*}
+\item Spatial term vanishes using SBP, skew-symmetry, and properties of $\bm{f}_S$.  
+\end{itemize}
 }
 
 %
@@ -1176,7 +1221,7 @@ Assuming continuity in time, $\bm{u}_h(\bm{x})$ satisfies the quadrature form of
 %}
 
 \frame{
-\frametitle{Unifying (some) finite difference SBP formulations}
+\frametitle{Recovering (some) finite difference SBP formulations}
 \vspace{-1em}
 \begin{figure}
 \centering
@@ -1194,11 +1239,11 @@ Assuming continuity in time, $\bm{u}_h(\bm{x})$ satisfies the quadrature form of
 %\endgroup
 \end{figure}
 \begin{itemize}
-\item Specific basis and quadrature: recovers several existing entropy stable schemes (DG-SEM, Gauss collocation, staggered grid, etc).  
+\item Specific choices of basis and quadrature recover existing entropy stable schemes (DG-SEM, Gauss collocation, staggered grid, etc).  
 \vspace{.25em}
 \item Setting $\bm{P}_q = \bm{I}$ recovers non-basis SBP finite differences on simplices.  
 \vspace{.25em}
-\item Generates \note{new inter-element coupling terms} (SBP-SATs).  
+\item Generates \note{new compact inter-element coupling terms} (SBP-SATs).  
 \end{itemize}
 
 \let\thefootnote\relax\footnotetext{\tiny Parsani et al.\  (2016). \emph{ES staggered grid disc.\ spectral collocation methods of any order for the comp.\ NS eqns.}}
@@ -1632,10 +1677,11 @@ coordinates{(0.5,0.000547621)(0.25,8.7194e-06)(0.125,1.47105e-07)(0.0625,2.34345
 \end{figure}
 
 \begin{itemize}
-\item Vortex passing through a shock on a periodic domain.
+\item Vortex passing through a shock on a periodic domain (matrix dissipation, degree $N=3$ approximation, mesh size $h = 1/128$).
 \item Entropy stable wall boundary conditions for GSBP still needed.
 \end{itemize}
 
+\let\thefootnote\relax\footnotetext{\tiny Winters, Derigs, Gassner, Walch (2017). \textit{A uniquely defined entropy stable matrix dissipation operator for high Mach number ideal MHD and compressible Euler simulations}.}
 }
 
 \frame{
@@ -1797,30 +1843,12 @@ Schemes on Curvilinear and Deforming Meshes.}
 %}
 
 
-%\frame{
-%\frametitle{Inviscid Taylor-Green vortex} 
-%%\vspace{-1em}
-%\begin{figure}
-%\centering
-%\includegraphics[width=.65\textwidth]{figs/taylorgreen.png}
-%\caption{Isocontours of $z$-vorticity for Taylor-Green at $t = 0, 10$ seconds.}
-%\end{figure}
-%%\vspace{-.5em}
-%\begin{itemize}
-%\item Simple turbulence-like behavior (generation of small scales).
-%%\vspace{.25em}
-%\item Inviscid Taylor-Green: tests robustness w.r.t.\ under-resolved solutions.
-%\end{itemize}
-%\let\thefootnote\relax\footnotetext{\tiny \url{https://how4.cenaero.be/content/bs1-dns-taylor-green-vortex-re1600}.}
-%}
-
 \frame{
 \frametitle{3D inviscid Taylor-Green vortex: KE dissipation rate} 
-
 \vspace{-1em}
 \begin{figure}
 \centering
-\subfloat[KE dissipation rate ($N=3$, $h = \frac{\pi}{8}$)]{
+\subfloat[KE dissipation rate ($N=3$, $h = {\pi}/ {8}$)]{
 \begin{tikzpicture}
 \begin{axis}[
         scaled ticks=false, 
@@ -1901,7 +1929,7 @@ coordinates{(0.25,5.32822e-05)(0.125,1.5792e-05)(0.0625,9.458e-07)(0.03125,3.050
 \begin{itemize}
 \item Discretely stable time-domain high order discontinuous Galerkin methods: provable semi-discrete stability
 \vspace{.25em}
-\item Additional work required for strong shocks, positivity preservation.  
+\item Challenges: strong shocks, positivity, computational cost.  
 \vspace{.25em}
 \item Current work: Gauss collocation (with DCDR Fernandez, M.\ Carpenter), adaptivity + hybrid meshes, multi-GPU (with L.\ Wilcox).  
 \vspace{.25em}
@@ -1928,6 +1956,14 @@ Thank you!  Questions?
 \frametitle{Additional slides }
 \end{frame}
 
+\frame[noframenumbering]{
+\frametitle{Accuracy of $\bm{D}_N^i$}
+
+\begin{figure}
+\centering
+\includegraphics[width=.9\textwidth]{figs/decoupledSBPfig.png}
+\end{figure}
+}
 
 \frame[noframenumbering]{
 \frametitle{Over-integration is ineffective without $L^2$ projection}

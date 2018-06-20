@@ -4,7 +4,7 @@ clear
 % useQuads = 1;mypath
 
 Globals2D;
-N = 1;
+N = 4;
 K1D = 16;
 useSkew = 1;
 CFL = .25;

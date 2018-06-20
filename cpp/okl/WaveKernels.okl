@@ -12,6 +12,35 @@
 
 //  =============== RK first order DG kernels ===============
 
+kernel void matvec_example(const    int K,
+			   const dfloat * restrict vgeo,
+			   const dfloat * restrict Dr,
+			   const dfloat * restrict Ds,
+			   const dfloat * restrict Dt,
+			   const dfloat * restrict Q,
+			   dfloat * restrict rhsQ){
+
+  // loop over elements
+  for(int e=0; e<K; ++e; outer0){
+
+    shared dfloat s_Q[p_Np];
+    
+    for(int i = 0; i < p_Np; ++i; inner0){
+      s_Q[i] = Q[i + p_Np*e];
+    }
+    barrier(localMemFence);
+
+    for(int i = 0; i < p_Np; ++i; inner0){
+
+      dfloat val = 0.f;
+      for (int j = 0; j < p_Np; ++j){		
+	val += Dr[i+j*p_Np]*s_Q[i];
+      }
+      rhsQ[i + p_Np*e] = val;	
+    }    
+  }
+
+
 kernel void rk_volume(const    int K,
 		      const dfloat * restrict vgeo,
 		      const dfloat * restrict Dr,
@@ -30,7 +59,9 @@ kernel void rk_volume(const    int K,
 
     // lapp has to survive multiple inner loops
     for(int k2 = 0; k2 < p_KblkV; ++k2; inner1){
-      for(int n=0;n<p_Np;++n;inner0){
+
+
+      for(int n = 0;n < p_Np; ++n; inner0){
 	int k = k1*p_KblkV + k2;
 	if (k < K){
 

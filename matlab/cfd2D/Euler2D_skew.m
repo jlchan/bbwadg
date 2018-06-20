@@ -4,7 +4,7 @@ Globals2D
 a = 1/8; % warping factor
 % FinalTime = 10;
 
-N = 2;
+N = 4;
 K1D = 8;
 FinalTime = 1.1;
 
@@ -14,7 +14,7 @@ global tau
 tau = 0;
 global useSkew;
 useSkew = 1;
-useGLL = 0;
+useGLL = 1;
 
 
 % Lx = 7.5; Ly = 5; ratiox = 3/4; ratioy = .5;
@@ -179,7 +179,7 @@ end
 
 x0 = Lx; y0 = 0;
 % x0 = 0; y0 = 0; Lx = 1; Ly = 1;
-% x = x + Lx*a*cos(1/2*pi*(x-x0)/Lx).*cos(3/2*pi*(y-y0)/Ly);
+x = x + Lx*a*cos(1/2*pi*(x-x0)/Lx).*cos(3/2*pi*(y-y0)/Ly);
 y = y + Ly*a*sin(pi*(x-x0)/Lx).*cos(1/2*pi*(y-y0)/Ly);
 % y(abs(y)<1e-8 & abs(x-10)<1e-8) = y(abs(y)<1e-8 & abs(x-10)<1e-8) + 4*a;
 % keyboard

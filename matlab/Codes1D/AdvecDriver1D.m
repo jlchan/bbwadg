@@ -2,7 +2,7 @@
 Globals1D;
 
 % Order of polymomials used for approximation 
-N = 1;
+N = 4;
 
 % Generate simple mesh
 [Nv, VX, K, EToV] = MeshGen1D(0.0,2.0,10);

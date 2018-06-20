@@ -7,6 +7,7 @@ N = 2;
 K1D = 100;
 FinalTime = 1.8;
 % FinalTime = .2;
+% FinalTime = .01;
 opt = 3;
 
 global tau
@@ -16,7 +17,7 @@ r = JacobiGL(0,0,N);
 % r = JacobiGQ(0,0,N);
 
 [rq wq] = JacobiGL(0,0,N); rq = .9999999999*rq;
-% [rq wq] = JacobiGQ(0,0,N+1);
+[rq wq] = JacobiGQ(0,0,N+1);
 
 % % include boundary nodes for extraction
 rq = [-(1-1e-11);rq;(1-1e-11)];
@@ -254,38 +255,37 @@ for i = 1:Nsteps
         A23 = dUdV23(q1q, q2q, q3q);
         A33 = dUdV33(q1q, q2q, q3q);               
                         
-        if 0 % compute q using WADG projection: q= P(inv(W)*P(Wq))
-            iA11 = dVdU11(rhoq,mq,Eq);
-            iA12 = dVdU12(rhoq,mq,Eq);
-            iA13 = dVdU13(rhoq,mq,Eq);
-            iA22 = dVdU22(rhoq,mq,Eq);
-            iA23 = dVdU23(rhoq,mq,Eq);
-            iA33 = dVdU33(rhoq,mq,Eq);
-            
+        iA11 = dVdU11(rhoq,mq,Eq);
+        iA12 = dVdU12(rhoq,mq,Eq);
+        iA13 = dVdU13(rhoq,mq,Eq);
+        iA22 = dVdU22(rhoq,mq,Eq);
+        iA23 = dVdU23(rhoq,mq,Eq);
+        iA33 = dVdU33(rhoq,mq,Eq);
+        
+        if 1 % compute q using WADG projection: q= P(inv(W)*P(Wq))                        
             q1t = VqPq*(A11.*q1q + A12.*q2q + A13.*q3q);
             q2t = VqPq*(A12.*q1q + A22.*q2q + A23.*q3q);
             q3t = VqPq*(A13.*q1q + A23.*q2q + A33.*q3q);
             q1q = VqPq*(iA11.*q1t + iA12.*q2t + iA13.*q3t);
             q2q = VqPq*(iA12.*q1t + iA22.*q2t + iA23.*q3t);
-            q3q = VqPq*(iA13.*q1t + iA23.*q2t + iA33.*q3t);
-                        
+            q3q = VqPq*(iA13.*q1t + iA23.*q2t + iA33.*q3t);                        
         end
         
-        % limiting - preserv positivity of q1, -q3
-        tol = 1e-8;
-        eids = find(any(q1q < tol,1));
-        q1avg = repmat(.5*wq'*(q1q),Nq,1);        
-        for e = eids
-            t = min((q1avg(1,e) - tol) / (q1avg(1,e)-min(q1q(:,e))),1);
-            q1q(:,e) = q1avg(:,e) + t*(q1q(:,e)-q1avg(:,e));            
-        end
-                
-        eids = find(any(q3q > -tol,1));
-        q3avg = repmat(.5*wq'*(q3q),Nq,1);
-        for e = eids
-            t = min((q3avg(1,e) - tol) / (q1avg(3,e)-max(q3q(:,e))),1);
-            q3q(:,e) = q3avg(:,e) + t*(q3q(:,e)-q3avg(:,e));
-        end        
+%         % limiting - preserv positivity of q1, -q3
+%         tol = 1e-8;
+%         eids = find(any(q1q < tol,1));
+%         q1avg = repmat(.5*wq'*(q1q),Nq,1);        
+%         for e = eids
+%             t = min((q1avg(1,e) - tol) / (q1avg(1,e)-min(q1q(:,e))),1);
+%             q1q(:,e) = q1avg(:,e) + t*(q1q(:,e)-q1avg(:,e));            
+%         end
+%                 
+%         eids = find(any(q3q > -tol,1));
+%         q3avg = repmat(.5*wq'*(q3q),Nq,1);
+%         for e = eids
+%             t = min((q3avg(1,e) - tol) / (q1avg(3,e)-max(q3q(:,e))),1);
+%             q3q(:,e) = q3avg(:,e) + t*(q3q(:,e)-q3avg(:,e));
+%         end        
         
         rhoq = U1(q1q,q2q,q3q);
         mq   = U2(q1q,q2q,q3q);
@@ -308,19 +308,12 @@ for i = 1:Nsteps
             r2 = Vq*rhs2;
             r3 = Vq*rhs3;
             
-            iA11 = dVdU11(rhoq,mq,Eq);
-            iA12 = dVdU12(rhoq,mq,Eq);
-            iA13 = dVdU13(rhoq,mq,Eq);
-            iA22 = dVdU22(rhoq,mq,Eq);
-            iA23 = dVdU23(rhoq,mq,Eq);
-            iA33 = dVdU33(rhoq,mq,Eq);
-            
             % compute PW*rhs
             rhs1t = VqPq*(iA11.*r1 + iA12.*r2 + iA13.*r3);
             rhs2t = VqPq*(iA12.*r1 + iA22.*r2 + iA23.*r3);
             rhs3t = VqPq*(iA13.*r1 + iA23.*r2 + iA33.*r3);
 
-            if 1 % conservative correction
+            if 0 % conservative correction
                 
                 % subtract off weighted mean from RHS: int(u - W*PW(u))
                 %                 Adr1 = wq'*(r1 - (A11.*rhs1t + A12.*rhs2t + A13.*rhs3t));
@@ -341,16 +334,19 @@ for i = 1:Nsteps
                 % apply local correction + limiting
                 for e = 1:K
                     A0 = [a11(e) a12(e) a13(e); a12(e) a22(e) a23(e); a13(e) a23(e) a33(e)];
-                    %             kappaA0(e) = cond(A0);
                     pravg = A0\[Adr1(e);Adr2(e);Adr3(e)];
                     ravg = A0\[ravg1(e);ravg2(e);ravg3(e)];
                     
-                    aa = .85;
+                    aa = .8;
                     rhs1(:,e) = Pq*(aa*(rhs1t(:,e) - pravg(1)) + ravg(1));
                     rhs2(:,e) = Pq*((rhs2t(:,e) - pravg(2)) + ravg(2));
                     rhs3(:,e) = Pq*(aa*(rhs3t(:,e) - pravg(3)) + ravg(3));
                 end                                                
-            end                        
+            else
+                rhs1 = Pq*rhs1t;
+                rhs2 = Pq*rhs2t;
+                rhs3 = Pq*rhs3t;
+            end
            
             
         elseif option==2

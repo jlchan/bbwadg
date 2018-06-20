@@ -16,9 +16,15 @@ fnodes = sort(fnodes,2)-1;
 EToE= (1:K)'*ones(1,Nfaces);
 EToF= ones(K,1)*(1:Nfaces);
 
+% EToV-1
+% EToE
+% EToF
+
 % uniquely number each set of three faces by their node numbers
 id = fnodes(:,1)*Nnodes + fnodes(:,2)+1;
 spNodeToNode=[id, (1:Nfaces*K)', EToE(:), EToF(:)];
+
+% spNodeToNode-1%: id, global face id, face to element, local face id
 
 % Now we sort by global face number.
 sorted=sortrows(spNodeToNode,1);
@@ -29,6 +35,10 @@ sorted=sortrows(spNodeToNode,1);
 % make links reflexive
 matchL = [sorted(indices,:)   ;sorted(indices+1,:)];
 matchR = [sorted(indices+1,:) ;sorted(indices,:)];
+
+% sorted
+% matchL
+% matchR
 
 % insert matches
 EToE(matchL(:,2)) = matchR(:,3);

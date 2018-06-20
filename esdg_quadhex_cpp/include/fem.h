@@ -19,10 +19,15 @@ void InitRefData2d(Mesh *mesh, int N, int Nfields);
 void QuadMesh2d(Mesh *mesh, int Nx, int Ny);
 void ConnectElems(Mesh *mesh, int dim); // computes EToE, EToF
 void GeometricFactors2d(Mesh *mesh);
+void Normals2d(Mesh *mesh);
 void BuildFaceNodeMaps(Mesh *mesh, MatrixXd xf, MatrixXd yf, MatrixXd zf, MatrixXi &mapP);
 
 void ReadGmsh2d(Mesh *mesh); // Gmsh
 
+// occa setup 
+void setupOccaMesh2d(Mesh *mesh, App *app);
+void setOccaArray(App *app, MatrixXd A, occa::memory &c_A);
+void setOccaIntArray(App *app, MatrixXi A, occa::memory &c_A);
 
 
 
