@@ -2,7 +2,7 @@
 #include "Basis.h"
 
 // make quads 
-void InitRefData2d(Mesh *mesh, int N, int Nfields){
+void InitRefData2d(Mesh *mesh, int N){
 
   int Np1 = (N+1);
 
@@ -63,14 +63,16 @@ void InitRefData2d(Mesh *mesh, int N, int Nfields){
   MatrixXd Vf1Dtmp = Vandermonde1D(N,rf1D);
   MatrixXd Vf1D = mrdivide(Vf1Dtmp,Vq1D);
 
+  //  cout << "Dq1D = " << endl << Dq1D << endl;
+  //  cout << "Vf1D = " << endl << Vf1D << endl;  
+
   mesh->N = N;
-  mesh->Nfields = Nfields;
   mesh->Np = Np1*Np1;
   mesh->Nfp = Np1;
   mesh->Nfaces = Nfaces;
   mesh->Nverts = 4;
 
-  // GLL nodes
+  // GLL nodes (for geofacs)
   mesh->r = r;
   mesh->s = s;  
   mesh->Dr = Dr;
@@ -78,6 +80,9 @@ void InitRefData2d(Mesh *mesh, int N, int Nfields){
   mesh->V = V;
 
   // interp to vol/face nodes
+  mesh->rq = rq;
+  mesh->sq = sq;
+  mesh->wq = wq;  
   mesh->Vq = Vq;
   mesh->Vf = Vf;  
 
@@ -450,9 +455,82 @@ void BuildFaceNodeMaps(Mesh *mesh, MatrixXd xf, MatrixXd yf, MatrixXd zf, Matrix
         }
       }
 
-    }// faces                                                                                                                                                                                                                               
-  }// k                                                                                                                                                                                                                                    
+    }// faces
+  }// k                                                                                                        
 
   return;
+}
 
+
+void MakeNodeMapsPeriodic2D(Mesh *mesh, MatrixXd xf, MatrixXd yf, double DX, double DY, MatrixXi &mapP){
+  
+  int Nfp = mesh->Nfp;
+  int Nfaces = mesh->Nfaces;
+  int K = mesh->K;
+
+  xf.resize(Nfp,Nfaces*K);
+  yf.resize(Nfp,Nfaces*K);  
+  vector<pair<int,int> > xfaces,yfaces;  
+  for (int f1 = 0; f1 < Nfaces*K; ++f1){
+    for (int f2 = 0; f2 < Nfaces*K; ++f2){
+
+      // distance b/w faces = diff b/w min/max coeffs 
+      double dx = .5*(fabs(xf.col(f1).maxCoeff()-xf.col(f2).maxCoeff())
+		      + fabs(xf.col(f1).minCoeff()-xf.col(f2).minCoeff()));
+      double dy = .5*(fabs(yf.col(f1).maxCoeff()-yf.col(f2).maxCoeff())
+		      + fabs(yf.col(f1).minCoeff()-yf.col(f2).minCoeff()));
+      
+      if ((dx < NODETOL) & (fabs(dy-DY)<NODETOL)){
+	xfaces.push_back(make_pair(f1,f2)); 
+      }else if ((dy < NODETOL) & (fabs(dx-DX)<NODETOL)){
+	yfaces.push_back(make_pair(f1,f2)); 
+      }
+    }
+  }
+  //  printf("num xfaces = %d, num yfaces = %d\n",xfaces.size(),yfaces.size());
+  //  cout << "xf = " << xf << endl;
+  //  cout << "yf = " << yf << endl;  
+
+  // find node maps in x
+  for (int f = 0; f < xfaces.size(); ++f){
+    int f1 = xfaces[f].first;
+    int f2 = xfaces[f].second;
+    for (int i = 0; i < Nfp; ++i){
+      int idM = i + f1*Nfp;
+      double xM = xf(idM);
+
+      for (int j = 0; j < Nfp; ++j){
+	int idP = j + f2*Nfp;
+	double xP = xf(idP);
+	
+	if (fabs(xM-xP) < NODETOL){
+	  mapP(idM) = idP;
+	  break;
+	}
+      }      
+    }
+  }
+
+  // find node maps in y
+  for (int f = 0; f < yfaces.size(); ++f){
+    int f1 = yfaces[f].first;
+    int f2 = yfaces[f].second;
+    for (int i = 0; i < Nfp; ++i){
+      int idM = i + f1*Nfp;
+      double yM = yf(idM);
+
+      for (int j = 0; j < Nfp; ++j){
+	int idP = j + f2*Nfp;
+	double yP = yf(idP);
+	
+	if (fabs(yM-yP) < NODETOL){
+	  mapP(idM) = idP;
+	  break;
+	}
+      }      
+    }
+  }
+
+  printf("Done making node maps periodic\n");
+  
 }

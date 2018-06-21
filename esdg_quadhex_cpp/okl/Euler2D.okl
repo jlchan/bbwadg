@@ -98,40 +98,99 @@ void euler2d_flux(dfloat rho_i, dfloat rho_j, dfloat u_i, dfloat u_j,
 }
 
 @kernel void volume(const int K,
-		    const int Np3,
-		    const dfloat *@restrict vgeo,
-		    const dfloat *@restrict vfgeo,
-		    const dfloat *@restrict D1D,
-		    const dfloat *@restrict Vf1D,
-		    const dfloat *@restrict wq1D,
-		    const dfloat *@restrict Q,
-		    dfloat *@restrict Qf,
-		    dfloat *@restrict rhsQ,
-		    dfloat *@restrict rhsQf){
+		    const dfloat *  vgeo,
+		    const dfloat *  vfgeo,
+		    const dfloat *  D1D,
+		    const dfloat *  Vf1D,
+		    const dfloat *  wq1D,
+		    const dfloat *  Q,
+		    dfloat *  Qf,
+		    dfloat *  rhs,
+		    dfloat *  rhsf){
 
-  for (int e = 0; e < K; ++e; @outer(0)){        
-    for (int i = 0; i < Np3; ++i; @inner(0)){
-      if (i==0){
-	printf("on thread 0 on elem %d\n",e);
+  for (int e = 0; e < K; ++e; @outer(0)){
+
+    @shared dfloat s_D[p_Np1][p_Np1];
+    @shared dfloat s_Q[p_Nfields][p_Np1][p_Np1];
+    @shared dfloat s_Qf[p_Nfields][p_Nfaces][p_Np1];    
+    @exclusive int ii,jj;
+    
+    for (int i = 0; i < p_Np; ++i; @inner(0)){
+
+      //jj = i % p_Np1;
+      //ii = i / p_Np1;
+      const int jj = i % p_Np1;
+      const int ii = i / p_Np1;
+      
+      if (e==0){
+	printf("i = %d, ii,jj = %d, %d \n",i,ii,jj);
+      }
+      
+      // load op
+      s_D[jj][ii] = D1D[i]; // i < (N+1)^2 = size of D1D
+
+      // load vol values
+      int id = i + p_Np * p_Nfields * e;
+      for (int fld = 0; fld < p_Nfields; ++fld){
+	s_Q[fld][ii][jj] = Q[id];
+	id += p_Np;
+      }      
+
+      // load surf values
+      if (i < p_NfpNfaces){
+	const int f = i / p_Nfp;
+	const int fid = i % p_Nfp;	
+	int idf = i + p_NfpNfaces * p_Nfields * e;
+	for (int fld = 0; fld < p_Nfields; ++fld){
+	  s_Qf[fld][f][fid] = Qf[idf];
+	  idf += p_NfpNfaces;
+	}
+      }      
+
+    }
+    @barrier("localMemFence");
+
+    // differentiate
+    for (int i = 0; i < p_Np; ++i; @inner(0)){
+
+      //jj = i % p_Np1;
+      //ii = i / p_Np1;
+      const int jj = i % p_Np1;
+      const int ii = i / p_Np1;
+
+      dfloat ur = 0.f;
+      dfloat us = 0.f;      
+      for (int j = 0; j < p_Np1; ++j){
+	const dfloat Dr = s_D[ii][j]; // ii,jj = which line of nodes
+	const dfloat Ds = s_D[jj][j]; 
+
+	ur += Dr*s_Q[0][j][jj];
+	us += Ds*s_Q[0][ii][j];	
+
+	if (e==0){
+	  //	  printf("thread %d: Dr = %f, u(%d) = %f\n",i,Dr,j,uj);
+	}
+      }
+      if (e==0){
+	printf("ur(%d) = %f, us = %f\n",i,ur,us);
       }
     }
   }
 }
 
 @kernel void surface(const int K,
-		     const int NfpNfaces,
-		     const dfloat *@restrict fgeo,
-		     const int    *@restrict mapPq,		     
-		     const dfloat *@restrict Vf1D,
-		     const dfloat *@restrict wq1D,
-		     const dfloat *@restrict Qf,
-		     dfloat *@restrict rhsQ,
-		     const dfloat *@restrict rhsQf){
+		     const dfloat * fgeo,
+		     const int    * mapPq,		     
+		     const dfloat * Vf1D,
+		     const dfloat * wq1D,
+		     const dfloat * Qf,
+		     dfloat * rhs,
+		     const dfloat * rhsf){
 
   for (int e = 0; e < K; ++e; @outer(0)){        
-    for (int i = 0; i < NfpNfaces; ++i; @inner(0)){
-      if (i==0){
-	printf("on thread 0 on elem %d\n",e);
+    for (int i = 0; i < p_NfpNfaces; ++i; @inner(0)){
+      if (e==0 && i==0){
+	printf("surface: on thread 0 on elem %d\n",e);
       }
     }
   }
@@ -139,21 +198,20 @@ void euler2d_flux(dfloat rho_i, dfloat rho_j, dfloat u_i, dfloat u_j,
 
 
 @kernel void update(const int K,
-		    const int Np3,
 		    const dfloat fa,
 		    const dfloat fb,
 		    const dfloat fdt,		    
-		    const dfloat *@restrict vgeo,
-		    const dfloat *@restrict Vf1D,
-		    dfloat *@restrict Q,
-		    dfloat *@restrict Qf,
-		    dfloat *@restrict rhsQ,
-		    dfloat *@restrict resQ){
+		    const dfloat * vgeo,
+		    const dfloat * Vf1D,
+		    dfloat * Q,
+		    dfloat * Qf,
+		    dfloat * rhs,
+		    dfloat * res){
 
   for (int e = 0; e < K; ++e; @outer(0)){        
-    for (int i = 0; i < Np3; ++i; @inner(0)){
-      if (i==0){
-	printf("on thread 0 on elem %d\n",e);
+    for (int i = 0; i < p_Np; ++i; @inner(0)){
+      if (e==0 && i==0){
+	printf("update: on thread 0 on elem %d\n",e);
       }
     }
   }

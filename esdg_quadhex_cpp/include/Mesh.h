@@ -18,7 +18,7 @@ and reference elements.
 #define p_N 6
 #endif
 
-#define NODETOL   1e-6
+#define NODETOL   1e-7
 /*
 #define p_Nfp     ((p_N+1)*(p_N+2)/2)
 #define p_Np      ((p_N+1)*(p_N+2)*(p_N+3)/6)
@@ -55,10 +55,9 @@ typedef struct foo {
   
   /* high order node info */
   MatrixXi Fmask;
-  int   **FmaskC; /* face node numbers in element volume data */
 
   // 1D operators (for tensor product)
-  VectorXd D1D, Vf1D, Lf1D;
+  MatrixXd D1D, Vf1D, Lf1D;
   VectorXd wq1D;
   
   // nodal points (GLL for quads/hexes)
@@ -96,12 +95,12 @@ typedef struct bar {
   occa::properties props; 
   occa::kernel volume, surface, update; 
 
-  occa::memory o_D, o_Vf, o_Lf; // operators
+  occa::memory o_D1D, o_Vf1D, o_Lf; // operators
   occa::memory o_wq1D; // 1D weights (for lifting ops)
 
   occa::memory o_Q, o_Qf; // solution and flux vals
   occa::memory o_vgeo, o_fgeo; // geometric terms
-  occa::memory o_rhs, o_res; // rhs and RK residual
+  occa::memory o_rhs, o_rhsf, o_res; // rhs and RK residual
   occa::memory o_mapPq; // node map
 
   

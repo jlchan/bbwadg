@@ -15,12 +15,14 @@
 /* geometric/mesh functions */
 Mesh *ReadGmsh3d(char *filename);
 
-void InitRefData2d(Mesh *mesh, int N, int Nfields);
+void InitRefData2d(Mesh *mesh, int N);
 void QuadMesh2d(Mesh *mesh, int Nx, int Ny);
 void ConnectElems(Mesh *mesh, int dim); // computes EToE, EToF
 void GeometricFactors2d(Mesh *mesh);
 void Normals2d(Mesh *mesh);
 void BuildFaceNodeMaps(Mesh *mesh, MatrixXd xf, MatrixXd yf, MatrixXd zf, MatrixXi &mapP);
+
+void MakeNodeMapsPeriodic2D(Mesh *mesh, MatrixXd xf, MatrixXd yf, double DX, double DY, MatrixXi &mapP);
 
 void ReadGmsh2d(Mesh *mesh); // Gmsh
 
@@ -28,6 +30,7 @@ void ReadGmsh2d(Mesh *mesh); // Gmsh
 void setupOccaMesh2d(Mesh *mesh, App *app);
 void setOccaArray(App *app, MatrixXd A, occa::memory &c_A);
 void setOccaIntArray(App *app, MatrixXi A, occa::memory &c_A);
+void getOccaArray(App *app, occa::memory c_A, MatrixXd &A);
 
 
 

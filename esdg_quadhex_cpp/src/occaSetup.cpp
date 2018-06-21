@@ -11,8 +11,12 @@ void setupOccaMesh2d(Mesh *mesh, App *app){
 
   app->props = occa::getKernelProperties();
 
-  app->props["defines/p_Np"] = mesh->Np;
+  app->props["defines/p_Np"] = mesh->Np; // number of dims
+  app->props["defines/p_Np1"] = mesh->N + 1;  // (N+1)
+  
   app->props["defines/p_Nfaces"] = mesh->Nfaces;
+  app->props["defines/p_Nfp"] = mesh->Nfp;
+  app->props["defines/p_NfpNfaces"] = mesh->Nfp * mesh->Nfaces;  
 
   int Nvgeo = 5; 
   int Nfgeo = 3; 
@@ -52,24 +56,21 @@ void setupOccaMesh2d(Mesh *mesh, App *app){
     mesh->nyJ,
     mesh->sJ;
 
-  MatrixXd Q(Np,K), Qf(NfpNfaces,K);
-  MatrixXd rhs(Np,K), res(Np,K);
-  Q.fill(0.0);
-  Qf.fill(0.0);  
+  MatrixXd rhs(Np,K), rhsf(NfpNfaces,K), res(Np,K);
   rhs.fill(0.0);
+  rhsf.fill(0.0);  
   res.fill(0.0);  
 
-  setOccaArray(app, Q, app->o_Q);
-  setOccaArray(app, Qf, app->o_Qf);  
   setOccaArray(app, rhs, app->o_rhs);
+  setOccaArray(app, rhsf,  app->o_rhsf);
   setOccaArray(app, res, app->o_res);  
   
   setOccaArray(app, vgeo, app->o_vgeo);
   setOccaArray(app, fgeo, app->o_fgeo);
   setOccaIntArray(app, mesh->mapPq, app->o_mapPq);
 
-  setOccaArray(app, mesh->D1D, app->o_D);
-  setOccaArray(app, mesh->Vf1D, app->o_Vf);  
+  setOccaArray(app, mesh->D1D, app->o_D1D);
+  setOccaArray(app, mesh->Vf1D, app->o_Vf1D);  
   setOccaArray(app, mesh->wq1D, app->o_wq1D);
 }
   
@@ -83,7 +84,7 @@ void setOccaArray(App *app, MatrixXd A, occa::memory &c_A){
   free(f_A);
 }
 
-// set occa array:: cast to dfloat
+// set occa array for int matrices
 void setOccaIntArray(App *app, MatrixXi A, occa::memory &c_A){
   int r = A.rows();
   int c = A.cols();
@@ -93,5 +94,17 @@ void setOccaIntArray(App *app, MatrixXi A, occa::memory &c_A){
   free(f_A);
 }
 
+// get occa array:: cast to double
+void getOccaArray(App *app, occa::memory c_A, MatrixXd &A){
+  int r = A.rows();
+  int c = A.cols();
+  dfloat *f_A = (dfloat*)malloc(r*c*sizeof(dfloat));
+  c_A.copyTo(f_A);
+  for (int i = 0; i < r*c; ++i){
+    A(i) = f_A[i]; // somewhat inefficient
+  }
+
+  free(f_A);
+}
 		 
 
