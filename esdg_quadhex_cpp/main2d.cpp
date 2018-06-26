@@ -42,7 +42,7 @@ int main(int argc, char **argv){
   // ============ physics independent stuff ===========
 
   InitRefData2d(mesh, N);
-  MapNodes(mesh); // low order mapping
+  MapNodes2d(mesh); // low order mapping
 
   // curvilinear meshing
   MatrixXd x = mesh->x;

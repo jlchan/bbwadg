@@ -16,8 +16,11 @@ MatrixXd Vandermonde1D(int N, VectorXd r); // for face
 MatrixXd GradVandermonde1D(int N, VectorXd r); // for face
 MatrixXd Bern1D(int N, VectorXd r);
 
-// 2D
+// 2D, 3D quad
 MatrixXd Vandermonde2DQuad(int N, VectorXd r, VectorXd s);
+MatrixXd Vandermonde3DQuad(int N, VectorXd r, VectorXd s, VectorXd t);
+
+// 2D
 void rstoab(VectorXd r, VectorXd s, VectorXd &a,VectorXd &b);
 VectorXd Simplex2DP(VectorXd a,VectorXd b,int i, int j);
 MatrixXd Vandermonde2D(int N, VectorXd r, VectorXd s); // for face

@@ -15,17 +15,23 @@
 /* geometric/mesh functions */
 Mesh *ReadGmsh3d(char *filename);
 
+// 2d routines
 void InitRefData2d(Mesh *mesh, int N);
 void QuadMesh2d(Mesh *mesh, int Nx, int Ny);
-void ConnectElems(Mesh *mesh, int dim); // computes EToE, EToF
-void MapNodes(Mesh *mesh);
+void MapNodes2d(Mesh *mesh);
 void GeometricFactors2d(Mesh *mesh);
 void Normals2d(Mesh *mesh);
-void BuildFaceNodeMaps(Mesh *mesh, MatrixXd xf, MatrixXd yf, MatrixXd zf, MatrixXi &mapP);
-
 void MakeNodeMapsPeriodic2D(Mesh *mesh, MatrixXd xf, MatrixXd yf, double DX, double DY, MatrixXi &mapP);
-
 void ReadGmsh2d(Mesh *mesh); // Gmsh
+
+// 3d routines
+void HexMesh3d(Mesh *mesh, int Nx, int Ny, int Nz);
+void InitRefData3d(Mesh *mesh, int N);
+
+// dimension independent routines
+void BuildFaceNodeMaps(Mesh *mesh, MatrixXd xf, MatrixXd yf, MatrixXd zf, MatrixXi &mapP);
+void ConnectElems(Mesh *mesh, int dim); // computes EToE, EToF
+
 
 // occa setup 
 void setupOccaMesh2d(Mesh *mesh, App *app);

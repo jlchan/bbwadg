@@ -94,8 +94,7 @@ void InitRefData2d(Mesh *mesh, int N){
   //  cout << "sq = " << sq << endl;  
   //cout << "rf = " << rf << endl;
   //cout << "sf = " << sf << endl;  
-
-  
+ 
   // GQ nodes
   MatrixXd Q1D = wq1D.asDiagonal()*Dq1D;
   VectorXd invwq1D = wq1D.array().inverse();
@@ -133,7 +132,6 @@ void InitRefData2d(Mesh *mesh, int N){
   mesh->rk4c(3) =  2006345519317.0 / 3224310063776.0;
   mesh->rk4c(4) =  2802321613138.0 / 2924317926251.0;
   mesh->rk4c(5) =              1.0;
-
   
 }
 
@@ -186,117 +184,8 @@ void QuadMesh2d(Mesh *mesh, int Nx, int Ny){
 }
 
 
-
-typedef unsigned long long ulint;
-// check if "a < b" for faceInfo (i.e. all entries of a.first less than that of b.first)
-static bool faceCompare(const std::pair<vector<int>,ulint> &a,const std::pair<vector<int>,ulint> &b){
-  for (int i = 0; i < a.first.size(); ++i){
-    if (a.first[i] != b.first[i]){
-      return a.first[i] < b.first[i];
-    }
-  }
-  return a.first.back() < b.first.back();
-}
-
-// connects quads
-void ConnectElems(Mesh *mesh, int dim){
-
-  int Nfaces = mesh->Nfaces;
-  int K = mesh->K;
-  int Nv = mesh->Nv;
-  MatrixXi EToV = mesh->EToV;
-  //cout << "EToV = " << endl << EToV << endl;
-  
-  // make face lists and fv scaling
-  MatrixXi fvlist;
-  if (dim==2){
-    fvlist.resize(Nfaces,2); 
-    fvlist << 0,1,
-      1,2,
-      2,3,
-      3,0;
-  }else if (dim==3){
-    fvlist.resize(Nfaces,4);
-    // todo: add 3D face list
-  }
-  int Nfaceverts = fvlist.cols();
-
-  // if K too large this can fail.
-  vector<pair<vector<int>, int> > faceInfo;
-
-  ulint i = 0;
-  for (int f = 0; f < Nfaces; ++f){
-    for (int e = 0; e < K; ++e){
-      vector<int> fv; 
-      for (int v = 0; v < Nfaceverts; ++v){
-	fv.push_back(EToV(e,fvlist(f,v)));
-      }
-      std::sort(fv.begin(),fv.end()); // sort fv (nodes on face)
-      //cout << fv.size() << endl; 
-      //cout << fv[0] << ", " << fv[1] << endl;
-      
-      faceInfo.push_back(make_pair(fv,i));
-      ++i;
-    }
-  }
-
-  // sort by first elem (second goes along for ride)  
-  /*
-  for (int i = 0; i < faceInfo.size(); ++i){
-    printf("faceInfo: %d %d, %d\n",faceInfo[i].first[0],faceInfo[i].first[1],faceInfo[i].second);
-  }
-  */
-  std::sort(faceInfo.begin(),faceInfo.end(),faceCompare);
-  
-  // initialize EToE, EToF
-  int low,hi;
-  low = 0;  hi = K-1; 
-  VectorXi eVec = VectorXi::LinSpaced((hi-low)+1,low,low+hi);
-  low = 0;  hi = Nfaces-1;
-  VectorXi fVec = VectorXi::LinSpaced((hi-low)+1,low,low+hi);  
-  MatrixXi EToE = eVec.replicate(1,Nfaces);
-  MatrixXi EToF = fVec.transpose().replicate(K,1);
-  // cout << EToE << endl;
-  // cout << EToF << endl;
-
-  // check for consecutive matches
-  for (int i = 0; i < Nfaces*K - 1; ++i){
-
-    // check if all vertices match
-    bool match = true;
-    for (int v = 0; v < Nfaceverts; ++v){
-      if (faceInfo[i].first[v]!=faceInfo[i+1].first[v]){
-	match = false;
-      }
-    }
-
-    if (match){  // if face[i] matches face[i+1]
-      ulint id1 = faceInfo[i].second;
-      ulint id2 = faceInfo[i+1].second;
-      int e1 = EToE(id1);
-      int f1 = EToF(id1);      
-
-      int e2 = EToE(id2);
-      int f2 = EToF(id2);            
-
-      //printf("matched on i = %d: e = %d,%d, f = %d,%d\n",i,e1,e2,f1,f2);
-      
-      EToE(e1,f1) = e2;
-      EToF(e1,f1) = f2;      
-      EToE(e2,f2) = e1;
-      EToF(e2,f2) = f1;      
-    }
-  }
-
-  //  cout << "EToE = " << endl << EToE << endl;
-  //  cout << "EToF = " << endl << EToF << endl;  
-  
-  mesh->EToE = EToE;
-  mesh->EToF = EToF;  
-}
-
 // computes physical nodal position based on affine 
-void MapNodes(Mesh *mesh){
+void MapNodes2d(Mesh *mesh){
   int Nfaces = mesh->Nfaces;
   int K = mesh->K;
   int Nv = mesh->Nv;
@@ -409,6 +298,295 @@ void Normals2d(Mesh *mesh){
   mesh->sJ = sJ;  
 }
 
+void MakeNodeMapsPeriodic2D(Mesh *mesh, MatrixXd xf, MatrixXd yf, double DX, double DY, MatrixXi &mapP){
+  
+  int Nfp = mesh->Nfp;
+  int Nfaces = mesh->Nfaces;
+  int K = mesh->K;
+
+  xf.resize(Nfp,Nfaces*K);
+  yf.resize(Nfp,Nfaces*K);  
+  vector<pair<int,int> > xfaces,yfaces;  
+  for (int f1 = 0; f1 < Nfaces*K; ++f1){
+    for (int f2 = 0; f2 < Nfaces*K; ++f2){
+
+      // distance b/w faces = diff b/w min/max coeffs 
+      double dx = .5*(fabs(xf.col(f1).maxCoeff()-xf.col(f2).maxCoeff())
+		      + fabs(xf.col(f1).minCoeff()-xf.col(f2).minCoeff()));
+      double dy = .5*(fabs(yf.col(f1).maxCoeff()-yf.col(f2).maxCoeff())
+		      + fabs(yf.col(f1).minCoeff()-yf.col(f2).minCoeff()));
+      
+      if ((dx < NODETOL) & (fabs(dy-DY)<NODETOL)){
+	xfaces.push_back(make_pair(f1,f2)); 
+      }else if ((dy < NODETOL) & (fabs(dx-DX)<NODETOL)){
+	yfaces.push_back(make_pair(f1,f2)); 
+      }
+    }
+  }
+  //  printf("num xfaces = %d, num yfaces = %d\n",xfaces.size(),yfaces.size());
+  //  cout << "xf = " << xf << endl;
+  //  cout << "yf = " << yf << endl;  
+
+  // find node maps in x
+  for (int f = 0; f < xfaces.size(); ++f){
+    int f1 = xfaces[f].first;
+    int f2 = xfaces[f].second;
+    for (int i = 0; i < Nfp; ++i){
+      int idM = i + f1*Nfp;
+      double xM = xf(idM);
+
+      for (int j = 0; j < Nfp; ++j){
+	int idP = j + f2*Nfp;
+	double xP = xf(idP);
+	
+	if (fabs(xM-xP) < NODETOL){
+	  mapP(idM) = idP;
+	  break;
+	}
+      }      
+    }
+  }
+
+  // find node maps in y
+  for (int f = 0; f < yfaces.size(); ++f){
+    int f1 = yfaces[f].first;
+    int f2 = yfaces[f].second;
+    for (int i = 0; i < Nfp; ++i){
+      int idM = i + f1*Nfp;
+      double yM = yf(idM);
+
+      for (int j = 0; j < Nfp; ++j){
+	int idP = j + f2*Nfp;
+	double yP = yf(idP);
+	
+	if (fabs(yM-yP) < NODETOL){
+	  mapP(idM) = idP;
+	  break;
+	}
+      }      
+    }
+  }
+
+  printf("Done making node maps periodic\n");
+  
+}
+
+// ========= 3d routines ===============
+
+void HexMesh3d(Mesh *mesh, int Nx, int Ny, int Nz){
+  // just make a uniform quadrilateral mesh on [-1,1]
+  int Nxp = Nx+1;
+  int Nyp = Ny+1;
+  int Nzp = Nz+1;  
+  int K = Nx*Ny*Nz;
+  int Nv = Nxp*Nyp*Nzp;
+
+  VectorXd x1D = VectorXd::LinSpaced(Nxp,-1,1);
+  VectorXd y1D = VectorXd::LinSpaced(Nyp,-1,1);
+  VectorXd z1D = VectorXd::LinSpaced(Nzp,-1,1);  
+
+  VectorXd x(Nv),y(Nv),z(Nv);
+  int sk = 0;
+  for (int k = 0; k < Nzp; ++k){
+    for (int j = 0; j < Nyp; ++j){
+      for (int i = 0; i < Nxp; ++i){	
+	x(sk) = x1D(i);
+	y(sk) = y1D(j);
+	z(sk) = z1D(k);
+	++sk;
+      }
+    }
+  }
+
+  MatrixXi EToV(K,8);
+  for (int e = 0; e < K; ++e){
+    int k = e/(Nx*Ny);
+    int j = (e - k*Nx*Ny)/Nx;
+    int i = e % Nx;
+
+    //printf("e = %d, ijk = %d, %d, %d\n",e,i,j,k);
+    
+    EToV(e,0) = i     + Nxp*j     + Nxp*Nyp*k;
+    EToV(e,1) = i     + Nxp*(j+1) + Nxp*Nyp*k;
+    EToV(e,2) = (i+1) + Nxp*j     + Nxp*Nyp*k;
+    EToV(e,3) = (i+1) + Nxp*(j+1) + Nxp*Nyp*k;
+    EToV(e,4) = i     + Nxp*j     + Nxp*Nyp*(k+1);
+    EToV(e,5) = i     + Nxp*(j+1) + Nxp*Nyp*(k+1);
+    EToV(e,6) = (i+1) + Nxp*j     + Nxp*Nyp*(k+1);
+    EToV(e,7) = (i+1) + Nxp*(j+1) + Nxp*Nyp*(k+1);
+  }
+  //  cout << "VX = [" << x << "];" << endl;
+  //  cout << "VY = [" << y << "];" << endl;
+  //  cout << "VZ = [" << z << "];" << endl;  
+  //  cout << "EToV = [" << EToV << "];" << endl;
+  
+  mesh->EToV = EToV;
+  mesh->K = K;  
+  mesh->Nv = Nv;
+  mesh->VX = x;
+  mesh->VY = y;
+  mesh->VZ = x;  
+}
+
+// make quads 
+void InitRefData3d(Mesh *mesh, int N){
+
+  int Np1 = (N+1);
+
+  // nodal points (GCL and all)
+  VectorXd r1D;
+  JacobiGL(N, 0, 0, r1D);
+
+  // quad points 
+  VectorXd rq1D, wq1D;
+  JacobiGQ(N, 0, 0, rq1D, wq1D);
+  
+  int Np2 = Np1*Np1;
+  int Np3 = Np1*Np2;
+  
+  VectorXd r(Np3),s(Np3),t(Np3);
+  VectorXd rq(Np3),sq(Np3),tq(Np3),wq(Np3);  
+  int sk = 0;
+  for (int k = 0; k < Np1; ++k){
+    for (int i = 0; i < Np1; ++i){
+      for (int j = 0; j < Np1; ++j){
+	r(sk) = r1D(i);
+	s(sk) = r1D(j);
+	t(sk) = r1D(k);	
+
+	rq(sk) = rq1D(i);
+	sq(sk) = rq1D(j);
+	tq(sk) = rq1D(k);
+
+	wq(sk) = wq1D(i)*wq1D(j)*wq1D(k);
+	++sk;
+      }
+    }
+  }
+    
+  /*
+  cout << "r = " << r << endl;
+  cout << "s = " << s << endl;
+  cout << "t = " << t << endl;
+  */
+  //return;
+
+  // nodal operators
+  MatrixXd V1D = Vandermonde1D(N,r1D);
+  MatrixXd Vr1D = GradVandermonde1D(N,r1D);
+  MatrixXd D1D = mrdivide(Vr1D,V1D);
+
+  MatrixXd I1D = MatrixXd::Identity(Np1,Np1);
+  MatrixXd I2D = MatrixXd::Identity(Np2,Np2);  
+
+  MatrixXd V = Vandermonde3DQuad(N,r,s,t);
+  MatrixXd Dr = kron(I1D,kron(D1D,I1D));
+  MatrixXd Ds = kron(I2D,D1D);
+  MatrixXd Dt = kron(D1D,I2D);
+
+  //cout << "I2D = " << I2D << endl;
+  //  cout << "D1D = " << D1D << endl;
+  //  cout << "Dr = " << endl << Dr << endl;
+  //  cout << "Ds = " << endl << Ds << endl;
+  //  cout << "Dt = " << endl << Dt << endl;    
+
+  return;
+
+  // face quad points
+  int Nfaces = 6;
+  int NfqNfaces = Nfaces * Np2;
+  VectorXd e(Np2); e.fill(1.0);    
+  VectorXd rf(NfqNfaces); rf << rf, e, rf, -e;
+  VectorXd sf(NfqNfaces); sf << -e, rf, e, rf;
+  VectorXd tf(NfqNfaces); tf << -e, rf, e, rf;  
+  VectorXd wf(NfqNfaces); wf << wq1D, wq1D, wq1D, wq1D;
+  
+  
+  // interp to quadrature
+  MatrixXd Vqtmp = Vandermonde3DQuad(N,rq,sq,tq);
+  MatrixXd Vftmp = Vandermonde3DQuad(N,rf,sf,tf);
+  MatrixXd Vq = mrdivide(Vqtmp,V);
+  MatrixXd Vf = mrdivide(Vftmp,V);  
+  
+  // 1D quadrature operators
+  MatrixXd Vq1D = Vandermonde1D(N,rq1D);
+  MatrixXd Vrq1D = GradVandermonde1D(N,rq1D);
+  MatrixXd Dq1D = mrdivide(Vrq1D,Vq1D);
+  VectorXd rf1D(2); rf1D << -1.0,1.0;
+  MatrixXd Vf1Dtmp = Vandermonde1D(N,rf1D);
+  MatrixXd Vf1D = mrdivide(Vf1Dtmp,Vq1D);
+
+  mesh->N = N;
+  mesh->Np = Np1*Np1;
+  mesh->Nfp = Np1;
+  mesh->Nfaces = Nfaces;
+  mesh->Nverts = 8;
+
+  // GLL nodes (for geofacs)
+  mesh->r = r;
+  mesh->s = s;  
+  mesh->Dr = Dr;
+  mesh->Ds = Ds;
+  mesh->V = V;
+
+  // interp to vol/face nodes
+  mesh->rq = rq;
+  mesh->sq = sq;
+  mesh->wq = wq;  
+  mesh->Vq = Vq;
+
+  mesh->rf = rf;
+  mesh->sf = sf;
+  mesh->wf = wf;    
+  mesh->Vf = Vf;
+
+  //  cout << "rq = " << rq << endl;
+  //  cout << "sq = " << sq << endl;  
+  //cout << "rf = " << rf << endl;
+  //cout << "sf = " << sf << endl;  
+ 
+  // GQ nodes
+  MatrixXd Q1D = wq1D.asDiagonal()*Dq1D;
+  VectorXd invwq1D = wq1D.array().inverse();
+  MatrixXd D1D_skew = invwq1D.asDiagonal()*(Q1D - Q1D.transpose());
+  mesh->D1D = D1D_skew; // (Q - Q^T)
+  //mesh->D1D = Dq1D;
+  mesh->Vf1D = Vf1D;
+  VectorXd wqInv = wq1D.array().inverse();
+  mesh->Lf1D = wqInv.asDiagonal()*Vf1D.transpose(); // 1D lift - may not need
+
+  //cout << "D1D = " << mesh->D1D << endl;
+  //  cout << "Vf1D = " << mesh->Vf1D << endl;
+  //cout << "Lf1D = " << mesh->Lf1D << endl;   
+  mesh->wq1D = wq1D;
+
+  // LSRK-45 coefficients
+  mesh->rk4a.resize(5);
+  mesh->rk4a(0) =              0.0;
+  mesh->rk4a(1) =  -567301805773.0 / 1357537059087.0;
+  mesh->rk4a(2) = -2404267990393.0 / 2016746695238.0;
+  mesh->rk4a(3) = -3550918686646.0 / 2091501179385.0;
+  mesh->rk4a(4) = -1275806237668.0 /  842570457699.0;
+
+  mesh->rk4b.resize(5);
+  mesh->rk4b(0) =  1432997174477.0 /  9575080441755.0;
+  mesh->rk4b(1) =  5161836677717.0 / 13612068292357.0;
+  mesh->rk4b(2) =  1720146321549.0 /  2090206949498.0;
+  mesh->rk4b(3) =  3134564353537.0 /  4481467310338.0;
+  mesh->rk4b(4) =  2277821191437.0 / 14882151754819.0;
+
+  mesh->rk4c.resize(5);
+  mesh->rk4c(0) =              0.0;
+  mesh->rk4c(1) =  1432997174477.0 / 9575080441755.0;
+  mesh->rk4c(2) =  2526269341429.0 / 6820363962896.0;
+  mesh->rk4c(3) =  2006345519317.0 / 3224310063776.0;
+  mesh->rk4c(4) =  2802321613138.0 / 2924317926251.0;
+  mesh->rk4c(5) =              1.0;
+  
+}
+
+// ======== dimension independent routines ============
+
 // general: input nodes (ex: quadrature nodes), get map back
 void BuildFaceNodeMaps(Mesh *mesh, MatrixXd xf, MatrixXd yf, MatrixXd zf, MatrixXi &mapP){
 
@@ -492,75 +670,136 @@ void BuildFaceNodeMaps(Mesh *mesh, MatrixXd xf, MatrixXd yf, MatrixXd zf, Matrix
 }
 
 
-void MakeNodeMapsPeriodic2D(Mesh *mesh, MatrixXd xf, MatrixXd yf, double DX, double DY, MatrixXi &mapP){
-  
-  int Nfp = mesh->Nfp;
+// connects quads (or hexes)
+typedef unsigned long long ulint;
+// check if "a < b" for faceInfo (i.e. all entries of a.first less than that of b.first)
+static bool faceCompare(const std::pair<vector<int>,ulint> &a,const std::pair<vector<int>,ulint> &b){
+  for (int i = 0; i < a.first.size(); ++i){
+    if (a.first[i] != b.first[i]){
+      return a.first[i] < b.first[i];
+    }
+  }
+  return a.first.back() < b.first.back();
+}
+
+void ConnectElems(Mesh *mesh, int dim){
+
   int Nfaces = mesh->Nfaces;
   int K = mesh->K;
+  int Nv = mesh->Nv;
+  MatrixXi EToV = mesh->EToV;
+  //cout << "EToV = " << endl << EToV << endl;
+  
+  // make face lists and fv scaling
+  MatrixXi fvlist;
+  if (dim==2){
+    fvlist.resize(Nfaces,2); 
+    fvlist << 0,1,
+      1,2,
+      2,3,
+      3,0;
+  }else if (dim==3){
+    fvlist.resize(Nfaces,4);
+    // todo: add 3D face list
+    // faces ordered: r -/+, s -/+, t -/+
+    // assume nodes = matlab meshgrid ordering
+    /*
+      .    6-----8
+      .   /|    /|
+      .  5-|---7 |
+      .  | |   | |
+      .  | 2---|-4
+      .  |/    |/
+      .  1-----3
+     */
+    // face ordering: right hand rule for outward normal (start shouldn't matter?)
+    /*
+    fvlist << 1,5,6,2,
+      4,8,7,4,
+      3,7,5,1,
+      2,6,8,4,
+      1,2,4,3,
+      7,8,6,5;
+    */
+    fvlist << 0,4,5,1,
+      3,7,6,3,
+      2,6,4,0,
+      1,5,7,3,
+      0,1,3,2,
+      6,7,5,4;
+  }
+  int Nfaceverts = fvlist.cols();
 
-  xf.resize(Nfp,Nfaces*K);
-  yf.resize(Nfp,Nfaces*K);  
-  vector<pair<int,int> > xfaces,yfaces;  
-  for (int f1 = 0; f1 < Nfaces*K; ++f1){
-    for (int f2 = 0; f2 < Nfaces*K; ++f2){
+  // if K too large this can fail.
+  vector<pair<vector<int>, int> > faceInfo;
 
-      // distance b/w faces = diff b/w min/max coeffs 
-      double dx = .5*(fabs(xf.col(f1).maxCoeff()-xf.col(f2).maxCoeff())
-		      + fabs(xf.col(f1).minCoeff()-xf.col(f2).minCoeff()));
-      double dy = .5*(fabs(yf.col(f1).maxCoeff()-yf.col(f2).maxCoeff())
-		      + fabs(yf.col(f1).minCoeff()-yf.col(f2).minCoeff()));
+  ulint i = 0;
+  for (int f = 0; f < Nfaces; ++f){
+    for (int e = 0; e < K; ++e){
+      vector<int> fv; 
+      for (int v = 0; v < Nfaceverts; ++v){
+	fv.push_back(EToV(e,fvlist(f,v)));
+      }
+      std::sort(fv.begin(),fv.end()); // sort fv (nodes on face)
+      //cout << fv.size() << endl; 
+      //cout << fv[0] << ", " << fv[1] << endl;
       
-      if ((dx < NODETOL) & (fabs(dy-DY)<NODETOL)){
-	xfaces.push_back(make_pair(f1,f2)); 
-      }else if ((dy < NODETOL) & (fabs(dx-DX)<NODETOL)){
-	yfaces.push_back(make_pair(f1,f2)); 
+      faceInfo.push_back(make_pair(fv,i));
+      ++i;
+    }
+  }
+
+  // sort by first elem (second goes along for ride)  
+  /*
+  for (int i = 0; i < faceInfo.size(); ++i){
+    printf("faceInfo: %d %d, %d\n",faceInfo[i].first[0],faceInfo[i].first[1],faceInfo[i].second);
+  }
+  */
+  std::sort(faceInfo.begin(),faceInfo.end(),faceCompare);
+  
+  // initialize EToE, EToF
+  int low,hi;
+  low = 0;  hi = K-1; 
+  VectorXi eVec = VectorXi::LinSpaced((hi-low)+1,low,low+hi);
+  low = 0;  hi = Nfaces-1;
+  VectorXi fVec = VectorXi::LinSpaced((hi-low)+1,low,low+hi);  
+  MatrixXi EToE = eVec.replicate(1,Nfaces);
+  MatrixXi EToF = fVec.transpose().replicate(K,1);
+  // cout << EToE << endl;
+  // cout << EToF << endl;
+
+  // check for consecutive matches
+  for (int i = 0; i < Nfaces*K - 1; ++i){
+
+    // check if all vertices match
+    bool match = true;
+    for (int v = 0; v < Nfaceverts; ++v){
+      if (faceInfo[i].first[v]!=faceInfo[i+1].first[v]){
+	match = false;
       }
     }
-  }
-  //  printf("num xfaces = %d, num yfaces = %d\n",xfaces.size(),yfaces.size());
-  //  cout << "xf = " << xf << endl;
-  //  cout << "yf = " << yf << endl;  
 
-  // find node maps in x
-  for (int f = 0; f < xfaces.size(); ++f){
-    int f1 = xfaces[f].first;
-    int f2 = xfaces[f].second;
-    for (int i = 0; i < Nfp; ++i){
-      int idM = i + f1*Nfp;
-      double xM = xf(idM);
+    if (match){  // if face[i] matches face[i+1]
+      ulint id1 = faceInfo[i].second;
+      ulint id2 = faceInfo[i+1].second;
+      int e1 = EToE(id1);
+      int f1 = EToF(id1);      
 
-      for (int j = 0; j < Nfp; ++j){
-	int idP = j + f2*Nfp;
-	double xP = xf(idP);
-	
-	if (fabs(xM-xP) < NODETOL){
-	  mapP(idM) = idP;
-	  break;
-	}
-      }      
+      int e2 = EToE(id2);
+      int f2 = EToF(id2);            
+
+      //printf("matched on i = %d: e = %d,%d, f = %d,%d\n",i,e1,e2,f1,f2);
+      
+      EToE(e1,f1) = e2;
+      EToF(e1,f1) = f2;      
+      EToE(e2,f2) = e1;
+      EToF(e2,f2) = f1;      
     }
   }
 
-  // find node maps in y
-  for (int f = 0; f < yfaces.size(); ++f){
-    int f1 = yfaces[f].first;
-    int f2 = yfaces[f].second;
-    for (int i = 0; i < Nfp; ++i){
-      int idM = i + f1*Nfp;
-      double yM = yf(idM);
-
-      for (int j = 0; j < Nfp; ++j){
-	int idP = j + f2*Nfp;
-	double yP = yf(idP);
-	
-	if (fabs(yM-yP) < NODETOL){
-	  mapP(idM) = idP;
-	  break;
-	}
-      }      
-    }
-  }
-
-  printf("Done making node maps periodic\n");
+  //  cout << "EToE = " << endl << EToE << endl;
+  //  cout << "EToF = " << endl << EToF << endl;  
   
+  mesh->EToE = EToE;
+  mesh->EToF = EToF;  
 }

@@ -3,11 +3,8 @@
 #include "NodeData.h"
 
 /*
-
 Routines and associated utilities for constructing basis functions and operators.
-
  */
-
 
 // ================== test eigen ================
 
@@ -210,6 +207,23 @@ MatrixXd Vandermonde2DQuad(int N, VectorXd r, VectorXd s){
   }
   return Vout;
 }
+
+MatrixXd Vandermonde3DQuad(int N, VectorXd r, VectorXd s, VectorXd t){
+  int Np = (N+1)*(N+1)*(N+1);
+  MatrixXd Vout(r.rows(),Np);
+  
+  int sk = 0;
+  for (int i = 0; i <= N; ++i){
+    for (int j = 0; j <= N; ++j){
+      for (int k = 0; k <= N; ++k){      
+	Vout.col(sk) = JacobiP(r,0,0,i).array()*JacobiP(s,0,0,j).array()*JacobiP(t,0,0,k).array();
+	++sk;
+      }
+    }
+  }
+  return Vout;
+}
+
 
 MatrixXd Vandermonde2D(int N, VectorXd r, VectorXd s){
   int Np = (N+1)*(N+2)/2;
@@ -1077,8 +1091,8 @@ void meshgrid(VectorXi x, VectorXi y, MatrixXi &X, MatrixXi &Y){
 
 MatrixXd kron(MatrixXd A, MatrixXd B){
   MatrixXd C(A.rows()*B.rows(),A.cols()*B.cols());
-  for (int i = 0; i < B.rows(); ++i){
-    for (int j = 0; j < B.cols(); ++j){
+  for (int i = 0; i < A.rows(); ++i){
+    for (int j = 0; j < A.cols(); ++j){
       C.block(i*B.rows(), j*B.cols(), B.rows(), B.cols()) =  A(i,j)*B.array();
     }
   }
