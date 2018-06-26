@@ -33,8 +33,8 @@ void InitRefData2d(Mesh *mesh, int N){
   VectorXd e(rq1D.size()); e.fill(1.0);
   int Nfaces = 4;
   int NfqNfaces = Nfaces * rq1D.size();  
-  VectorXd rf(NfqNfaces); rf << rq1D, e, -rq1D, -e;
-  VectorXd sf(NfqNfaces); sf << -e, rq1D, e, -rq1D;
+  VectorXd rf(NfqNfaces); rf << rq1D, e, rq1D, -e;
+  VectorXd sf(NfqNfaces); sf << -e, rq1D, e, rq1D;
   VectorXd wf(NfqNfaces); wf << wq1D, wq1D, wq1D, wq1D;
   
   // nodal operators
@@ -64,7 +64,7 @@ void InitRefData2d(Mesh *mesh, int N){
   MatrixXd Vf1D = mrdivide(Vf1Dtmp,Vq1D);
 
   //  cout << "Dq1D = " << endl << Dq1D << endl;
-  //  cout << "Vf1D = " << endl << Vf1D << endl;  
+  // cout << "Vf1D = " << endl << Vf1D << endl;  
 
   mesh->N = N;
   mesh->Np = Np1*Np1;
@@ -84,13 +84,31 @@ void InitRefData2d(Mesh *mesh, int N){
   mesh->sq = sq;
   mesh->wq = wq;  
   mesh->Vq = Vq;
-  mesh->Vf = Vf;  
 
+  mesh->rf = rf;
+  mesh->sf = sf;
+  mesh->wf = wf;    
+  mesh->Vf = Vf;
+
+  //  cout << "rq = " << rq << endl;
+  //  cout << "sq = " << sq << endl;  
+  //cout << "rf = " << rf << endl;
+  //cout << "sf = " << sf << endl;  
+
+  
   // GQ nodes
-  mesh->D1D = Dq1D;
+  MatrixXd Q1D = wq1D.asDiagonal()*Dq1D;
+  VectorXd invwq1D = wq1D.array().inverse();
+  MatrixXd D1D_skew = invwq1D.asDiagonal()*(Q1D - Q1D.transpose());
+  mesh->D1D = D1D_skew; // (Q - Q^T)
+  //mesh->D1D = Dq1D;
   mesh->Vf1D = Vf1D;
   VectorXd wqInv = wq1D.array().inverse();
-  mesh->Lf1D = wqInv.asDiagonal()*Vf1D; // 1D lift - may not need
+  mesh->Lf1D = wqInv.asDiagonal()*Vf1D.transpose(); // 1D lift - may not need
+
+  //cout << "D1D = " << mesh->D1D << endl;
+  //  cout << "Vf1D = " << mesh->Vf1D << endl;
+  //cout << "Lf1D = " << mesh->Lf1D << endl;   
   mesh->wq1D = wq1D;
 
   // LSRK-45 coefficients
@@ -277,6 +295,46 @@ void ConnectElems(Mesh *mesh, int dim){
   mesh->EToF = EToF;  
 }
 
+// computes physical nodal position
+/*
+void ComputePhysNodes(Mesh *mesh){
+  int Nfaces = mesh->Nfaces;
+  int K = mesh->K;
+  int Nv = mesh->Nv;
+  MatrixXi EToV = mesh->EToV;
+
+  VectorXd VX = mesh->VX;
+  VectorXd VY = mesh->VY;  
+ 
+  MatrixXd x1(EToV.cols(),K);
+  MatrixXd y1(EToV.cols(),K);  
+  for (int e = 0; e < K; ++e){
+    for (int v = 0; v < EToV.cols(); ++v){
+      int vid = EToV(e,v);
+      x1(v,e) = VX(vid);
+      y1(v,e) = VY(vid);      
+    }
+  }
+  // interp to high order GLL nodes (matlab ordering)
+  VectorXd r1(4),s1(4);
+  r1 << -1.0, 1.0, 1.0, -1.0;
+  s1 << -1.0, -1.0, 1.0, 1.0;
+
+  VectorXd r = mesh->r;
+  VectorXd s = mesh->s;
+  
+  MatrixXd Vdm1 = Vandermonde2DQuad(1,r1,s1);
+  MatrixXd VdmN = Vandermonde2DQuad(1,r,s);
+  //cout << "Vdm1 = " << Vdm1 << endl;
+  MatrixXd V1 = mrdivide(VdmN,Vdm1);
+
+  MatrixXd x = V1*x1;
+  MatrixXd y = V1*y1;
+  mesh->x = x;
+  mesh->y = y;
+
+}
+*/
 
 void GeometricFactors2d(Mesh *mesh){
 
@@ -340,8 +398,10 @@ void GeometricFactors2d(Mesh *mesh){
   //  cout << "y = " << endl << y << endl;
   
   /*
-  cout << "Dr = " << endl << Dr << endl;
-  cout << "rxJ = " << endl << rxJ << endl;    
+  cout << "rxJ = " << endl << rxJ << endl;
+  cout << "ryJ = " << endl << ryJ << endl;
+  cout << "sxJ = " << endl << sxJ << endl;
+  cout << "syJ = " << endl << syJ << endl;    
   */
 
   // all quantities stored at GLL points (must interp before using)

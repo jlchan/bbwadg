@@ -5,10 +5,12 @@ using namespace Eigen;
 using namespace std;
 #include <stdio.h>
 
-#define dfloat float
-#define dfloat4 float4
-//#define dfloat double
-//#define dfloat4 double4
+//#define dfloat float
+//#define dfloat4 float4
+#define dfloat double
+#define dfloat4 double4
+
+#define PI 3.141592653589793
 
 //#define MPI_DFLOAT MPI_FLOAT
 

@@ -32,8 +32,6 @@ void setOccaArray(App *app, MatrixXd A, occa::memory &c_A);
 void setOccaIntArray(App *app, MatrixXi A, occa::memory &c_A);
 void getOccaArray(App *app, occa::memory c_A, MatrixXd &A);
 
-
-
 /*
 void PrintMesh ( Mesh *mesh );
 

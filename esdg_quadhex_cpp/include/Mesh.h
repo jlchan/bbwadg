@@ -68,7 +68,7 @@ typedef struct foo {
   VectorXd wq, rq, sq, tq;
   MatrixXd Vq, Vf;
 
-  VectorXd rfq,sfq,tfq,wfq;
+  VectorXd rf,sf,tf,wf;
 
   // =============== global DG stuff ===================
 
@@ -93,13 +93,12 @@ typedef struct bar {
 
   occa::device device;
   occa::properties props; 
-  occa::kernel volume, surface, update; 
+  occa::kernel volume, surface, update, eval_surface; 
 
-  occa::memory o_D1D, o_Vf1D, o_Lf; // operators
-  occa::memory o_wq1D; // 1D weights (for lifting ops)
+  occa::memory o_D1D, o_Vf1D, o_Lf1D; // operators
 
   occa::memory o_Q, o_Qf; // solution and flux vals
-  occa::memory o_vgeo, o_fgeo; // geometric terms
+  occa::memory o_vgeo, o_vfgeo, o_fgeo; // geometric terms
   occa::memory o_rhs, o_rhsf, o_res; // rhs and RK residual
   occa::memory o_mapPq; // node map
 
