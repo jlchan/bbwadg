@@ -7,7 +7,7 @@ endif
 
 
 paths += -I./include 
-flags += -DOCCA_GL_ENABLED=1 -Dp_N=$(N) -g -L${OCCA_DIR}/lib
+flags += -DOCCA_GL_ENABLED=1 -Dp_N=$(N) -g 
 
 ifeq ($(OS),OSX)
 	links += -framework OpenGL -framework GLUT
@@ -25,8 +25,10 @@ sources = $(wildcard $(srcPath)/*.cpp)
 
 objects  = $(subst $(srcPath)/,$(objPath)/,$(sources:.cpp=.o))
 
-main: $(objects) $(headers) main.cpp
-	$(compiler) $(compilerFlags) -o main $(flags) $(objects) main.cpp $(paths) $(links)
+.PHONY: main2d clean
+
+main2d: $(objects) $(headers) main2d.cpp
+	$(compiler) $(compilerFlags) -o main2d $(flags) $(objects) main2d.cpp -L${OCCA_DIR}/lib $(paths) $(links)
 
 $(objPath)/%.o:$(srcPath)/%.cpp $(wildcard $(subst $(srcPath)/,$(incPath)/,$(<:.cpp=.hpp))) $(wildcard $(subst $(srcPath)/,$(incPath)/,$(<:.cpp=.tpp)))
 	$(compiler) $(compilerFlags) -o $@ $(flags) -c $(paths) $<
@@ -34,7 +36,8 @@ $(objPath)/%.o:$(srcPath)/%.cpp $(wildcard $(subst $(srcPath)/,$(incPath)/,$(<:.
 clean:
 	rm -f $(objPath)/*.o;
 	rm -f main;
+	rm -f main2d;
+	rm -f main3d;
 	rm -rf main.dSYM/;
 
-.PHONY: main clean
 #=================================================

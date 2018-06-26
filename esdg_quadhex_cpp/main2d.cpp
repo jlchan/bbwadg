@@ -28,7 +28,7 @@ int main(int argc, char **argv){
   //occa::printModeInfo();
 
   int N = 4;
-  int K1D = 8;
+  int K1D = 16;
   
   Mesh *mesh = (Mesh*) calloc(1, sizeof(Mesh));  
   QuadMesh2d(mesh,2*K1D,K1D); // make Cartesian mesh
@@ -42,7 +42,22 @@ int main(int argc, char **argv){
   // ============ physics independent stuff ===========
 
   InitRefData2d(mesh, N);
-  GeometricFactors2d(mesh);
+  MapNodes(mesh); // low order mapping
+
+  // curvilinear meshing
+  MatrixXd x = mesh->x;
+  MatrixXd y = mesh->y;
+  double a = 0*.5/K1D;
+  MatrixXd dx = (.5*PI*(x.array()-Lx)/Lx).cos()*(1.5*PI*y.array()).cos();
+  MatrixXd dy = (PI*(x.array()-Lx)/Lx).sin()*(.5*PI*y.array()/Ly).cos();
+  mesh->x = x + a*Lx*dx;
+  mesh->y = y + a*Ly*dy;  
+
+  //  cout << "x = [" << x << "];" << endl;
+  //  cout << "y = [" << y << "];" << endl;
+  //  return 0;
+  
+  GeometricFactors2d(mesh); 
   Normals2d(mesh); 
 
   int dim = 2;
@@ -124,7 +139,8 @@ int main(int argc, char **argv){
 
   // ============== run RK solver ==================
 
-  double h = 2.0 / (double) K1D; //min(DX,DY) / (double) K1D;
+  //double h = 2.0 / (double) K1D; //min(DX,DY) / (double) K1D;
+  double h = mesh->J.maxCoeff() / mesh->sJ.maxCoeff(); // J = O(h^d), Jf = O(h^{d-1}) in d dims
   double CN = dim * (double)((N+1)*(N+2))/2.0; // trace constant for GQ hexes
   double CFL = .5;
   double dt = CFL * h / CN;

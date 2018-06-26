@@ -18,6 +18,7 @@ Mesh *ReadGmsh3d(char *filename);
 void InitRefData2d(Mesh *mesh, int N);
 void QuadMesh2d(Mesh *mesh, int Nx, int Ny);
 void ConnectElems(Mesh *mesh, int dim); // computes EToE, EToF
+void MapNodes(Mesh *mesh);
 void GeometricFactors2d(Mesh *mesh);
 void Normals2d(Mesh *mesh);
 void BuildFaceNodeMaps(Mesh *mesh, MatrixXd xf, MatrixXd yf, MatrixXd zf, MatrixXi &mapP);
