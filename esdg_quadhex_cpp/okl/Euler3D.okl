@@ -1,0 +1,227 @@
+#if USE_DOUBLE
+#define dfloat double
+#define dfloat4 double4
+#define LOGDF log
+#define POWDF pow
+#define EXPDF exp
+#else
+#define dfloat float
+#define dfloat4 float4
+#define LOGDF logf
+#define POWDF powf
+#define EXPDF expf
+#endif
+
+// helpful functions
+#define avg(a, b) .5f * (a + b)
+#define pfun(rho, u, v, w, E)                                                  \
+  ((p_gamma - 1.f) * (E - .5f * rho * (u * u + v * v + w * w)))
+#define beta(rho, u, v, w, E)                                                  \
+  (rho / (2.f * pfun(rho, u, v, w, E))) // inverse temp
+
+// map conservation to entropy vars
+#define pfun(rho, u, v, w, E)                                                  \
+  ((p_gamma - 1.f) * (E - .5f * rho * (u * u + v * v + w * w)))
+#define rhoeU(rho, rhou, rhov, rhow, E)                                        \
+  (E - .5f * (rhou * rhou + rhov * rhov + rhow * rhow) / rho)
+#define sU(rho, rhou, rhov, rhow, E)                                           \
+  (LOGDF((p_gamma - 1.f) * rhoeU(rho, rhou, rhov, rhow, E) /                   \
+         POWDF(rho, p_gamma)))
+
+// map entropy to conservation vars
+#define sV(V1, V2, V3, V4, V5)                                                 \
+  (p_gamma - V1 + (V2 * V2 + V3 * V3 + V4 * V4) / (2.f * V5))
+#define rhoeV(V1, V2, V3, V4, V5)                                              \
+  (POWDF((p_gamma - 1.f) / POWDF(-V5, p_gamma), 1.f / (p_gamma - 1.f)) *       \
+   EXPDF(-sV(V1, V2, V3, V4, V5) / (p_gamma - 1.f)))
+
+// occa function
+dfloat logmean(dfloat aL, dfloat aR)
+{
+  const dfloat xi = aL / aR;
+  const dfloat f = (xi - 1.f) / (xi + 1.f);
+  const dfloat u = f * f;
+  const dfloat u2 = u * u;
+
+  dfloat F = .5f * LOGDF(xi) / f; // Log(xi) = Log(aL)-log(aR) 
+  if (fabs(u) < 1.fe-4)
+  {
+    F = 1.f + u / 3.f + u2 / 5.f + u2 * u / 7.f;
+  }
+  return (aL + aR) / (2.f * F);
+}
+
+void VU(dfloat rho, dfloat rhou, dfloat rhov, dfloat rhow, dfloat E,
+	dfloat &V1, dfloat &V2, dfloat &V3, dfloat &V4, dfloat &V5)
+{
+
+  const dfloat rhoe = rhoeU(rho, rhou, rhov, rhow, E);
+  V1 = (-E + rhoe * (p_gamma + 1.f - sU(rho, rhou, rhov, rhow, E))) / rhoe;
+  V2 = rhou / rhoe;
+  V3 = rhov / rhoe;
+  V4 = rhow / rhoe;
+  V5 = (-rho) / rhoe;
+}
+
+void UV(dfloat V1, dfloat V2, dfloat V3, dfloat V4, dfloat V5,
+	dfloat &rho, dfloat &rhou, dfloat &rhov, dfloat &rhow, dfloat &E)
+{
+
+  const dfloat rhoe = rhoeV(V1, V2, V3, V4, V5);
+  rho = rhoe * (-V5);
+  rhou = rhoe * (V2);
+  rhov = rhoe * (V3);
+  rhow = rhoe * (V4);
+  E = rhoe * (1.f - (V2 * V2 + V3 * V3 + V4 * V4) / (2.f * V5));
+}
+
+void euler3d_flux(dfloat rho_i, dfloat rho_j, dfloat u_i, dfloat u_j,
+                   dfloat v_i, dfloat v_j, dfloat w_i, dfloat w_j, dfloat E_i,
+                   dfloat E_j, dfloat beta_i, dfloat beta_j, dfloat *FxS,
+                   dfloat *FyS, dfloat *FzS)
+{
+
+  const dfloat rholog = logmean(rho_i, rho_j);
+  const dfloat rhoavg = avg(rho_i, rho_j);
+  const dfloat uavg = avg(u_i, u_j);
+  const dfloat vavg = avg(v_i, v_j);
+  const dfloat wavg = avg(w_i, w_j);
+  const dfloat vnavg = 2.f * (uavg * uavg + vavg * vavg + wavg * wavg) -
+                       (avg(u_i * u_i, u_j * u_j) + avg(v_i * v_i, v_j * v_j) +
+                        avg(w_i * w_i, w_j * w_j));
+  const dfloat beta_avg = avg(beta_i, beta_j);
+
+  const dfloat pa = rhoavg / (2.f * beta_avg);
+  const dfloat f4aux =
+      rholog / (2.f * (p_gamma - 1.f) * logmean(beta_i, beta_j)) + pa +
+      .5f * rholog * vnavg;
+
+  FxS[0] = rholog * uavg;
+  FyS[0] = rholog * vavg;
+  FzS[0] = rholog * wavg;
+
+  FxS[1] = FxS[0] * uavg + pa;
+  FyS[1] = FyS[0] * uavg;
+  FzS[1] = FzS[0] * uavg;
+
+  FxS[2] = FxS[0] * vavg;
+  FyS[2] = FyS[0] * vavg + pa;
+  FzS[2] = FzS[0] * vavg;
+
+  FxS[3] = FxS[0] * wavg;
+  FyS[3] = FyS[0] * wavg;
+  FzS[3] = FzS[0] * wavg + pa;
+
+  FxS[4] = f4aux * uavg;
+  FyS[4] = f4aux * vavg;
+  FzS[4] = f4aux * wavg;
+}
+
+
+// initialize surface values from interior
+@kernel void eval_surface(const int K,
+			  const dfloat * Vf1D,
+			  const dfloat * Q,
+			  dfloat * Qf){
+  for (int e = 0; e < K; ++e; @outer(0)){
+
+    @shared dfloat s_Vf[p_Np1]; // second col is symmetric
+    @shared dfloat s_V[p_Nfields][p_Np1][p_Np1][p_Np1]; // entropy vars
+    
+    for (int i = 0; i < p_T; ++i; @inner(0)){
+      if (i < p_Np1){
+	s_Vf[i] = Vf1D[i];	
+      }
+      
+      if (i < p_Np){
+	// load vol values
+	const int kk = i / p_Np2;
+	const int ii = (i - kk*p_Np2) / p_Np1; // y-id
+	const int jj = i % p_Np1; // x-id
+
+	int id = i + p_Np * p_Nfields * e;
+	const dfloat rho  = Q[id]; id += p_Np;
+	const dfloat rhou = Q[id]; id += p_Np;
+	const dfloat rhov = Q[id]; id += p_Np;
+	const dfloat rhow = Q[id]; id += p_Np;	
+	const dfloat E    = Q[id];
+	
+	// evaluate entropy vars at nodes
+	dfloat V1,V2,V3,V4,V5;
+	VU(rho, rhou, rhov, rhow, E, V1, V2, V3, V4, V5);
+
+	//	if (e==0){
+	//	  printf("V1-V4(%d) = %f, %f, %f, %f\n",i,V1,V2,V3,V4);
+	//	}
+	s_V[0][ii][jj][kk] = V1;
+	s_V[1][ii][jj][kk] = V2;
+	s_V[2][ii][jj][kk] = V3;
+	s_V[3][ii][jj][kk] = V4;
+	s_V[4][ii][jj][kk] = V5;
+
+      }
+    }
+    @barrier("localMemFence");
+
+
+    for (int i = 0; i < p_T; ++i; @inner(0)){
+      if (i < p_NfpNfaces){
+
+	const int f = i / p_Nfp;
+	const int fid = i % p_Nfp;
+	const int fid1 = fid / p_Np1;
+	const int fid2 = fid % p_Np1;
+	
+
+	dfloat V1f = 0.f;
+	dfloat V2f = 0.f;
+	dfloat V3f = 0.f;
+	dfloat V4f = 0.f;
+	dfloat V5f = 0.f;		
+	for (int j = 0; j < p_Np1; ++j){	  
+
+	  int Vfjid, idi, idj, idk;
+	  Vfjid = (f % 2 == 0) ? j : p_Np1-j-1; // traverse forwards/backwards
+	  if (f==0 || f==1){ // -/+ r
+	    // local coords = s, t
+	    idi = j;
+	    idj = fid1;
+	    idk = fid2;
+	  }else if (f==2 || f==3){ // -/+ s
+	    //local coords r,t     
+	    idi = fid1;
+	    idj = j;
+	    idk = fid2; 	    
+	  }else if (f==4 || f==5){ // -/+ t
+	    // local coords r,s
+	    idi = fid1;
+	    idj = fid2;
+	    idk = j;
+	    printf("f = %d, idijk = %d, %d, %d\n",f,idi,idj,idk);
+	  }
+
+	  // interp left/right in r direction
+	  const dfloat Vfj = s_Vf[Vfjid];
+	  V1f += Vfj * s_V[0][idi][idj][idk]; 
+	  V2f += Vfj * s_V[1][idi][idj][idk];
+	  V3f += Vfj * s_V[2][idi][idj][idk];
+	  V4f += Vfj * s_V[3][idi][idj][idk];
+	  V5f += Vfj * s_V[4][idi][idj][idk];	  
+	}
+
+	dfloat rhof, rhouf, rhovf, rhowf, Ef;
+	UV(V1f,V2f,V3f,V4f,V5f, rhof, rhouf, rhovf, rhowf, Ef); 
+
+	int id = i + e*p_NfpNfaces*p_Nfields;
+	Qf[id] = rhof;   id += p_NfpNfaces;
+	Qf[id] = rhouf;  id += p_NfpNfaces;
+	Qf[id] = rhovf;  id += p_NfpNfaces;
+	Qf[id] = rhowf;  id += p_NfpNfaces;	
+	Qf[id] = Ef;	
+
+      }      
+    } // inner0
+
+  }
+}
+

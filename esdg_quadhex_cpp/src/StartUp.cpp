@@ -298,7 +298,7 @@ void Normals2d(Mesh *mesh){
   mesh->sJ = sJ;  
 }
 
-void MakeNodeMapsPeriodic2D(Mesh *mesh, MatrixXd xf, MatrixXd yf, double DX, double DY, MatrixXi &mapP){
+void MakeNodeMapsPeriodic2d(Mesh *mesh, MatrixXd xf, MatrixXd yf, double DX, double DY, MatrixXi &mapP){
   
   int Nfp = mesh->Nfp;
   int Nfaces = mesh->Nfaces;
@@ -415,17 +415,17 @@ void HexMesh3d(Mesh *mesh, int Nx, int Ny, int Nz){
     EToV(e,6) = (i+1) + Nxp*j     + Nxp*Nyp*(k+1);
     EToV(e,7) = (i+1) + Nxp*(j+1) + Nxp*Nyp*(k+1);
   }
-  //  cout << "VX = [" << x << "];" << endl;
-  //  cout << "VY = [" << y << "];" << endl;
-  //  cout << "VZ = [" << z << "];" << endl;  
-  //  cout << "EToV = [" << EToV << "];" << endl;
+  //cout << "VX = [" << x << "];" << endl;
+  //cout << "VY = [" << y << "];" << endl;
+  //cout << "VZ = [" << z << "];" << endl;  
+  //cout << "EToV = [" << EToV << "];" << endl;
   
   mesh->EToV = EToV;
   mesh->K = K;  
   mesh->Nv = Nv;
   mesh->VX = x;
   mesh->VY = y;
-  mesh->VZ = x;  
+  mesh->VZ = z;  
 }
 
 // make quads 
@@ -458,7 +458,7 @@ void InitRefData3d(Mesh *mesh, int N){
 	sq(sk) = rq1D(j);
 	tq(sk) = rq1D(k);
 
-	wq(sk) = wq1D(i)*wq1D(j)*wq1D(k);
+	wq(sk) = wq1D(i)*wq1D(j)*wq1D(k);	
 	++sk;
       }
     }
@@ -469,7 +469,6 @@ void InitRefData3d(Mesh *mesh, int N){
   cout << "s = " << s << endl;
   cout << "t = " << t << endl;
   */
-  //return;
 
   // nodal operators
   MatrixXd V1D = Vandermonde1D(N,r1D);
@@ -490,17 +489,25 @@ void InitRefData3d(Mesh *mesh, int N){
   //  cout << "Ds = " << endl << Ds << endl;
   //  cout << "Dt = " << endl << Dt << endl;    
 
-  return;
-
-  // face quad points
+  VectorXd rq2(Np2),sq2(Np2),wq2(Np2);
+  sk = 0;
+  for (int i = 0; i < Np1; ++i){
+    for (int j = 0; j < Np1; ++j){
+      rq2(sk) = rq1D(i);
+      sq2(sk) = rq1D(j);      
+      wq2(sk) = wq1D(i)*wq1D(j);
+      ++sk;
+    }
+  }
+  VectorXd e(Np2); e.fill(1.0);
+  
+  // face quad points: r -/+, s-/+, t-/+
   int Nfaces = 6;
   int NfqNfaces = Nfaces * Np2;
-  VectorXd e(Np2); e.fill(1.0);    
-  VectorXd rf(NfqNfaces); rf << rf, e, rf, -e;
-  VectorXd sf(NfqNfaces); sf << -e, rf, e, rf;
-  VectorXd tf(NfqNfaces); tf << -e, rf, e, rf;  
-  VectorXd wf(NfqNfaces); wf << wq1D, wq1D, wq1D, wq1D;
-  
+  VectorXd rf(NfqNfaces); rf << -e, e, rq2, rq2, rq2, rq2;
+  VectorXd sf(NfqNfaces); sf << rq2, rq2, -e, e, sq2, sq2;
+  VectorXd tf(NfqNfaces); tf << sq2, sq2, sq2, sq2, -e, e;
+  VectorXd wf(NfqNfaces); wf << wq2, wq2, wq2, wq2, wq2, wq2;  
   
   // interp to quadrature
   MatrixXd Vqtmp = Vandermonde3DQuad(N,rq,sq,tq);
@@ -517,26 +524,30 @@ void InitRefData3d(Mesh *mesh, int N){
   MatrixXd Vf1D = mrdivide(Vf1Dtmp,Vq1D);
 
   mesh->N = N;
-  mesh->Np = Np1*Np1;
-  mesh->Nfp = Np1;
+  mesh->Np = Np3;
+  mesh->Nfp = Np2;
   mesh->Nfaces = Nfaces;
   mesh->Nverts = 8;
 
   // GLL nodes (for geofacs)
   mesh->r = r;
-  mesh->s = s;  
+  mesh->s = s;
+  mesh->t = t;    
   mesh->Dr = Dr;
   mesh->Ds = Ds;
+  mesh->Dt = Dt;  
   mesh->V = V;
 
   // interp to vol/face nodes
   mesh->rq = rq;
   mesh->sq = sq;
+  mesh->tq = tq;  
   mesh->wq = wq;  
   mesh->Vq = Vq;
 
   mesh->rf = rf;
   mesh->sf = sf;
+  mesh->tf = tf;  
   mesh->wf = wf;    
   mesh->Vf = Vf;
 
@@ -558,7 +569,7 @@ void InitRefData3d(Mesh *mesh, int N){
   //cout << "D1D = " << mesh->D1D << endl;
   //  cout << "Vf1D = " << mesh->Vf1D << endl;
   //cout << "Lf1D = " << mesh->Lf1D << endl;   
-  mesh->wq1D = wq1D;
+  //mesh->wq1D = wq1D;
 
   // LSRK-45 coefficients
   mesh->rk4a.resize(5);
@@ -584,6 +595,283 @@ void InitRefData3d(Mesh *mesh, int N){
   mesh->rk4c(5) =              1.0;
   
 }
+
+
+// computes physical nodal position based on affine 
+void MapNodes3d(Mesh *mesh){
+  int Nfaces = mesh->Nfaces;
+  int K = mesh->K;
+  int Nv = mesh->Nv;
+  MatrixXi EToV = mesh->EToV;
+
+  VectorXd VX = mesh->VX;
+  VectorXd VY = mesh->VY;
+  VectorXd VZ = mesh->VZ;    
+ 
+  MatrixXd x1(EToV.cols(),K);
+  MatrixXd y1(EToV.cols(),K);
+  MatrixXd z1(EToV.cols(),K);    
+  for (int e = 0; e < K; ++e){
+    for (int v = 0; v < EToV.cols(); ++v){
+      int vid = EToV(e,v);
+      x1(v,e) = VX(vid);
+      y1(v,e) = VY(vid);
+      z1(v,e) = VZ(vid);            
+    }
+  }
+  // interp to high order GLL nodes (matlab ordering)
+  VectorXd r1(8),s1(8),t1(8);
+  r1 << -1.0, -1.0, 1.0, 1.0, -1.0, -1.0, 1.0, 1.0;
+  s1 << -1.0, 1.0, -1.0, 1.0, -1.0, 1.0, -1.0, 1.0;  
+  t1 << -1.0, -1.0, -1.0, -1.0, 1.0, 1.0, 1.0, 1.0;  
+
+  VectorXd r = mesh->r;
+  VectorXd s = mesh->s;
+  VectorXd t = mesh->t;  
+  
+  MatrixXd Vdm1 = Vandermonde3DQuad(1,r1,s1,t1);
+  MatrixXd VdmN = Vandermonde3DQuad(1,r,s,t);
+  //cout << "Vdm1 = " << Vdm1 << endl;
+  MatrixXd V1 = mrdivide(VdmN,Vdm1);
+
+  MatrixXd x = V1*x1;
+  MatrixXd y = V1*y1;
+  MatrixXd z = V1*z1;  
+  mesh->x = x;
+  mesh->y = y;
+  mesh->z = z;
+
+  /*cout << "VX = [" << VX << "];" << endl;
+  cout << "VY = [" << VY << "];" << endl;
+  cout << "VZ = [" << VZ << "];" << endl;
+  cout << "x1 = [" << x1 << "];" << endl;
+  cout << "y1 = [" << y1 << "];" << endl;
+  cout << "z1 = [" << z1 << "];" << endl;  
+  cout << "x = [" << x << "];" << endl;
+  cout << "y = [" << y << "];" << endl;
+  cout << "z = [" << z << "];" << endl;  */
+
+}
+
+// use Kopriva interpolation trick at GLL points
+// - guarantees GCL on uniform p meshes
+
+void GeometricFactors3d(Mesh *mesh){
+
+  int Nfaces = mesh->Nfaces;
+  int K = mesh->K;
+  int Nv = mesh->Nv;
+
+  MatrixXd x = mesh->x;
+  MatrixXd y = mesh->y;
+  MatrixXd z = mesh->z;  
+
+  // compute geofacs
+  MatrixXd Dr = mesh->Dr;
+  MatrixXd Ds = mesh->Ds;
+  MatrixXd Dt = mesh->Dt;
+
+  MatrixXd xr = Dr*x;  MatrixXd xs = Ds*x;  MatrixXd xt = Dt*x;
+  MatrixXd yr = Dr*y;  MatrixXd ys = Ds*y;  MatrixXd yt = Dt*y;  
+  MatrixXd zr = Dr*z;  MatrixXd zs = Ds*z;  MatrixXd zt = Dt*z;  
+
+  // use curl-conservative form to compute GCL-satisfying geofacs
+  MatrixXd rxJ = Dt * (ys.array()*z.array()).matrix() - Ds * (yt.array()*z.array()).matrix();
+  MatrixXd sxJ = Dr * (yt.array()*z.array()).matrix() - Dt * (yr.array()*z.array()).matrix();
+  MatrixXd txJ = Ds * (yr.array()*z.array()).matrix() - Dr * (ys.array()*z.array()).matrix();  
+
+  MatrixXd ryJ = -(Dt * (xs.array()*z.array()).matrix() - Ds * (xt.array()*z.array()).matrix());
+  MatrixXd syJ = -(Dr * (xt.array()*z.array()).matrix() - Dt * (xr.array()*z.array()).matrix());
+  MatrixXd tyJ = -(Ds * (xr.array()*z.array()).matrix() - Dr * (xs.array()*z.array()).matrix());  
+
+  MatrixXd rzJ = -(Dt * (ys.array()*x.array()).matrix() - Ds * (yt.array()*x.array()).matrix());
+  MatrixXd szJ = -(Dr * (yt.array()*x.array()).matrix() - Dt * (yr.array()*x.array()).matrix());
+  MatrixXd tzJ = -(Ds * (yr.array()*x.array()).matrix() - Dr * (ys.array()*x.array()).matrix());  
+  
+  MatrixXd J =
+    xr.array()*(ys.array()*zt.array() - zs.array()*yt.array())
+    - yr.array()*(xs.array()*zt.array() - zs.array()*xt.array())
+    - zr.array()*(xs.array()*yt.array() - ys.array()*xt.array());
+
+  // all quantities stored at GLL points (must interp before using)
+  mesh->x = x;
+  mesh->y = y;
+  mesh->rxJ = rxJ;
+  mesh->sxJ = sxJ;
+  mesh->ryJ = ryJ;
+  mesh->syJ = syJ;
+  mesh->J = J;
+  
+}
+
+
+void Normals3d(Mesh *mesh){
+
+  MatrixXd Vf = mesh->Vf;
+  MatrixXd rxJf = Vf*mesh->rxJ;
+  MatrixXd sxJf = Vf*mesh->sxJ;
+  MatrixXd txJf = Vf*mesh->txJ;  
+
+  MatrixXd ryJf = Vf*mesh->ryJ;
+  MatrixXd syJf = Vf*mesh->syJ;
+  MatrixXd tyJf = Vf*mesh->tyJ;
+  
+  MatrixXd rzJf = Vf*mesh->rzJ;
+  MatrixXd szJf = Vf*mesh->szJ;
+  MatrixXd tzJf = Vf*mesh->tzJ;    
+
+  int Nfaces = mesh->Nfaces;
+  int Nfp = mesh->Nfp;
+  VectorXd e(Nfp); e.fill(1.0);
+  VectorXd zz(Nfp); zz.fill(0.0);  
+  VectorXd nrJ(Vf.rows()); nrJ << -e, e, zz, zz, zz, zz;
+  VectorXd nsJ(Vf.rows()); nsJ << zz, zz, -e,e , zz, zz;
+  VectorXd ntJ(Vf.rows()); nrJ << zz, zz, zz, zz, -e, e;    
+
+  MatrixXd nxJ = nrJ.asDiagonal()*rxJf + nsJ.asDiagonal()*sxJf + ntJ.asDiagonal()*txJf;
+  MatrixXd nyJ = nrJ.asDiagonal()*ryJf + nsJ.asDiagonal()*syJf + ntJ.asDiagonal()*tyJf;
+  MatrixXd nzJ = nrJ.asDiagonal()*rzJf + nsJ.asDiagonal()*szJf + ntJ.asDiagonal()*tzJf;
+  MatrixXd sJ = (nxJ.array().square() + nyJ.array().square() + nzJ.array().square()).sqrt();
+
+  mesh->nxJ = nxJ;
+  mesh->nyJ = nyJ;
+  mesh->nzJ = nzJ;  
+  mesh->sJ = sJ;  
+}
+
+
+void MakeNodeMapsPeriodic3d(Mesh *mesh, MatrixXd xf, MatrixXd yf, MatrixXd zf,
+			    double DX, double DY, double DZ, MatrixXi &mapP){
+  
+  int Nfp = mesh->Nfp;
+  int Nfaces = mesh->Nfaces;
+  int K = mesh->K;
+
+  xf.resize(Nfp,Nfaces*K);
+  yf.resize(Nfp,Nfaces*K);
+  zf.resize(Nfp,Nfaces*K);    
+  vector<pair<int,int> > xfaces,yfaces,zfaces;  
+  for (int f1 = 0; f1 < Nfaces*K; ++f1){
+    for (int f2 = 0; f2 < Nfaces*K; ++f2){
+
+      // distance b/w faces = diff b/w min/max coeffs 
+      double dx = .5*(fabs(xf.col(f1).maxCoeff()-xf.col(f2).maxCoeff())
+		      + fabs(xf.col(f1).minCoeff()-xf.col(f2).minCoeff()));
+      double dy = .5*(fabs(yf.col(f1).maxCoeff()-yf.col(f2).maxCoeff())
+		      + fabs(yf.col(f1).minCoeff()-yf.col(f2).minCoeff()));
+      double dz = .5*(fabs(zf.col(f1).maxCoeff()-zf.col(f2).maxCoeff())
+		      + fabs(zf.col(f1).minCoeff()-zf.col(f2).minCoeff()));
+      
+      if ((fabs(dx-DX)<NODETOL) & (dy < NODETOL) & (dz < NODETOL)){
+	xfaces.push_back(make_pair(f1,f2)); 
+      }else if ((fabs(dy-DY)<NODETOL) & (dx < NODETOL) & (dz < NODETOL)){
+	yfaces.push_back(make_pair(f1,f2)); 
+      }else if ((fabs(dz-DZ)<NODETOL) & (dx < NODETOL) & (dy < NODETOL)){
+	zfaces.push_back(make_pair(f1,f2));
+      }
+    }
+  }
+  printf("num xfaces = %d, num yfaces = %d, num zfaces = %d\n",xfaces.size(),yfaces.size(),zfaces.size());
+  //  cout << "xf = " << xf << endl;
+  //  cout << "yf = " << yf << endl;
+  //  return;
+
+  // find node maps in x  
+  for (int f = 0; f < xfaces.size(); ++f){
+    int f1 = xfaces[f].first;
+    int f2 = xfaces[f].second;
+    for (int i = 0; i < Nfp; ++i){
+      int idM = i + f1*Nfp;
+      double yM = yf(idM);
+      double zM = zf(idM);
+
+      bool match_found = false;	      
+
+      for (int j = 0; j < Nfp; ++j){
+	int idP = j + f2*Nfp;
+	double yP = yf(idP);
+	double zP = zf(idP);	
+
+	double dist = fabs(yM-yP) + fabs(zM-zP);
+
+	if (dist < NODETOL){
+	  mapP(idM) = idP;
+	  match_found = true;
+	  break;	  
+	}
+
+      }
+      if (match_found==false){
+	printf("Match not found for xface\n");
+      }
+    }
+  }
+
+  // find node maps in y
+  for (int f = 0; f < yfaces.size(); ++f){
+    int f1 = yfaces[f].first;
+    int f2 = yfaces[f].second;
+    for (int i = 0; i < Nfp; ++i){
+      int idM = i + f1*Nfp;
+      double xM = xf(idM);
+      double zM = zf(idM);      
+
+      bool match_found = false;
+      
+      for (int j = 0; j < Nfp; ++j){
+	int idP = j + f2*Nfp;
+	double xP = xf(idP);
+	double zP = zf(idP);      
+
+	double dist = fabs(xM-xP) + fabs(zM-zP);	
+	if (dist < NODETOL){
+	  mapP(idM) = idP;
+	  match_found=true;
+	  break;
+	}
+      }
+      if (match_found==false){
+	printf("Match not found for yface\n");
+      }
+
+    }
+  }
+
+  // find node maps in z
+  for (int f = 0; f < zfaces.size(); ++f){
+    int f1 = zfaces[f].first;
+    int f2 = zfaces[f].second;
+    for (int i = 0; i < Nfp; ++i){
+      int idM = i + f1*Nfp;
+      double xM = xf(idM);
+      double yM = yf(idM);      
+
+      bool match_found = false;
+      for (int j = 0; j < Nfp; ++j){
+	int idP = j + f2*Nfp;
+	double xP = xf(idP);
+	double yP = yf(idP);      
+
+	double dist = fabs(xM-xP) + fabs(yM-yP);	
+	if (dist < NODETOL){
+	  mapP(idM) = idP;
+	  match_found = true;
+	  break;
+	}
+      }
+      if (match_found==false){
+	printf("Match not found for zface\n");
+      }
+
+    }
+  }
+  
+  printf("Done making node maps periodic\n");
+  
+}
+
+
+
 
 // ======== dimension independent routines ============
 
@@ -704,13 +992,13 @@ void ConnectElems(Mesh *mesh, int dim){
     // faces ordered: r -/+, s -/+, t -/+
     // assume nodes = matlab meshgrid ordering
     /*
-      .    6-----8
+      .    5-----7
       .   /|    /|
-      .  5-|---7 |
+      .  4-|---6 |
       .  | |   | |
-      .  | 2---|-4
+      .  | 1---|-3
       .  |/    |/
-      .  1-----3
+      .  0-----2
      */
     // face ordering: right hand rule for outward normal (start shouldn't matter?)
     /*
@@ -722,27 +1010,32 @@ void ConnectElems(Mesh *mesh, int dim){
       7,8,6,5;
     */
     fvlist << 0,4,5,1,
-      3,7,6,3,
+      3,7,6,2,
       2,6,4,0,
       1,5,7,3,
       0,1,3,2,
       6,7,5,4;
   }
+  //cout << "fvlist = " << fvlist << endl;
+  
   int Nfaceverts = fvlist.cols();
 
   // if K too large this can fail.
   vector<pair<vector<int>, int> > faceInfo;
 
+  //cout << "K = " << K << endl;
+  
   ulint i = 0;
   for (int f = 0; f < Nfaces; ++f){
     for (int e = 0; e < K; ++e){
       vector<int> fv; 
       for (int v = 0; v < Nfaceverts; ++v){
+	//printf("e = %d, f = %d, v = %d: fv = %d\n",e,f,v,fvlist(f,v));
 	fv.push_back(EToV(e,fvlist(f,v)));
       }
       std::sort(fv.begin(),fv.end()); // sort fv (nodes on face)
       //cout << fv.size() << endl; 
-      //cout << fv[0] << ", " << fv[1] << endl;
+      //cout << fv[0] << ", " << fv[1] <<", " << fv[2] <<", " << fv[3] << endl;
       
       faceInfo.push_back(make_pair(fv,i));
       ++i;

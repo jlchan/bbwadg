@@ -111,7 +111,135 @@ void setupOccaMesh2d(Mesh *mesh, App *app){
   //cout << "Lf1D = " << mesh->Lf1D.col(0) << endl;
   
 }
+
+
+// sets up mesh-based occa parameters
+void setupOccaMesh3d(Mesh *mesh, App *app){
+
+  app->device.setup("mode: 'Serial'");
+  // app->device.setup("mode: 'CUDA', deviceID: 0");
+
+  app->props = occa::getKernelProperties();
+
+  app->props["defines/p_Np"] = mesh->Np; // number of dims
+  app->props["defines/p_Np1"] = mesh->N + 1;  // (N+1)
+  app->props["defines/p_Np2"] = (mesh->N + 1)*(mesh->N + 1);  // (N+1)
+  app->props["defines/p_Np3"] = (mesh->N + 1)*(mesh->N + 1)*(mesh->N + 1);  // (N+1)  
   
+  app->props["defines/p_Nfaces"] = mesh->Nfaces;
+  app->props["defines/p_Nfp"] = mesh->Nfp;
+  app->props["defines/p_NfpNfaces"] = mesh->Nfp * mesh->Nfaces;
+  app->props["defines/p_T"] = max(mesh->Nfp * mesh->Nfaces,mesh->Np);
+
+  int Nvgeo = 9; 
+  int Nfgeo = 4; 
+  app->props["defines/p_Nvgeo"] = Nvgeo;
+  app->props["defines/p_Nfgeo"] = Nfgeo;
+
+  // switch dfloat type (double/float) in types.h
+  if (sizeof(dfloat)==4){
+    app->props["defines/USE_DOUBLE"] = 0;
+  }else{
+    app->props["defines/USE_DOUBLE"] = 1;
+  }
+
+  // allocate space for geofaces
+  int K = mesh->K;
+  int Np = mesh->Np;
+  int NfpNfaces = (mesh->Nfp)*(mesh->Nfaces);  
+
+  // interpolate to quad pts and store
+  MatrixXd Vq   = mesh->Vq;
+  MatrixXd rxJq = Vq*(mesh->rxJ);
+  MatrixXd sxJq = Vq*(mesh->sxJ);
+  MatrixXd txJq = Vq*(mesh->txJ);  
+  MatrixXd ryJq = Vq*(mesh->ryJ);
+  MatrixXd syJq = Vq*(mesh->syJ);
+  MatrixXd tyJq = Vq*(mesh->tyJ);  
+  MatrixXd rzJq = Vq*(mesh->rzJ);
+  MatrixXd szJq = Vq*(mesh->szJ);
+  MatrixXd tzJq = Vq*(mesh->tzJ);  
+  MatrixXd Jq   = Vq*(mesh->J); // interp: may lose some accuracy
+
+  MatrixXd vgeo(Nvgeo*(mesh->Vq.rows()),K);  
+  vgeo << rxJq,
+    ryJq,
+    rzJq,
+    sxJq,
+    syJq,
+    szJq,
+    txJq,
+    tyJq,
+    tzJq,
+    Jq;	  
+
+  // interp to face values 
+  MatrixXd Vf   = mesh->Vf;
+  MatrixXd rxJf = Vf*(mesh->rxJ);
+  MatrixXd sxJf = Vf*(mesh->sxJ);
+  MatrixXd txJf = Vf*(mesh->txJ);  
+  MatrixXd ryJf = Vf*(mesh->ryJ);
+  MatrixXd syJf = Vf*(mesh->syJ);
+  MatrixXd tyJf = Vf*(mesh->tyJ);  
+  MatrixXd rzJf = Vf*(mesh->rzJ);
+  MatrixXd szJf = Vf*(mesh->szJ);
+  MatrixXd tzJf = Vf*(mesh->tzJ);  
+  MatrixXd Jf   = Vf*(mesh->J); // this may not be accurate. I don't think I use though.
+  MatrixXd vfgeo(Nvgeo*(Vf.rows()),K);
+  vfgeo << rxJf,
+    ryJf,
+    rzJf,
+    sxJf,
+    syJf,
+    szJf,
+    txJf,
+    tyJf,
+    tzJf,
+    Jf;	  
+  
+  // normals computed at face quad points already
+  MatrixXd fgeo(Nfgeo*(mesh->Vf.rows()),K);
+  fgeo << mesh->nxJ,
+    mesh->nyJ,
+    mesh->nzJ,    
+    mesh->sJ;
+
+  // init rhs, res, Qf to zero
+  int Nfields = mesh->Nfields;
+  MatrixXd rhs(Nfields*Np,K), res(Nfields*Np,K);
+  rhs.fill(0.0);
+  res.fill(0.0);
+  MatrixXd Qf(Nfields*NfpNfaces,K),rhsf(Nfields*NfpNfaces,K);
+  Qf.fill(0.0);
+  rhsf.fill(0.0);  
+
+  setOccaArray(app, rhs, app->o_rhs);
+  setOccaArray(app, res, app->o_res);  
+
+  setOccaArray(app, Qf,  app->o_Qf);
+  setOccaArray(app, rhsf,  app->o_rhsf);
+  
+  setOccaArray(app, vgeo, app->o_vgeo);
+  setOccaArray(app, vfgeo, app->o_vfgeo);  
+  setOccaArray(app, fgeo, app->o_fgeo);
+
+  // correct for Nfields > 1
+  MatrixXi mapPqNfields(NfpNfaces,K);
+  for (int i = 0; i < NfpNfaces*K; ++i){
+    int idP = mesh->mapPq(i);
+    int e = idP / NfpNfaces;
+    int fidP = idP % NfpNfaces;
+    mapPqNfields(i) = fidP + e*NfpNfaces*Nfields;
+  }
+  setOccaIntArray(app, mapPqNfields, app->o_mapPq);
+
+  setOccaArray(app, mesh->D1D, app->o_D1D); 
+  setOccaArray(app, mesh->Vf1D.row(0), app->o_Vf1D); // Vf1D rows 1,2 = mirror images
+  setOccaArray(app, mesh->Lf1D.col(0), app->o_Lf1D); // Lf1D cols 1,2 = mirror images  
+  
+}
+
+
 // set occa array:: cast to dfloat
 void setOccaArray(App *app, MatrixXd A, occa::memory &c_A){
   int r = A.rows();

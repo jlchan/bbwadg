@@ -71,7 +71,7 @@ int main(int argc, char **argv){
 
   double DX = mesh->VX.maxCoeff()-mesh->VX.minCoeff();
   double DY = mesh->VY.maxCoeff()-mesh->VY.minCoeff();
-  MakeNodeMapsPeriodic2D(mesh,xf,yf,DX,DY,mapPq);
+  MakeNodeMapsPeriodic2d(mesh,xf,yf,DX,DY,mapPq);
   mesh->mapPq = mapPq;
 
   //  cout << "xf = [" << xf << "];" << endl;
