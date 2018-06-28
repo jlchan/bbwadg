@@ -20,7 +20,6 @@ static void VortexSolution2d(MatrixXd x,MatrixXd y,double t,
   rho = 1.0 - (1.0/(8.0*GAMMA*PI*PI))*(GAMMA-1.0)/2.0*(beta*exp_r2.array()).square();
   rho = rho.array().pow(1.0/(GAMMA-1.0));
   p   = rho.array().pow(GAMMA);
-
 }
 
 int main(int argc, char **argv){
