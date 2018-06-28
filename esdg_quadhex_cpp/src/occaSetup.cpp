@@ -1,6 +1,6 @@
+#include "dfloat.h"
 #include "fem.h"
 //#include "types.h"
-#include "dfloat.h"
 
 // may want to generalize later to multiple devices...
 
@@ -10,7 +10,7 @@ void setupOccaMesh2d(Mesh *mesh, App *app){
   app->device.setup("mode: 'Serial'");
   // app->device.setup("mode: 'CUDA', deviceID: 0");
 
-  app->props = occa::getKernelProperties();
+  app->props = occa::getKernelProperties(); //props;
 
   app->props["defines/p_Np"] = mesh->Np; // number of dims
   app->props["defines/p_Np1"] = mesh->N + 1;  // (N+1)

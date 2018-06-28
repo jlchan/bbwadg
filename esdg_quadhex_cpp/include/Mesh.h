@@ -89,7 +89,7 @@ typedef struct foo {
 
 
 // struct for occa arrays, kernels, etc
-typedef struct bar {
+typedef struct foobar {
 
   occa::device device;
   occa::properties props; 
@@ -101,7 +101,6 @@ typedef struct bar {
   occa::memory o_vgeo, o_vfgeo, o_fgeo; // geometric terms
   occa::memory o_rhs, o_rhsf, o_res; // rhs and RK residual
   occa::memory o_mapPq; // node map
-
   
 }App;
 

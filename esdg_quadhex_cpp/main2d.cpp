@@ -29,7 +29,8 @@ int main(int argc, char **argv){
   int N = 1;
   int K1D = 2;
   
-  Mesh *mesh = (Mesh*) calloc(1, sizeof(Mesh));  
+  //Mesh *mesh = (Mesh*) calloc(1, sizeof(Mesh));
+  Mesh *mesh = new Mesh;
   QuadMesh2d(mesh,2*K1D,K1D); // make Cartesian mesh
 
   // [0,20] x [-5,5] for vortex
@@ -88,7 +89,9 @@ int main(int argc, char **argv){
   int Nfields = 4; 
   mesh->Nfields = Nfields;
   
-  App *app = (App*) calloc(1, sizeof(App));
+  //App *app = (App*) calloc(1, sizeof(App));
+  App *app = new App;
+ 
   setupOccaMesh2d(mesh,app); // build mesh geofacs
 
   app->props["defines/p_gamma"] = GAMMA;
