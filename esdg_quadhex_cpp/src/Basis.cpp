@@ -809,8 +809,9 @@ void JacobiGL(int N, int alpha_int, int beta_int, VectorXd &r){
     r(1) = 1.0;
     return;
   }
+
   VectorXd rint, wint;
-  JacobiGQ(N-2,alpha+1,beta+1,rint,wint);
+  JacobiGQ(N-2,alpha_int+1,beta_int+1,rint,wint);
   for (int i = 0; i < rint.size(); ++i){
     r(i+1) = rint(i);
   }
@@ -855,8 +856,8 @@ void JacobiGQ(int N, int alpha_int, int beta_int, VectorXd &r, VectorXd &w){
   MatrixXd V = eig.eigenvectors();
   r = eig.eigenvalues();
 
-  double gamma_alpha = factorial(alpha-1);
-  double gamma_beta = factorial(alpha-1);
+  //double gamma_alpha = factorial(alpha-1);
+  //double gamma_beta = factorial(alpha-1);
 
   // assumes alpha,beta = int so gamma(x) = factorial(x-1)
   w = V.row(0).array().square() * pow(2.0,alpha+beta+1.0) / (alpha+beta+1) *

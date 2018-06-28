@@ -20,6 +20,8 @@ void InitRefData2d(Mesh *mesh, int N){
   // quad points 
   VectorXd rq1D, wq1D;
   JacobiGQ(N, 0, 0, rq1D, wq1D);
+
+  //cout << "rq,wq for GQ = " << rq1D << ", " << wq1D << endl;
   
   meshgrid(rq1D,rq1D, rmat,smat);
   VectorXd rq = Map<VectorXd>(rmat.data(), rmat.cols()*rmat.rows());
@@ -125,7 +127,7 @@ void InitRefData2d(Mesh *mesh, int N){
   mesh->rk4b(3) =  3134564353537.0 /  4481467310338.0;
   mesh->rk4b(4) =  2277821191437.0 / 14882151754819.0;
 
-  mesh->rk4c.resize(5);
+  mesh->rk4c.resize(6);
   mesh->rk4c(0) =              0.0;
   mesh->rk4c(1) =  1432997174477.0 / 9575080441755.0;
   mesh->rk4c(2) =  2526269341429.0 / 6820363962896.0;

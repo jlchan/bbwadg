@@ -26,8 +26,8 @@ int main(int argc, char **argv){
 
   //occa::printModeInfo();
 
-  int N = 6;
-  int K1D = 8;
+  int N = 1;
+  int K1D = 2;
   
   Mesh *mesh = (Mesh*) calloc(1, sizeof(Mesh));  
   QuadMesh2d(mesh,2*K1D,K1D); // make Cartesian mesh
@@ -183,7 +183,8 @@ int main(int argc, char **argv){
   return 0;
 #endif 
   
-  int interval = ceil(Nsteps/10);
+  int interval = max((int) ceil(Nsteps/10),1);
+  printf("Interval = %d\n",interval);
   int NINT = mesh->rk4a.size();
   for (int i = 0; i < Nsteps; ++i){
     for (int INTRK = 0; INTRK < NINT; ++INTRK){
