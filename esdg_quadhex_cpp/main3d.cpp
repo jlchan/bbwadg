@@ -6,11 +6,11 @@ int main(int argc, char **argv){
 
   //occa::printModeInfo();
 
-  int N = 1;
-  int K1D = 1;
+  int N = 2;
+  int K1D = 2;
   
   Mesh *mesh = (Mesh*) calloc(1, sizeof(Mesh));  
-  HexMesh3d(mesh,1,1,1); // make Cartesian mesh
+  HexMesh3d(mesh,K1D,K1D,K1D); // make Cartesian mesh
 
 #if 0
   // [0,20] x [-5,5] for vortex
@@ -75,19 +75,30 @@ int main(int argc, char **argv){
 
   // build occa kernels
   string path = "okl/Euler3D.okl";
-  //  app->volume = app->device.buildKernel(path.c_str(),"volume",app->props);
-  //  app->surface = app->device.buildKernel(path.c_str(),"surface",app->props);
-  //  app->update = app->device.buildKernel(path.c_str(),"update",app->props);
+  app->volume = app->device.buildKernel(path.c_str(),"volume",app->props);
+  app->surface = app->device.buildKernel(path.c_str(),"surface",app->props);
+  app->update = app->device.buildKernel(path.c_str(),"update",app->props);
   app->eval_surface = app->device.buildKernel(path.c_str(),"eval_surface",app->props);  
-
+  
+#if 1
+  // testing
   app->eval_surface(K,app->o_Vf1D,app->o_Q,app->o_Qf);
 
-#if 0
+  app->volume(K,app->o_vgeo, app->o_vfgeo,
+	      app->o_D1D, app->o_Vf1D, app->o_Lf1D,
+	      app->o_Q,app->o_Qf,app->o_rhs,app->o_rhsf);
+  
+  app->surface(K,app->o_vgeo,app->o_fgeo,app->o_mapPq,app->o_Lf1D,
+	       app->o_Qf,app->o_rhsf,app->o_rhs);
+  
   MatrixXd Qf(Nfields*NfpNfaces,K);
   getOccaArray(app,app->o_Q,Q);
   getOccaArray(app,app->o_Qf,Qf);
-  cout << "Q = " << endl << Q << endl;
-  cout << "Qf = " << endl << Qf << endl; 
+  MatrixXd rhs(Nfields*Np,K);    
+  getOccaArray(app,app->o_rhs,rhs);  
+  //  cout << "Q = " << endl << Q << endl;
+  //cout << "Qf = " << endl << Qf << endl;
+  cout << "rhs = " << endl << rhs << endl;   
   return 0;
 #endif
   

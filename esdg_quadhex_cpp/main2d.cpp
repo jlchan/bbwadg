@@ -27,8 +27,8 @@ int main(int argc, char **argv){
 
   //occa::printModeInfo();
 
-  int N = 4;
-  int K1D = 16;
+  int N = 6;
+  int K1D = 8;
   
   Mesh *mesh = (Mesh*) calloc(1, sizeof(Mesh));  
   QuadMesh2d(mesh,2*K1D,K1D); // make Cartesian mesh
@@ -174,7 +174,7 @@ int main(int argc, char **argv){
   getOccaArray(app,app->o_rhs,Q);
   //cout << "vol only rhs = " << endl << Q << endl;
   
-  app->surface(K, app->o_fgeo, app->o_mapPq,
+  app->surface(K, app->o_vgeo, app->o_fgeo, app->o_mapPq,
 	       app->o_Lf1D, app->o_Qf, app->o_rhsf,
 	       app->o_rhs); 
   
@@ -198,15 +198,17 @@ int main(int argc, char **argv){
 		  app->o_Q, app->o_Qf,
 		  app->o_rhs, app->o_rhsf);
 
-      app->surface(K, app->o_fgeo, app->o_mapPq,
+      app->surface(K, app->o_vgeo, app->o_fgeo, app->o_mapPq,
 		   app->o_Lf1D, app->o_Qf, app->o_rhsf,
 		   app->o_rhs); 
       
       //      getOccaArray(app,app->o_rhs,Q);
       //      cout << "rhs = " << endl << Q << endl;
       
-      app->update(K, fa, fb, fdt, app->o_vgeo, app->o_Vf1D, 
-		  app->o_Q, app->o_Qf, app->o_rhs, app->o_res);      
+      app->update(K, fa, fb, fdt,
+		  app->o_Q, app->o_rhs, app->o_res);
+
+      app->eval_surface(K, app->o_Vf1D,app->o_Q, app->o_Qf);
     }
 
     if (i % interval == 0){

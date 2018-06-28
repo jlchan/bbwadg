@@ -264,8 +264,6 @@ void GeometricFactors2d(Mesh *mesh){
   */
 
   // all quantities stored at GLL points (must interp before using)
-  mesh->x = x;
-  mesh->y = y;
   mesh->rxJ = rxJ;
   mesh->sxJ = sxJ;
   mesh->ryJ = ryJ;
@@ -660,7 +658,6 @@ void GeometricFactors3d(Mesh *mesh){
 
   int Nfaces = mesh->Nfaces;
   int K = mesh->K;
-  int Nv = mesh->Nv;
 
   MatrixXd x = mesh->x;
   MatrixXd y = mesh->y;
@@ -694,13 +691,28 @@ void GeometricFactors3d(Mesh *mesh){
     - zr.array()*(xs.array()*yt.array() - ys.array()*xt.array());
 
   // all quantities stored at GLL points (must interp before using)
-  mesh->x = x;
-  mesh->y = y;
   mesh->rxJ = rxJ;
   mesh->sxJ = sxJ;
+  mesh->txJ = txJ;  
   mesh->ryJ = ryJ;
   mesh->syJ = syJ;
+  mesh->tyJ = tyJ;  
+  mesh->rzJ = rzJ;
+  mesh->szJ = szJ;
+  mesh->tzJ = tzJ;  
   mesh->J = J;
+
+#if 0
+  for (int e = 0; e < K; ++e){
+    for (int i = 0; i < rxJ.rows(); ++i){
+      printf("geo = %f, %f, %f, %f, %f, %f, %f, %f, %f\n",
+	     rxJ(i,e),sxJ(i,e),txJ(i,e),
+	     ryJ(i,e),syJ(i,e),tyJ(i,e),
+	     rzJ(i,e),szJ(i,e),tzJ(i,e));	     
+
+    }
+  }
+#endif
   
 }
 
@@ -708,17 +720,17 @@ void GeometricFactors3d(Mesh *mesh){
 void Normals3d(Mesh *mesh){
 
   MatrixXd Vf = mesh->Vf;
-  MatrixXd rxJf = Vf*mesh->rxJ;
-  MatrixXd sxJf = Vf*mesh->sxJ;
-  MatrixXd txJf = Vf*mesh->txJ;  
+  MatrixXd rxJf = Vf * mesh->rxJ;
+  MatrixXd sxJf = Vf * mesh->sxJ;
+  MatrixXd txJf = Vf * mesh->txJ;  
 
-  MatrixXd ryJf = Vf*mesh->ryJ;
-  MatrixXd syJf = Vf*mesh->syJ;
-  MatrixXd tyJf = Vf*mesh->tyJ;
+  MatrixXd ryJf = Vf * mesh->ryJ;
+  MatrixXd syJf = Vf * mesh->syJ;
+  MatrixXd tyJf = Vf * mesh->tyJ;
   
-  MatrixXd rzJf = Vf*mesh->rzJ;
-  MatrixXd szJf = Vf*mesh->szJ;
-  MatrixXd tzJf = Vf*mesh->tzJ;    
+  MatrixXd rzJf = Vf * mesh->rzJ;
+  MatrixXd szJf = Vf * mesh->szJ;
+  MatrixXd tzJf = Vf * mesh->tzJ;    
 
   int Nfaces = mesh->Nfaces;
   int Nfp = mesh->Nfp;
@@ -726,7 +738,11 @@ void Normals3d(Mesh *mesh){
   VectorXd zz(Nfp); zz.fill(0.0);  
   VectorXd nrJ(Vf.rows()); nrJ << -e, e, zz, zz, zz, zz;
   VectorXd nsJ(Vf.rows()); nsJ << zz, zz, -e,e , zz, zz;
-  VectorXd ntJ(Vf.rows()); nrJ << zz, zz, zz, zz, -e, e;    
+  VectorXd ntJ(Vf.rows()); ntJ << zz, zz, zz, zz, -e, e;
+
+  //  for (int i = 0; i < Nfp*Nfaces; ++i){
+  //    printf("nrstJ = %f, %f, %f\n",nrJ(i),nsJ(i),ntJ(i));
+  //  }
 
   MatrixXd nxJ = nrJ.asDiagonal()*rxJf + nsJ.asDiagonal()*sxJf + ntJ.asDiagonal()*txJf;
   MatrixXd nyJ = nrJ.asDiagonal()*ryJf + nsJ.asDiagonal()*syJf + ntJ.asDiagonal()*tyJf;
@@ -736,7 +752,16 @@ void Normals3d(Mesh *mesh){
   mesh->nxJ = nxJ;
   mesh->nyJ = nyJ;
   mesh->nzJ = nzJ;  
-  mesh->sJ = sJ;  
+  mesh->sJ = sJ;
+
+#if 0
+  for (int e = 0; e < mesh->K; ++e){
+    for (int i = 0; i < nxJ.rows(); ++i){
+      printf("nxyzJ = %f, %f, %f, %f\n",nxJ(i,e),nyJ(i,e),nzJ(i,e),sJ(i,e));
+    }
+  }
+#endif
+  
 }
 
 

@@ -4,19 +4,22 @@ clear
 % useQuads = 1;mypath
 
 Globals2D;
-N = 1;
-K1D = 2;
+N = 4;
+K1D = 8;
 useSkew = 1;
-CFL = .25;
-FinalTime = 1;
+CFL = .5;
+FinalTime = 5;
 global tau
 tau = 1;
 
 % Read in Mesh
+% Lx = 1; Ly = 1; ratiox = 1; ratioy = 1;
+% [Nv, VX, VY, K, EToV] = QuadMesh2D(K1D);
+
 Lx = 10; Ly = 5; ratiox = 1; ratioy = Ly/Lx;
-%[Nv, VX, VY, K, EToV] = unif_tri_mesh(round(ratiox*K1D),round(K1D*ratioy));
 [Nv, VX, VY, K, EToV] = QuadMesh2D(round(ratiox*K1D),round(K1D*ratioy));
-VX = VX/max(abs(VX));  VY = VY/max(abs(VY));
+VX = VX/max(abs(VX)); VY = VY/max(abs(VY));
+% return
 VX = (VX+1)*Lx; VY = VY*Ly;
 
 % [Nv, VX, VY, K, EToV] = QuadMesh2D(K1D,K1D);
@@ -57,7 +60,7 @@ global mapPq
 
 % define vol quad pts
 [rq1D wq1D] = JacobiGQ(0,0,N);
-[sq rq] = meshgrid(rq1D);
+[rq sq] = meshgrid(rq1D);
 rq = rq(:); sq = sq(:);
 [ws wr] = meshgrid(wq1D); 
 wq = wr(:).*ws(:);
@@ -85,7 +88,8 @@ J = Vq*J;
 % wq1D = .5*[wq1D;wq1D];
 
 e = ones(size(rq1D));
-rfq = [rq1D; e; -rq1D; -e]; sfq = [-e; rq1D; e; -rq1D]; wfq = [wq1D; wq1D; wq1D; wq1D];
+%rfq = [rq1D; e; -rq1D; -e]; sfq = [-e; rq1D; e; -rq1D]; wfq = [wq1D; wq1D; wq1D; wq1D];
+rfq = [rq1D; e; rq1D; -e]; sfq = [-e; rq1D; e; rq1D]; wfq = [wq1D; wq1D; wq1D; wq1D];
 Vfqf = kron(eye(Nfaces),Vandermonde1D(N,rq1D)/Vandermonde1D(N,JacobiGL(0,0,N)));
 % rfq = [rq1D2; e; -rq1D2; -e]; sfq = [-e; rq1D; e; -rq1D]; wfq = [wq1D2; wq1D; wq1D2; wq1D];
 % Vfqf = blkdiag(Vandermonde1D(N,rq1D2)/Vandermonde1D(N,JacobiGL(0,0,N)),Vandermonde1D(N,rq1D)/Vandermonde1D(N,JacobiGL(0,0,N)),...
@@ -146,6 +150,15 @@ if useSkew
     DNr = diag(1./[wq;wfq])*QNrskew;
     DNs = diag(1./[wq;wfq])*QNsskew;    
 end
+
+Q1D = diag(wq1D)*(GradVandermonde1D(N,rq1D)/Vandermonde1D(N,rq1D));
+
+D1D = diag(1./wq1D)*(Q1D-Q1D');
+Vf1D = Vandermonde1D(N,[-1;1])/Vandermonde1D(N,JacobiGQ(0,0,N));
+Lf1D = diag(1./wq1D)*Vf1D';
+Drskew = diag(1./wq)*QNrskew(1:Np,1:Np);
+Dsskew = diag(1./wq)*QNsskew(1:Np,1:Np);
+u = reshape(rq,N+1,N+1);
 
 %% lightweight adaptive mesh data structures
 
@@ -348,7 +361,7 @@ xq = Vq*x; yq = Vq*y;
 xp = Vp*x; yp = Vp*y;
 xf = Vfq*x;    yf = Vfq*y;
 
-if 0
+if 1
     rp1D = linspace(-1,1,100)';
     Vp1D = Vandermonde1D(N,rp1D)/Vandermonde1D(N,JacobiGL(0,0,N));
     Vfp = kron(eye(Nfaces),Vp1D);
@@ -389,7 +402,7 @@ nyJ = ryJf.*nrJ + syJf.*nsJ;
 
 sJ = sqrt(nxJ.^2 + nyJ.^2);
 nx = nxJ./sJ; ny = nyJ./sJ;
-return
+% return
 % nx = nxJ./Jf;
 % ny = nyJ./Jf;
 % sJ = sqrt(nx.^2 + ny.^2);
@@ -469,6 +482,14 @@ rhou = Pq*(rhoq.*uq);
 rhov = Pq*(rhoq.*vq);
 E    = Pq*(pq/(gamma-1) + .5*rhoq.*(uq.^2+vq.^2));
 
+% rho(:) = 1;
+% rhou(:) = 1;
+% rhov(:) = 1;
+% E(:) = 2;
+% 
+% rho(:,1) = 1;
+% rho(:,2) = 2;
+
 rho = Vq*rho;
 rhou = Vq*rhou;
 rhov = Vq*rhov;
@@ -500,12 +521,18 @@ res3 = zeros(Nq,K);
 res4 = zeros(Nq,K);
 
 % compute time step size
-CN = (N+1)^2/2; % guessing...
+CN = 2*(N+1)*(N+2)/2; % guessing...
 CNh = max(CN*max(sJ(:)./Jf(:)));
 dt = CFL*2/CNh;
 
+h = 2/K1D;
+dt = CFL*h/CN;
+
 Nsteps = ceil(FinalTime/dt);
 dt = FinalTime/Nsteps;
+% Nsteps
+% dt
+% return
 
 figure(1)
 for i = 1:Nsteps
@@ -517,17 +544,21 @@ for i = 1:Nsteps
         q1 = V1(rho,rhou,rhov,E);
         q2 = V2(rho,rhou,rhov,E);
         q3 = V3(rho,rhou,rhov,E);
-        q4 = V4(rho,rhou,rhov,E);        
+        q4 = V4(rho,rhou,rhov,E);         
         q1M = VfPq*q1; 
         q2M = VfPq*q2;
         q3M = VfPq*q3;
         q4M = VfPq*q4; 
         
-        % evaluate 
+        % evaluate
         rhoM  = U1(q1M,q2M,q3M,q4M);
         rhouM = U2(q1M,q2M,q3M,q4M);
         rhovM = U3(q1M,q2M,q3M,q4M);
         EM    = U4(q1M,q2M,q3M,q4M);
+        
+%         [rho;rhou;rhov;E]
+%         [rhoM;rhouM;rhovM;EM]
+%         return        
         
         u = rhou./rho; 
         v = rhov./rho; 
@@ -535,7 +566,9 @@ for i = 1:Nsteps
         vM = rhovM./rhoM;
         
         % extra LF flux info        
-        [rhs1 rhs2 rhs3 rhs4]  = RHS2Dsimple(rho,u,v,E,rhoM,uM,vM,EM);        
+        [rhs1 rhs2 rhs3 rhs4]  = RHS2Dsimple(rho,u,v,E,rhoM,uM,vM,EM);                
+        -J(1)*[rhs1; rhs2; rhs3; rhs4]
+        return
         
         if (INTRK==5)
             rhstest(i) = 0;
@@ -599,12 +632,12 @@ Eq = Vq2*Pq*E;
 err = wJq2.*((rhoq-rhoex).^2 + (rhouq-rhouex).^2 + (rhovq-rhovex).^2 + (Eq-Eex).^2);
 L2err = sqrt(sum(err(:)))
 
-dS = abs(entropy-entropy(1));
-dS = entropy + max(abs(entropy));
-figure(2)
-semilogy(dt*(1:Nsteps),dS,'o--');hold on
-semilogy(dt*(1:Nsteps),abs(rhstest),'x--');hold on
-legend('dS','rhstest')
+% dS = abs(entropy-entropy(1));
+% dS = entropy + max(abs(entropy));
+% figure(2)
+% semilogy(dt*(1:Nsteps),dS,'o--');hold on
+% semilogy(dt*(1:Nsteps),abs(rhstest),'x--');hold on
+% legend('dS','rhstest')
 
 
 function [rhs1 rhs2 rhs3 rhs4] = RHS2Dsimple(rhoq,uq,vq,Eq,rhoM,uM,vM,EM)
@@ -671,10 +704,10 @@ fSf2 = nxJ(:).*fxS2(rhoM(:),uM(:),vM(:),EM(:),rhoP(:),uP(:),vP(:),EP(:)) + nyJ(:
 fSf3 = nxJ(:).*fxS3(rhoM(:),uM(:),vM(:),EM(:),rhoP(:),uP(:),vP(:),EP(:)) + nyJ(:).*fyS3(rhoM(:),uM(:),vM(:),EM(:),rhoP(:),uP(:),vP(:),EP(:));
 fSf4 = nxJ(:).*fxS4(rhoM(:),uM(:),vM(:),EM(:),rhoP(:),uP(:),vP(:),EP(:)) + nyJ(:).*fyS4(rhoM(:),uM(:),vM(:),EM(:),rhoP(:),uP(:),vP(:),EP(:));
 
-fSf1 = reshape(fSf1,Nfp*Nfaces,K) - .25*Lf1;
-fSf2 = reshape(fSf2,Nfp*Nfaces,K) - .25*Lf2;
-fSf3 = reshape(fSf3,Nfp*Nfaces,K) - .25*Lf3;
-fSf4 = reshape(fSf4,Nfp*Nfaces,K) - .25*Lf4;
+fSf1 = reshape(fSf1,Nfp*Nfaces,K) - .5*Lf1;
+fSf2 = reshape(fSf2,Nfp*Nfaces,K) - .5*Lf2;
+fSf3 = reshape(fSf3,Nfp*Nfaces,K) - .5*Lf3;
+fSf4 = reshape(fSf4,Nfp*Nfaces,K) - .5*Lf4;
 
 divF1 = zeros(size(DNr,1),K);
 divF2 = zeros(size(DNr,1),K);
@@ -712,6 +745,12 @@ for e = 1:K
     Dx = DNr.*rxJK + DNs.*sxJK;
     Dy = DNr.*ryJK + DNs.*syJK;       
     
+%     2*(sum(Dx(1:Np,1:Np).*FxS2(1:Np,1:Np),2) + sum(Dy(1:Np,1:Np).*FyS2(1:Np,1:Np),2))
+%     2*(sum(Dx(1:Np,1:Np).*FxS3(1:Np,1:Np),2) + sum(Dy(1:Np,1:Np).*FyS3(1:Np,1:Np),2))
+%     2*(sum(Dx(1:Np,:).*FxS2(1:Np,:),2) + sum(Dy(1:Np,:).*FyS2(1:Np,:),2))
+%     2*(sum(Dx(1:Np,:).*FxS3(1:Np,:),2) + sum(Dy(1:Np,:).*FyS3(1:Np,:),2))
+%     keyboard
+    
     divF1(:,e) = sum(Dx.*FxS1,2) + sum(Dy.*FyS1,2);
     divF2(:,e) = sum(Dx.*FxS2,2) + sum(Dy.*FyS2,2);
     divF3(:,e) = sum(Dx.*FxS3,2) + sum(Dy.*FyS3,2);
@@ -719,10 +758,33 @@ for e = 1:K
 end
 
 PN = [VqPq VqLq]; 
+
+% 2*divF1(Np+1:end,:)
+% 2*divF2(Np+1:end,:)
+% 2*divF3(Np+1:end,:)
+% 2*divF4(Np+1:end,:)
+% 2*divF1(1:Np,:)
+% 2*divF2(1:Np,:)
+% 2*divF3(1:Np,:)
+% 2*divF4(1:Np,:)
+
 rhs1 = 2*PN*divF1 + VqLq*(fSf1);
 rhs2 = 2*PN*divF2 + VqLq*(fSf2);
 rhs3 = 2*PN*divF3 + VqLq*(fSf3);
 rhs4 = 2*PN*divF4 + VqLq*(fSf4);
+
+2*VqPq*divF1(1:Np,:) 
+% VqLq*(fSf1 + 2*divF1(Np+1:end,:))
+r1 = 2*divF1(Np+1:end,:);
+[fSf1(:), r1(:)]
+
+keyboard
+
+% PN = [VqPq VqLq]; 
+% rhs1 = 2*PN*divF1 + VqLq*(fSf1);
+% rhs2 = 2*PN*divF2 + VqLq*(fSf2);
+% rhs3 = 2*PN*divF3 + VqLq*(fSf3);
+% rhs4 = 2*PN*divF4 + VqLq*(fSf4);
 
 % collocation assumption
 rhs1 = -(rhs1./J);

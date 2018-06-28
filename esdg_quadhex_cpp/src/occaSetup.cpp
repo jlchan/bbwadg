@@ -131,7 +131,7 @@ void setupOccaMesh3d(Mesh *mesh, App *app){
   app->props["defines/p_NfpNfaces"] = mesh->Nfp * mesh->Nfaces;
   app->props["defines/p_T"] = max(mesh->Nfp * mesh->Nfaces,mesh->Np);
 
-  int Nvgeo = 9; 
+  int Nvgeo = 10;  // 3x3 geofacs + J
   int Nfgeo = 4; 
   app->props["defines/p_Nvgeo"] = Nvgeo;
   app->props["defines/p_Nfgeo"] = Nfgeo;
@@ -160,8 +160,9 @@ void setupOccaMesh3d(Mesh *mesh, App *app){
   MatrixXd szJq = Vq*(mesh->szJ);
   MatrixXd tzJq = Vq*(mesh->tzJ);  
   MatrixXd Jq   = Vq*(mesh->J); // interp: may lose some accuracy
+  //cout << "Jq = " << Jq << endl;
 
-  MatrixXd vgeo(Nvgeo*(mesh->Vq.rows()),K);  
+  MatrixXd vgeo(Nvgeo*Vq.rows(),K);  
   vgeo << rxJq,
     ryJq,
     rzJq,
@@ -171,7 +172,9 @@ void setupOccaMesh3d(Mesh *mesh, App *app){
     txJq,
     tyJq,
     tzJq,
-    Jq;	  
+    Jq;
+  //printf("Nvgeo = %d, rows of Vq = %d\n",Nvgeo,Vq.rows());
+  //  cout << "Vgeo = " << vgeo << endl;
 
   // interp to face values 
   MatrixXd Vf   = mesh->Vf;
@@ -198,11 +201,14 @@ void setupOccaMesh3d(Mesh *mesh, App *app){
     Jf;	  
   
   // normals computed at face quad points already
-  MatrixXd fgeo(Nfgeo*(mesh->Vf.rows()),K);
+  MatrixXd fgeo(Nfgeo*(Vf.rows()),K);
   fgeo << mesh->nxJ,
     mesh->nyJ,
     mesh->nzJ,    
     mesh->sJ;
+
+  //printf("fgeo size = %d\n",fgeo.rows());
+  //cout << "fgeo = " << fgeo << endl;
 
   // init rhs, res, Qf to zero
   int Nfields = mesh->Nfields;
@@ -235,8 +241,7 @@ void setupOccaMesh3d(Mesh *mesh, App *app){
 
   setOccaArray(app, mesh->D1D, app->o_D1D); 
   setOccaArray(app, mesh->Vf1D.row(0), app->o_Vf1D); // Vf1D rows 1,2 = mirror images
-  setOccaArray(app, mesh->Lf1D.col(0), app->o_Lf1D); // Lf1D cols 1,2 = mirror images  
-  
+  setOccaArray(app, mesh->Lf1D.col(0), app->o_Lf1D); // Lf1D cols 1,2 = mirror images    
 }
 
 

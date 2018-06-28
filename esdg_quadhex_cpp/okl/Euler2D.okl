@@ -511,7 +511,8 @@ void euler2d_flux(dfloat rho_i, dfloat rho_j, dfloat u_i, dfloat u_j,
 
 
 @kernel void surface(const int K,
-		     const dfloat * fgeo,
+		     const dfloat * vgeo,
+		     const dfloat * fgeo,		     
 		     const int    * mapPq,		     
 		     const dfloat * Lf1D,
 		     const dfloat * Qf,
@@ -587,29 +588,20 @@ void euler2d_flux(dfloat rho_i, dfloat rho_j, dfloat u_i, dfloat u_j,
 	s_fnS[0][f][fid] = FnS1 + rhsf[idM]; idM += p_NfpNfaces;
 	s_fnS[1][f][fid] = FnS2 + rhsf[idM]; idM += p_NfpNfaces;
 	s_fnS[2][f][fid] = FnS3 + rhsf[idM]; idM += p_NfpNfaces;
-	s_fnS[3][f][fid] = FnS4 + rhsf[idM];
-
-#if 0
-	//printf("rho,rhou,rhov,EM = %f, %f, %f, %f,   QP = %f, %f, %f, %f\n",rhoM,rhouM,rhovM,EM,rhoP,rhouP,rhovP,EP);
-	//printf("FxS = %f, %f, %f, %f,   FyS = %f, %f, %f, %f\n",FxS1,FxS2,FxS3,FxS4,FyS1,FyS2,FyS3,FyS4);
-	//printf("Fn(%d,%d) = %f, %f, %f, %f\n",FnS1,FnS2,FnS3,FnS4);
-	//printf("Fn(%d,%d) = %f, %f, %f, %f\n",s_fnS[0][f][fid],s_fnS[1][f][fid],s_fnS[2][f][fid],s_fnS[3][f][fid]);
-	dfloat r1 = rhsf[i + 0*p_NfpNfaces + e*p_NfpNfaces*p_Nfields];
-	dfloat r2 = rhsf[i + 1*p_NfpNfaces + e*p_NfpNfaces*p_Nfields];
-	dfloat r3 = rhsf[i + 2*p_NfpNfaces + e*p_NfpNfaces*p_Nfields];	
-	dfloat r4 = rhsf[i + 3*p_NfpNfaces + e*p_NfpNfaces*p_Nfields];	
-	printf("Fn(%d,%d) = %f, %f, %f, %f,   rhsf = %f, %f, %f, %f\n", i,e,FnS1,FnS2,FnS3,FnS4,r1,r2,r3,r4);
-#endif	
-	
+	s_fnS[3][f][fid] = FnS4 + rhsf[idM];	
 
       } // i < NfpNfaces      
     }
     @barrier("localMemFence");
 
-    // apply lift 
+    // apply lift and inverse jacobian
     for (int i = 0; i < p_T; ++i; @inner(0)){
 
       if (i < p_Np){
+
+	const dfloat Ji = vgeo[i + 4*p_Np + e*p_Nvgeo*p_Np];
+	const dfloat invJ = 1.f/Ji;
+
 
 	const int jj = i % p_Np1;
 	const int ii = i / p_Np1;
@@ -626,16 +618,8 @@ void euler2d_flux(dfloat rho_i, dfloat rho_j, dfloat u_i, dfloat u_j,
 	  val += s_Lf[ii]*s_fnS[fld][3][jj] + s_Lf[p_Np1-ii-1]*s_fnS[fld][1][jj];
 
 	  // maybe divide by J here?
-	  rhs[id] += val;
-	  //rhs[id] = (rhs[id] + val)*invJ;
+	  rhs[id] = -(rhs[id] + val)*invJ;
 
-#if 0
-	  if (fld==0){
-	    printf("VqLq (...) = %f\n",val);
-	    //printf("s_Lf[%d] = %f\n",jj,s_Lf[p_Np1-jj-1]);
-	    //printf("i = %d: s_Lf = %f,  fSf1(%d,%d) = %f\n",i,s_Lf[ii],i,e,s_fnS[fld][3][jj]);
-	  }
-#endif
 	  id += p_Np;
 	}
 
@@ -651,124 +635,35 @@ void euler2d_flux(dfloat rho_i, dfloat rho_j, dfloat u_i, dfloat u_j,
 		    const dfloat fa,
 		    const dfloat fb,
 		    const dfloat fdt,		    
-		    const dfloat * vgeo,
-		    const dfloat * Vf1D,
 		    dfloat * Q,
-		    dfloat * Qf,
 		    dfloat * rhs,
 		    dfloat * res){
 
   for (int e = 0; e < K; ++e; @outer(0)){        
-
-    @shared dfloat s_Vf[p_Np1]; // second col is symmetric
-    @shared dfloat s_V[p_Nfields][p_Np1][p_Np1]; // entropy vars
     
-    for (int i = 0; i < p_T; ++i; @inner(0)){
-      if (i < p_Np1){
-	s_Vf[i] = Vf1D[i];	
+    for (int i = 0; i < p_Np; ++i; @inner(0)){
+      
+      // update vol values
+      dfloat Qi[p_Nfields];
+      int id = i + e*p_Nfields*p_Np;
+      for(int fld = 0; fld < p_Nfields; ++fld){
+	
+	// load rhs, residual, solution
+	const dfloat rhsi = rhs[id]; // make neg for rhs
+	dfloat resi = res[id];
+	Qi[fld] = Q[id];
+	
+	// update residual and solution
+	resi = fa*resi + fdt*rhsi;	  
+	Qi[fld] += fb*resi;
+	
+	// store updated residual and solution
+	res[id] = resi;	  
+	Q[id] = Qi[fld];
+	
+	id += p_Np;
       }
       
-      if (i < p_Np){
-
-	const dfloat Ji = vgeo[i + 4*p_Np + e*p_Nvgeo*p_Np];
-	const dfloat invJ = 1.f/Ji;
-	
-	// update vol values
-	dfloat Qi[p_Nfields];
-	int id = i + e*p_Nfields*p_Np;
-	for(int fld = 0; fld < p_Nfields; ++fld){
-
-	  // load rhs, residual, solution
-	  const dfloat rhsi = -rhs[id]*invJ; // make neg for rhs
-	  dfloat resi = res[id];
-	  Qi[fld] = Q[id];
-
-	  // update residual and solution
-	  resi = fa*resi + fdt*rhsi;	  
-	  Qi[fld] += fb*resi;
-
-	  // store updated residual and solution
-	  res[id] = resi;	  
-	  Q[id] = Qi[fld];
-
-	  id += p_Np;
-	}
-	
-	// store vol values in smem
-	const int jj = i % p_Np1; // y-id
-	const int ii = i / p_Np1; // x-id
-	
-	const dfloat rho  = Qi[0];
-	const dfloat rhou = Qi[1];
-	const dfloat rhov = Qi[2];
-	const dfloat E    = Qi[3];
-	
-	// evaluate entropy vars at nodes
-	dfloat V1,V2,V3,V4;
-	VU(rho, rhou, rhov, E, V1, V2, V3, V4);
-
-	s_V[0][ii][jj] = V1;
-	s_V[1][ii][jj] = V2;
-	s_V[2][ii][jj] = V3;
-	s_V[3][ii][jj] = V4;
-      }
     }
-    @barrier("localMemFence");
-
-    for (int i = 0; i < p_T; ++i; @inner(0)){
-
-      // interpolate to face values
-      if (i < p_NfpNfaces){
-	dfloat val[p_Nfields];
-	for (int fld = 0; fld < p_Nfields; ++fld){
-	  val[fld] = 0.f;
-	}
-	
-	const int f = i / p_Nfp;
-	const int fid = i % p_Nfp;
-
-	dfloat V1f = 0.f;
-	dfloat V2f = 0.f;
-	dfloat V3f = 0.f;
-	dfloat V4f = 0.f;	
-	for (int j = 0; j < p_Np1; ++j){	  
-	  /*
-	    .    _f2_
-	    .   |    |
-	    . f3|    |f1
-	    .   |____|
-	    .     f0
-	  */   
-	  int Vfjid, idi, idj;
-	  if (f==0){
-	    Vfjid = j;  idi = fid;  idj = j; // traverse in j
-	  }else if (f==1){ 
-	    Vfjid = p_Np1-j-1;  idi = j;  idj = fid; 
-	  }else if (f==2){ 
-	    Vfjid = p_Np1-j-1;  idi = fid;  idj = j;
-	  }else if (f==3){
-	    Vfjid = j;  idi = j;  idj = fid;
-	  }
-
-	  // interp left/right in r direction
-	  const dfloat Vfj = s_Vf[Vfjid];
-	  V1f += Vfj * s_V[0][idi][idj]; 
-	  V2f += Vfj * s_V[1][idi][idj];
-	  V3f += Vfj * s_V[2][idi][idj];
-	  V4f += Vfj * s_V[3][idi][idj];
-	}
-
-	dfloat rhof, rhouf, rhovf, Ef;
-	UV(V1f,V2f,V3f,V4f, rhof, rhouf, rhovf, Ef); 
-
-	int id = i + e*p_NfpNfaces*p_Nfields;
-	Qf[id] = rhof;   id += p_NfpNfaces;
-	Qf[id] = rhouf;  id += p_NfpNfaces;
-	Qf[id] = rhovf;  id += p_NfpNfaces;
-	Qf[id] = Ef;	
-
-      }      
-    } // inner0
-
   }
 }
