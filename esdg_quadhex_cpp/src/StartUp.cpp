@@ -7,8 +7,8 @@ void InitRefData2d(Mesh *mesh, int N){
   int Np1 = (N+1);
 
   // nodal points (GCL and all)
-  VectorXd r1D;
-  JacobiGL(N, 0, 0, r1D);
+  VectorXd r1D,w1D;
+  JacobiGL(N, 0, 0, r1D,w1D);
 
   MatrixXd rmat,smat;
   meshgrid(r1D,r1D, smat,rmat);
@@ -19,7 +19,8 @@ void InitRefData2d(Mesh *mesh, int N){
 
   // quad points 
   VectorXd rq1D, wq1D;
-  JacobiGQ(N, 0, 0, rq1D, wq1D);
+  //JacobiGQ(N, 0, 0, rq1D, wq1D);
+  JacobiGL(N, 0, 0, rq1D, wq1D); // GLL option - weights shouldn't matter, it's just colloc
 
   //cout << "rq,wq for GQ = " << rq1D << ", " << wq1D << endl;
   
@@ -66,7 +67,7 @@ void InitRefData2d(Mesh *mesh, int N){
   MatrixXd Vf1D = mrdivide(Vf1Dtmp,Vq1D);
 
   //  cout << "Dq1D = " << endl << Dq1D << endl;
-  // cout << "Vf1D = " << endl << Vf1D << endl;  
+  //  cout << "Vf1D = " << endl << Vf1D << endl;  
 
   mesh->N = N;
   mesh->Np = Np1*Np1;
@@ -299,6 +300,8 @@ void Normals2d(Mesh *mesh){
 }
 
 void MakeNodeMapsPeriodic2d(Mesh *mesh, MatrixXd xf, MatrixXd yf, double DX, double DY, MatrixXi &mapP){
+
+  printf("Modifying node maps for periodicity\n");
   
   int Nfp = mesh->Nfp;
   int Nfaces = mesh->Nfaces;
@@ -323,9 +326,9 @@ void MakeNodeMapsPeriodic2d(Mesh *mesh, MatrixXd xf, MatrixXd yf, double DX, dou
       }
     }
   }
-  //  printf("num xfaces = %d, num yfaces = %d\n",xfaces.size(),yfaces.size());
-  //  cout << "xf = " << xf << endl;
-  //  cout << "yf = " << yf << endl;  
+  printf("num xfaces = %d, num yfaces = %d\n",xfaces.size(),yfaces.size());
+  //cout << "xf = " << xf << endl;
+  //cout << "yf = " << yf << endl;  
 
   // find node maps in x
   for (int f = 0; f < xfaces.size(); ++f){
@@ -434,8 +437,8 @@ void InitRefData3d(Mesh *mesh, int N){
   int Np1 = (N+1);
 
   // nodal points (GCL and all)
-  VectorXd r1D;
-  JacobiGL(N, 0, 0, r1D);
+  VectorXd r1D, w1D;
+  JacobiGL(N, 0, 0, r1D, w1D);
 
   // quad points 
   VectorXd rq1D, wq1D;

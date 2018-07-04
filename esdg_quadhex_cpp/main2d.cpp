@@ -20,14 +20,23 @@ static void VortexSolution2d(MatrixXd x,MatrixXd y,double t,
   rho = 1.0 - (1.0/(8.0*GAMMA*PI*PI))*(GAMMA-1.0)/2.0*(beta*exp_r2.array()).square();
   rho = rho.array().pow(1.0/(GAMMA-1.0));
   p   = rho.array().pow(GAMMA);
+
+  /*
+  rho.fill(2.0);
+  u.fill(.1);
+  v.fill(.2);
+  p.fill(1.0);  
+  */
 }
 
 int main(int argc, char **argv){
 
   //occa::printModeInfo();
 
-  int N = 1;
-  int K1D = 2;
+  int N = 4;
+  int K1D = 8;
+  double FinalTime = 5.0;
+  double CFL = .5;  
   
   Mesh *mesh = (Mesh*) calloc(1, sizeof(Mesh));  
   QuadMesh2d(mesh,2*K1D,K1D); // make Cartesian mesh
@@ -52,9 +61,9 @@ int main(int argc, char **argv){
   mesh->x = x + a*Lx*dx;
   mesh->y = y + a*Ly*dy;  
 
-  //  cout << "x = [" << x << "];" << endl;
-  //  cout << "y = [" << y << "];" << endl;
-  //  return 0;
+  //cout << "x = [" << x << "];" << endl;
+  //cout << "y = [" << y << "];" << endl;
+  //return 0;
   
   GeometricFactors2d(mesh); 
   Normals2d(mesh); 
@@ -73,11 +82,13 @@ int main(int argc, char **argv){
   MakeNodeMapsPeriodic2d(mesh,xf,yf,DX,DY,mapPq);
   mesh->mapPq = mapPq;
 
-  //  cout << "xf = [" << xf << "];" << endl;
-  //  cout << "yf = [" << yf << "];" << endl;
-  //  cout << "mapPq = [" << mapPq << "];" << endl;
-  //  return 0;
-  
+  //return 0;
+  /*
+  cout << "xf = [" << xf << "];" << endl;
+  cout << "yf = [" << yf << "];" << endl;
+  cout << "mapPq = [" << mapPq << "];" << endl;
+  return 0;
+  */
 
   // ============ problem dependent stuff ============
 
@@ -141,10 +152,8 @@ int main(int argc, char **argv){
   //double h = 2.0 / (double) K1D; //min(DX,DY) / (double) K1D;
   double h = mesh->J.maxCoeff() / mesh->sJ.maxCoeff(); // J = O(h^d), Jf = O(h^{d-1}) in d dims
   double CN = dim * (double)((N+1)*(N+2))/2.0; // trace constant for GQ hexes
-  double CFL = .5;
   double dt = CFL * h / CN;
   
-  double FinalTime = 1.0;
   int Nsteps = (int) ceil(FinalTime/dt);
   dt = FinalTime/(double) Nsteps;
 
@@ -157,8 +166,12 @@ int main(int argc, char **argv){
   MatrixXd Qf(Nfields*NfpNfaces,K);
   getOccaArray(app,app->o_Q,Q);
   getOccaArray(app,app->o_Qf,Qf);
-  cout << "Q = " << endl << Q << endl;
-  cout << "Qf = " << endl << Qf << endl; 
+  cout << "xq = [" << endl << xq <<  "];" << endl;
+  cout << "yq = [" << endl << yq << "];" << endl;
+  cout << "xf = [" << endl << xf <<  "];" << endl;
+  cout << "yf = [" << endl << yf << "];" << endl;
+  cout << "Q = [" << endl << Q.middleRows(0,Np) <<  "];" << endl;
+  cout << "Qf = [" << endl << Qf.middleRows(0,NfpNfaces) << "];" << endl; 
   return 0;
 #endif
   
@@ -171,14 +184,14 @@ int main(int argc, char **argv){
 	      app->o_rhs, app->o_rhsf);
 
   getOccaArray(app,app->o_rhs,Q);
-  //cout << "vol only rhs = " << endl << Q << endl;
+  cout << "vol only rhs = " << endl << Q << endl;
   
   app->surface(K, app->o_vgeo, app->o_fgeo, app->o_mapPq,
 	       app->o_Lf1D, app->o_Qf, app->o_rhsf,
 	       app->o_rhs); 
   
   getOccaArray(app,app->o_rhs,Q);
-  //  cout << "rhs = " << endl << Q << endl;
+    cout << "vol+surf rhs = " << endl << Q << endl;
   
   return 0;
 #endif 
@@ -219,10 +232,33 @@ int main(int argc, char **argv){
   rho = Q.middleRows(0,Np);
   rhou = Q.middleRows(Np,Np);
   rhov = Q.middleRows(2*Np,Np);
-  E = Q.middleRows(3*Np,Np);    
+  E = Q.middleRows(3*Np,Np);
 
+  // finer quadrature for error eval
+  VectorXd rq1D2, wq1D2;
+  JacobiGQ(N+1, 0, 0, rq1D2, wq1D2);
+  int Np1 = rq1D2.size();
+  int Np2 = Np1*Np1;
+  VectorXd rq2(Np2),sq2(Np2),wq2(Np2);
+  int sk = 0;
+  for (int i = 0; i < Np1; ++i){
+    for (int j = 0; j < Np1; ++j){
+      rq2(sk) = rq1D2(i);
+      sq2(sk) = rq1D2(j);      
+      wq2(sk) = wq1D2(i)*wq1D2(j);
+      ++sk;
+    }
+  }
+  MatrixXd Vqtmp = Vandermonde2DQuad(N,rq2,sq2);
+  MatrixXd Vq = Vandermonde2DQuad(N,mesh->rq,mesh->sq);  
+  MatrixXd Vq2 = mrdivide(Vqtmp,Vq);
+  MatrixXd xq2 = Vq2 * (mesh->Vq*mesh->x);
+  MatrixXd yq2 = Vq2 * (mesh->Vq*mesh->y);
+
+  //cout << "Vq2 = "  << Vq2 << endl;
+  
   MatrixXd rhoex;
-  VortexSolution2d(xq,yq,FinalTime,rhoex,u,v,p);
+  VortexSolution2d(xq2,yq2,FinalTime,rhoex,u,v,p);
 
 #if 0
   cout << "xq = [" << xq << "];" << endl;
@@ -232,12 +268,12 @@ int main(int argc, char **argv){
   return 0;
 #endif
 
-  MatrixXd wJq = mesh->wq.asDiagonal() * (mesh->Vq*mesh->J);  
+  MatrixXd wJq = wq2.asDiagonal() * (Vq2*(mesh->Vq*mesh->J));  
   //  MatrixXd rhouex = rhoex.array()*u.array();
   //  MatrixXd rhovex = rhoex.array()*v.array();
   //  MatrixXd Eex = p.array()/(GAMMA-1.0) + .5*rhoex.array()*(u.array().square() + v.array().square());
 
-  MatrixXd werr = wJq.array()*(rhoex - rho).array().square();
+  MatrixXd werr = wJq.array()*(rhoex - Vq2*rho).array().square();
   printf("L2 error for rho = %g\n",sqrt(werr.sum()));
 
   return 0;

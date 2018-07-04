@@ -797,7 +797,7 @@ void tet_cubature_duffy(int N, VectorXd &a, VectorXd &wa,
 }
 */
 
-void JacobiGL(int N, int alpha_int, int beta_int, VectorXd &r){
+void JacobiGL(int N, int alpha_int, int beta_int, VectorXd &r, VectorXd &w){
 
   double alpha = (double) alpha_int;
   double beta = (double) beta_int;
@@ -816,6 +816,42 @@ void JacobiGL(int N, int alpha_int, int beta_int, VectorXd &r){
     r(i+1) = rint(i);
   }
   r(N) = 1.0;
+
+  w.resize(Np);
+  w.fill(1.0);
+  if (N==2){
+    w(0) = 0.333333333333333;
+    w(1) = 1.333333333333333;
+    w(2) = 0.333333333333333;    
+  }else if (N==3){
+    w(0) = .166666666666667;
+    w(1) = .833333333333334;
+    w(2) = .833333333333334;
+    w(3) = .166666666666667;    
+  }else if (N==4){
+    w(0) = .1;
+    w(1) = 0.544444444444445;
+    w(2) = 0.711111111111111; 
+    w(3) = 0.544444444444445;
+    w(4) = .1;   
+  }else if (N==5){
+    w(0) = 0.066666666666667;
+    w(1) = 0.378474956297847;
+    w(2) = 0.554858377035487;
+    w(3) = 0.554858377035487;
+    w(4) = 0.378474956297847;
+    w(5) = 0.066666666666667;
+  }else if (N==6){
+    w(0) = 0.047619047619047;
+    w(1) = 0.276826047361566;
+    w(2) = 0.431745381209863;
+    w(3) = 0.487619047619047;
+    w(4) = 0.431745381209863;
+    w(5) = 0.276826047361566;
+    w(6) = 0.047619047619048;
+      
+  }
+  
 }
 
 // requires alpha, beta = integers
@@ -866,8 +902,6 @@ void JacobiGQ(int N, int alpha_int, int beta_int, VectorXd &r, VectorXd &w){
   //  cout << "r = " << r << endl;
   //  cout << "w = " << w << endl;
 }
-
-
 
 void Nodes3D(int N, VectorXd &r, VectorXd &s, VectorXd &t){
   int Np = (N+1)*(N+2)*(N+3)/6;
@@ -961,7 +995,7 @@ void tet_cubature(int N, VectorXd &rq, VectorXd &sq, VectorXd &tq, VectorXd &wq)
     }
   }
 }
-
+		     
 void tri_cubature(int N, VectorXd &rfq, VectorXd &sfq, VectorXd &wfq){
 
 #define loadNfq(M)  Nfq = p_Nfq_N##M;

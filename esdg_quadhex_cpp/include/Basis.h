@@ -8,7 +8,7 @@ void test_solve();
 void test_basis();
 
 // 1D 
-void JacobiGL(int N, int alpha_int, int beta_int, VectorXd &r);
+void JacobiGL(int N, int alpha_int, int beta_int, VectorXd &r, VectorXd &w);
 void JacobiGQ(int N, int alpha_int, int beta_int, VectorXd &r, VectorXd &w);
 VectorXd JacobiP(VectorXd x, dfloat alpha, dfloat beta, int d);
 VectorXd GradJacobiP(VectorXd x, double alpha, double beta, int p);
@@ -19,6 +19,8 @@ MatrixXd Bern1D(int N, VectorXd r);
 // 2D, 3D quad
 MatrixXd Vandermonde2DQuad(int N, VectorXd r, VectorXd s);
 MatrixXd Vandermonde3DQuad(int N, VectorXd r, VectorXd s, VectorXd t);
+void quad_cubature(int N, VectorXd &rq, VectorXd &sq, VectorXd &wq);
+void hex_cubature(int N, VectorXd &rq, VectorXd &sq, VectorXd &tq, VectorXd &wq);
 
 // 2D
 void rstoab(VectorXd r, VectorXd s, VectorXd &a,VectorXd &b);
