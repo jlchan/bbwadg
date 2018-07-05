@@ -778,27 +778,38 @@ void MakeNodeMapsPeriodic3d(Mesh *mesh, MatrixXd xf, MatrixXd yf, MatrixXd zf,
   int Nfaces = mesh->Nfaces;
   int K = mesh->K;
 
+  VectorXi isBoundaryFace(Nfaces*K);
+  isBoundaryFace.fill(0);
+  for (int e = 0; e < K; ++e){
+    for (int f = 0; f < Nfaces; ++f){
+      if (e==mesh->EToE(e,f)){
+	isBoundaryFace(f + e*Nfaces) = 1;
+      }
+    }
+  }
+
   xf.resize(Nfp,Nfaces*K);
   yf.resize(Nfp,Nfaces*K);
   zf.resize(Nfp,Nfaces*K);    
   vector<pair<int,int> > xfaces,yfaces,zfaces;  
   for (int f1 = 0; f1 < Nfaces*K; ++f1){
     for (int f2 = 0; f2 < Nfaces*K; ++f2){
-
-      // distance b/w faces = diff b/w min/max coeffs 
-      double dx = .5*(fabs(xf.col(f1).maxCoeff()-xf.col(f2).maxCoeff())
-		      + fabs(xf.col(f1).minCoeff()-xf.col(f2).minCoeff()));
-      double dy = .5*(fabs(yf.col(f1).maxCoeff()-yf.col(f2).maxCoeff())
-		      + fabs(yf.col(f1).minCoeff()-yf.col(f2).minCoeff()));
-      double dz = .5*(fabs(zf.col(f1).maxCoeff()-zf.col(f2).maxCoeff())
-		      + fabs(zf.col(f1).minCoeff()-zf.col(f2).minCoeff()));
-      
-      if ((fabs(dx-DX)<NODETOL) & (dy < NODETOL) & (dz < NODETOL)){
-	xfaces.push_back(make_pair(f1,f2)); 
-      }else if ((fabs(dy-DY)<NODETOL) & (dx < NODETOL) & (dz < NODETOL)){
-	yfaces.push_back(make_pair(f1,f2)); 
-      }else if ((fabs(dz-DZ)<NODETOL) & (dx < NODETOL) & (dy < NODETOL)){
-	zfaces.push_back(make_pair(f1,f2));
+      if (isBoundaryFace(f1) && isBoundaryFace(f2)){
+	// distance b/w faces = diff b/w min/max coeffs 
+	double dx = .5*(fabs(xf.col(f1).maxCoeff()-xf.col(f2).maxCoeff())
+			+ fabs(xf.col(f1).minCoeff()-xf.col(f2).minCoeff()));
+	double dy = .5*(fabs(yf.col(f1).maxCoeff()-yf.col(f2).maxCoeff())
+			+ fabs(yf.col(f1).minCoeff()-yf.col(f2).minCoeff()));
+	double dz = .5*(fabs(zf.col(f1).maxCoeff()-zf.col(f2).maxCoeff())
+			+ fabs(zf.col(f1).minCoeff()-zf.col(f2).minCoeff()));
+	
+	if ((fabs(dx-DX)<NODETOL) & (dy < NODETOL) & (dz < NODETOL)){
+	  xfaces.push_back(make_pair(f1,f2)); 
+	}else if ((fabs(dy-DY)<NODETOL) & (dx < NODETOL) & (dz < NODETOL)){
+	  yfaces.push_back(make_pair(f1,f2)); 
+	}else if ((fabs(dz-DZ)<NODETOL) & (dx < NODETOL) & (dy < NODETOL)){
+	  zfaces.push_back(make_pair(f1,f2));
+	}
       }
     }
   }
