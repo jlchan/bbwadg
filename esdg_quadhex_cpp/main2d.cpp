@@ -33,8 +33,8 @@ int main(int argc, char **argv){
 
   //occa::printModeInfo();   return 0;
 
-  int N = 2;
-  int K1D = 1;
+  int N = 4;
+  int K1D = 8;
   double FinalTime = 5.0;
   double CFL = .5;  
   
@@ -56,15 +56,18 @@ int main(int argc, char **argv){
   // curvilinear meshing
   MatrixXd x = mesh->x;
   MatrixXd y = mesh->y;
-  double a = 0*.5/K1D;
-  MatrixXd dx = (.5*PI*(x.array()-Lx)/Lx).cos()*(1.5*PI*y.array()).cos();
-  MatrixXd dy = (PI*(x.array()-Lx)/Lx).sin()*(.5*PI*y.array()/Ly).cos();
-  mesh->x = x + a*Lx*dx;
-  mesh->y = y + a*Ly*dy;  
+  double a = .4;
+  MatrixXd dx = (.5*PI*(x.array()-Lx)/Lx).cos()*(1.5*PI*y.array()/Ly).cos();
+  x = x + a*Lx*dx;
+  MatrixXd dy = (1.5*PI*(x.array()-Lx)/Lx).cos()*(.5*PI*y.array()/Ly).cos();
+  y = y + a*Ly*dy;
 
-  //cout << "x = [" << x << "];" << endl;
-  //cout << "y = [" << y << "];" << endl;
-  //return 0;
+  mesh->x = x;
+  mesh->y = y;  
+  
+  //  cout << "x = [" << mesh->x << "];" << endl;
+  //  cout << "y = [" << mesh->y << "];" << endl;
+  //  return 0;
   
   GeometricFactors2d(mesh); 
   Normals2d(mesh); 
@@ -82,7 +85,6 @@ int main(int argc, char **argv){
   double DY = mesh->VY.maxCoeff()-mesh->VY.minCoeff();
   MakeNodeMapsPeriodic2d(mesh,xf,yf,DX,DY,mapPq);
   mesh->mapPq = mapPq;
-
   //return 0;
   /*
   cout << "xf = [" << xf << "];" << endl;
@@ -167,7 +169,7 @@ int main(int argc, char **argv){
   // interp to surface to start
   app->eval_surface(K, app->o_Vf1D,app->o_Q, app->o_Qf);
 
-#if 1
+#if 0
   MatrixXd Qf(Nfields*NfpNfaces,K);
   getOccaArray(app,app->o_Q,Q);
   getOccaArray(app,app->o_Qf,Qf);
