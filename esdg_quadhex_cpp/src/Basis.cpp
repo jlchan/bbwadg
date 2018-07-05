@@ -859,6 +859,10 @@ void JacobiGL(int N, int alpha_int, int beta_int, VectorXd &r, VectorXd &w){
     w(6) = 0.210704227143506;
     w(7) = 0.035714285714286;
   }
+  // todo - add
+  //  dPn = GradJacobiP(rgq,0,0,N+1) / JacobiP(1,0,0,N+1);
+  // Pn = JacobiP(rgll,0,0,N) / JacobiP(1,0,0,N);
+  // wgll = wgq.*(1-rgq.^2).*dPn.^2 ./ (N*(N+1).*Pn.^2);
   
 }
 

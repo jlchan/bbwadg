@@ -31,10 +31,10 @@ static void VortexSolution2d(MatrixXd x,MatrixXd y,double t,
 
 int main(int argc, char **argv){
 
-  //occa::printModeInfo();
+  //occa::printModeInfo();   return 0;
 
-  int N = 4;
-  int K1D = 8;
+  int N = 2;
+  int K1D = 1;
   double FinalTime = 5.0;
   double CFL = .5;  
   
@@ -109,8 +109,10 @@ int main(int argc, char **argv){
   app->props["defines/p_Nfields"] = Nfields;
   app->props["defines/p_tau"] = 1.0;  
   
-  // build occa kernels
+  // build occa kernels  
   string path = "okl/Euler2D.okl";
+
+  //testing
   app->volume = app->device.buildKernel(path.c_str(),"volume",app->props);
   app->surface = app->device.buildKernel(path.c_str(),"surface",app->props);
   app->update = app->device.buildKernel(path.c_str(),"update",app->props);
@@ -165,16 +167,16 @@ int main(int argc, char **argv){
   // interp to surface to start
   app->eval_surface(K, app->o_Vf1D,app->o_Q, app->o_Qf);
 
-#if 0
+#if 1
   MatrixXd Qf(Nfields*NfpNfaces,K);
   getOccaArray(app,app->o_Q,Q);
   getOccaArray(app,app->o_Qf,Qf);
-  cout << "xq = [" << endl << xq <<  "];" << endl;
+  /*cout << "xq = [" << endl << xq <<  "];" << endl;
   cout << "yq = [" << endl << yq << "];" << endl;
   cout << "xf = [" << endl << xf <<  "];" << endl;
-  cout << "yf = [" << endl << yf << "];" << endl;
-  cout << "Q = [" << endl << Q.middleRows(0,Np) <<  "];" << endl;
-  cout << "Qf = [" << endl << Qf.middleRows(0,NfpNfaces) << "];" << endl; 
+  cout << "yf = [" << endl << yf << "];" << endl;*/
+  cout << "rho = [" << endl << Q.middleRows(0,Np) <<  "];" << endl;
+  cout << "rhof = [" << endl << Qf.middleRows(0,NfpNfaces) << "];" << endl; 
   return 0;
 #endif
   
