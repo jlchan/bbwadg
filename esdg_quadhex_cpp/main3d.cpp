@@ -44,8 +44,10 @@ int main(int argc, char **argv){
 
   //occa::printModeInfo();
 
-  int N = 5;
-  int K1D = 4;
+  int N = 4;
+  int K1D = 8;
+  double CFL = .25;  
+  double FinalTime = .50;
   
   Mesh *mesh = (Mesh*) calloc(1, sizeof(Mesh));  
   HexMesh3d(mesh,K1D,K1D,K1D); // make Cartesian mesh
@@ -125,10 +127,7 @@ int main(int argc, char **argv){
 
   double h = mesh->J.maxCoeff() / mesh->sJ.maxCoeff(); // J = O(h^d), Jf = O(h^{d-1}) in d dims
   double CN = dim * (double)((N+1)*(N+2))/2.0; // trace constant for GQ hexes
-  double CFL = .25;
   double dt = CFL * h / CN;
-  
-  double FinalTime = 5.0;
   int Nsteps = (int) ceil(FinalTime/dt);
   dt = FinalTime/(double) Nsteps;
 
