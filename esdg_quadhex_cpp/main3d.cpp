@@ -98,7 +98,7 @@ int main(int argc, char **argv){
   double DX = mesh->VX.maxCoeff()-mesh->VX.minCoeff();
   double DY = mesh->VY.maxCoeff()-mesh->VY.minCoeff();
   double DZ = mesh->VZ.maxCoeff()-mesh->VZ.minCoeff();
-  MakeNodeMapsPeriodic3d(mesh,xf,yf,zf,DX,DY,DZ,mapPq);
+  //MakeNodeMapsPeriodic3d(mesh,xf,yf,zf,DX,DY,DZ,mapPq);  
   mesh->mapPq = mapPq;  
 
   // ============ problem dependent stuff ============
@@ -115,9 +115,10 @@ int main(int argc, char **argv){
   //app->device.setup("mode: 'Serial'");
   app->device.setup("mode: 'CUDA', deviceID: 0");
   //app->device.setup("mode: 'OpenCL', platformID : 0, deviceID: 0");
-  
-  setupOccaMesh3d(mesh,app); // build mesh geofacs
 
+  printf("occa setup\n");
+  setupOccaMesh3d(mesh,app); // build mesh geofacs
+  return 0;
   app->props["defines/p_gamma"] = GAMMA;
   app->props["defines/p_Nfields"] = Nfields;
   app->props["defines/p_tau"] = 1.0;
