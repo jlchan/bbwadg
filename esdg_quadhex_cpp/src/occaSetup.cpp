@@ -193,7 +193,7 @@ void setupOccaMesh3d(Mesh *mesh, App *app){
     tyJf,
     tzJf,
     Jf;	  
-  
+
   // normals computed at face quad points already
   MatrixXd fgeo(Nfgeo*(Vf.rows()),K);
   fgeo << mesh->nxJ,
@@ -211,17 +211,25 @@ void setupOccaMesh3d(Mesh *mesh, App *app){
   res.fill(0.0);
   MatrixXd Qf(Nfields*NfpNfaces,K),rhsf(Nfields*NfpNfaces,K);
   Qf.fill(0.0);
-  rhsf.fill(0.0);  
+  rhsf.fill(0.0);
 
+  printf("moving data to GPU: rhs arry is size %d, %d\n",rhs.rows(),rhs.cols());
   setOccaArray(app, rhs, app->o_rhs);
+#if 1
+  printf("here 1\n");  
   setOccaArray(app, res, app->o_res);  
-
+  printf("here 2\n");  
   setOccaArray(app, Qf,  app->o_Qf);
+  printf("here 3\n");    
   setOccaArray(app, rhsf,  app->o_rhsf);
-  
+  printf("here 4\n");    
+
   setOccaArray(app, vgeo, app->o_vgeo);
-  setOccaArray(app, vfgeo, app->o_vfgeo);  
+  printf("here 5\n");    
+  setOccaArray(app, vfgeo, app->o_vfgeo);
+  printf("here 6\n");    
   setOccaArray(app, fgeo, app->o_fgeo);
+  printf("here 7\n");    
 
   // correct for Nfields > 1
   MatrixXi mapPqNfields(NfpNfaces,K);
@@ -236,6 +244,7 @@ void setupOccaMesh3d(Mesh *mesh, App *app){
   setOccaArray(app, mesh->D1D, app->o_D1D); 
   setOccaArray(app, mesh->Vf1D.row(0), app->o_Vf1D); // Vf1D rows 1,2 = mirror images
   setOccaArray(app, mesh->Lf1D.col(0), app->o_Lf1D); // Lf1D cols 1,2 = mirror images    
+#endif
 }
 
 
@@ -246,7 +255,7 @@ void setOccaArray(App *app, MatrixXd A, occa::memory &c_A){
   dfloat *f_A = (dfloat*)malloc(r*c*sizeof(dfloat));
   Map<MatrixXdf >(f_A,r,c) = A.cast<dfloat>();
   c_A = app->device.malloc(r*c*sizeof(dfloat),f_A);
-  free(f_A);
+  free(f_A);  
 }
 
 // set occa array for int matrices
