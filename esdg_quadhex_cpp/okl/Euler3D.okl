@@ -56,11 +56,12 @@ void VU(dfloat rho, dfloat rhou, dfloat rhov, dfloat rhow, dfloat E,
 {
 
   const dfloat rhoe = rhoeU(rho, rhou, rhov, rhow, E);
-  V1 = (-E + rhoe * (p_gamma + 1.f - sU(rho, rhou, rhov, rhow, E))) / rhoe;
-  V2 = rhou / rhoe;
-  V3 = rhov / rhoe;
-  V4 = rhow / rhoe;
-  V5 = (-rho) / rhoe;
+  const dfloat invrhoe = 1.f/rhoe;
+  V1 = (-E + rhoe * (p_gamma + 1.f - sU(rho, rhou, rhov, rhow, E))) * invrhoe;
+  V2 = rhou * invrhoe;
+  V3 = rhov * invrhoe;
+  V4 = rhow * invrhoe;
+  V5 = (-rho) * invrhoe;
 }
 
 void UV(dfloat V1, dfloat V2, dfloat V3, dfloat V4, dfloat V5,

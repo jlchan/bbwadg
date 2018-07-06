@@ -44,7 +44,7 @@ int main(int argc, char **argv){
 
   //occa::printModeInfo();
 
-  int N = 4;
+  int N = 3;
   int K1D = 8;
   double CFL = .25;  
   double FinalTime = .50;
@@ -92,7 +92,12 @@ int main(int argc, char **argv){
   int Nfields = 5; 
   mesh->Nfields = Nfields;
   
-  App *app = (App*) calloc(1, sizeof(App));
+  //App *app = (App*) calloc(1, sizeof(App));
+  App *app = new App;
+  app->device.setup("mode: 'Serial'");
+  // app->device.setup("mode: 'CUDA', deviceID: 0");
+  //app->device.setup("mode: 'OpenCL', platformID : 0, deviceID: 0");
+  
   setupOccaMesh3d(mesh,app); // build mesh geofacs
 
   app->props["defines/p_gamma"] = GAMMA;

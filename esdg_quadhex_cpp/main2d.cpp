@@ -37,6 +37,7 @@ int main(int argc, char **argv){
   int K1D = 8;
   double FinalTime = 5.0;
   double CFL = .5;  
+  double a = .0;
   
   //Mesh *mesh = (Mesh*) calloc(1, sizeof(Mesh));
   Mesh *mesh = new Mesh;
@@ -56,7 +57,6 @@ int main(int argc, char **argv){
   // curvilinear meshing
   MatrixXd x = mesh->x;
   MatrixXd y = mesh->y;
-  double a = .0;
   MatrixXd dx = (.5*PI*(x.array()-Lx)/Lx).cos()*(1.5*PI*y.array()/Ly).cos();
   x = x + a*Lx*dx;
   MatrixXd dy = (1.5*PI*(x.array()-Lx)/Lx).cos()*(.5*PI*y.array()/Ly).cos();
@@ -104,7 +104,8 @@ int main(int argc, char **argv){
   
   //App *app = (App*) calloc(1, sizeof(App));
   App *app = new App;
- 
+  app->device.setup("mode: 'Serial'");
+  // app->device.setup("mode: 'CUDA', deviceID: 0");  
   setupOccaMesh2d(mesh,app); // build mesh geofacs
 
   app->props["defines/p_gamma"] = GAMMA;

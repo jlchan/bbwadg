@@ -7,10 +7,6 @@
 // sets up mesh-based occa parameters
 void setupOccaMesh2d(Mesh *mesh, App *app){
 
-  app->device.setup("mode: 'Serial'");
-  // app->device.setup("mode: 'CUDA', deviceID: 0");
-  //app->device.setup("mode: 'OpenCL', platformID : 0, deviceID: 0");
-
   app->props = occa::getKernelProperties(); //props;
 
   app->props["defines/p_Np"] = mesh->Np; // number of dims
@@ -116,9 +112,6 @@ void setupOccaMesh2d(Mesh *mesh, App *app){
 
 // sets up mesh-based occa parameters
 void setupOccaMesh3d(Mesh *mesh, App *app){
-
-  app->device.setup("mode: 'Serial'");
-  // app->device.setup("mode: 'CUDA', deviceID: 0");
 
   app->props = occa::getKernelProperties();
 
