@@ -44,13 +44,13 @@ int main(int argc, char **argv){
 
   //occa::printModeInfo();
 
-  int N = 4;
-  int K1D = 32;
+  int N = 3;
+  int K1D = 8;
   double CFL = .5;  
-  double FinalTime = 5.0;
+  double FinalTime = .50;
   
   Mesh *mesh = (Mesh*) calloc(1, sizeof(Mesh));  
-  HexMesh3d(mesh,K1D,K1D,K1D); // make Cartesian mesh
+  HexMesh3d(mesh,K1D,2*K1D,K1D); // make Cartesian mesh
 
 #if 1
   // [0,20] x [-5,5] for vortex
@@ -116,13 +116,12 @@ int main(int argc, char **argv){
   app->device.setup("mode: 'CUDA', deviceID: 0");
   //app->device.setup("mode: 'OpenCL', platformID : 0, deviceID: 0");
 
-  printf("occa setup\n");
   setupOccaMesh3d(mesh,app); // build mesh geofacs
-  return 0;
+ 
   app->props["defines/p_gamma"] = GAMMA;
   app->props["defines/p_Nfields"] = Nfields;
   app->props["defines/p_tau"] = 1.0;
-
+  
   MatrixXd xq = mesh->Vq*mesh->x;
   MatrixXd yq = mesh->Vq*mesh->y;
   MatrixXd zq = mesh->Vq*mesh->z;
