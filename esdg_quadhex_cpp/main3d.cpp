@@ -36,7 +36,80 @@ static void VortexSolution3d(MatrixXd x, MatrixXd y, MatrixXd z, double t,
   rhov = rho.array()*(1.0 + ry.array() * L.array());
   rhow = rho.array()*(0.0 + rz.array() * L.array());
   E = p0 / gm1 * (1.0 + tmp.array().pow(GAMMA)) +
-    .5 * (rhou.array().square() + rhov.array().square() + rhow.array().square())/rho.array();  
+    .5 * (rhou.array().square() + rhov.array().square() + rhow.array().square())/rho.array();
+
+  /*
+  rho.fill(4.0);
+  rhou.fill(.1);
+  rhov.fill(.25);
+  rhow.fill(.5);
+  E.fill(2.0);  
+  */
+
+  /*
+  rho = 2.0 + .5*(PI*x.array()).sin()*(PI*y.array()).sin()*(PI*z.array()).sin();
+  rhou = 1.0 + .5*(PI*x.array()).sin()*(PI*y.array()).sin()*(PI*z.array()).sin();
+  rhov = .0 + .5*(PI*x.array()).sin()*(PI*y.array()).sin()*(PI*z.array()).sin();
+  rhow = -1.0 + .5*(PI*x.array()).sin()*(PI*y.array()).sin()*(PI*z.array()).sin();
+  E = 2.0 + .5*(PI*x.array()).sin()*(PI*y.array()).sin()*(PI*z.array()).sin();
+  
+  int K = x.cols();
+  int Np = x.rows();  
+  for (int e = 0; e < K; ++e){
+    for (int i = 0; i < Np; ++i){
+      if (y(i,e) > 10.0){
+	rho(i,e) += 2.0;
+	rhou(i,e) += 1.0;
+	rhov(i,e) += -1.0;
+	rhow(i,e) += 1.0;		
+	E(i,e) += 1.0;
+      }
+    }
+  }
+  */
+}
+
+#define pfun(rho, u, v, w, E)                                   \
+  ((GAMMA - 1.) * (E - .5f * rho * (u * u + v * v + w * w)))
+#define beta(rho, u, v, w, E)                           \
+  (rho / (2. * pfun(rho, u, v, w, E))) // inverse temp                                                                                                                                                                                     
+// map conservation to entropy vars
+#define pfun(rho, u, v, w, E)                                   \
+  ((GAMMA - 1.) * (E - .5f * rho * (u * u + v * v + w * w)))
+#define rhoeU(rho, rhou, rhov, rhow, E)                         \
+  (E - .5f * (rhou * rhou + rhov * rhov + rhow * rhow) / rho)
+#define sU(rho, rhou, rhov, rhow, E)                            \
+  (log((GAMMA - 1.) * rhoeU(rho, rhou, rhov, rhow, E) /    \
+         pow(rho, GAMMA)))
+
+// map entropy to conservation vars                                                                                                                                                                                                        
+#define sV(V1, V2, V3, V4, V5)                                  \
+  (GAMMA - V1 + (V2 * V2 + V3 * V3 + V4 * V4) / (2. * V5))
+#define rhoeV(V1, V2, V3, V4, V5)                                       \
+  (pow((GAMMA - 1.) / pow(-V5, GAMMA), 1. / (GAMMA - 1.)) * \
+   exp(-sV(V1, V2, V3, V4, V5) / (GAMMA - 1.)))
+
+static void VU(dfloat rho, dfloat rhou, dfloat rhov, dfloat rhow, dfloat E,
+        dfloat &V1, dfloat &V2, dfloat &V3, dfloat &V4, dfloat &V5)
+{
+  const dfloat rhoe = rhoeU(rho, rhou, rhov, rhow, E);
+  const dfloat invrhoe = 1./rhoe;
+  V1 = (-E + rhoe * (GAMMA + 1. - sU(rho, rhou, rhov, rhow, E))) * invrhoe;
+  V2 = rhou * invrhoe;
+  V3 = rhov * invrhoe;
+  V4 = rhow * invrhoe;
+  V5 = (-rho) * invrhoe;
+}
+
+static void UV(dfloat V1, dfloat V2, dfloat V3, dfloat V4, dfloat V5,
+        dfloat &rho, dfloat &rhou, dfloat &rhov, dfloat &rhow, dfloat &E)
+{
+  const dfloat rhoe = rhoeV(V1, V2, V3, V4, V5);
+  rho = rhoe * (-V5);
+  rhou = rhoe * (V2);
+  rhov = rhoe * (V3);
+  rhow = rhoe * (V4);
+  E = rhoe * (1. - (V2 * V2 + V3 * V3 + V4 * V4) / (2. * V5));
 }
 
 
@@ -45,9 +118,9 @@ int main(int argc, char **argv){
   //occa::printModeInfo();
 
   int N = 3;
-  int K1D = 8;
-  double CFL = .5;  
-  double FinalTime = .50;
+  int K1D = 4;
+  double CFL = .25;  
+  double FinalTime = 5.0;
   
   Mesh *mesh = (Mesh*) calloc(1, sizeof(Mesh));  
   HexMesh3d(mesh,K1D,2*K1D,K1D); // make Cartesian mesh
@@ -98,7 +171,7 @@ int main(int argc, char **argv){
   double DX = mesh->VX.maxCoeff()-mesh->VX.minCoeff();
   double DY = mesh->VY.maxCoeff()-mesh->VY.minCoeff();
   double DZ = mesh->VZ.maxCoeff()-mesh->VZ.minCoeff();
-  //MakeNodeMapsPeriodic3d(mesh,xf,yf,zf,DX,DY,DZ,mapPq);  
+  MakeNodeMapsPeriodic3d(mesh,xf,yf,zf,DX,DY,DZ,mapPq);  
   mesh->mapPq = mapPq;  
 
   // ============ problem dependent stuff ============
@@ -120,7 +193,7 @@ int main(int argc, char **argv){
  
   app->props["defines/p_gamma"] = GAMMA;
   app->props["defines/p_Nfields"] = Nfields;
-  app->props["defines/p_tau"] = 1.0;
+  app->props["defines/p_tau"] = 0.0;
   
   MatrixXd xq = mesh->Vq*mesh->x;
   MatrixXd yq = mesh->Vq*mesh->y;
@@ -144,7 +217,61 @@ int main(int argc, char **argv){
   app->surface = app->device.buildKernel(path.c_str(),"surface",app->props);
   app->update = app->device.buildKernel(path.c_str(),"update",app->props);
   app->eval_surface = app->device.buildKernel(path.c_str(),"eval_surface",app->props);  
+
+
+  MatrixXd wJq = mesh->wq.asDiagonal() * (mesh->Vq*mesh->J);
   
+#if 0
+  app->eval_surface(K, app->o_Vf1D,app->o_Q, app->o_Qf);
+  
+  // test rhs eval
+  app->volume(K, app->o_vgeo, app->o_vfgeo,
+	      app->o_D1D, app->o_Vf1D, app->o_Lf1D,
+	      app->o_Q, app->o_Qf,
+	      app->o_rhs, app->o_rhsf);
+
+  //getOccaArray(app,app->o_rhs,Q);
+  //cout << "vol only rhs = " << endl << Q << endl;
+  
+  app->surface(K, app->o_vgeo, app->o_fgeo, app->o_mapPq,
+	       app->o_Lf1D, app->o_Qf, app->o_rhsf,
+	       app->o_rhs); 
+  
+  getOccaArray(app,app->o_rhs,Q);
+  //cout << "vol+surf rhs = " << endl << Q << endl;
+
+  MatrixXd V1(Np,K);
+  MatrixXd V2(Np,K);
+  MatrixXd V3(Np,K);
+  MatrixXd V4(Np,K);
+  MatrixXd V5(Np,K);
+  double UVerr = 0.0;  
+  for (int e = 0; e < K; ++e){
+    for (int i = 0; i < Np; ++i){
+      double V1i,V2i,V3i,V4i,V5i;
+      VU(rho(i,e),rhou(i,e),rhov(i,e),rhow(i,e),E(i,e),V1i,V2i,V3i,V4i,V5i);
+      V1(i,e) = V1i;
+      V2(i,e) = V2i;
+      V3(i,e) = V3i;
+      V4(i,e) = V4i;
+      V5(i,e) = V5i;
+      double rhoi,rhoui,rhovi,rhowi,Ei;
+      UV(V1i,V2i,V3i,V4i,V5i,rhoi,rhoui,rhovi,rhowi,Ei);
+
+      UVerr += fabs(rho(i,e)-rhoi) + fabs(rhou(i,e)-rhoui) + fabs(rhov(i,e)-rhovi) + fabs(rhow(i,e)-rhowi) + fabs(E(i,e)-Ei);
+    }
+  }
+
+  MatrixXd rhsrho  = Q.middleRows(0,Np);
+  MatrixXd rhsrhou = Q.middleRows(Np,Np);
+  MatrixXd rhsrhov = Q.middleRows(2*Np,Np);
+  MatrixXd rhsrhow = Q.middleRows(3*Np,Np);  
+  MatrixXd rhsE    = Q.middleRows(4*Np,Np);
+  double rhstest = (wJq.array()*((V1.array()*rhsrho.array() + V2.array()*rhsrhou.array() + V3.array()*rhsrhov.array() + V4.array()*rhsrhow.array() + V5.array()*rhsE.array()))).matrix().sum();
+  printf("uverr = %g, rhstest = %g\n",UVerr,rhstest);
+  
+  return 0;
+#endif 
 
   // ============== solver ===================
 
@@ -189,7 +316,8 @@ int main(int argc, char **argv){
   rho = Q.middleRows(0,Np);
   rhou = Q.middleRows(Np,Np);
   rhov = Q.middleRows(2*Np,Np);
-  E = Q.middleRows(3*Np,Np);    
+  rhow = Q.middleRows(3*Np,Np);  
+  E = Q.middleRows(4*Np,Np);    
 
   MatrixXd rhoex,rhouex,rhovex,rhowex,Eex;
   VortexSolution3d(xq,yq,zq,FinalTime,rhoex,rhouex,rhovex,rhowex,Eex);
@@ -202,7 +330,7 @@ int main(int argc, char **argv){
   return 0;
 #endif
 
-  MatrixXd wJq = mesh->wq.asDiagonal() * (mesh->Vq*mesh->J);  
+  //  MatrixXd wJq = mesh->wq.asDiagonal() * (mesh->Vq*mesh->J);  
   //  MatrixXd rhouex = rhoex.array()*u.array();
   //  MatrixXd rhovex = rhoex.array()*v.array();
   //  MatrixXd Eex = p.array()/(GAMMA-1.0) + .5*rhoex.array()*(u.array().square() + v.array().square());
