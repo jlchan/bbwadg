@@ -56,7 +56,7 @@ int main(int argc, char **argv){
   // curvilinear meshing
   MatrixXd x = mesh->x;
   MatrixXd y = mesh->y;
-  double a = .4;
+  double a = .0;
   MatrixXd dx = (.5*PI*(x.array()-Lx)/Lx).cos()*(1.5*PI*y.array()/Ly).cos();
   x = x + a*Lx*dx;
   MatrixXd dy = (1.5*PI*(x.array()-Lx)/Lx).cos()*(.5*PI*y.array()/Ly).cos();

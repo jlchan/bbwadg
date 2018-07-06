@@ -17,7 +17,7 @@
 // helpful functions
 #define avg(a, b) .5f * (a + b)
 #define pfun(rho, u, v, E) ((p_gamma - 1.f) * (E - .5f * rho * (u * u + v * v)))
-#define beta(rho, u, v, E) (rho / (2.f * pfun(rho, u, v, E))) // inverse temp
+#define beta(rho, u, v, E) (.5f * rho / pfun(rho, u, v, E)) // inverse temp
 
 // map conservation to entropy vars
 #define pfun(rho, u, v, E) ((p_gamma - 1.f) * (E - .5f * rho * (u * u + v * v)))
@@ -26,7 +26,7 @@
   (LOGDF((p_gamma - 1.f) * rhoeU(rho, rhou, rhov, E) / POWDF(rho, p_gamma)))
 
 // map entropy to conservation vars
-#define sV(V1, V2, V3, V4) (p_gamma - V1 + (V2 * V2 + V3 * V3) / (2.f * V4))
+#define sV(V1, V2, V3, V4) (p_gamma - V1 + .5f*(V2 * V2 + V3 * V3) / V4)
 #define rhoeV(V1, V2, V3, V4)						\
   (POWDF((p_gamma - 1.f) / POWDF(-V4, p_gamma), 1.f / (p_gamma - 1.f)) * \
    EXPDF(-sV(V1, V2, V3, V4) / (p_gamma - 1.f)))
@@ -39,12 +39,12 @@ dfloat logmean(dfloat aL, dfloat aR)
   const dfloat u = f * f;
   const dfloat u2 = u * u;
 
-  dfloat F = LOGDF(xi) / 2.f / f;
+  dfloat F = .5f * LOGDF(xi) / f;
   if (fabs(u) < 1.fe-3)
     {
-      F = 1.f + u / 3.f + u2 / 5.f + u2 * u / 7.f + u2 * u2 / 9.f;
+      F = 1.f + u*.333333333f + u2*.2f + u2*u*0.142857142857143f + u2*u2*.1111111111111111f;
     }
-  return (aL + aR) / (2.f * F);
+  return .5f * (aL + aR) / F;
 }
 
 void VU(dfloat rho, dfloat rhou, dfloat rhov, dfloat E, dfloat &V1, dfloat &V2,
@@ -52,10 +52,11 @@ void VU(dfloat rho, dfloat rhou, dfloat rhov, dfloat E, dfloat &V1, dfloat &V2,
 {
 
   const dfloat rhoe = rhoeU(rho, rhou, rhov, E);
-  V1 = (-E + rhoe * (p_gamma + 1.f - sU(rho, rhou, rhov, E))) / rhoe;
-  V2 = rhou / rhoe;
-  V3 = rhov / rhoe;
-  V4 = (-rho) / rhoe;
+  const dfloat invrhoe = 1.f/rhoe;
+  V1 = (-E + rhoe * (p_gamma + 1.f - sU(rho, rhou, rhov, E))) * invrhoe;
+  V2 = rhou * invrhoe;
+  V3 = rhov * invrhoe;
+  V4 = (-rho) * invrhoe;
 }
 
 void UV(dfloat V1, dfloat V2, dfloat V3, dfloat V4, dfloat &rho, dfloat &rhou,
