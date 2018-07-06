@@ -44,10 +44,10 @@ int main(int argc, char **argv){
 
   //occa::printModeInfo();
 
-  int N = 3;
-  int K1D = 8;
-  double CFL = .25;  
-  double FinalTime = .50;
+  int N = 4;
+  int K1D = 32;
+  double CFL = .5;  
+  double FinalTime = 5.0;
   
   Mesh *mesh = (Mesh*) calloc(1, sizeof(Mesh));  
   HexMesh3d(mesh,K1D,K1D,K1D); // make Cartesian mesh
@@ -60,7 +60,7 @@ int main(int argc, char **argv){
   mesh->VX = (mesh->VX.array()+1.0)*Lx;
   mesh->VY = (mesh->VY.array()+1.0)*Ly;
   mesh->VZ = (mesh->VZ.array()+1.0)*Lz;  
-#endif
+#endif  
   
   InitRefData3d(mesh, N);
 
@@ -68,6 +68,24 @@ int main(int argc, char **argv){
   ConnectElems(mesh,dim);  
 
   MapNodes3d(mesh); // low order mapping
+
+  MatrixXd x = mesh->x;
+  MatrixXd y = mesh->y;
+  MatrixXd z = mesh->z;
+  MatrixXd dx = .5*(PI*x.array()/10).sin()*(2*PI*y.array()/20).sin()*(PI*z.array()/10).sin();
+  MatrixXd dy = -(2*PI*x.array()/10).sin()*(PI*y.array()/10).sin()*(2*PI*z.array()/10).sin();
+  MatrixXd dz = dx;
+
+  double a = 0*.125;
+  x = x + a*dx;
+  y = y + a*dy;
+  z = z + a*dz;
+
+  mesh->x = x;
+  mesh->y = y;
+  mesh->z = z;  
+
+  
   GeometricFactors3d(mesh);
   Normals3d(mesh);
   
@@ -94,8 +112,8 @@ int main(int argc, char **argv){
   
   //App *app = (App*) calloc(1, sizeof(App));
   App *app = new App;
-  app->device.setup("mode: 'Serial'");
-  // app->device.setup("mode: 'CUDA', deviceID: 0");
+  //app->device.setup("mode: 'Serial'");
+  app->device.setup("mode: 'CUDA', deviceID: 0");
   //app->device.setup("mode: 'OpenCL', platformID : 0, deviceID: 0");
   
   setupOccaMesh3d(mesh,app); // build mesh geofacs

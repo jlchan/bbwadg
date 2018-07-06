@@ -453,8 +453,8 @@ void InitRefData3d(Mesh *mesh, int N){
 
   // quad points 
   VectorXd rq1D, wq1D;
-  JacobiGQ(N, 0, 0, rq1D, wq1D);
-  //JacobiGL(N, 0, 0, rq1D, wq1D);
+  //JacobiGQ(N, 0, 0, rq1D, wq1D);
+  JacobiGL(N, 0, 0, rq1D, wq1D);
   
   int Np2 = Np1*Np1;
   int Np3 = Np1*Np2;
