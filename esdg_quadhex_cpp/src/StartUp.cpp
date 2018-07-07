@@ -493,7 +493,7 @@ void InitRefData3d(Mesh *mesh, int N){
   MatrixXd I1D = MatrixXd::Identity(Np1,Np1);
   MatrixXd I2D = MatrixXd::Identity(Np2,Np2);  
 
-  MatrixXd V = Vandermonde3DQuad(N,r,s,t);
+  MatrixXd V = Vandermonde3DHex(N,r,s,t);
   MatrixXd Dr = kron(I1D,kron(D1D,I1D));
   MatrixXd Ds = kron(I2D,D1D);
   MatrixXd Dt = kron(D1D,I2D);
@@ -525,8 +525,8 @@ void InitRefData3d(Mesh *mesh, int N){
   VectorXd wf(NfqNfaces); wf << wq2, wq2, wq2, wq2, wq2, wq2;  
   
   // interp to quadrature
-  MatrixXd Vqtmp = Vandermonde3DQuad(N,rq,sq,tq);
-  MatrixXd Vftmp = Vandermonde3DQuad(N,rf,sf,tf);
+  MatrixXd Vqtmp = Vandermonde3DHex(N,rq,sq,tq);
+  MatrixXd Vftmp = Vandermonde3DHex(N,rf,sf,tf);
   MatrixXd Vq = mrdivide(Vqtmp,V);
   MatrixXd Vf = mrdivide(Vftmp,V);  
   
@@ -644,8 +644,8 @@ void MapNodes3d(Mesh *mesh){
   VectorXd s = mesh->s;
   VectorXd t = mesh->t;  
   
-  MatrixXd Vdm1 = Vandermonde3DQuad(1,r1,s1,t1);
-  MatrixXd VdmN = Vandermonde3DQuad(1,r,s,t);
+  MatrixXd Vdm1 = Vandermonde3DHex(1,r1,s1,t1);
+  MatrixXd VdmN = Vandermonde3DHex(1,r,s,t);
   //cout << "Vdm1 = " << Vdm1 << endl;
   MatrixXd V1 = mrdivide(VdmN,Vdm1);
 

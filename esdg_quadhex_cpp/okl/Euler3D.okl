@@ -362,7 +362,6 @@ void euler3d_flux(dfloat rho_i, dfloat rho_j, dfloat u_i, dfloat u_j,
 	  val[4] += Dx * FxS[4] + Dy * FyS[4] + Dz * FzS[4];	  
 	}
 	
-	
 	// diff in s direction
 	const dfloat sxi = s_G[3][ii][jj][kk];
 	const dfloat syi = s_G[4][ii][jj][kk];

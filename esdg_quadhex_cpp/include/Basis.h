@@ -18,7 +18,7 @@ MatrixXd Bern1D(int N, VectorXd r);
 
 // 2D, 3D quad
 MatrixXd Vandermonde2DQuad(int N, VectorXd r, VectorXd s);
-MatrixXd Vandermonde3DQuad(int N, VectorXd r, VectorXd s, VectorXd t);
+MatrixXd Vandermonde3DHex(int N, VectorXd r, VectorXd s, VectorXd t);
 void quad_cubature(int N, VectorXd &rq, VectorXd &sq, VectorXd &wq);
 void hex_cubature(int N, VectorXd &rq, VectorXd &sq, VectorXd &tq, VectorXd &wq);
 

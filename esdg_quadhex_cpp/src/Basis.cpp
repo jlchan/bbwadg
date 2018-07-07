@@ -208,7 +208,7 @@ MatrixXd Vandermonde2DQuad(int N, VectorXd r, VectorXd s){
   return Vout;
 }
 
-MatrixXd Vandermonde3DQuad(int N, VectorXd r, VectorXd s, VectorXd t){
+MatrixXd Vandermonde3DHex(int N, VectorXd r, VectorXd s, VectorXd t){
   int Np = (N+1)*(N+1)*(N+1);
   MatrixXd Vout(r.rows(),Np);
   

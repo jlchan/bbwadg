@@ -38,13 +38,12 @@ static void VortexSolution3d(MatrixXd x, MatrixXd y, MatrixXd z, double t,
   E = p0 / gm1 * (1.0 + tmp.array().pow(GAMMA)) +
     .5 * (rhou.array().square() + rhov.array().square() + rhow.array().square())/rho.array();
 
-  /*
   rho.fill(4.0);
   rhou.fill(.1);
   rhov.fill(.25);
   rhow.fill(.5);
   E.fill(2.0);  
-  */
+  /*  */
 
   /*
   rho = 2.0 + .5*(PI*x.array()).sin()*(PI*y.array()).sin()*(PI*z.array()).sin();
@@ -117,16 +116,16 @@ int main(int argc, char **argv){
 
   //occa::printModeInfo();
 
-  int N = 3;
-  int K1D = 4;
-  double CFL = .25;  
-  double FinalTime = 5.0;
+  int N = 2;
+  int K1D = 1;
+  double CFL = .5;  
+  double FinalTime = .0;
   
   Mesh *mesh = (Mesh*) calloc(1, sizeof(Mesh));  
   HexMesh3d(mesh,K1D,2*K1D,K1D); // make Cartesian mesh
 
 #if 1
-  // [0,20] x [-5,5] for vortex
+  // [0,10] x [0,20] x [0,10] for vortex
   double Lx = 5;
   double Ly = 10;
   double Lz = 5;  
@@ -145,19 +144,25 @@ int main(int argc, char **argv){
   MatrixXd x = mesh->x;
   MatrixXd y = mesh->y;
   MatrixXd z = mesh->z;
-  MatrixXd dx = .5*(PI*x.array()/10).sin()*(2*PI*y.array()/20).sin()*(PI*z.array()/10).sin();
-  MatrixXd dy = -(2*PI*x.array()/10).sin()*(PI*y.array()/10).sin()*(2*PI*z.array()/10).sin();
+  MatrixXd dx = .5*(PI*x.array()/10).sin()*(2.0*PI*y.array()/20).sin()*(PI*z.array()/10).sin();
+  MatrixXd dy = -(2.0*PI*x.array()/10).sin()*(PI*y.array()/20).sin()*(2.0*PI*z.array()/10).sin();
   MatrixXd dz = dx;
 
-  double a = 0*.125;
+  double a = 0.0;
   x = x + a*dx;
   y = y + a*dy;
   z = z + a*dz;
 
+#if 0
+  cout << "x = [" << x << "];" << endl;
+  cout << "y = [" << y << "];" << endl;
+  cout << "z = [" << z << "];" << endl;
+  return 0;
+#endif
+  
   mesh->x = x;
   mesh->y = y;
   mesh->z = z;  
-
   
   GeometricFactors3d(mesh);
   Normals3d(mesh);
@@ -221,7 +226,7 @@ int main(int argc, char **argv){
 
   MatrixXd wJq = mesh->wq.asDiagonal() * (mesh->Vq*mesh->J);
   
-#if 0
+#if 1
   app->eval_surface(K, app->o_Vf1D,app->o_Q, app->o_Qf);
   
   // test rhs eval
@@ -238,9 +243,10 @@ int main(int argc, char **argv){
 	       app->o_rhs); 
   
   getOccaArray(app,app->o_rhs,Q);
-  //cout << "vol+surf rhs = " << endl << Q << endl;
+  cout << "vol+surf rhs = " << endl << Q << endl;
 
-  MatrixXd V1(Np,K);
+  /*
+MatrixXd V1(Np,K);
   MatrixXd V2(Np,K);
   MatrixXd V3(Np,K);
   MatrixXd V4(Np,K);
@@ -269,7 +275,7 @@ int main(int argc, char **argv){
   MatrixXd rhsE    = Q.middleRows(4*Np,Np);
   double rhstest = (wJq.array()*((V1.array()*rhsrho.array() + V2.array()*rhsrhou.array() + V3.array()*rhsrhov.array() + V4.array()*rhsrhow.array() + V5.array()*rhsE.array()))).matrix().sum();
   printf("uverr = %g, rhstest = %g\n",UVerr,rhstest);
-  
+  */  
   return 0;
 #endif 
 
@@ -317,24 +323,42 @@ int main(int argc, char **argv){
   rhou = Q.middleRows(Np,Np);
   rhov = Q.middleRows(2*Np,Np);
   rhow = Q.middleRows(3*Np,Np);  
-  E = Q.middleRows(4*Np,Np);    
+  E = Q.middleRows(4*Np,Np);
 
+  // finer quadrature for error eval
+  VectorXd rq1D2, wq1D2;
+  JacobiGQ(N+1, 0, 0, rq1D2, wq1D2);
+  int Np1 = rq1D2.size();
+  int Nq3 = Np1*Np1*Np1;
+  VectorXd rq2(Nq3),sq2(Nq3),tq2(Nq3),wq2(Nq3);
+  int sk = 0;
+  for (int i = 0; i < Np1; ++i){
+    for (int j = 0; j < Np1; ++j){
+      for (int k = 0; k < Np1; ++k){
+	rq2(sk) = rq1D2(i);
+	sq2(sk) = rq1D2(j);
+	tq2(sk) = rq1D2(k);
+	wq2(sk) = wq1D2(i)*wq1D2(j)*wq1D2(k);
+	++sk;
+      }
+    }
+  } 
+  MatrixXd Vqtmp = Vandermonde3DHex(N,rq2,sq2,tq2);
+  MatrixXd Vq = Vandermonde3DHex(N,mesh->rq,mesh->sq,mesh->tq);  
+  MatrixXd Vq2 = mrdivide(Vqtmp,Vq);
+  MatrixXd xq2 = Vq2 * (mesh->Vq*mesh->x);
+  MatrixXd yq2 = Vq2 * (mesh->Vq*mesh->y);
+  MatrixXd zq2 = Vq2 * (mesh->Vq*mesh->z);  
+  
   MatrixXd rhoex,rhouex,rhovex,rhowex,Eex;
-  VortexSolution3d(xq,yq,zq,FinalTime,rhoex,rhouex,rhovex,rhowex,Eex);
+  VortexSolution3d(xq2,yq2,zq2,FinalTime,rhoex,rhouex,rhovex,rhowex,Eex);
 
-#if 0
-  cout << "xq = [" << xq << "];" << endl;
-  cout << "yq = [" << yq << "];" << endl;
-  cout << "rho = [" << rho << "];" << endl;
-  cout << "rhoex = [" << rhoex << "];" << endl;
-  return 0;
-#endif
-
+  MatrixXd wJq2 = wq2.asDiagonal() * (Vq2*(mesh->Vq*mesh->J));  
   //  MatrixXd wJq = mesh->wq.asDiagonal() * (mesh->Vq*mesh->J);  
   //  MatrixXd rhouex = rhoex.array()*u.array();
   //  MatrixXd rhovex = rhoex.array()*v.array();
   //  MatrixXd Eex = p.array()/(GAMMA-1.0) + .5*rhoex.array()*(u.array().square() + v.array().square());
-  MatrixXd werr = wJq.array()*(rhoex - rho).array().square();
+  MatrixXd werr = wJq2.array()*(rhoex - Vq2*rho).array().square();
   printf("L2 error for rho = %g\n",sqrt(werr.sum()));
  
   return 0;
