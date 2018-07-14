@@ -21,7 +21,7 @@ static void VortexSolution2d(MatrixXd x,MatrixXd y,double t,
   rho = rho.array().pow(1.0/(GAMMA-1.0));
   p   = rho.array().pow(GAMMA);
 
-  /*
+  /*  
   rho.fill(2.0);
   u.fill(.1);
   v.fill(.2);
@@ -33,11 +33,11 @@ int main(int argc, char **argv){
 
   //occa::printModeInfo();   return 0;
 
-  int N = 4;
+  int N = 3;
   int K1D = 8;
-  double FinalTime = 5.0;
+  double FinalTime = 1.0;
   double CFL = .5;  
-  double a = .0;
+  double a = .1;
   
   //Mesh *mesh = (Mesh*) calloc(1, sizeof(Mesh));
   Mesh *mesh = new Mesh;
@@ -183,7 +183,7 @@ int main(int argc, char **argv){
   return 0;
 #endif
   
-#if 0
+#if 1
 
   // test rhs eval
   app->volume(K, app->o_vgeo, app->o_vfgeo,
@@ -192,14 +192,14 @@ int main(int argc, char **argv){
 	      app->o_rhs, app->o_rhsf);
 
   getOccaArray(app,app->o_rhs,Q);
-  cout << "vol only rhs = " << endl << Q << endl;
+  cout << "vol only rhs = " << endl << Q.middleRows(0,Np) << endl;
   
   app->surface(K, app->o_vgeo, app->o_fgeo, app->o_mapPq,
 	       app->o_Lf1D, app->o_Qf, app->o_rhsf,
 	       app->o_rhs); 
   
   getOccaArray(app,app->o_rhs,Q);
-    cout << "vol+surf rhs = " << endl << Q << endl;
+    cout << "vol+surf rhs = " << endl << Q.middleRows(0,Np) << endl;
   
   return 0;
 #endif 

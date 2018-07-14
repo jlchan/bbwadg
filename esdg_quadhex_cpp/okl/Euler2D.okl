@@ -98,6 +98,7 @@ void euler2d_flux(dfloat rho_i, dfloat rho_j, dfloat u_i, dfloat u_j,
   FyS3 = FyS1 * vavg + pa;
   FxS4 = f4aux * uavg;
   FyS4 = f4aux * vavg;
+  
 }
 
 // initialize surface values from interior

@@ -19,8 +19,8 @@ void InitRefData2d(Mesh *mesh, int N){
 
   // quad points 
   VectorXd rq1D, wq1D;
-  //JacobiGQ(N, 0, 0, rq1D, wq1D);
-  JacobiGL(N, 0, 0, rq1D, wq1D); // GLL option - weights shouldn't matter, it's just colloc
+  JacobiGQ(N, 0, 0, rq1D, wq1D);
+  //JacobiGL(N, 0, 0, rq1D, wq1D); // GLL option - weights shouldn't matter, it's just colloc
 
   //cout << "rq,wq for GQ = " << rq1D << ", " << wq1D << endl;
   
@@ -247,25 +247,19 @@ void GeometricFactors2d(Mesh *mesh){
   MatrixXd rxJ = ys;
   MatrixXd sxJ = -yr;
   MatrixXd ryJ = -xs;
-  MatrixXd syJ = xr;    
+  MatrixXd syJ = xr;
+
+  // for higher accuracy, interp xs, yr, sr xs to GQ points first    
+  xr = mesh->Vq*xr;
+  xs = mesh->Vq*xs;
+  yr = mesh->Vq*yr;
+  ys = mesh->Vq*ys;  
+  /* */
   MatrixXd J = -xs.array()*yr.array() + xr.array()*ys.array();
-  
-  // cout << "VX = " << endl << x1 << endl;
-  // cout << "VY = " << endl << y1 << endl;
-  // cout << "VX = " << endl << VX << endl;
-  // cout << "VY = " << endl << VY << endl;
 
-  //  cout << "EToV = " << EToV << endl;
-  //  cout << "x = " << endl << x << endl;
-  //  cout << "y = " << endl << y << endl;
-  
-  /*
-  cout << "rxJ = " << endl << rxJ << endl;
-  cout << "ryJ = " << endl << ryJ << endl;
-  cout << "sxJ = " << endl << sxJ << endl;
-  cout << "syJ = " << endl << syJ << endl;    
-  */
-
+  // interpolate J back to store at GLL points (we undo this later)
+  J = mldivide(mesh->Vq,J);
+ 
   // all quantities stored at GLL points (must interp before using)
   mesh->rxJ = rxJ;
   mesh->sxJ = sxJ;
@@ -453,8 +447,8 @@ void InitRefData3d(Mesh *mesh, int N){
 
   // quad points 
   VectorXd rq1D, wq1D;
-  JacobiGQ(N, 0, 0, rq1D, wq1D);
-  //JacobiGL(N, 0, 0, rq1D, wq1D);
+  //JacobiGQ(N, 0, 0, rq1D, wq1D);
+  JacobiGL(N, 0, 0, rq1D, wq1D);
   
   int Np2 = Np1*Np1;
   int Np3 = Np1*Np2;
@@ -479,12 +473,6 @@ void InitRefData3d(Mesh *mesh, int N){
     }
   }
     
-  /*
-  cout << "r = " << r << endl;
-  cout << "s = " << s << endl;
-  cout << "t = " << t << endl;
-  */
-
   // nodal operators
   MatrixXd V1D = Vandermonde1D(N,r1D);
   MatrixXd Vr1D = GradVandermonde1D(N,r1D);
@@ -515,20 +503,39 @@ void InitRefData3d(Mesh *mesh, int N){
     }
   }
   VectorXd e(Np2); e.fill(1.0);
-  
+ 
   // face quad points: r -/+, s-/+, t-/+
   int Nfaces = 6;
   int NfqNfaces = Nfaces * Np2;
   VectorXd rf(NfqNfaces); rf << -e, e, rq2, rq2, rq2, rq2;
   VectorXd sf(NfqNfaces); sf << rq2, rq2, -e, e, sq2, sq2;
   VectorXd tf(NfqNfaces); tf << sq2, sq2, sq2, sq2, -e, e;
-  VectorXd wf(NfqNfaces); wf << wq2, wq2, wq2, wq2, wq2, wq2;  
+  VectorXd wf(NfqNfaces); wf << wq2, wq2, wq2, wq2, wq2, wq2;
+
+#if 1
+  cout << "rq2 = [" << rq2 << "];" << endl;
+  cout << "sq2 = [" << sq2 << "];" << endl;  
+  
+  cout << "rc = [" << r << "];" << endl;
+  cout << "sc = [" << s << "];" << endl;
+  cout << "tc = [" << t << "];" << endl;
+  cout << setprecision(15) << "wq = [" << wq << "];" << endl;
+
+  cout << "rfc = [" << rf << "];" << endl;
+  cout << "sfc = [" << sf << "];" << endl;
+  cout << "tfc = [" << tf << "];" << endl;
+  cout << setprecision(15) << "wf = [" << wf << "];" << endl;
+#endif
   
   // interp to quadrature
   MatrixXd Vqtmp = Vandermonde3DHex(N,rq,sq,tq);
   MatrixXd Vftmp = Vandermonde3DHex(N,rf,sf,tf);
   MatrixXd Vq = mrdivide(Vqtmp,V);
-  MatrixXd Vf = mrdivide(Vftmp,V);  
+  MatrixXd Vf = mrdivide(Vftmp,V);
+
+#if 0
+  cout << "Vf = " << Vf << endl;
+#endif
   
   // 1D quadrature operators
   MatrixXd Vq1D = Vandermonde1D(N,rq1D);
@@ -700,13 +707,32 @@ void GeometricFactors3d(Mesh *mesh){
 
   MatrixXd rzJ = -(Dt * (ys.array()*x.array()).matrix() - Ds * (yt.array()*x.array()).matrix());
   MatrixXd szJ = -(Dr * (yt.array()*x.array()).matrix() - Dt * (yr.array()*x.array()).matrix());
-  MatrixXd tzJ = -(Ds * (yr.array()*x.array()).matrix() - Dr * (ys.array()*x.array()).matrix());  
+  MatrixXd tzJ = -(Ds * (yr.array()*x.array()).matrix() - Dr * (ys.array()*x.array()).matrix());
+
+#define useGLLforJ 0
+#if useGLLforJ
+  MatrixXd Vq = mesh->Vq;
+  xr = Vq * xr;
+  xs = Vq * xs;
+  xt = Vq * xt;
+  yr = Vq * yr;
+  ys = Vq * ys;
+  yt = Vq * yt;
+  zr = Vq * zr;
+  zs = Vq * zs;
+  zt = Vq * zt;  
+#endif
   
   MatrixXd J =
     xr.array()*(ys.array()*zt.array() - zs.array()*yt.array())
     - yr.array()*(xs.array()*zt.array() - zs.array()*xt.array())
     - zr.array()*(xs.array()*yt.array() - ys.array()*xt.array());
 
+#if useGLLforJ
+  // interpolate J back to store at GLL points (we undo this later)
+  J = mldivide(Vq,J); 
+#endif
+  
   // all quantities stored at GLL points (must interp before using)
   mesh->rxJ = rxJ;
   mesh->sxJ = sxJ;
@@ -719,16 +745,24 @@ void GeometricFactors3d(Mesh *mesh){
   mesh->tzJ = tzJ;  
   mesh->J = J;
 
-#if 0
+  double err = (Dr*rxJ + Ds*sxJ + Dt*txJ).cwiseAbs().sum() +
+    (Dr*ryJ + Ds*syJ + Dt*tyJ).cwiseAbs().sum() +
+    (Dr*rzJ + Ds*szJ + Dt*tzJ).cwiseAbs().sum();
+  //printf("GCL err = %g\n",err);
+
+  
+#if 1
+  printf("vgeo = [\n");
   for (int e = 0; e < K; ++e){
     for (int i = 0; i < rxJ.rows(); ++i){
-      printf("geo = %f, %f, %f, %f, %f, %f, %f, %f, %f\n",
+      printf(" %f, %f, %f, %f, %f, %f, %f, %f, %f\n",
 	     rxJ(i,e),sxJ(i,e),txJ(i,e),
 	     ryJ(i,e),syJ(i,e),tyJ(i,e),
 	     rzJ(i,e),szJ(i,e),tzJ(i,e));	     
 
     }
   }
+  printf("];\n");  
 #endif
   
 }
@@ -747,7 +781,22 @@ void Normals3d(Mesh *mesh){
   
   MatrixXd rzJf = Vf * mesh->rzJ;
   MatrixXd szJf = Vf * mesh->szJ;
-  MatrixXd tzJf = Vf * mesh->tzJ;    
+  MatrixXd tzJf = Vf * mesh->tzJ;
+
+#if 1
+  printf("vgeof = [\n");
+  for (int e = 0; e < mesh->K; ++e){
+    for (int i = 0; i < rxJf.rows(); ++i){
+      printf(" %f, %f, %f, %f, %f, %f, %f, %f, %f\n",
+	     rxJf(i,e),sxJf(i,e),txJf(i,e),
+	     ryJf(i,e),syJf(i,e),tyJf(i,e),
+	     rzJf(i,e),szJf(i,e),tzJf(i,e));	     
+
+    }
+  }
+  printf("];\n");  
+#endif
+  
 
   int Nfaces = mesh->Nfaces;
   int Nfp = mesh->Nfp;

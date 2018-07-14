@@ -116,6 +116,15 @@ void euler3d_flux(dfloat rho_i, dfloat rho_j, dfloat u_i, dfloat u_j,
   FxS[4] = f4aux * uavg;
   FyS[4] = f4aux * vavg;
   FzS[4] = f4aux * wavg;
+
+#define testGCL 0
+#if testGCL
+  // for testing GCL
+  FxS[0] = 1.0;
+  FyS[0] = 1.0;
+  FzS[0] = 1.0;	    
+#endif
+  
 }
 
 
@@ -173,7 +182,6 @@ void euler3d_flux(dfloat rho_i, dfloat rho_j, dfloat u_i, dfloat u_j,
 	const int fid1 = fid / p_Np1;
 	const int fid2 = fid % p_Np1;
 	
-
 	dfloat V1f = 0.f;
 	dfloat V2f = 0.f;
 	dfloat V3f = 0.f;
@@ -254,24 +262,30 @@ void euler3d_flux(dfloat rho_i, dfloat rho_j, dfloat u_i, dfloat u_j,
     
     for (int i = 0; i < p_T; ++i; @inner(0)){
 
+      // load ops
+      if (i < p_Np1){
+	s_Lf[i] = Lf1D[i];
+	s_Vf[i] = Vf1D[i];
+      }           
+      if (i < p_Np2){
+	const int id1 = i % p_Np1;
+	const int id2 = i / p_Np1;
+	s_D[id1][id2] = D1D[i]; // i < (N+1)^2 = size of D1D
+      }
+      
       if (i < p_Np){
-	//printf("running on thread %d \n",i);
-	
+		
 	kk = i / p_Np2; // z-id
 	ii = (i - kk*p_Np2) / p_Np1; // y-id
 	jj = i % p_Np1; // x-id
-	
-	// load ops
-	if (i < p_Np2){
-	  const int id1 = i % p_Np1;
-	  const int id2 = i / p_Np1;
-	  s_D[id1][id2] = D1D[i]; // i < (N+1)^2 = size of D1D
-	}
-	
+
+	//if (e==0){printf("running on thread %d: ijk = %d, %d, %d \n",i,ii,jj,kk);}
+		
 	// load geofacs
 	int id = i + p_Np * p_Nvgeo * e;
 	for (int geo = 0; geo < p_Nvgeo; ++geo){
-	  s_G[geo][ii][jj][kk] = vgeo[id]; id += p_Np;
+	  s_G[geo][ii][jj][kk] = vgeo[id];
+	  id += p_Np;
 	}
 
 	// load vol values
@@ -282,11 +296,6 @@ void euler3d_flux(dfloat rho_i, dfloat rho_j, dfloat u_i, dfloat u_j,
 	}
       }
 
-      if (i < p_Np1){
-	s_Lf[i] = Lf1D[i];
-	s_Vf[i] = Vf1D[i];
-      }     
-
       // load surface geo
       if (i < p_NfpNfaces){
 	const int f = i / p_Nfp;
@@ -296,7 +305,8 @@ void euler3d_flux(dfloat rho_i, dfloat rho_j, dfloat u_i, dfloat u_j,
 	
 	int id = i + p_NfpNfaces * p_Nvgeo * e;
 	for (int geo = 0; geo < p_Nvgeo; ++geo){
-	  s_Gf[geo][f][fid1][fid2] = vfgeo[id]; id += p_NfpNfaces;
+	  s_Gf[geo][f][fid1][fid2] = vfgeo[id];
+	  id += p_NfpNfaces;
 	}
 
 	int idf = i + p_NfpNfaces * p_Nfields * e;
@@ -419,7 +429,8 @@ void euler3d_flux(dfloat rho_i, dfloat rho_j, dfloat u_i, dfloat u_j,
 	  const dfloat Dt = s_D[kk][j]; // ii,jj = which line of nodes
 	  const dfloat Dx = Dt * .5f*(txi + txj);
 	  const dfloat Dy = Dt * .5f*(tyi + tyj);
-	  const dfloat Dz = Dt * .5f*(tzi + tzj);	  
+	  const dfloat Dz = Dt * .5f*(tzi + tzj);
+
 	  val[0] += Dx * FxS[0] + Dy * FyS[0] + Dz * FzS[0];
 	  val[1] += Dx * FxS[1] + Dy * FyS[1] + Dz * FzS[1];
 	  val[2] += Dx * FxS[2] + Dy * FyS[2] + Dz * FzS[2];
@@ -427,26 +438,22 @@ void euler3d_flux(dfloat rho_i, dfloat rho_j, dfloat u_i, dfloat u_j,
 	  val[4] += Dx * FxS[4] + Dy * FyS[4] + Dz * FzS[4];	  	
 	}
 
-	dfloat FxS[p_Nfields],FyS[p_Nfields],FzS[p_Nfields];
+	dfloat FxS[p_Nfields], FyS[p_Nfields], FzS[p_Nfields];
 
 	// ============ accum rst = +/- 1 faces, nhat = -/+ 1
 	
-	int fLR[2];	
 	int id1,id2,id3;
 	for (int dim = 0; dim < 3; ++dim){
 
 	  if (dim==0){ // r
-	    fLR[0] = 0; fLR[1] = 1;
-	    id1 = ii;  id2 = jj;  id3 = kk;	    	    
+	    id1 = ii;  id2 = jj;  id3 = kk;
 	  }else if (dim==1){ // s 
-	    fLR[0] = 2; fLR[1] = 3;
-	    id1 = jj;  id2 = ii;  id3 = kk;	    	    
+	    id1 = jj;  id2 = ii;  id3 = kk;
 	  }else{ // t 
-	    fLR[0] = 4; fLR[1] = 5;
-	    id1 = kk;  id2 = ii;  id3 = jj;	    	    	    
+	    id1 = kk;  id2 = ii;  id3 = jj;
 	  }
 	  for (int ff = 0; ff < 2; ++ff){
-	    const int f = fLR[ff];
+	    const int f = 2*dim+ff; 
 	    const dfloat rho_j = s_Qf[0][f][id2][id3];
 	    const dfloat inv_rho_j = 1.f/rho_j;
 	    const dfloat u_j = s_Qf[1][f][id2][id3] * inv_rho_j;
@@ -461,16 +468,31 @@ void euler3d_flux(dfloat rho_i, dfloat rho_j, dfloat u_i, dfloat u_j,
 	    const dfloat nsgn = (ff==0) ? -1.f : 1.f; 
 	    const int lid = (ff==0) ? id1 : p_Np1-id1-1;  
 
-	    const int geoid = 3*dim; 
+	    const int geoid = 3*dim;
 	    const dfloat Lx = nsgn * .5f * (s_G[geoid  ][id1][id2][id3] + s_Gf[geoid  ][f][id2][id3]) * s_Lf[lid];
 	    const dfloat Ly = nsgn * .5f * (s_G[geoid+1][id1][id2][id3] + s_Gf[geoid+1][f][id2][id3]) * s_Lf[lid];
 	    const dfloat Lz = nsgn * .5f * (s_G[geoid+2][id1][id2][id3] + s_Gf[geoid+2][f][id2][id3]) * s_Lf[lid];
+
+#if 0
+	    if (e==0 && dim==0 && ff == 0){
+	      dfloat vgeoi = s_G[1][id1][id2][id3];
+	      dfloat vfgeoi = s_Gf[1][f][id2][id3];
+	      printf("on thread %d, geoid = %d: vgeo = %g, vfgeo = %f\n",i,geoid,vgeoi,vfgeoi);
+	    }
+#endif
+	    
+	    
+#if 0
+	    if (e==0){
+	      printf("FxyzS[0] = %f, %f, %f\n",FxS[0],FyS[0],FzS[0]);
+	    }
+#endif
 	    
 	    val[0] += Lx * FxS[0] + Ly * FyS[0] + Lz * FzS[0];
 	    val[1] += Lx * FxS[1] + Ly * FyS[1] + Lz * FzS[1];
 	    val[2] += Lx * FxS[2] + Ly * FyS[2] + Lz * FzS[2];
 	    val[3] += Lx * FxS[3] + Ly * FyS[3] + Lz * FzS[3];
-	    val[4] += Lx * FxS[4] + Ly * FyS[4] + Lz * FzS[4];	  
+	    val[4] += Lx * FxS[4] + Ly * FyS[4] + Lz * FzS[4];	  	    	    
 	  }
 	}
 
@@ -539,7 +561,7 @@ void euler3d_flux(dfloat rho_i, dfloat rho_j, dfloat u_i, dfloat u_j,
 	  dfloat FxS[p_Nfields],FyS[p_Nfields],FzS[p_Nfields];
 	  euler3d_flux(rho_i, rho_j, u_i, u_j, v_i, v_j, w_i, w_j,
 		       E_i, E_j, beta_i, beta_j, FxS, FyS, FzS);
-
+	  
 	  val[0] += Vfx * FxS[0] + Vfy * FyS[0] + Vfz * FzS[0];
 	  val[1] += Vfx * FxS[1] + Vfy * FyS[1] + Vfz * FzS[1];
 	  val[2] += Vfx * FxS[2] + Vfy * FyS[2] + Vfz * FzS[2];

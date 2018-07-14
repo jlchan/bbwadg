@@ -230,7 +230,7 @@ void setupOccaMesh3d(Mesh *mesh, App *app){
 
   // correct for Nfields > 1
   MatrixXi mapPqNfields(NfpNfaces,K);
-  for (int i = 0; i < NfpNfaces*K; ++i){
+  for (long long int i = 0; i < NfpNfaces*K; ++i){
     int idP = mesh->mapPq(i);
     int e = idP / NfpNfaces;
     int fidP = idP % NfpNfaces;
