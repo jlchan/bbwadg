@@ -447,8 +447,8 @@ void InitRefData3d(Mesh *mesh, int N){
 
   // quad points 
   VectorXd rq1D, wq1D;
-  //JacobiGQ(N, 0, 0, rq1D, wq1D);
-  JacobiGL(N, 0, 0, rq1D, wq1D);
+  JacobiGQ(N, 0, 0, rq1D, wq1D);
+  //JacobiGL(N, 0, 0, rq1D, wq1D);
   
   int Np2 = Np1*Np1;
   int Np3 = Np1*Np2;
@@ -512,7 +512,7 @@ void InitRefData3d(Mesh *mesh, int N){
   VectorXd tf(NfqNfaces); tf << sq2, sq2, sq2, sq2, -e, e;
   VectorXd wf(NfqNfaces); wf << wq2, wq2, wq2, wq2, wq2, wq2;
 
-#if 1
+#if 0
   cout << "rq2 = [" << rq2 << "];" << endl;
   cout << "sq2 = [" << sq2 << "];" << endl;  
   
@@ -751,7 +751,7 @@ void GeometricFactors3d(Mesh *mesh){
   //printf("GCL err = %g\n",err);
 
   
-#if 1
+#if 0
   printf("vgeo = [\n");
   for (int e = 0; e < K; ++e){
     for (int i = 0; i < rxJ.rows(); ++i){
@@ -783,7 +783,7 @@ void Normals3d(Mesh *mesh){
   MatrixXd szJf = Vf * mesh->szJ;
   MatrixXd tzJf = Vf * mesh->tzJ;
 
-#if 1
+#if 0
   printf("vgeof = [\n");
   for (int e = 0; e < mesh->K; ++e){
     for (int i = 0; i < rxJf.rows(); ++i){

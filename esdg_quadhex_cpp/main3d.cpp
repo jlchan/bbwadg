@@ -38,12 +38,13 @@ static void VortexSolution3d(MatrixXd x, MatrixXd y, MatrixXd z, double t,
   E = p0 / gm1 * (1.0 + tmp.array().pow(GAMMA)) +
     .5 * (rhou.array().square() + rhov.array().square() + rhow.array().square())/rho.array();
 
+  /*
   rho.fill(4.0);
   rhou.fill(.1);
   rhov.fill(.25);
   rhow.fill(.5);
   E.fill(2.0);  
-  /**/
+  */
 
   /*
   rho = 2.0 + .5*(PI*x.array()).sin()*(PI*y.array()).sin()*(PI*z.array()).sin();
@@ -116,15 +117,15 @@ int main(int argc, char **argv){
 
   //occa::printModeInfo();
 
-  int N = 2;
-  int K1D = 1;
+  int N = 3;
+  int K1D = 8;
   double CFL = .5;  
   double FinalTime = .5;
   
   Mesh *mesh = (Mesh*) calloc(1, sizeof(Mesh));  
   HexMesh3d(mesh,K1D,K1D,K1D); // make Cartesian mesh
 
-#if 0
+#if 1
   // [0,10] x [0,20] x [0,10] for vortex
   double Lx = 5;
   double Ly = 10;
@@ -148,7 +149,7 @@ int main(int argc, char **argv){
   MatrixXd dy = -(2.0*PI*x.array()/10).sin()*(PI*y.array()/20).sin()*(2.0*PI*z.array()/10).sin();
   MatrixXd dz = dx;
 
-  MatrixXd d = (PI*(1+x.array())/2).sin()*(PI*(1+y.array())/2).sin()*(PI*(1+z.array())/2).sin();
+  /*  MatrixXd d = (PI*(1+x.array())/2).sin()*(PI*(1+y.array())/2).sin()*(PI*(1+z.array())/2).sin();
   dx.fill(0.0);
   dy.fill(0.0); 
   dz.fill(0.0);
@@ -156,7 +157,8 @@ int main(int argc, char **argv){
   dx = d;
   // dy = d;
   //  dz = d;  
-
+  */
+  
   double a = .10;
   x = x + a*dx;
   y = y + a*dy;
@@ -235,7 +237,7 @@ int main(int argc, char **argv){
 
   MatrixXd wJq = mesh->wq.asDiagonal() * (mesh->Vq*mesh->J);
 
-#if 1
+#if 0
   app->eval_surface(K, app->o_Vf1D,app->o_Q, app->o_Qf);
   
   // test rhs eval
@@ -247,7 +249,7 @@ int main(int argc, char **argv){
   getOccaArray(app,app->o_rhs,Q);
   MatrixXd rhs1  = Q.middleRows(0,Np);
   
-  cout << "vol only rhs = " << endl << rhs1 << endl;
+  //cout << "vol only rhs = " << endl << rhs1 << endl;
   
   app->surface(K, app->o_vgeo, app->o_fgeo, app->o_mapPq,
 	       app->o_Lf1D, app->o_Qf, app->o_rhsf,

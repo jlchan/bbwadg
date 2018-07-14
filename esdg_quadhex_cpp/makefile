@@ -25,14 +25,14 @@ sources = $(wildcard $(srcPath)/*.cpp)
 
 objects  = $(subst $(srcPath)/,$(objPath)/,$(sources:.cpp=.o))
 
-.PHONY: main2d clean
+.PHONY: clean
 
-all: 2d 3d
+all: main2d main3d
 
-2d: $(objects) $(headers) main2d.cpp
+main2d: $(objects) $(headers) main2d.cpp
 	$(compiler) $(compilerFlags) -o main2d $(flags) $(objects) main2d.cpp -L${OCCA_DIR}/lib $(paths) $(links)
 
-3d: $(objects) $(headers) main3d.cpp
+main3d: $(objects) $(headers) main3d.cpp
 	$(compiler) $(compilerFlags) -o main3d $(flags) $(objects) main3d.cpp -L${OCCA_DIR}/lib $(paths) $(links)
 
 $(objPath)/%.o:$(srcPath)/%.cpp $(wildcard $(subst $(srcPath)/,$(incPath)/,$(<:.cpp=.hpp))) $(wildcard $(subst $(srcPath)/,$(incPath)/,$(<:.cpp=.tpp)))
