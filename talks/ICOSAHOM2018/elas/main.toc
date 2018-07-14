@@ -1,0 +1,3 @@
+\beamer@sectionintoc {1}{Weight-adjusted DG methods: acoustics}{8}{0}{1}
+\beamer@sectionintoc {2}{Extension to elastic wave propagation}{21}{0}{2}
+\beamer@sectionintoc {3}{Acoustic-elastic coupling, poroelasticity}{44}{0}{3}

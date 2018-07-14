@@ -641,11 +641,35 @@ N V S T
 %\only<2>{\LRp{{\bm{M}}_{1/w}}^{-1} {\bm{M}} \td{\bm{U}}{t} &= \underbrace{\bm{M}^{-1}\bm{A}_h \bm{U} }_{\text{unweighted RHS}}}
 %\end{align*}
 %\vspace{.1em}
-\item Low storage: matrix-free application of $\bm{M}^{-1}{\bm{M}}_{1/w}$ using quadrature.
+\item Low storage matrix-free application of $\bm{M}^{-1}{\bm{M}}_{1/w}$ using quadrature.
 \begin{gather*}
-\bm{M} = \bm{V}_q^T\bm{W}\bm{V}_q, \quad \bm{V}_q = \text{ eval.\ at quad.\ points}, \quad \bm{W} = \text{ quad.\ weights}\\
+\bm{M} = \bm{V}_q^T\bm{W}\bm{V}_q, \quad \bm{V}_q = \text{ eval.\ at quad.\ pts}, \quad \bm{W} = \text{ quad.\ weights}\\
 \LRp{\bm{M}}^{-1} {\bm{M}}_{1/w}\text{RHS} = \underbrace{\widehat{\bm{M}}^{-1} \bm{V}_q^T \bm{W}}_{\bm{P}_q} {\rm diag}\LRp{1/w} \bm{V}_q \LRp{\text{RHS}}.
 \end{gather*}
+\end{itemize}
+}
+
+\frame{
+\frametitle{WADG and high order accuracy}
+\begin{itemize}
+\item Generates norm with same equivalence constants
+\[
+\only<1>{
+w_{\min} \bm{u}^T\bm{M}\bm{u} \leq \bm{u}^T\bm{M}_{w}\bm{u} \leq w_{\max} \bm{u}^T\bm{M}\bm{u} 
+}
+\only<2->{
+w_{\min} \bm{u}^T\bm{M}\bm{u} \leq \bm{u}^T\bm{M}^{-1}\bm{M}_{1/w}\bm{M}^{-1}\bm{u} \leq w_{\max} \bm{u}^T\bm{M}\bm{u} 
+}
+\]
+\item<3-> High order accuracy of weighted projection $P_w$, WADG projection $\tilde{P}_w$ 
+\begin{align*}
+&\nor{u - \tilde{P}_w u}_{L^2} \leq C_w h^{N+1}  \nor{w}_{W^{N+1,\infty}} \nor{u}_{W^{N+1,2}}\\
+&\nor{P_w u - \tilde{P}_w u}_{L^2} \leq C_{w,N} h^{\note{N+2}}  \nor{w}_{W^{N+1,\infty}} \nor{u}_{W^{N+1,2}}.\end{align*}
+\item<4-> WADG retains high order accuracy for moments: if $v\in P^M$
+\begin{align*}
+\LRb{\bm{v}^T\bm{M}_w\bm{u} - \bm{v}^T\bm{M}^{-1}\bm{M}_{1/w}\bm{M}^{-1}\bm{u}} &\leq \\
+C_{w} \nor{w}_{W^{N+1,\infty}} &h^{2N+2-M}\nor{u}_{W^{N+1,2}} \nor{v}_{L^2}.
+\end{align*}
 \end{itemize}
 }
 
@@ -691,13 +715,9 @@ N V S T
 \subfloat[Weighted-adjusted DG]{
 \includegraphics[width=.325\textwidth]{figs/cproj_wave.png}
 }}
-%\caption{Standard vs.\ weight-adjusted DG with spatially varying $c^2$ containing both smooth variations and a discontinuity.}
+\caption{Standard vs.\ weight-adjusted DG with spatially varying $c^2$ containing both smooth variations and a discontinuity.}
 \end{figure}
-\vspace{.5em}
-WADG retains high order accuracy: weighted projection error bound:
-\begin{align*}
-&\nor{u - P_w u}_{L^2} \leq C h^{N+1}  \nor{w}_{W^{N+1,\infty}} \nor{\frac{\sqrt{J}}{w}}_{L^{\infty}} \nor{u}_{W^{N+1,2}}.
-\end{align*}
+%\vspace{.5em}
 }
 
 
@@ -1201,7 +1221,7 @@ Simple implementation for anisotropy - fluxes independent of $\bm{C}$.
 
 
 \frame{
-\frametitle{Numerical results for Biot}
+\frametitle{Numerical results for Biot (with de Hoop, Shukla)}
 
 \vspace{-2em}
 \begin{figure}
