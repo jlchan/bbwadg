@@ -96,10 +96,10 @@ int main(int argc, char **argv){
 
   //occa::printModeInfo();
 
-  int N = 7;
-  int K1D = 2;
+  int N = 4;
+  int K1D = 8;
   double CFL = .5; 
-  double FinalTime = 1.0;
+  double FinalTime = 5.0;
   
   Mesh *mesh = (Mesh*) calloc(1, sizeof(Mesh));  
 
@@ -138,9 +138,12 @@ int main(int argc, char **argv){
   MatrixXd dy = -(2.0*PI*x.array()/10).sin()*(PI*y.array()/20).sin()*(2.0*PI*z.array()/10).sin();
   MatrixXd dz = dx;
   double a = .0;
-  mesh->x = x + a*dx;
-  mesh->y = y + a*dy;
-  mesh->z = z + a*dz;
+  x = x + a*dx;
+  y = y + a*dy;
+  z = z + a*dz;
+  mesh->x = x;
+  mesh->y = y;
+  mesh->z = z;
 #endif
   
   GeometricFactors3d(mesh);
@@ -316,11 +319,11 @@ int main(int argc, char **argv){
   VortexSolution3d(xq2,yq2,zq2,FinalTime,rhoex,rhouex,rhovex,rhowex,Eex);
 
   MatrixXd wJq2 = wq2.asDiagonal() * (Vq2*(mesh->Vq*mesh->J));  
-  //  MatrixXd wJq = mesh->wq.asDiagonal() * (mesh->Vq*mesh->J);  
-  //  MatrixXd rhouex = rhoex.array()*u.array();
-  //  MatrixXd rhovex = rhoex.array()*v.array();
-  //  MatrixXd Eex = p.array()/(GAMMA-1.0) + .5*rhoex.array()*(u.array().square() + v.array().square());
-  MatrixXd werr = wJq2.array()*(rhoex - Vq2*rho).array().square();
+  MatrixXd werr = wJq2.array()*((rhoex - Vq2*rho).array().square() +
+				(rhouex - Vq2*rhou).array().square() +
+				(rhovex - Vq2*rhov).array().square() +
+				(rhowex - Vq2*rhow).array().square() +
+				(Eex - Vq2*E).array().square());
   printf("L2 error for rho = %g\n",sqrt(werr.sum()));
  
   return 0;

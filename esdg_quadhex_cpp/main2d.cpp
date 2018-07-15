@@ -33,7 +33,7 @@ int main(int argc, char **argv){
 
   //occa::printModeInfo();   return 0;
 
-  int N = 3;
+  int N = 5;
   int K1D = 8;
   double FinalTime = 1.0;
   double CFL = .5;  
@@ -204,8 +204,9 @@ int main(int argc, char **argv){
   return 0;
 #endif 
   
-  int interval = max((int) ceil(Nsteps/10),1);
+  int interval = max((int) ceil(Nsteps/10),1);  
   printf("Interval = %d\n",interval);
+
   int NINT = mesh->rk4a.size();
   for (int i = 0; i < Nsteps; ++i){
     for (int INTRK = 0; INTRK < NINT; ++INTRK){
@@ -277,11 +278,14 @@ int main(int argc, char **argv){
 #endif
 
   MatrixXd wJq = wq2.asDiagonal() * (Vq2*(mesh->Vq*mesh->J));  
-  //  MatrixXd rhouex = rhoex.array()*u.array();
-  //  MatrixXd rhovex = rhoex.array()*v.array();
-  //  MatrixXd Eex = p.array()/(GAMMA-1.0) + .5*rhoex.array()*(u.array().square() + v.array().square());
+  MatrixXd rhouex = rhoex.array()*u.array();
+  MatrixXd rhovex = rhoex.array()*v.array();
+  MatrixXd Eex = p.array()/(GAMMA-1.0) + .5*rhoex.array()*(u.array().square() + v.array().square());
 
-  MatrixXd werr = wJq.array()*(rhoex - Vq2*rho).array().square();
+  MatrixXd werr = wJq.array()*((rhoex - Vq2*rho).array().square() +
+			       (rhouex - Vq2*rhou).array().square() +
+			       (rhovex - Vq2*rhov).array().square() +
+			       (Eex - Vq2*E).array().square());
   printf("L2 error for rho = %g\n",sqrt(werr.sum()));
 
   return 0;
