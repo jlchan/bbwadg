@@ -105,7 +105,7 @@ int main(int argc, char **argv){
   //App *app = (App*) calloc(1, sizeof(App));
   App *app = new App;
   app->device.setup("mode: 'Serial'");
-  // app->device.setup("mode: 'CUDA', deviceID: 0");  
+  // app->device.setup("mode: 'CUDA', device_id: 0");  
   setupOccaMesh2d(mesh,app); // build mesh geofacs
 
   app->props["defines/p_gamma"] = GAMMA;
@@ -183,7 +183,7 @@ int main(int argc, char **argv){
   return 0;
 #endif
   
-#if 1
+#if 0
 
   // test rhs eval
   app->volume(K, app->o_vgeo, app->o_vfgeo,

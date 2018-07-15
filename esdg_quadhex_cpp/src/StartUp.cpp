@@ -108,7 +108,7 @@ void InitRefData2d(Mesh *mesh, int N){
   VectorXd wqInv = wq1D.array().inverse();
   mesh->Lf1D = wqInv.asDiagonal()*Vf1D.transpose(); // 1D lift - may not need
 
-  //cout << "D1D = " << mesh->D1D << endl;
+  //  cout << "D1D = " << mesh->D1D << endl;
   //  cout << "Vf1D = " << mesh->Vf1D << endl;
   //cout << "Lf1D = " << mesh->Lf1D << endl;   
   mesh->wq1D = wq1D;
@@ -447,8 +447,8 @@ void InitRefData3d(Mesh *mesh, int N){
 
   // quad points 
   VectorXd rq1D, wq1D;
-  JacobiGQ(N, 0, 0, rq1D, wq1D);
-  //JacobiGL(N, 0, 0, rq1D, wq1D);
+  //JacobiGQ(N, 0, 0, rq1D, wq1D);
+  JacobiGL(N, 0, 0, rq1D, wq1D);
   
   int Np2 = Np1*Np1;
   int Np3 = Np1*Np2;
@@ -588,10 +588,11 @@ void InitRefData3d(Mesh *mesh, int N){
   VectorXd wqInv = wq1D.array().inverse();
   mesh->Lf1D = wqInv.asDiagonal()*Vf1D.transpose(); // 1D lift - may not need
 
-  //cout << "D1D = " << mesh->D1D << endl;
-  //  cout << "Vf1D = " << mesh->Vf1D << endl;
-  //cout << "Lf1D = " << mesh->Lf1D << endl;   
-  //mesh->wq1D = wq1D;
+#if 0
+  cout << "D1D = " << mesh->D1D << endl;
+  cout << "Vf1D = " << mesh->Vf1D << endl;
+  cout << "Lf1D = " << mesh->Lf1D << endl;   
+#endif
 
   // LSRK-45 coefficients
   mesh->rk4a.resize(5);
@@ -712,15 +713,9 @@ void GeometricFactors3d(Mesh *mesh){
 #define useGLLforJ 0
 #if useGLLforJ
   MatrixXd Vq = mesh->Vq;
-  xr = Vq * xr;
-  xs = Vq * xs;
-  xt = Vq * xt;
-  yr = Vq * yr;
-  ys = Vq * ys;
-  yt = Vq * yt;
-  zr = Vq * zr;
-  zs = Vq * zs;
-  zt = Vq * zt;  
+  xr = Vq * xr;  xs = Vq * xs;  xt = Vq * xt;
+  yr = Vq * yr;  ys = Vq * ys;  yt = Vq * yt;
+  zr = Vq * zr;  zs = Vq * zs;  zt = Vq * zt;  
 #endif
   
   MatrixXd J =
@@ -745,11 +740,12 @@ void GeometricFactors3d(Mesh *mesh){
   mesh->tzJ = tzJ;  
   mesh->J = J;
 
+#if 0
   double err = (Dr*rxJ + Ds*sxJ + Dt*txJ).cwiseAbs().sum() +
     (Dr*ryJ + Ds*syJ + Dt*tyJ).cwiseAbs().sum() +
     (Dr*rzJ + Ds*szJ + Dt*tzJ).cwiseAbs().sum();
-  //printf("GCL err = %g\n",err);
-
+  printf("GCL err = %g\n",err);
+#endif
   
 #if 0
   printf("vgeo = [\n");
@@ -784,7 +780,7 @@ void Normals3d(Mesh *mesh){
   MatrixXd tzJf = Vf * mesh->tzJ;
 
 #if 0
-  printf("vgeof = [\n");
+  printf("vfgeo = [\n");
   for (int e = 0; e < mesh->K; ++e){
     for (int i = 0; i < rxJf.rows(); ++i){
       printf(" %f, %f, %f, %f, %f, %f, %f, %f, %f\n",

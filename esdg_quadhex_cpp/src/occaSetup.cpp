@@ -12,6 +12,10 @@ void setupOccaMesh2d(Mesh *mesh, App *app){
   app->props["defines/p_Np"] = mesh->Np; // number of dims
   app->props["defines/p_Np1"] = mesh->N + 1;  // (N+1)
   app->props["defines/p_Np2"] = (mesh->N + 1)*(mesh->N + 1);  // (N+1)  
+
+  app->props["defines/p_Nq1"] = mesh->N + 1;  // (N+1)
+  app->props["defines/p_Nq2"] = (mesh->N + 1)*(mesh->N + 1);  
+  //  app->props["defines/p_Nq3"] = (mesh->N + 1)*(mesh->N + 1)*(mesh->N + 1);  
   
   app->props["defines/p_Nfaces"] = mesh->Nfaces;
   app->props["defines/p_Nfp"] = mesh->Nfp;
@@ -106,7 +110,6 @@ void setupOccaMesh2d(Mesh *mesh, App *app){
   setOccaArray(app, mesh->Lf1D.col(0), app->o_Lf1D); // Lf1D cols 1,2 = mirror images  
   //cout << "Vf1D = " << mesh->Vf1D.row(0) << endl;
   //cout << "Lf1D = " << mesh->Lf1D.col(0) << endl;
-  
 }
 
 
@@ -116,10 +119,11 @@ void setupOccaMesh3d(Mesh *mesh, App *app){
   app->props = occa::getKernelProperties();
 
   app->props["defines/p_Np"] = mesh->Np; // number of dims
-  app->props["defines/p_Np1"] = mesh->N + 1;  // (N+1)
-  app->props["defines/p_Np2"] = (mesh->N + 1)*(mesh->N + 1);  // (N+1)
-  app->props["defines/p_Np3"] = (mesh->N + 1)*(mesh->N + 1)*(mesh->N + 1);  // (N+1)  
-  
+
+  app->props["defines/p_Nq1"] = mesh->N + 1;  // (N+1)
+  app->props["defines/p_Nq2"] = (mesh->N + 1)*(mesh->N + 1);  
+  app->props["defines/p_Nq3"] = (mesh->N + 1)*(mesh->N + 1)*(mesh->N + 1);  
+    
   app->props["defines/p_Nfaces"] = mesh->Nfaces;
   app->props["defines/p_Nfp"] = mesh->Nfp;
   app->props["defines/p_NfpNfaces"] = mesh->Nfp * mesh->Nfaces;
@@ -167,6 +171,7 @@ void setupOccaMesh3d(Mesh *mesh, App *app){
     tyJq,
     tzJq,
     Jq;
+
   //printf("Nvgeo = %d, rows of Vq = %d\n",Nvgeo,Vq.rows());
   //  cout << "Vgeo = " << vgeo << endl;
 

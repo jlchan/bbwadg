@@ -108,23 +108,23 @@ void euler2d_flux(dfloat rho_i, dfloat rho_j, dfloat u_i, dfloat u_j,
 			  dfloat * Qf){
   for (int e = 0; e < K; ++e; @outer(0)){
 
-    @shared dfloat s_Vf[p_Np1]; // second col is symmetric
-    @shared dfloat s_V[p_Nfields][p_Np1][p_Np1]; // entropy vars
+    @shared dfloat s_Vf[p_Nq1]; // second col is symmetric
+    @shared dfloat s_V[p_Nfields][p_Nq1][p_Nq1]; // entropy vars
     
     for (int i = 0; i < p_T; ++i; @inner(0)){
-      if (i < p_Np1){
+      if (i < p_Nq1){
 	s_Vf[i] = Vf1D[i];	
       }
       
-      if (i < p_Np){
+      if (i < p_Nq2){
 	// load vol values
-	const int jj = i % p_Np1; // y-id
-	const int ii = i / p_Np1; // x-id
+	const int jj = i % p_Nq1; // y-id
+	const int ii = i / p_Nq1; // x-id
 	
-	int id = i + p_Np * p_Nfields * e;
-	const dfloat rho  = Q[id]; id += p_Np;
-	const dfloat rhou = Q[id]; id += p_Np;
-	const dfloat rhov = Q[id]; id += p_Np;
+	int id = i + p_Nq2 * p_Nfields * e;
+	const dfloat rho  = Q[id]; id += p_Nq2;
+	const dfloat rhou = Q[id]; id += p_Nq2;
+	const dfloat rhov = Q[id]; id += p_Nq2;
 	const dfloat E    = Q[id];
 	
 	// evaluate entropy vars at nodes
@@ -157,7 +157,7 @@ void euler2d_flux(dfloat rho_i, dfloat rho_j, dfloat u_i, dfloat u_j,
 	dfloat V2f = 0.f;
 	dfloat V3f = 0.f;
 	dfloat V4f = 0.f;	
-	for (int j = 0; j < p_Np1; ++j){	  
+	for (int j = 0; j < p_Nq1; ++j){	  
 	  /*
 	    .    _f2_
 	    .   |    |
@@ -169,9 +169,9 @@ void euler2d_flux(dfloat rho_i, dfloat rho_j, dfloat u_i, dfloat u_j,
 	  if (f==0){
 	    Vfjid = j;  idi = fid;  idj = j; // traverse in j
 	  }else if (f==1){ 
-	    Vfjid = p_Np1-j-1;  idi = j;  idj = fid; 
+	    Vfjid = p_Nq1-j-1;  idi = j;  idj = fid; 
 	  }else if (f==2){ 
-	    Vfjid = p_Np1-j-1;  idi = fid;  idj = j;
+	    Vfjid = p_Nq1-j-1;  idi = fid;  idj = j;
 	  }else if (f==3){
 	    Vfjid = j;  idi = j;  idj = fid;
 	  }
@@ -212,46 +212,46 @@ void euler2d_flux(dfloat rho_i, dfloat rho_j, dfloat u_i, dfloat u_j,
 
   for (int e = 0; e < K; ++e; @outer(0)){
 
-    @shared dfloat s_D[p_Np1][p_Np1];
-    @shared dfloat s_Lf[p_Np1];
-    @shared dfloat s_Vf[p_Np1];        
+    @shared dfloat s_D[p_Nq1][p_Nq1];
+    @shared dfloat s_Lf[p_Nq1];
+    @shared dfloat s_Vf[p_Nq1];        
 
-    @shared dfloat s_Q[p_Nfields][p_Np1][p_Np1];
-    @shared dfloat s_Qf[p_Nfields][p_Nfaces][p_Np1];
+    @shared dfloat s_Q[p_Nfields][p_Nq1][p_Nq1];
+    @shared dfloat s_Qf[p_Nfields][p_Nfaces][p_Nq1];
 
-    @shared dfloat s_G[p_Nvgeo][p_Np1][p_Np1];
+    @shared dfloat s_G[p_Nvgeo][p_Nq1][p_Nq1];
     @shared dfloat s_Gf[p_Nvgeo][p_Nfaces][p_Nfp];    
 
     //@exclusive int ii,jj;
     
     for (int i = 0; i < p_T; ++i; @inner(0)){
 
-      if (i < p_Np){
+      if (i < p_Nq2){
 	//printf("running on thread %d \n",i);
 	
-	const int jj = i % p_Np1;
-	const int ii = i / p_Np1;
+	const int jj = i % p_Nq1;
+	const int ii = i / p_Nq1;
 	
 	// load ops
-	if (i < p_Np2){
+	if (i < p_Nq2){
 	  s_D[jj][ii] = D1D[i]; // i < (N+1)^2 = size of D1D
 	}
 	
 	// load geofacs
-	int id = i + p_Np * p_Nvgeo * e;
+	int id = i + p_Nq2 * p_Nvgeo * e;
 	for (int geo = 0; geo < p_Nvgeo; ++geo){
-	  s_G[geo][ii][jj] = vgeo[id]; id += p_Np;
+	  s_G[geo][ii][jj] = vgeo[id]; id += p_Nq2;
 	}
 
 	// load vol values
-	id = i + p_Np * p_Nfields * e;
+	id = i + p_Nq2 * p_Nfields * e;
 	for (int fld = 0; fld < p_Nfields; ++fld){
 	  s_Q[fld][ii][jj] = Q[id];
-	  id += p_Np;
+	  id += p_Nq2;
 	}
       }
 
-      if (i < p_Np1){
+      if (i < p_Nq1){
 	s_Lf[i] = Lf1D[i];
 	s_Vf[i] = Vf1D[i];
       }     
@@ -279,9 +279,9 @@ void euler2d_flux(dfloat rho_i, dfloat rho_j, dfloat u_i, dfloat u_j,
     // differentiate fluxes
     for (int i = 0; i < p_T; ++i; @inner(0)){
 
-      if (i < p_Np){
-	const int jj = i % p_Np1; // y index
-	const int ii = i / p_Np1; // x index
+      if (i < p_Nq2){
+	const int jj = i % p_Nq1; // y index
+	const int ii = i / p_Nq1; // x index
 
 	dfloat val[p_Nfields];
 	for (int fld = 0; fld < p_Nfields; ++fld){
@@ -298,7 +298,7 @@ void euler2d_flux(dfloat rho_i, dfloat rho_j, dfloat u_i, dfloat u_j,
 	// diff in r direction
 	const dfloat rxi = s_G[0][ii][jj];
 	const dfloat ryi = s_G[1][ii][jj];
-	for (int j = 0; j < p_Np1; ++j){
+	for (int j = 0; j < p_Nq1; ++j){
 
 	  const dfloat rxj = s_G[0][j][jj];
 	  const dfloat ryj = s_G[1][j][jj];
@@ -328,7 +328,7 @@ void euler2d_flux(dfloat rho_i, dfloat rho_j, dfloat u_i, dfloat u_j,
 	// diff in s direction
 	const dfloat sxi = s_G[2][ii][jj];
 	const dfloat syi = s_G[3][ii][jj];
-	for (int j = 0; j < p_Np1; ++j){
+	for (int j = 0; j < p_Nq1; ++j){
 	
 	  const dfloat sxj = s_G[2][ii][j];
 	  const dfloat syj = s_G[3][ii][j];
@@ -385,8 +385,8 @@ void euler2d_flux(dfloat rho_i, dfloat rho_j, dfloat u_i, dfloat u_j,
 	
 	dfloat LxL = -GxL * s_Lf[vol_id]; // output = nodes in r direction
 	dfloat LyL = -GyL * s_Lf[vol_id];      
-	dfloat LxR =  GxR * s_Lf[p_Np1 - vol_id - 1];
-	dfloat LyR =  GyR * s_Lf[p_Np1 - vol_id - 1];
+	dfloat LxR =  GxR * s_Lf[p_Nq1 - vol_id - 1];
+	dfloat LyR =  GyR * s_Lf[p_Nq1 - vol_id - 1];
 	val[0] +=  LxL * FxS1LR[0] + LyL * FyS1LR[0] + LxR * FxS1LR[1] + LyR * FyS1LR[1];
 	val[1] +=  LxL * FxS2LR[0] + LyL * FyS2LR[0] + LxR * FxS2LR[1] + LyR * FyS2LR[1];
 	val[2] +=  LxL * FxS3LR[0] + LyL * FyS3LR[0] + LxR * FxS3LR[1] + LyR * FyS3LR[1];
@@ -415,8 +415,8 @@ void euler2d_flux(dfloat rho_i, dfloat rho_j, dfloat u_i, dfloat u_j,
 	
 	LxL = -GxL * s_Lf[vol_id]; // output = nodes in r direction
 	LyL = -GyL * s_Lf[vol_id];      
-	LxR =  GxR * s_Lf[p_Np1 - vol_id - 1];
-	LyR =  GyR * s_Lf[p_Np1 - vol_id - 1];
+	LxR =  GxR * s_Lf[p_Nq1 - vol_id - 1];
+	LyR =  GyR * s_Lf[p_Nq1 - vol_id - 1];
 	val[0] +=  LxL * FxS1LR[0] + LyL * FyS1LR[0] + LxR * FxS1LR[1] + LyR * FyS1LR[1];
 	val[1] +=  LxL * FxS2LR[0] + LyL * FyS2LR[0] + LxR * FxS2LR[1] + LyR * FyS2LR[1];
 	val[2] +=  LxL * FxS3LR[0] + LyL * FyS3LR[0] + LxR * FxS3LR[1] + LyR * FyS3LR[1];
@@ -424,10 +424,10 @@ void euler2d_flux(dfloat rho_i, dfloat rho_j, dfloat u_i, dfloat u_j,
 
 	//printf("rhs vol = %f, %f, %f, %f\n", val[0], val[1], val[2], val[3]);
 	
-	int id = i + e*p_Np*p_Nfields;
-	rhs[id] = val[0]; id += p_Np;
-	rhs[id] = val[1]; id += p_Np;
-	rhs[id] = val[2]; id += p_Np;
+	int id = i + e*p_Nq2*p_Nfields;
+	rhs[id] = val[0]; id += p_Nq2;
+	rhs[id] = val[1]; id += p_Nq2;
+	rhs[id] = val[2]; id += p_Nq2;
 	rhs[id] = val[3];
 
 	
@@ -451,7 +451,7 @@ void euler2d_flux(dfloat rho_i, dfloat rho_j, dfloat u_i, dfloat u_j,
 	const dfloat E_i = s_Qf[3][f][fid];
 	const dfloat beta_i = beta(rho_i,u_i,v_i,E_i);	
 
-	for (int j = 0; j < p_Np1; ++j){
+	for (int j = 0; j < p_Nq1; ++j){
 
 	  // interpolate to target node fid on face f
 	  
@@ -464,13 +464,13 @@ void euler2d_flux(dfloat rho_i, dfloat rho_j, dfloat u_i, dfloat u_j,
 	    Vfx = -.5f * (s_Gf[2][f][fid] + s_G[2][idi][idj]) * Vfj; // sx
 	    Vfy = -.5f * (s_Gf[3][f][fid] + s_G[3][idi][idj]) * Vfj; // sy
 	  }else if (f==1){ 
-	    const dfloat Vfj = s_Vf[p_Np1-j-1]; // 2nd row of Vf
+	    const dfloat Vfj = s_Vf[p_Nq1-j-1]; // 2nd row of Vf
 	    idi = j; // pull line of r-nodes
 	    idj = fid;
 	    Vfx = .5f * (s_Gf[0][f][fid] + s_G[0][idi][idj]) * Vfj; // rx
 	    Vfy = .5f * (s_Gf[1][f][fid] + s_G[1][idi][idj]) * Vfj; // ry
 	  }else if (f==2){ 
-	    const dfloat Vfj = s_Vf[p_Np1-j-1];
+	    const dfloat Vfj = s_Vf[p_Nq1-j-1];
 	    idi = fid;
 	    idj = j;
 	    Vfx = .5f * (s_Gf[2][f][fid] + s_G[2][idi][idj]) * Vfj; // sx
@@ -526,11 +526,11 @@ void euler2d_flux(dfloat rho_i, dfloat rho_j, dfloat u_i, dfloat u_j,
   for (int e = 0; e < K; ++e; @outer(0)){
 
     @shared dfloat s_fnS[p_Nfields][p_Nfaces][p_Nfp];
-    @shared dfloat s_Lf[p_Np1];
+    @shared dfloat s_Lf[p_Nq1];
     
     for (int i = 0; i < p_T; ++i; @inner(0)){
 
-      if (i < p_Np1){
+      if (i < p_Nq1){
 	s_Lf[i] = Lf1D[i];
       }
       
@@ -601,30 +601,30 @@ void euler2d_flux(dfloat rho_i, dfloat rho_j, dfloat u_i, dfloat u_j,
     // apply lift and inverse jacobian
     for (int i = 0; i < p_T; ++i; @inner(0)){
 
-      if (i < p_Np){
+      if (i < p_Nq2){
 
-	const dfloat Ji = vgeo[i + 4*p_Np + e*p_Nvgeo*p_Np];
+	const dfloat Ji = vgeo[i + 4*p_Nq2 + e*p_Nvgeo*p_Nq2];
 	const dfloat invJ = 1.f/Ji;
 
 
-	const int jj = i % p_Np1;
-	const int ii = i / p_Np1;
+	const int jj = i % p_Nq1;
+	const int ii = i / p_Nq1;
 	
 	// accumulate value per node
-	int id = i + e*p_Np*p_Nfields;
+	int id = i + e*p_Nq2*p_Nfields;
 	for (int fld = 0; fld < p_Nfields; ++fld){
 	  dfloat val = 0.f;
 	  
 	  // s = (-/+) 1 face contribution
-	  val += s_Lf[jj]*s_fnS[fld][0][ii] + s_Lf[p_Np1-jj-1]*s_fnS[fld][2][ii];
+	  val += s_Lf[jj]*s_fnS[fld][0][ii] + s_Lf[p_Nq1-jj-1]*s_fnS[fld][2][ii];
 
 	  // r = (-/+) 1 face contribution	  
-	  val += s_Lf[ii]*s_fnS[fld][3][jj] + s_Lf[p_Np1-ii-1]*s_fnS[fld][1][jj];
+	  val += s_Lf[ii]*s_fnS[fld][3][jj] + s_Lf[p_Nq1-ii-1]*s_fnS[fld][1][jj];
 
 	  // maybe divide by J here?
 	  rhs[id] = -(rhs[id] + val)*invJ;
 
-	  id += p_Np;
+	  id += p_Nq2;
 	}
 
       }//if 
@@ -645,11 +645,11 @@ void euler2d_flux(dfloat rho_i, dfloat rho_j, dfloat u_i, dfloat u_j,
 
   for (int e = 0; e < K; ++e; @outer(0)){        
     
-    for (int i = 0; i < p_Np; ++i; @inner(0)){
+    for (int i = 0; i < p_Nq2; ++i; @inner(0)){
       
       // update vol values
       dfloat Qi[p_Nfields];
-      int id = i + e*p_Nfields*p_Np;
+      int id = i + e*p_Nfields*p_Nq2;
       for(int fld = 0; fld < p_Nfields; ++fld){
 	
 	// load rhs, residual, solution
@@ -665,7 +665,7 @@ void euler2d_flux(dfloat rho_i, dfloat rho_j, dfloat u_i, dfloat u_j,
 	res[id] = resi;	  
 	Q[id] = Qi[fld];
 	
-	id += p_Np;
+	id += p_Nq2;
       }
       
     }

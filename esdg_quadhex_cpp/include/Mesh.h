@@ -18,7 +18,7 @@ and reference elements.
 #define p_N 6
 #endif
 
-#define NODETOL   1e-7
+#define NODETOL   1e-11
 /*
 #define p_Nfp     ((p_N+1)*(p_N+2)/2)
 #define p_Np      ((p_N+1)*(p_N+2)*(p_N+3)/6)
