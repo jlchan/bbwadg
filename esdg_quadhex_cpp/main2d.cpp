@@ -33,11 +33,11 @@ int main(int argc, char **argv){
 
   //occa::printModeInfo();   return 0;
 
-  int N = 5;
+  int N = 3;
   int K1D = 8;
-  double FinalTime = 1.0;
+  double FinalTime = 5.0;
   double CFL = .5;  
-  double a = .1;
+  double a = .125;
   
   //Mesh *mesh = (Mesh*) calloc(1, sizeof(Mesh));
   Mesh *mesh = new Mesh;
@@ -104,8 +104,8 @@ int main(int argc, char **argv){
   
   //App *app = (App*) calloc(1, sizeof(App));
   App *app = new App;
-  app->device.setup("mode: 'Serial'");
-  // app->device.setup("mode: 'CUDA', device_id: 0");  
+  //app->device.setup("mode: 'Serial'");
+  app->device.setup("mode: 'CUDA', device_id: 0");  
   setupOccaMesh2d(mesh,app); // build mesh geofacs
 
   app->props["defines/p_gamma"] = GAMMA;

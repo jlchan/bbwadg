@@ -19,9 +19,9 @@ void InitRefData2d(Mesh *mesh, int N){
 
   // quad points 
   VectorXd rq1D, wq1D;
-  JacobiGQ(N, 0, 0, rq1D, wq1D);
-  //JacobiGL(N, 0, 0, rq1D, wq1D); // GLL option - weights shouldn't matter, it's just colloc
-
+  JacobiGL(N, 0, 0, rq1D, wq1D);
+  //JacobiGQ(N, 0, 0, rq1D, wq1D);  
+  
   //cout << "rq,wq for GQ = " << rq1D << ", " << wq1D << endl;
   
   meshgrid(rq1D,rq1D, rmat,smat);
