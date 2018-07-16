@@ -98,6 +98,12 @@ int main(int argc, char **argv){
 
   int N = 4;
   int K1D = 8;
+  if (argc == 3){
+    N = atoi(argv[1]);
+    K1D = atoi(argv[2]);
+    printf("setting N = %d, K1D = %d\n",N,K1D);
+  }
+
   double CFL = .5; 
   double FinalTime = 5.0;
   
