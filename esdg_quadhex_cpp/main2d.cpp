@@ -44,7 +44,8 @@ int main(int argc, char **argv){
 
   double FinalTime = 5.0;
   double CFL = .5;  
-  double a = .125;
+  double av = .125; // vertex warping
+  double a = .125*0; // curved warping
   
   //Mesh *mesh = (Mesh*) calloc(1, sizeof(Mesh));
   Mesh *mesh = new Mesh;
@@ -55,6 +56,16 @@ int main(int argc, char **argv){
   double Ly = 5;  
   mesh->VX = (mesh->VX.array()+1.0)*Lx;
   mesh->VY = (mesh->VY.array())*Ly;
+
+  // vertex mapping
+  MatrixXd xv = mesh->VX;
+  MatrixXd yv = mesh->VY;
+  MatrixXd dxv = (.5*PI*(xv.array()-Lx)/Lx).cos()*(1.5*PI*yv.array()/Ly).cos();
+  xv = xv + av*Lx*dxv;
+  MatrixXd dyv = (1.5*PI*(xv.array()-Lx)/Lx).cos()*(.5*PI*yv.array()/Ly).cos();
+  yv = yv + av*Ly*dyv;
+  mesh->VX = xv;
+  mesh->VY = yv;  
 
   // ============ physics independent stuff ===========
 
@@ -71,10 +82,12 @@ int main(int argc, char **argv){
 
   mesh->x = x;
   mesh->y = y;  
-  
-  //  cout << "x = [" << mesh->x << "];" << endl;
-  //  cout << "y = [" << mesh->y << "];" << endl;
-  //  return 0;
+
+  /*
+  cout << "x = [" << mesh->x << "];" << endl;
+  cout << "y = [" << mesh->y << "];" << endl;
+  return 0;
+  */
   
   GeometricFactors2d(mesh); 
   Normals2d(mesh); 
