@@ -32,9 +32,16 @@ static void VortexSolution2d(MatrixXd x,MatrixXd y,double t,
 int main(int argc, char **argv){
 
   //occa::printModeInfo();   return 0;
-
   int N = 3;
   int K1D = 8;
+
+  //printf("argc = %d\n",argc);
+  if (argc == 3){
+    N = atoi(argv[1]);
+    K1D = atoi(argv[2]);
+    printf("setting N = %d, K1D = %d\n",N,K1D);
+  }
+
   double FinalTime = 5.0;
   double CFL = .5;  
   double a = .125;
