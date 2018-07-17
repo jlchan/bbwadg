@@ -33,7 +33,7 @@ int main(int argc, char **argv){
 
   //occa::printModeInfo();   return 0;
   int N = 3;
-  int K1D = 8;
+  int K1D = 16;
 
   //printf("argc = %d\n",argc);
   if (argc == 3){
@@ -42,10 +42,9 @@ int main(int argc, char **argv){
     printf("setting N = %d, K1D = %d\n",N,K1D);
   }
 
-  double FinalTime = 5.0;
+  double FinalTime = 1.0;
   double CFL = .5;  
-  double av = .125; // vertex warping
-  double a = .125*0; // curved warping
+  double a = .25; // curved warping
   
   //Mesh *mesh = (Mesh*) calloc(1, sizeof(Mesh));
   Mesh *mesh = new Mesh;
@@ -57,16 +56,6 @@ int main(int argc, char **argv){
   mesh->VX = (mesh->VX.array()+1.0)*Lx;
   mesh->VY = (mesh->VY.array())*Ly;
 
-  // vertex mapping
-  MatrixXd xv = mesh->VX;
-  MatrixXd yv = mesh->VY;
-  MatrixXd dxv = (.5*PI*(xv.array()-Lx)/Lx).cos()*(1.5*PI*yv.array()/Ly).cos();
-  xv = xv + av*Lx*dxv;
-  MatrixXd dyv = (1.5*PI*(xv.array()-Lx)/Lx).cos()*(.5*PI*yv.array()/Ly).cos();
-  yv = yv + av*Ly*dyv;
-  mesh->VX = xv;
-  mesh->VY = yv;  
-
   // ============ physics independent stuff ===========
 
   InitRefData2d(mesh, N);
@@ -77,7 +66,7 @@ int main(int argc, char **argv){
   MatrixXd y = mesh->y;
   MatrixXd dx = (.5*PI*(x.array()-Lx)/Lx).cos()*(1.5*PI*y.array()/Ly).cos();
   x = x + a*Lx*dx;
-  MatrixXd dy = (1.5*PI*(x.array()-Lx)/Lx).cos()*(.5*PI*y.array()/Ly).cos();
+  MatrixXd dy = (2.0*PI*(x.array()-Lx)/Lx).sin()*(.5*PI*y.array()/Ly).cos();
   y = y + a*Ly*dy;
 
   mesh->x = x;
