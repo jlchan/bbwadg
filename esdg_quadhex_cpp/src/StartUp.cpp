@@ -447,8 +447,8 @@ void InitRefData3d(Mesh *mesh, int N){
 
   // quad points 
   VectorXd rq1D, wq1D;
-  JacobiGQ(N, 0, 0, rq1D, wq1D);
-  //JacobiGL(N, 0, 0, rq1D, wq1D);
+  //JacobiGQ(N, 0, 0, rq1D, wq1D);
+  JacobiGL(N, 0, 0, rq1D, wq1D);
   
   int Np2 = Np1*Np1;
   int Np3 = Np1*Np2;
@@ -709,24 +709,11 @@ void GeometricFactors3d(Mesh *mesh){
   MatrixXd rzJ = -(Dt * (ys.array()*x.array()).matrix() - Ds * (yt.array()*x.array()).matrix());
   MatrixXd szJ = -(Dr * (yt.array()*x.array()).matrix() - Dt * (yr.array()*x.array()).matrix());
   MatrixXd tzJ = -(Ds * (yr.array()*x.array()).matrix() - Dr * (ys.array()*x.array()).matrix());
-
-#define useGLLforJ 0
-#if useGLLforJ
-  MatrixXd Vq = mesh->Vq;
-  xr = Vq * xr;  xs = Vq * xs;  xt = Vq * xt;
-  yr = Vq * yr;  ys = Vq * ys;  yt = Vq * yt;
-  zr = Vq * zr;  zs = Vq * zs;  zt = Vq * zt;  
-#endif
   
   MatrixXd J =
-    xr.array()*(ys.array()*zt.array() - zs.array()*yt.array())
+      xr.array()*(ys.array()*zt.array() - zs.array()*yt.array())
     - yr.array()*(xs.array()*zt.array() - zs.array()*xt.array())
-    - zr.array()*(xs.array()*yt.array() - ys.array()*xt.array());
-
-#if useGLLforJ
-  // interpolate J back to store at GLL points (we undo this later)
-  J = mldivide(Vq,J); 
-#endif
+    + zr.array()*(xs.array()*yt.array() - ys.array()*xt.array());
   
   // all quantities stored at GLL points (must interp before using)
   mesh->rxJ = rxJ;
