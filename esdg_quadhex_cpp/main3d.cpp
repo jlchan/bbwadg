@@ -38,13 +38,13 @@ static void VortexSolution3d(MatrixXd x, MatrixXd y, MatrixXd z, double t,
   E = p0 / gm1 * (1.0 + tmp.array().pow(GAMMA)) +
     .5 * (rhou.array().square() + rhov.array().square() + rhow.array().square())/rho.array();
 
-  /*
+/*
     rho.fill(4.0);
     rhou.fill(.1);
     rhov.fill(.25);
     rhow.fill(.5);
     E.fill(2.0);  
-  */
+    */
 
   /*
     rho = 2.0 + .5*(PI*x.array()).sin()*(PI*y.array()).sin()*(PI*z.array()).sin();
@@ -161,12 +161,12 @@ int main(int argc, char **argv){
   mesh->z = z;
 #endif
 
-
+  /*
   cout << "x = [" << x << "];" << endl;
   cout << "y = [" << y << "];" << endl;
   cout << "z = [" << z << "];" << endl;
   return 0;
-  /*  */
+  */
   
   
   GeometricFactors3d(mesh);
