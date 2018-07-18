@@ -116,8 +116,13 @@ int main(int argc, char **argv){
   
   Mesh *mesh = (Mesh*) calloc(1, sizeof(Mesh));  
 
+#define TEST 0
 #define VORTEX 1
 #define TAYLOR_GREEN 0
+
+#if TEST
+  HexMesh3d(mesh,K1D,K1D,K1D); // make Cartesian mesh  
+#endif
   
 #if VORTEX   // isentropic vortex
   // [0,10] x [0,20] x [0,10] for vortex  
@@ -146,12 +151,21 @@ int main(int argc, char **argv){
   MatrixXd y = mesh->y;
   MatrixXd z = mesh->z;
 
+#if TEST
+  MatrixXd d = (.125*((x+y+z).array())).exp();
+  x = x + a*d;
+  y = y + a*d;
+  z = z + a*d;
+  mesh->x = x;
+  mesh->y = y;
+  mesh->z = z;
+#endif
+  
 #if VORTEX
   MatrixXd xx = PI*(x.array()-5.0)/5.0;
   MatrixXd yy = 2.0*PI*(y.array()-10.0)/10.0;
   MatrixXd zz = PI*(z.array()-5.0)/5.0;
-  MatrixXd d;
-  d = xx.array().sin()*yy.array().sin()*zz.array().sin();
+  MatrixXd d = xx.array().sin()*yy.array().sin()*zz.array().sin();
 
   x = x + a*d;
   y = y + a*d;
@@ -162,16 +176,15 @@ int main(int argc, char **argv){
 #endif
 
   /*
-  cout << "x = [" << x << "];" << endl;
-  cout << "y = [" << y << "];" << endl;
-  cout << "z = [" << z << "];" << endl;
+  MatrixXd xyz(x.rows(),x.cols()*3);
+  xyz << x,y,z;
+  cout << "xyz = [" << endl << xyz << "];" << endl;
   return 0;
-  */
-  
+  */  
   
   GeometricFactors3d(mesh);
   Normals3d(mesh);
-
+ 
   MatrixXd xf = (mesh->Vf)*(mesh->x);
   MatrixXd yf = (mesh->Vf)*(mesh->y);
   MatrixXd zf = (mesh->Vf)*(mesh->z);  
@@ -204,12 +217,53 @@ int main(int argc, char **argv){
   app->props["defines/p_gamma"] = GAMMA;
   app->props["defines/p_Nfields"] = Nfields;
   app->props["defines/p_tau"] = 1.0;
-  
-  MatrixXd xq = mesh->Vq*mesh->x;
-  MatrixXd yq = mesh->Vq*mesh->y;
-  MatrixXd zq = mesh->Vq*mesh->z;
 
- 
+  MatrixXd Vq = mesh->Vq;  
+  MatrixXd xq = Vq*mesh->x;
+  MatrixXd yq = Vq*mesh->y;
+  MatrixXd zq = Vq*mesh->z;
+
+#if TEST
+  // test 3d geofacs
+
+  MatrixXd Dr = Vq * mrdivide(mesh->Dr,Vq);
+  MatrixXd Ds = Vq * mrdivide(mesh->Ds,Vq);
+  MatrixXd Dt = Vq * mrdivide(mesh->Dt,Vq);
+  MatrixXd rxJ = Vq * mesh->rxJ;
+  MatrixXd sxJ = Vq * mesh->sxJ;
+  MatrixXd txJ = Vq * mesh->txJ;
+  MatrixXd J = Vq * mesh->J;  
+
+  MatrixXd u = xq; //xq.array().exp();
+  MatrixXd duex = 1.0 + 0*xq.array();
+  
+  MatrixXd d1 = rxJ.array()*(Dr*u).array() +
+    sxJ.array()*(Ds*u).array() +
+    txJ.array()*(Dt*u).array();
+  MatrixXd d2 = Dr*(u.array()*rxJ.array()).matrix() +
+    Ds*(u.array()*sxJ.array()).matrix() +
+    Dt*(u.array()*txJ.array()).matrix();
+
+  MatrixXd dudx = .5*(d1 + d2).array() / J.array();
+
+  MatrixXd geo(rxJ.rows(),rxJ.cols()*3);
+  geo << rxJ, sxJ, txJ;
+
+  //cout << "Dt = " << Dt << endl;
+  cout << setprecision(11);
+  //cout << "geo = [" << endl << geo << "];" << endl;
+  // printf("Vq size = %d, %d\n",Vq.rows(),Vq.cols());
+  cout << "uc = [" << u << "];" << endl;
+  cout << "d1c = [" << d1 << "];" << endl;
+  cout << "d2c = [" << d2 << "];" << endl;  
+  cout << "dudxc = [" << dudx << "];" << endl;    
+
+  printf("diff = %g\n",(dudx.array()-duex.array()).abs().sum());
+
+  return 0;
+#endif
+
+  
   double time = 0.0;
   MatrixXd rho, rhou, rhov, rhow, E;
   VortexSolution3d(xq,yq,zq,time,rho,rhou,rhov,rhow,E);
@@ -333,8 +387,8 @@ int main(int argc, char **argv){
     }
   } 
   MatrixXd Vqtmp = Vandermonde3DHex(N,rq2,sq2,tq2);
-  MatrixXd Vq = Vandermonde3DHex(N,mesh->rq,mesh->sq,mesh->tq);  
-  MatrixXd Vq2 = mrdivide(Vqtmp,Vq);
+  MatrixXd VqN = Vandermonde3DHex(N,mesh->rq,mesh->sq,mesh->tq);  
+  MatrixXd Vq2 = mrdivide(Vqtmp,VqN);
   MatrixXd xq2 = Vq2 * (mesh->Vq*mesh->x);
   MatrixXd yq2 = Vq2 * (mesh->Vq*mesh->y);
   MatrixXd zq2 = Vq2 * (mesh->Vq*mesh->z);  
