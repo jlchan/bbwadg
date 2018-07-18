@@ -96,7 +96,7 @@ int main(int argc, char **argv){
 
   //occa::printModeInfo();
 
-  int N = 4;
+  int N = 3;
   int K1D = 8;
   if (argc == 3){
     N = atoi(argv[1]);
@@ -104,8 +104,8 @@ int main(int argc, char **argv){
     printf("setting N = %d, K1D = %d\n",N,K1D);
   }
 
-  double CFL = .5; 
-  double FinalTime = 5.0;
+  double CFL = 1.0; 
+  double FinalTime = 1.0;
   
   Mesh *mesh = (Mesh*) calloc(1, sizeof(Mesh));  
 
@@ -139,14 +139,16 @@ int main(int argc, char **argv){
   MatrixXd y = mesh->y;
   MatrixXd z = mesh->z;
 
-#if VORTEX  
-  MatrixXd dx = .5*(PI*x.array()/10).sin()*(2.0*PI*y.array()/20).sin()*(PI*z.array()/10).sin();
-  MatrixXd dy = -(2.0*PI*x.array()/10).sin()*(PI*y.array()/20).sin()*(2.0*PI*z.array()/10).sin();
-  MatrixXd dz = dx;
-  double a = .0;
-  x = x + a*dx;
-  y = y + a*dy;
-  z = z + a*dz;
+#if VORTEX
+  MatrixXd xx = PI*(x.array()-5.0)/5.0;
+  MatrixXd yy = 2.0*PI*(y.array()-10.0)/10.0;
+  MatrixXd zz = PI*(z.array()-5.0)/5.0;
+  MatrixXd d;
+  d = xx.array().sin()*yy.array().sin()*zz.array().sin();
+  double a = .50;
+  x = x + a*d;
+  y = y + a*d;
+  z = z + a*d;
   mesh->x = x;
   mesh->y = y;
   mesh->z = z;
@@ -192,6 +194,13 @@ int main(int argc, char **argv){
   MatrixXd yq = mesh->Vq*mesh->y;
   MatrixXd zq = mesh->Vq*mesh->z;
 
+  /*
+  cout << "x = [" << x << "];" << endl;
+  cout << "y = [" << y << "];" << endl;
+  cout << "z = [" << z << "];" << endl;
+  return 0;
+  */
+  
   double time = 0.0;
   MatrixXd rho, rhou, rhov, rhow, E;
   VortexSolution3d(xq,yq,zq,time,rho,rhou,rhov,rhow,E);
