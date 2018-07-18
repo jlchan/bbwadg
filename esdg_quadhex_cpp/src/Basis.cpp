@@ -804,6 +804,9 @@ void JacobiGL(int N, int alpha_int, int beta_int, VectorXd &r, VectorXd &w){
 
   int Np = (N+1);
   r.resize(Np);
+  w.resize(Np);
+  w.fill(1.0);
+  
   r(0) = -1.0;
   if (N==1){
     r(1) = 1.0;
@@ -816,9 +819,7 @@ void JacobiGL(int N, int alpha_int, int beta_int, VectorXd &r, VectorXd &w){
     r(i+1) = rint(i);
   }
   r(N) = 1.0;
-
-  w.resize(Np);
-  w.fill(1.0);
+  
   if (N==2){
     w(0) = 0.333333333333333;
     w(1) = 1.333333333333333;
@@ -858,6 +859,8 @@ void JacobiGL(int N, int alpha_int, int beta_int, VectorXd &r, VectorXd &w){
     w(5) = 0.341122692483504;
     w(6) = 0.210704227143506;
     w(7) = 0.035714285714286;
+  }else{
+    printf("N > 7: weights not yet implemented for GLL quadrature\n");
   }
   // todo - add
   //  dPn = GradJacobiP(rgq,0,0,N+1) / JacobiP(1,0,0,N+1);
