@@ -42,7 +42,7 @@ int main(int argc, char **argv){
     printf("setting N = %d, K1D = %d\n",N,K1D);
   }
 
-  double FinalTime = 1.0;
+  double FinalTime = 5.0;
   double CFL = .5;  
   double a = .25; // curved warping
   

@@ -98,14 +98,21 @@ int main(int argc, char **argv){
 
   int N = 3;
   int K1D = 8;
-  if (argc == 3){
+  double CFL = 1.0; 
+  double FinalTime = 1.0;
+  double a = .50;  
+  if (argc > 2){
     N = atoi(argv[1]);
     K1D = atoi(argv[2]);
     printf("setting N = %d, K1D = %d\n",N,K1D);
   }
+  if (argc > 5){
+    CFL = atof(argv[3]);
+    FinalTime = atof(argv[4]);
+    a = atof(argv[5]);
+    printf("setting CFL = %f, T = %f, curved warping a =%f\n",CFL,FinalTime,a);
+  }
 
-  double CFL = 1.0; 
-  double FinalTime = 1.0;
   
   Mesh *mesh = (Mesh*) calloc(1, sizeof(Mesh));  
 
@@ -145,7 +152,7 @@ int main(int argc, char **argv){
   MatrixXd zz = PI*(z.array()-5.0)/5.0;
   MatrixXd d;
   d = xx.array().sin()*yy.array().sin()*zz.array().sin();
-  double a = .50;
+
   x = x + a*d;
   y = y + a*d;
   z = z + a*d;
@@ -153,6 +160,14 @@ int main(int argc, char **argv){
   mesh->y = y;
   mesh->z = z;
 #endif
+
+
+  cout << "x = [" << x << "];" << endl;
+  cout << "y = [" << y << "];" << endl;
+  cout << "z = [" << z << "];" << endl;
+  return 0;
+  /*  */
+  
   
   GeometricFactors3d(mesh);
   Normals3d(mesh);
@@ -188,19 +203,13 @@ int main(int argc, char **argv){
  
   app->props["defines/p_gamma"] = GAMMA;
   app->props["defines/p_Nfields"] = Nfields;
-  app->props["defines/p_tau"] = 0.0;
+  app->props["defines/p_tau"] = 1.0;
   
   MatrixXd xq = mesh->Vq*mesh->x;
   MatrixXd yq = mesh->Vq*mesh->y;
   MatrixXd zq = mesh->Vq*mesh->z;
 
-  /*
-  cout << "x = [" << x << "];" << endl;
-  cout << "y = [" << y << "];" << endl;
-  cout << "z = [" << z << "];" << endl;
-  return 0;
-  */
-  
+ 
   double time = 0.0;
   MatrixXd rho, rhou, rhov, rhow, E;
   VortexSolution3d(xq,yq,zq,time,rho,rhou,rhov,rhow,E);
