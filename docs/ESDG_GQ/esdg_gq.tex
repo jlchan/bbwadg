@@ -1,0 +1,1013 @@
+\pdfoutput=1
+
+%\documentclass[preprint,10pt]{elsarticle}
+%\documentclass[preprint,10pt]{amsart}
+%\documentclass[review, 10pt]{siamart0216}
+%\documentclass{siamart0216}
+\documentclass[review,onefignum,onetabnum,final]{siamart171218}
+
+%\usepackage{fullpage}
+%\usepackage[colorlinks=true]{hyperref}
+
+\usepackage{amsmath,amssymb,amsfonts}
+
+%\usepackage{pdfpages}
+\usepackage[titletoc,toc,title]{appendix}
+\usepackage{listings}
+\usepackage{array} 
+\usepackage{mathtools}
+\usepackage{bm}
+\usepackage{bbm}
+
+\usepackage{tikz}
+\usepackage[normalem]{ulem}
+\usepackage{hhline}
+
+\usepackage{graphicx}
+\usepackage{subfig}
+\usepackage{color}
+
+%% ====================================== graphics
+
+\usepackage{pgfplots}
+\usepackage{pgfplotstable}
+\definecolor{markercolor}{RGB}{124.9, 255, 160.65}
+\pgfplotsset{
+compat=1.3,
+width=10cm,
+tick label style={font=\small},
+label style={font=\small},
+legend style={font=\small}
+}
+
+\usetikzlibrary{calc}
+\usetikzlibrary{intersections} 
+
+%%% START MACRO FOR ANNOTATION OF TRIANGLE WITH SLOPE %%%.
+\newcommand{\logLogSlopeTriangle}[5]
+{
+    % #1. Relative offset in x direction.
+    % #2. Width in x direction, so xA-xB.
+    % #3. Relative offset in y direction.
+    % #4. Slope d(y)/d(log10(x)).
+    % #5. Plot options.
+
+    \pgfplotsextra
+    {
+        \pgfkeysgetvalue{/pgfplots/xmin}{\xmin}
+        \pgfkeysgetvalue{/pgfplots/xmax}{\xmax}
+        \pgfkeysgetvalue{/pgfplots/ymin}{\ymin}
+        \pgfkeysgetvalue{/pgfplots/ymax}{\ymax}
+
+        % Calculate auxilliary quantities, in relative sense.
+        \pgfmathsetmacro{\xArel}{#1}
+        \pgfmathsetmacro{\yArel}{#3}
+        \pgfmathsetmacro{\xBrel}{#1-#2}
+        \pgfmathsetmacro{\yBrel}{\yArel}
+        \pgfmathsetmacro{\xCrel}{\xArel}
+
+        \pgfmathsetmacro{\lnxB}{\xmin*(1-(#1-#2))+\xmax*(#1-#2)} % in [xmin,xmax].
+        \pgfmathsetmacro{\lnxA}{\xmin*(1-#1)+\xmax*#1} % in [xmin,xmax].
+        \pgfmathsetmacro{\lnyA}{\ymin*(1-#3)+\ymax*#3} % in [ymin,ymax].
+        \pgfmathsetmacro{\lnyC}{\lnyA+#4*(\lnxA-\lnxB)}
+        \pgfmathsetmacro{\yCrel}{\lnyC-\ymin)/(\ymax-\ymin)} % THE IMPROVED EXPRESSION WITHOUT 'DIMENSION TOO LARGE' ERROR.
+
+        % Define coordinates for \draw. MIND THE 'rel axis cs' as opposed to the 'axis cs'.
+        \coordinate (A) at (rel axis cs:\xArel,\yArel);
+        \coordinate (B) at (rel axis cs:\xBrel,\yBrel);
+        \coordinate (C) at (rel axis cs:\xCrel,\yCrel);
+
+        % Draw slope triangle.
+        \draw[#5]   (A)-- node[pos=0.5,anchor=north] {}
+                    (B)-- 
+                    (C)-- node[pos=0.5,anchor=west] {\textcolor{black}{#4}}
+                    cycle;
+    }
+}
+%%% END MACRO FOR ANNOTATION OF TRIANGLE WITH SLOPE %%%.
+
+\newcommand{\logLogSlopeTriangleNeg}[5]
+{
+    % #1. Relative offset in x direction.
+    % #2. Width in x direction, so xA-xB.
+    % #3. Relative offset in y direction.
+    % #4. Slope d(y)/d(log10(x)).
+    % #5. Plot options.
+
+    \pgfplotsextra
+    {
+        \pgfkeysgetvalue{/pgfplots/xmin}{\xmin}
+        \pgfkeysgetvalue{/pgfplots/xmax}{\xmax}
+        \pgfkeysgetvalue{/pgfplots/ymin}{\ymin}
+        \pgfkeysgetvalue{/pgfplots/ymax}{\ymax}
+
+        % Calculate auxilliary quantities, in relative sense.
+        \pgfmathsetmacro{\xArel}{#1}
+        \pgfmathsetmacro{\yArel}{#3}
+        \pgfmathsetmacro{\xBrel}{#1-#2}
+        \pgfmathsetmacro{\yBrel}{\yArel}
+        \pgfmathsetmacro{\xCrel}{\xArel}
+
+        \pgfmathsetmacro{\lnxB}{\xmin*(1-(#1-#2))+\xmax*(#1-#2)} % in [xmin,xmax].
+        \pgfmathsetmacro{\lnxA}{\xmin*(1-#1)+\xmax*#1} % in [xmin,xmax].
+        \pgfmathsetmacro{\lnyA}{\ymin*(1-#3)+\ymax*#3} % in [ymin,ymax].
+        \pgfmathsetmacro{\lnyC}{\lnyA+#4*(\lnxA-\lnxB)}
+        \pgfmathsetmacro{\yCrel}{\lnyC-\ymin)/(\ymax-\ymin)} % THE IMPROVED EXPRESSION WITHOUT 'DIMENSION TOO LARGE' ERROR.
+
+        % Define coordinates for \draw. MIND THE 'rel axis cs' as opposed to the 'axis cs'.
+        \coordinate (A) at (rel axis cs:\xArel,\yArel);
+        \coordinate (B) at (rel axis cs:\xBrel,\yBrel);
+        \coordinate (C) at (rel axis cs:\xCrel,\yCrel);
+
+        % Draw slope triangle.
+        \draw[#5]   (A)-- node[pos=.5,anchor=south] {}
+                    (B)-- 
+                    (C)-- node[pos=0.5,anchor=west] {\textcolor{black}{#4}}
+                    cycle;
+    }
+}
+%%% END MACRO FOR ANNOTATION OF TRIANGLE WITH SLOPE %%%.
+
+%%% START MACRO FOR ANNOTATION OF TRIANGLE WITH SLOPE %%%.
+\newcommand{\logLogSlopeTriangleFlipNeg}[5]
+{
+    % #1. Relative offset in x direction.
+    % #2. Width in x direction, so xA-xB.
+    % #3. Relative offset in y direction.
+    % #4. Slope d(y)/d(log10(x)).
+    % #5. Plot options.
+
+    \pgfplotsextra
+    {
+        \pgfkeysgetvalue{/pgfplots/xmin}{\xmin}
+        \pgfkeysgetvalue{/pgfplots/xmax}{\xmax}
+        \pgfkeysgetvalue{/pgfplots/ymin}{\ymin}
+        \pgfkeysgetvalue{/pgfplots/ymax}{\ymax}
+
+        % Calculate auxilliary quantities, in relative sense.
+        %\pgfmathsetmacro{\xArel}{#1}
+        %\pgfmathsetmacro{\yArel}{#3}
+        \pgfmathsetmacro{\xBrel}{#1-#2}
+        \pgfmathsetmacro{\yBrel}{#3}
+        \pgfmathsetmacro{\xCrel}{#1}
+
+        \pgfmathsetmacro{\lnxB}{\xmin*(1-(#1-#2))+\xmax*(#1-#2)} % in [xmin,xmax].
+        \pgfmathsetmacro{\lnxA}{\xmin*(1-#1)+\xmax*#1} % in [xmin,xmax].
+        \pgfmathsetmacro{\lnyA}{\ymin*(1-#3)+\ymax*#3} % in [ymin,ymax].
+        \pgfmathsetmacro{\lnyC}{\lnyA+#4*(\lnxA-\lnxB)}
+        \pgfmathsetmacro{\yCrel}{\lnyC-\ymin)/(\ymax-\ymin)} % THE IMPROVED EXPRESSION WITHOUT 'DIMENSION TOO LARGE' ERROR.
+
+	\pgfmathsetmacro{\xArel}{\xBrel}
+        \pgfmathsetmacro{\yArel}{\yCrel}
+
+        % Define coordinates for \draw. MIND THE 'rel axis cs' as opposed to the 'axis cs'.
+        \coordinate (A) at (rel axis cs:\xArel,\yArel);
+        \coordinate (B) at (rel axis cs:\xBrel,\yBrel);
+        \coordinate (C) at (rel axis cs:\xCrel,\yCrel);
+
+        % Draw slope triangle.
+        \draw[#5]   (A)-- node[pos=0.5,anchor=east] {\textcolor{black}{#4}}
+                    (B)-- 
+                    (C)-- node[pos=0.5,anchor=north] {1}
+                    cycle;
+    }
+}
+%%% END MACRO FOR ANNOTATION OF TRIANGLE WITH SLOPE %%%.
+
+
+%%% START MACRO FOR ANNOTATION OF TRIANGLE WITH SLOPE %%%.
+\newcommand{\logLogSlopeTriangleFlip}[5]
+{
+    % #1. Relative offset in x direction.
+    % #2. Width in x direction, so xA-xB.
+    % #3. Relative offset in y direction.
+    % #4. Slope d(y)/d(log10(x)).
+    % #5. Plot options.
+
+    \pgfplotsextra
+    {
+        \pgfkeysgetvalue{/pgfplots/xmin}{\xmin}
+        \pgfkeysgetvalue{/pgfplots/xmax}{\xmax}
+        \pgfkeysgetvalue{/pgfplots/ymin}{\ymin}
+        \pgfkeysgetvalue{/pgfplots/ymax}{\ymax}
+
+        % Calculate auxilliary quantities, in relative sense.
+        %\pgfmathsetmacro{\xArel}{#1}
+        %\pgfmathsetmacro{\yArel}{#3}
+        \pgfmathsetmacro{\xBrel}{#1-#2}
+        \pgfmathsetmacro{\yBrel}{#3}
+        \pgfmathsetmacro{\xCrel}{#1}
+
+        \pgfmathsetmacro{\lnxB}{\xmin*(1-(#1-#2))+\xmax*(#1-#2)} % in [xmin,xmax].
+        \pgfmathsetmacro{\lnxA}{\xmin*(1-#1)+\xmax*#1} % in [xmin,xmax].
+        \pgfmathsetmacro{\lnyA}{\ymin*(1-#3)+\ymax*#3} % in [ymin,ymax].
+        \pgfmathsetmacro{\lnyC}{\lnyA+#4*(\lnxA-\lnxB)}
+        \pgfmathsetmacro{\yCrel}{\lnyC-\ymin)/(\ymax-\ymin)} % THE IMPROVED EXPRESSION WITHOUT 'DIMENSION TOO LARGE' ERROR.
+
+	\pgfmathsetmacro{\xArel}{\xBrel}
+        \pgfmathsetmacro{\yArel}{\yCrel}
+
+        % Define coordinates for \draw. MIND THE 'rel axis cs' as opposed to the 'axis cs'.
+        \coordinate (A) at (rel axis cs:\xArel,\yArel);
+        \coordinate (B) at (rel axis cs:\xBrel,\yBrel);
+        \coordinate (C) at (rel axis cs:\xCrel,\yCrel);
+
+        % Draw slope triangle.
+        \draw[#5]   (A)-- node[pos=0.5,anchor=east] {\textcolor{black}{#4}}
+                    (B)-- 
+                    (C)-- node[pos=0.5,anchor=south] {}
+                    cycle;
+    }
+}
+%%% END MACRO FOR ANNOTATION OF TRIANGLE WITH SLOPE %%%.
+
+
+
+\usepackage{stmaryrd}
+
+\renewcommand{\tilde}{\widetilde}
+\renewcommand{\hat}{\widehat}
+%\renewcommand{\topfraction}{0.85}
+%\renewcommand{\textfraction}{0.1}
+%\renewcommand{\floatpagefraction}{0.75}
+
+\newcommand{\vect}[1]{\ensuremath\boldsymbol{#1}}
+\newcommand{\tensor}[1]{\underline{\bm{#1}}}
+\newcommand{\del}{\triangle}
+\newcommand{\curl}{\grad \times}
+\renewcommand{\div}{\grad \cdot}
+
+\newcommand{\bbm}[1]{\mathbbm{#1}}
+\newcommand{\bs}[1]{\boldsymbol{#1}}
+\newcommand{\equaldef}{\stackrel{\mathrm{def}}{=}}
+
+\newcommand{\td}[2]{\frac{{\rm d}#1}{{\rm d}{\rm #2}}}
+\newcommand{\pd}[2]{\frac{\partial#1}{\partial#2}}
+\newcommand{\nor}[1]{\left\| #1 \right\|}
+\newcommand{\LRp}[1]{\left( #1 \right)}
+\newcommand{\LRs}[1]{\left[ #1 \right]}
+\newcommand{\LRa}[1]{\left\langle #1 \right\rangle}
+\newcommand{\LRb}[1]{\left| #1 \right|}
+\newcommand{\LRc}[1]{\left\{ #1 \right\}}
+\newcommand{\LRceil}[1]{\left\lceil #1 \right\rceil}
+\newcommand{\LRl}[1]{\left. #1 \right|}
+\newcommand{\pdd}[2]{\frac{\partial^2#1}{\partial#2^2}}
+\newcommand{\pdn}[3]{\frac{\partial^{#3}#1}{\partial#2^{#3}}}
+\newcommand{\mb}[1]{\mathbf{#1}}
+\newcommand{\mbb}[1]{\mathbb{#1}}
+\newcommand{\mc}[1]{\mathcal{#1}}
+\newcommand{\snor}[1]{\left| #1 \right|}
+
+
+%\newcommand{\cond}[1]{\kappa\LRp{#1}}
+\newcommand{\cond}[2]{\nor{#1}_{#2}\nor{{#1}^{-1}}_{#2}}
+
+
+\newcommand{\Grad} {\ensuremath{\nabla}}
+\newcommand{\Div} {\ensuremath{\nabla\cdot}}
+\newcommand{\jump}[1] {\ensuremath{\llbracket#1\rrbracket}}
+\newcommand{\avg}[1] {\ensuremath{\LRc{\!\{#1\}\!}}}
+
+\newcommand{\Oh}{{\Omega_h}}
+\renewcommand{\L}{L^2\LRp{\Omega}}
+\newcommand{\LK}{L^2\LRp{D^k}}
+\newcommand{\LdK}{L^2\LRp{\partial D^k}}
+\newcommand{\Dhat}{\widehat{D}}
+\newcommand{\Lhat}{L^2\LRp{\Dhat}}
+
+\newcommand{\eval}[2][\right]{\relax
+  \ifx#1\right\relax \left.\fi#2#1\rvert}
+
+\def\etal{{\it et al.~}}
+
+
+\newcommand{\note}[1]{{\color{blue}{#1}}}
+%\newcommand{\noteOne}[1]{{\color{blue}{#1}}}
+%\newcommand{\noteTwo}[1]{{\color{red}{#1}}}
+%\newcommand{\note}[1]{#1}
+%\newcommand{\noteOne}[1]{#1}
+%\newcommand{\noteTwo}[1]{#1}
+
+
+\newcommand{\LinfDk}{L^{\infty}\LRp{D^k}}
+
+\newcommand{\diag}[1]{{\rm diag}\LRp{#1}}
+
+\newcommand{\Ksub}{K_{\rm sub}}
+
+\newcolumntype{C}[1]{>{\centering\let\newline\\\arraybackslash\hspace{0pt}}m{#1}}
+
+%% d in integrand
+\newcommand*\diff[1]{\mathop{}\!{\mathrm{d}#1}}
+
+\makeatletter
+\renewcommand\d[1]{\mspace{6mu}\mathrm{d}#1\@ifnextchar\d{\mspace{-3mu}}{}}
+\makeatother
+
+%\date{}
+\author{Jesse Chan, David C.\ Del Rey Fernandez, Mark H.\ Carpenter}
+\title{Entropy stable Gauss-Legendre collocation methods}
+\graphicspath{{./figs/}}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+Here is the abstract.  Here is the abstract.  Here is the abstract.  Here is the abstract.  Here is the abstract.  Here is the abstract.  Here is the abstract.  Here is the abstract.  Here is the abstract.  Here is the abstract.  Here is the abstract.  Here is the abstract.  Here is the abstract.  Here is the abstract.  Here is the abstract.  Here is the abstract.  Here is the abstract.  Here is the abstract.  Here is the abstract.  Here is the abstract.  Here is the abstract.  Here is the abstract.  Here is the abstract.  Here is the abstract.  Here is the abstract.  Here is the abstract.  Here is the abstract.  Here is the abstract.  Here is the abstract.  Here is the abstract.  Here is the abstract.  Here is the abstract.  Here is the abstract.  Here is the abstract.  
+
+\end{abstract}
+
+\section{Introduction}
+
+Time dependent nonlinear conservation laws are ubiquitous in computational fluid dynamics (CFD).  These conservation laws include the compressible Euler and Navier-Stokes equations, which govern compressible fluid behavior within aerospace applications, as well as the equations governing coastal flooding and geophysical flows (shallow water), and those describing astrophysical phenomena (magnetohydrodynamics).  The utility of these simulations depends both on the reliability and accuracy of numerical methods for the solution of the associated nonlinear partial differential equations (PDEs).  
+
+High order methods are increasingly of interest for these applications.  Such methods are more accurate per degree of freedom than low order methods, while also possessing much smaller numerical dispersion and dissipation errors.  This makes high order methods especially well suited to time-dependent simulations.  In this work, we focus specifically on discontinuous Galerkin methods on unstructured quadrilateral and hexahedral meshes.  These methods combine properties of high order approximations with the geometric flexibility of unstructured meshing.  %When paired with explicit time-stepping methods, high order DG and finite element methods are also well-suited for many-core and GPU computing \cite{klockner2009nodal, swirydowicz2017acceleration, wintermeyer2018entropy}.  
+
+However, high order methods are notorious for being more prone to instability compared to low order methods \cite{wang2013high}.  This instability is addressed through various stabilization techniques (e.g.\ artificial viscosity, filtering, slope limiting).  However, these techniques often reduce accuracy to first or second order, and can prevent solvers from realizing the advantages of high order approximations.  Moreover, it is often not possible to prove that a high order scheme does not blow up even in the presence of stabilization.  This ambiguity can necessitate the re-tuning of stabilization parameters, as parameters which are both stable and accurate for one problem or discretization setting  may provide either too little or too much numerical dissipation for another.  
+
+The instability of high order methods is rooted in the fact that discretizations of nonlinear conservation laws do not typically satisfy a discrete analogue of the conservation or dissipation of energy (entropy).  While the numerical dissipation present for low order methods serves as a stabilizing mechanism, the low of numerical dissipation in high order methods reveals the lack of an inherent statement of stability.  The dissipation of entropy serves as an energetic principle for nonlinear conservation laws \cite{dafermos2005compensated}, and requires the use of the chain rule in its proof.  The instability of high order methods is tied to the fact that, when discretizing systems of nonlinear PDEs, the chain rule does not typically hold at the discrete level.  The lack of a chain rule was circumvented by using a non-standard ``flux differencing'' formulation \cite{fisher2013high, carpenter2014entropy, gassner2016split, gassner2017br1}, which is key to constructing semi-discretely entropy stable high order schemes on unstructured quadrilateral and hexahedral meshes.  Flux differencing replaces the derivative of the nonlinear flux with the discrete differentiation of an auxiliary quantity.  This auxiliary quantity is computed through the evaluation of a two-point entropy conservative flux \cite{tadmor1987numerical} using pairs of solution values at quadrature points.  These entropy stable schemes were later extended to non-tensor product elements using GLL-like quadrature points on triangles and tetrahedra \cite{chen2017entropy, crean2018entropy}.  More recently, the construction of efficient entropy stable schemes was extended to more arbitrary choices of basis and quadrature \cite{chan2017discretely, chan2018discretely}.  
+
+This paper focuses on the construction of efficient semi-discretely entropy stable collocation schemes based on Gauss nodes, using the framework introduced in \cite{chan2017discretely, chan2018discretely}.  While entropy stable collocation schemes have been constructed on Gauss-like quadrature points without boundary nodes \cite{crean2017high}, the inter-element coupling terms for such schemes introduce significantly more communication and computation than collocation points which contain boundary nodes.  This work introduces new inter-element coupling terms which avoid this all-to-all coupling, requiring only communication of face values between neighboring elements.  
+
+In Section~\ref{sec:0}, we briefly review the derivation of continuous entropy inequalities for systems of nonlinear conservation laws.  In Section~\ref{sec:1}, we describe how to construct entropy stable discretizations of nonlinear conservation laws using different quadrature points on affine tensor product elements.  In Section~\ref{sec:2}, we describe how to extend this construction to curvilinear elements, and Section~\ref{sec:3} presents numerical results which confirm the high order accuracy and stability of the proposed method for smooth, discontinuous, and under-resolved (turbulent) solutions of the compressible Euler equations in two and three dimensions.  
+
+\section{A brief review of entropy stability theory}
+\label{sec:0}
+
+We are interested in methods for the numerical solution of systems of conservation laws in $d$ dimensions
+\begin{equation}
+\pd{\bm{u}}{t} + \sum_{i=1}^d \pd{\bm{f}_i\LRp{\bm{u}}}{x_i} = 0,
+\label{eq:nonlinpde}
+\end{equation}
+where $\bm{u}$ denotes the conservative variables, $\bm{f}_i(\bm{u})$ are nonlinear fluxes, and $x_i$ denotes the $i$th coordinate.  Many physically motivated conservation laws admit a statement of stability involving a convex scalar entropy $S(\bm{u})$.  We first define the entropy variables $\bm{v}(\bm{u})$ to be the gradient of the entropy $S(\bm{u})$ with respect to the conservative variables 
+\[
+\bm{v} = \pd{S(\bm{u})}{\bm{u}}.  
+\]
+For a convex entropy, $\bm{v}(\bm{u})$ defines an invertible mapping from conservative to entropy variables.  We denote the inverse of this mapping (from entropy to conservative variables) by $\bm{u}(\bm{v})$.  
+
+At the continuous level, it can be shown (for example, in \cite{dafermos2005compensated}) that vanishing viscosity solutions to (\ref{eq:nonlinpde}) satisfy the strong form of an entropy inequality 
+\begin{gather}
+\pd{S(\bm{u})}{t} + \sum_{i=1}^d \pd{F_i(\bm{u})}{x_i} \leq 0,
+\label{eq:entropyineq}
+\end{gather}
+where $F_i$ denotes the $i$th scalar entropy flux function and $\psi_i(\bm{u})$ denotes the $i$th entropy potential
+\[
+F_i(\bm{u}) = \bm{v}^T\pd{\bm{f}_i}{x_i}, \qquad \psi_i(\bm{u}) = \bm{v}^T\bm{f}_i(\bm{u}) - F_i(\bm{u}). 
+\]
+Integrating (\ref{eq:entropyineq}) over a domain $\Omega$ and applying the divergence theorem yields an averaged entropy inequality
+\begin{equation}
+\int_{\Omega} \pd{S(\bm{u})}{t} + \int_{\partial \Omega} \sum_{i=1}^d \bm{n}_i \LRp{\bm{v}^T\bm{f}_i(\bm{u}) - \psi_i(\bm{u})} \leq 0,
+\label{eq:weakentropyineq}
+\end{equation}
+where $\partial \Omega$ denotes the boundary of $\Omega$ and $\bm{n}_i$ denotes the $i$th component of the outward normal on $\partial \Omega$.  Roughly speaking, this implies that the time rate of change of entropy is less than or equal to the flux of entropy through the boundary.
+
+
+\section{Entropy stable Gauss and Gauss-Legendre-Lobatto collocation methods}
+\label{sec:1}
+
+This focus of this paper is on entropy stable high order collocation methods which satisfy a semi-discrete version of the entropy inequality (\ref{eq:weakentropyineq}).  
+These methods collocate the solution at some choice of collocation nodes, and are applicable to tensor product meshes consisting of quadrilateral and hexahedral elements.  
+
+Entropy stable collocation methods have largely utilized Gauss-Legendre-Lobatto (GLL) nodes \cite{fisher2013high, carpenter2014entropy, gassner2016split, gassner2017br1}, which contain points on the boundary.  The popularity of GLL nodes can be attributed in part to a connection made in \cite{gassner2013skew}, where it was shown by Gassner that collocation DG discretizations based on GLL nodes could be recast in terms of summation-by-parts (SBP) operators.  This equivalence allowed Gassner to leverage existing finite difference formulations to produce stable high order discretizations of the nonlinear Burgers' equation.  
+
+GLL quadratures contain boundary points, which greatly simplifies the construction of inter-element coupling terms for entropy stable collocation schemes.  However, it is also known that the use of GLL quadrature within DG methods under-integrates the mass matrix, which can lead to solution ``aliasing'' and lower accuracy \cite{parsani2016entropy}.  In this work, we explore entropy stable collocation schemes based on Gauss quadrature points instead of GLL points.  
+
+This comparison is motivated by the accuracy of each respective quadrature rule.  While $(N+1)$-point GLL quadrature rules are exact for polynomial integrands of degree $(2N-1)$, $(N+1)$-point Gauss quadrature rules are exact for polynomials of degree $(2N+1)$.  This higher accuracy of Gauss quadrature has been shown to translate to lower errors and slightly improved rates of convergence in simulations of wave propagation and fluid flow \cite{kopriva2010quadrature, hindenlang2012explicit, chan2015gpu}.  However, Gauss points have not been widely used to construct entropy stable discretizations due to the lack of efficient, stable, and high order accurate inter-element coupling terms, known as simultaneous approximation terms (SBP-SAT) in the finite difference literature \cite{fernandez2014review, crean2017high, fernandez2018simultaneous}.  SBP-SATs for Gauss points are non-compact, in the sense that they introduce all-to-all coupling between degrees of freedom on neighboring elements.  This results in greater communication between elements, as well as a significantly larger number of two-point flux evaluations and floating point operations.  
+
+It is possible to realize the improved accuracy of Gauss points while avoiding non-compact SBP-SATs through a staggered grid formulation, where the solution is stored at Gauss nodes but interpolated to a set of higher degree $(N+2)$ GLL ``flux'' points for computation \cite{parsani2016entropy}.  Because GLL nodes include boundary points, compact and high order accurate SBP-SAT terms can be constructed for the flux points.  After performing computations on the flux points, the results are interpolated back to Gauss points and used to evolve the solution forward in time.  Figure~\ref{fig:nodesets} shows an illustration of GLL, staggered grid, and Gauss point sets for a 2D quadrilateral element.  
+
+\begin{figure}
+\centering
+\subfloat[GLL nodes]{\includegraphics[width=.3\textwidth]{figs/sbp.png}}
+\hspace{1em}
+\subfloat[Staggered grid nodes]{\includegraphics[width=.3\textwidth]{figs/staggered.png}}
+\hspace{1em}
+\subfloat[Gauss nodes]{\includegraphics[width=.3\textwidth]{figs/gsbp.png}}
+\caption{Examples of nodal sets under which efficient entropy stable schemes can be constructed.  This work focuses on the construction of efficient and accurate SBP-SAT terms for Gauss nodal sets.}
+\label{fig:nodesets}
+\end{figure}
+
+The following sections will describe how to construct efficient high order entropy stable schemes using Gauss points.  These schemes are based on ``decoupled'' SBP operators introduced in \cite{chan2017discretely, chan2018discretely}, which are applicable to general choices of basis and quadrature.  By choosing a tensor product Lagrange polynomial basis and $(N+1)$ point Gauss quadrature rules, we recover a Gauss collocation scheme.  The high order accuracy and entropy stability of this scheme are direct results of theorems presented in  \cite{chan2017discretely, chan2018discretely}.  However, we will also present a different proof of entropy stability in one dimension for completeness.  
+
+\subsection{Gauss nodes and generalized summation by parts operators}
+
+We assume the solution is collocated at $(N+1)$ quadrature points $x_i$ with associated quadrature weights $w_i$.  We do not make any assumptions on the points, in order to accommodate both GLL and Gauss nodes using this notation.  The collocation assumption is equivalent to approximating the solution using a degree $N$ Lagrange basis $\ell_j(x)$ defined over the $(N+1)$ quadrature points.  
+
+Let $\bm{D}$ denote the nodal differentiation matrix, and let $\bm{V}_f$ denote the $(N+1)\times 2$ matrix which interpolates polynomials at Gauss nodes to values at endpoints.  These two matrices are defined entrywise as
+\[
+\bm{D}_{ij} = \LRl{\pd{\ell_j}{x}}_{x = x_i}, \qquad \LRp{\bm{V}_f}_{i1} = \ell_i(-1), \qquad  \LRp{\bm{V}_f}_{i2} = \ell_i(1).
+\]
+We also introduce the diagonal matrix of quadrature weights $\bm{W}_{ij} = \delta_{ij} w_i$.  In this work, $\bm{W}$ is identical to the mass matrix, whose entries are evaluated as $L^2$ inner products of basis functions.  This equality holds so long as the basis functions are Lagrange polynomials and integrals are approximated using quadrature (either GLL or Gauss).  
+%\[
+%\bm{M}_{ij} = \int_{-1}^{1} \ell_j(x)\ell_i(x) = \sum_{k=1}^{N+1}  w_k\ell_j(x_k)\ell_i(x_k)  = \delta_{ij} w_i.  
+%\]
+It can be show that the mass and differentiation matrices for Gauss nodes fall under the class of generalized SBP (GSBP) operators \cite{fernandez2014generalized}.  
+\begin{lemma}
+$\bm{Q} = \bm{W}\bm{D}$ satisfies the generalized summation by parts property
+\[
+\bm{Q} = \bm{V}_f^T \bm{B} \bm{V}_f - \bm{Q}^T, \qquad \bm{B} = \begin{bmatrix}-1 & \\ & 1\end{bmatrix}.
+\]
+\label{lemma:sbp}
+\end{lemma}
+\begin{proof}
+The proof is a direct restatement of integration by parts, and can be found in \cite{ortleb2016kinetic, ortleb2017kinetic, ranocha2018generalised}.  We reproduce it here for completeness.  Let $\bm{u},\bm{v}$ be two arbitrary vectors, and let $u(x), v(x)$ denote the polynomials whose nodal values are given by $\bm{u},\bm{v}$.  Then, 
+\begin{align*}
+\bm{v}^T\bm{Q}\bm{u} &= \bm{v}^T\bm{W}\bm{D}\bm{u} = \int_{-1}^1 \pd{u}{x}v = \LRl{uv}_{-1}^1 - \int_{-1}^1 u\pd{v}{x} \\
+&= \LRp{\bm{V}_f \bm{v}}^T\bm{B}\bm{V}_f\bm{u} - \LRp{\bm{D}\bm{v}}^T\bm{W}\bm{u} = \bm{v}^T\bm{V}_f^T\bm{B}\bm{V}_f \bm{u} - \bm{v}^T\bm{Q}^T\bm{u},
+\end{align*}
+where we have used that $\bm{W}$ is diagonal and that $(N+1)$-point Gauss quadrature is exact for the above integrands.  Taking $\bm{v} = \bm{e}_i$ and $\bm{u} = \bm{e}_j$ for $i,j = 1,\ldots, N+1$ (where $\bm{e}_i$ denotes the $i$th canonical vector) completes the proof.  
+\end{proof}
+
+Lemma~\ref{lemma:sbp} holds for both GLL and Gauss nodes, and switching between these two nodal sets simply results in a redefinition of the matrices $\bm{D}, \bm{V}_f$.  For example, because GLL nodes include boundary points, the interpolation matrix $\bm{V}_f$ reduces to a generalized permutation matrix which extracts the nodal values associated with the left and right endpoints.  %Lemma~\ref{lemma:sbp} can be extended directly to higher dimensions through a tensor product construction.  
+
+
+
+%However, there are some properties which are exclusive to Gauss nodes.  
+%\begin{lemma}
+%Let $p(x)$ be a linear function with Gauss nodal values $\bm{p}$.  Then, the Gauss node operators satisfy the following summation by parts property
+%\[
+%\diag{\bm{p}} \bm{Q} = \bm{V}_f^T \bm{B}\diag{\bm{V}_f\bm{p}} \bm{V}_f - \bm{Q}^T\diag{\bm{p}},
+%\]
+%where $\bm{B}$ is the boundary matrix introduced in Lemma~\ref{lemma:sbp}.
+%\label{lemma:vertexmapped}
+%\end{lemma}
+%\begin{proof}
+%Due to the fact that Gauss quadrature is exact for polynomial integrands of degree $(2N+1)$, the proof is very similar to that of Lemma~\ref{lemma:sbp}.  Let $\bm{u}, \bm{v}$ be vectors and let $u(x),v(x)$ denote polynomials with associated nodal values.  Then, 
+%\begin{align*}
+%\bm{v}^T\diag{\bm{p}} \bm{Q}\bm{u} &= \int_{-1}^1 \pd{u}{x} pv = 
+%\LRl{ u pv}_{-1}^1 - \int_{-1}^1 u \pd{(pv)}{x}.
+%\end{align*}
+%The latter integrand is a polynomial of degree $2N$
+%\begin{align*}
+%&= \LRp{\bm{V}_f\bm{v}}^T \bm{B} \diag{\bm{V}_f\bm{p}} \bm{V}_f\bm{u}  - \LRp{\bm{D}\diag{\bm{p}}\bm{v}}^T\bm{W}\bm{u}.
+%\end{align*}
+%\end{proof}
+%
+%Both Lemma~\ref{lemma:sbp} and \ref{lemma:vertexmapped} extend directly to higher dimensions through tensor products.  
+
+
+\subsection{Existing entropy stable SBP-SATs for generalized SBP operators}
+\label{sec:gsbpsat}
+
+In this section, we will review the construction of semi-discretely entropy stable discretizations.  Entropy stable discretizations can be constructed by first introducing an entropy conservative scheme, then adding appropriate interface dissipation to produce an entropy inequality.  The construction of entropy conservative schemes relies on the existence of an two-point (dyadic) entropy conservative flux \cite{tadmor1987numerical}.  
+\begin{definition}
+Let $\bm{f}_S(\bm{u}_L,\bm{u}_R)$ be a bivariate function which is symmetric and consistent with the flux function $\bm{f}(\bm{u})$
+\begin{align*}
+\bm{f}_S(\bm{u}_L,\bm{u}_R) = \bm{f}_S(\bm{u}_R,\bm{u}_L), \qquad \bm{f}_S(\bm{u},\bm{u}) = \bm{f}(\bm{u})
+\end{align*}
+The numerical flux $\bm{f}_S(\bm{u}_L, \bm{u}_R)$ is entropy conservative if, for entropy variables $\bm{v}_L = \bm{v}(\bm{u}_L), \bm{v}_R = \bm{v}(\bm{u}_R)$, the Tadmor ``shuffle'' condition is satisfied
+\begin{align*}
+\LRp{\bm{v}_L - \bm{v}_R}^T \bm{f}_S(\bm{u}_L,\bm{u}_R) = (\psi_L - \psi_R), \qquad \psi_L = \psi(\bm{v}(\bm{u}_L)), \quad \psi_R = \psi(\bm{v}(\bm{u}_R)).  
+\end{align*}
+\label{def:tadmor}
+\end{definition}
+Here, $\psi$ is the entropy potential.  
+
+
+
+\note{Ask DCDR to fill this in \cite{fernandez2014review, crean2017high, fernandez2018simultaneous}.}
+
+
+\subsection{Decoupled SBP operators}
+
+The main goal of this work is to circumvent the all-to-all coupling of degrees of freedom introduced by the SBP-SAT terms described in Section~\ref{sec:gsbpsat}, and will do so through the use of ``decoupled'' SBP operators.  Decoupled SBP operators were first introduced in \cite{chan2017discretely} and used to construct entropy stable schemes on simplicial elements.  These operators (and simplifications under a collocation assumption) are presented in a more general setting in Appendix~\ref{app:decoupled}.  In this section, decoupled SBP operators are introduced in one dimension for either GLL or Gauss nodal sets.  
+
+Let $\bm{Q} = \bm{W}\bm{D}$.  The decoupled SBP operator $\bm{Q}_N$ is defined as the block matrix 
+\begin{equation}
+\bm{Q}_N  = \begin{bmatrix}
+\bm{Q} - \frac{1}{2}\bm{V}_f^T\bm{B}\bm{V}_f & \frac{1}{2}\bm{V}_f^T\bm{B}\\
+-\frac{1}{2}\bm{B}\bm{V}_f & \frac{1}{2}\bm{B}
+\end{bmatrix}.
+\label{eq:qndef}
+\end{equation}
+Lemma~\ref{lemma:sbp} and straightforward computations show that $\bm{Q}_N$ also satisfies the following SBP property
+\begin{lemma}
+\label{lemma:dsbp}
+Let $\bm{Q}_N$ be defined through (\ref{eq:qndef}).  Then,
+\[
+\bm{Q}_N + \bm{Q}_N^T = \begin{bmatrix}
+\bm{0} &\\
+& \bm{B}
+\end{bmatrix}.
+\]
+\end{lemma}
+
+The matrix $\bm{Q}_N$ acts not only on volume nodes, but on both volume and surface nodes.  However, $\bm{Q}_N$ does not directly define an approximation to the derivative.  Let $f(x), g(x)$ denote two functions, and let $\bm{f}, \bm{g}$ denote the values of $f,g$ at interior nodal points.  We also define vectors $\bm{f}_N, \bm{g}_N$ denoting the values of $f,g$ at both interior and boundary points 
+\begin{equation}
+\bm{f}_N = \begin{bmatrix}
+f\LRp{x_1}\\
+\vdots\\
+f\LRp{x_{N+1}}\\
+f(-1)\\
+f(1)
+\end{bmatrix} = \begin{bmatrix}
+\bm{f} \\
+\bm{f}_f
+\end{bmatrix}, \qquad
+\bm{g}_N = \begin{bmatrix}
+g\LRp{x_1}\\
+\vdots\\
+g\LRp{x_{N+1}}\\
+g(-1)\\
+g(1)
+\end{bmatrix} = \begin{bmatrix}
+\bm{g} \\
+\bm{g}_f
+\end{bmatrix}.
+\label{eq:fg}
+\end{equation}
+Then, a polynomial approximation to $f\pd{g}{x}$ can be computed using $\bm{Q}_N$.  Let $\bm{u}$ denote the nodal values of the polynomial $u(x) \approx f\pd{g}{x}$.  These coefficients are computed via
+\begin{equation}
+\bm{W}\bm{u} = \begin{bmatrix}
+\bm{I}\\
+\bm{V}_f
+\end{bmatrix}^T \diag{\bm{f}_N} \bm{Q}_N \bm{g}_N.
+\label{eq:qn}
+\end{equation}
+The expression (\ref{eq:qn}) can be rewritten in ``strong'' form as follows
+\begin{align*}
+\bm{u} = \bm{W}^{-1}\begin{bmatrix}
+\bm{I}\\
+\bm{V}_f
+\end{bmatrix}^T& \diag{\bm{f}_N} \bm{Q}_N \bm{g}_N \\
+= \diag{\bm{f}}\bm{D}\bm{g} &+ \frac{1}{2}\diag{\bm{f}} \bm{W}^{-1} \bm{V}_f^T \bm{B}\LRp{\bm{g}_f - \bm{V}_f\bm{g}} \\
+&+ \frac{1}{2}\bm{W}^{-1} \bm{V}_f^T\bm{B}\diag{\bm{f}_f} \LRp{\bm{g}_f - \bm{V}_f\bm{g}},
+\end{align*}
+where we have used the fact that diagonal matrices commute to simplify expressions.  Thus, the decoupled SBP operator $\bm{Q}_N$ can be interpreted as adding boundary corrections to the GSBP operator $\bm{D}$ in a skew-symmetric fashion.  
+
+It was shown in \cite{chan2017discretely} that $\bm{u}$ is a high order accurate approximation to the quantity $f\pd{g}{x}$.  Both the generalized SBP operator $\bm{D}$ and the expression in (\ref{eq:qn}) involving the decoupled SBP operator recover exact derivatives of high order polynomials.  However, when applied to non-polynomial functions, the decoupled SBP operator $\bm{Q}_N$ improves accuracy near the boundaries.  Figure~\ref{fig:dsbpcorrect} illustrates this by using both operators to approximate the derivative of a Gaussian $e^{-4x^2}$.  The decoupled SBP operator results in an improved approximation near the boundary.  %This can be interpreted as  \cite{brenner2007mathematical}
+
+\begin{figure}
+\centering
+\begin{tikzpicture}
+\begin{axis}[
+    width=.6\textwidth,
+    xlabel={$x$ coordinate},
+%    ylabel={$L^2$ errors}, 
+%    xmin=.0125, xmax=.75,
+    ymin=-2, ymax=2.25,
+    legend pos=north east, legend cell align=left, legend style={font=\tiny},	
+    xmajorgrids=true, ymajorgrids=true, grid style=dashed,
+    legend entries={GSBP, Decoupled SBP, Exact}    
+]
+\pgfplotsset{
+cycle list={{blue, only marks, mark=*}, {blue}, {red, only marks,mark=square*},{red},{black,dashed}}
+}
+\addlegendimage{blue, mark=*}
+\addlegendimage{red, mark=square*}
+\addlegendimage{black, dashed}
+
+\addplot+[semithick, mark options={solid, fill=markercolor}]
+coordinates{(-0.93247,-0.677965)(-0.661209,1.35632)(-0.238619,1.07263)(0.238619,-1.07263)(0.661209,-1.35632)(0.93247,0.677965)};
+
+\addplot+[semithick, mark options={solid, fill=markercolor}]
+coordinates{(-1,-1.56577)(-0.959184,-1.00891)(-0.918367,-0.51366)(-0.877551,-0.0774098)(-0.836735,0.302464)(-0.795918,0.628585)(-0.755102,0.903575)(-0.714286,1.13006)(-0.673469,1.31065)(-0.632653,1.44798)(-0.591837,1.54466)(-0.55102,1.60333)(-0.510204,1.62659)(-0.469388,1.61708)(-0.428571,1.57742)(-0.387755,1.51022)(-0.346939,1.41812)(-0.306122,1.30372)(-0.265306,1.16966)(-0.22449,1.01856)(-0.183673,0.85303)(-0.142857,0.675704)(-0.102041,0.489201)(-0.0612245,0.296143)(-0.0204082,0.0991513)(0.0204082,-0.0991513)(0.0612245,-0.296143)(0.102041,-0.489201)(0.142857,-0.675704)(0.183673,-0.85303)(0.22449,-1.01856)(0.265306,-1.16966)(0.306122,-1.30372)(0.346939,-1.41812)(0.387755,-1.51022)(0.428571,-1.57742)(0.469388,-1.61708)(0.510204,-1.62659)(0.55102,-1.60333)(0.591837,-1.54466)(0.632653,-1.44798)(0.673469,-1.31065)(0.714286,-1.13006)(0.755102,-0.903575)(0.795918,-0.628585)(0.836735,-0.302464)(0.877551,0.0774098)(0.918367,0.51366)(0.959184,1.00891)(1,1.56577)};
+
+\addplot+[semithick, mark options={solid, fill=markercolor}]
+coordinates{(-0.93247,-0.194074)(-0.661209,1.16978)(-0.238619,1.20913)(0.238619,-1.20913)(0.661209,-1.16978)(0.93247,0.194074)};
+
+\addplot+[semithick, mark options={solid, fill=markercolor}]
+coordinates{(-1,-0.434491)(-0.959184,-0.303266)(-0.918367,-0.130624)(-0.877551,0.0698403)(-0.836735,0.286078)(-0.795918,0.507515)(-0.755102,0.724981)(-0.714286,0.930644)(-0.673469,1.11794)(-0.632653,1.28151)(-0.591837,1.41712)(-0.55102,1.5216)(-0.510204,1.59278)(-0.469388,1.62942)(-0.428571,1.63111)(-0.387755,1.59825)(-0.346939,1.53198)(-0.306122,1.43404)(-0.265306,1.30681)(-0.22449,1.15314)(-0.183673,0.976347)(-0.142857,0.78012)(-0.102041,0.568459)(-0.0612245,0.345602)(-0.0204082,0.115959)(0.0204082,-0.115959)(0.0612245,-0.345602)(0.102041,-0.568459)(0.142857,-0.78012)(0.183673,-0.976347)(0.22449,-1.15314)(0.265306,-1.30681)(0.306122,-1.43404)(0.346939,-1.53198)(0.387755,-1.59825)(0.428571,-1.63111)(0.469388,-1.62942)(0.510204,-1.59278)(0.55102,-1.5216)(0.591837,-1.41712)(0.632653,-1.28151)(0.673469,-1.11794)(0.714286,-0.930644)(0.755102,-0.724981)(0.795918,-0.507515)(0.836735,-0.286078)(0.877551,-0.0698403)(0.918367,0.130624)(0.959184,0.303266)(1,0.434491)};
+
+\addplot+[semithick, mark options={solid, fill=markercolor}]
+coordinates{(-1,0.146525)(-0.959184,0.193522)(-0.918367,0.251752)(-0.877551,0.322529)(-0.836735,0.406852)(-0.795918,0.50522)(-0.755102,0.617438)(-0.714286,0.742415)(-0.673469,0.877994)(-0.632653,1.02082)(-0.591837,1.1663)(-0.55102,1.30861)(-0.510204,1.44089)(-0.469388,1.55553)(-0.428571,1.64452)(-0.387755,1.70003)(-0.346939,1.71492)(-0.306122,1.68342)(-0.265306,1.60163)(-0.22449,1.46805)(-0.183673,1.2839)(-0.142857,1.05327)(-0.102041,0.783025)(-0.0612245,0.482507)(-0.0204082,0.162994)(0.0204082,-0.162994)(0.0612245,-0.482507)(0.102041,-0.783025)(0.142857,-1.05327)(0.183673,-1.2839)(0.22449,-1.46805)(0.265306,-1.60163)(0.306122,-1.68342)(0.346939,-1.71492)(0.387755,-1.70003)(0.428571,-1.64452)(0.469388,-1.55553)(0.510204,-1.44089)(0.55102,-1.30861)(0.591837,-1.1663)(0.632653,-1.02082)(0.673469,-0.877994)(0.714286,-0.742415)(0.755102,-0.617438)(0.795918,-0.50522)(0.836735,-0.406852)(0.877551,-0.322529)(0.918367,-0.251752)(0.959184,-0.193522)(1,-0.146525)};
+\end{axis}
+\end{tikzpicture}
+
+\caption{Degree $N= 5$ approximations of derivatives of a Gaussian $e^{-4x^2}$ using the generalized SBP operator $\bm{D}$ and the decoupled SBP operator $\bm{Q}_N$ via (\ref{eq:qn}). }
+\label{fig:dsbpcorrect}
+\end{figure}
+
+
+
+
+\subsection{An entropy stable Gauss collocation scheme based on decoupled SBP operators}
+
+We can now construct an entropy conservative Gauss collocation scheme with compact SBP-SATs using decoupled SBP operators.  Let $\bm{u}_N$ and $\bm{v}(\bm{u}_N)$ denote the values of the conservative variables and entropy variables at Gauss points, respectively.  We define approximate values $\tilde{\bm{u}}_f$ of the conservative variables by interpolating the values of the entropy variables to element boundaries 
+\[
+\tilde{\bm{u}}_f = \bm{u}(\bm{v}_f), \qquad \bm{v}_f = \bm{V}_f\bm{v}(\bm{u}_N).  
+\]
+We now define $\tilde{\bm{u}}$ as the concatenated vector of solution values at Gauss points and the ``entropy-projected conservative variables'' $\tilde{\bm{u}}_f$.  We also define $\bm{F}_S$ as the matrix of evaluations of the two-point flux $\bm{f}_S$ at combinations of values of $\tilde{\bm{u}}$
+\[
+\LRp{\bm{F}_S}_{ij} = \bm{f}_S\LRp{\tilde{\bm{u}}_i,\tilde{\bm{u}}_j}, \qquad \tilde{\bm{u}} = \begin{bmatrix}
+\bm{u}_N\\
+\tilde{\bm{u}}_f
+\end{bmatrix}.
+\]
+\begin{theorem}
+\label{thm:consentropy}
+Let $\circ$ denote the Hadamard product, and let $\tilde{\bm{u}}_f^+$ denote values of the entropy-projected conservative variables on neighboring elements.  Then, the formulation
+\begin{equation}
+\label{eq:form}
+\bm{W}\td{\bm{u}_N}{t} + 2 \begin{bmatrix}
+\bm{I}\\
+\bm{V}_f
+\end{bmatrix}^T\LRp{\bm{Q}_N \circ \bm{F}_S}\bm{1} + \bm{V}_f^T \bm{B} \LRp{\bm{f}_S\LRp{\tilde{\bm{u}}_f^+,\tilde{\bm{u}}_f} - \bm{f}(\bm{u})} = 0
+\end{equation}
+satisfies the quadrature form of the semi-discrete conservation of entropy
+\[
+\bm{1}^T\bm{W}\td{S(\bm{u}_N)}{t} + \bm{1}^T\bm{B} \LRp{\bm{v}_f^T\bm{f}(\tilde{\bm{u}}_f) - \psi_i\LRp{\tilde{\bm{u}}_f}} = 0.
+\]
+\end{theorem}
+\begin{proof}
+Theorem~\ref{thm:consentropy} follows from choosing either GLL or Gauss quadratures in Theorem 4 of \cite{chan2017discretely}.  We provide a separate illustrative proof on a two-element mesh.  The extension to multiple elements is straightforward.  
+
+First, we rewrite formulation (\ref{eq:form}) in a skew-symmetric form.  Using Lemma~\ref{lemma:dsbp} and the diagonal nature of $\bm{B}$, (\ref{eq:form}) is equivalent to solving
+\begin{equation}
+\bm{W}\td{\bm{u}_N}{t} + \begin{bmatrix}
+\bm{I}\\
+\bm{V}_f
+\end{bmatrix}^T\LRp{\LRp{\bm{Q}_N - \bm{Q}_N^T} \circ \bm{F}_S}\bm{1} + \bm{V}_f^T \bm{B} {\bm{f}_S\LRp{\tilde{\bm{u}}_f^+,\tilde{\bm{u}}_f}} = 0
+\label{eq:skew}
+\end{equation}
+
+\end{proof}
+
+\note{Add two-element case.} 
+
+
+A semi-discrete entropy inequality can be enforced by adding appropriate interface dissipation terms, such as Lax-Friedrichs or matrix dissipation \cite{winters2017uniquely}.  We note that these terms must be computed in terms of $\tilde{\bm{u}}_f$ in order to ensure a discrete dissipation of entropy \cite{chen2017entropy,chan2017discretely}.  
+
+\section{Extension to higher dimensions and curved meshes}
+\label{sec:2}
+
+Theorem~\ref{thm:consentropy} 
+
+\note{Describe GCL using GLL nodes \cite{chan2018discretely}}
+
+Retaining entropy stability on curved meshes requires satisfaction of a discrete geometric conservation law (GCL) \cite{carpenter2014entropy, gassner2017br1, crean2018entropy, chan2018discretely}.  For two-dimensional isoparametric mappings, the GCL is automatically satisfied.  However, in three dimensions, the GCL is not guaranteed to be satisfied at the discrete level, due to the fact that geometric terms are polynomials of degree higher than $N$.  Modifications to the computation of geometric terms are required to ensure that the GCL is satisfied at the discrete level.
+
+For general SBP operators, the discrete GCL can be enforced through the solution of a local least squares problem \cite{crean2018entropy}.  We take an alternative approach and  construct geometric terms using the approach of Kopriva \cite{kopriva2006metric}.  This takes advantage of the fact that the collocation methods constructed in this work correspond to polynomial discretizations.  Kopriva's construction is based on rewriting the geometric terms as the curl of some auxiliary quantity.  By interpolating this auxiliary quantity prior to applying the curl, 
+
+To summarize, entropy stability curved meshes
+\begin{enumerate}
+\item Construct polynomial approximations of the geometric terms using interpolation at GLL nodes \cite{kopriva2006metric}.  
+\item Interpolate the geometric terms to volume and surface quadrature points.  
+\item \note{Split form}.
+\end{enumerate}
+
+\section{Numerical results}
+\label{sec:3}
+The compressible Euler equations in $d$ dimensions are given as follows:
+\begin{align*}
+\pd{\rho}{t} &+ \sum_{j=1}^d \pd{\LRp{\rho \bm{u}_j}}{x_j} = 0,\\
+\pd{\rho \bm{u}_i}{t} &+ \sum_{j=1}^d \pd{\LRp{\rho \bm{u}_i\bm{u}_j + p\delta_{ij} }}{x_j} = 0, \qquad i = 1,\ldots,d\\
+\pd{E}{t} &+ \sum_{j=1}^d \pd{\LRp{\bm{u}_j(E+p)}}{x_j} = 0.\nonumber
+\end{align*}
+Here, $\rho$ is density, $\bm{u} = \LRp{\bm{u}_1, \ldots,\bm{u}_d}$ is the vector of velocities, and $E$ is the total energy.  The pressure $p$ and specific internal energy $\rho e$ are given by 
+\[
+p = (\gamma-1)\LRp{E - \frac{1}{2}\rho \LRb{\bm{u}}^2}, \qquad \rho e = E - \frac{1}{2}\rho \LRb{\bm{u}}^2, \qquad \LRb{\bm{u}}^2 = \LRp{\sum_{j=1}^d \bm{u}_j^2}.
+\]
+
+There exists an infinite family of suitable convex entropies for the compressible Euler equations \cite{harten1983symmetric}.  However, there is only a single unique entropy which appropriately treats the viscous heat conduction term in the compressible Navier-Stokes equations \cite{hughes1986new}.  This entropy $S(\bm{u})$ is given in $d$ dimensions by
+\begin{equation*}
+S(\bm{u}) = -\frac{\rho s}{\gamma-1},
+\end{equation*}
+where $s = \log\LRp{\frac{p}{\rho^\gamma}}$ is the physical specific entropy.  The entropy variables in $d$ dimensions are given by
+\begin{align*}
+v_1 &= \frac{\rho e (\gamma + 1 - s) - E}{\rho e}, \\
+v_{1+i}&= \frac{\rho \bm{u}_i}{\rho e}, \qquad i = 1,\ldots, d,\\
+v_{d+2} &= -\frac{\rho}{\rho e},
+\end{align*}
+while the conservation variables in terms of the entropy variables are given by
+\begin{align*}
+\rho &= -(\rho e) v_{d+2}, \\
+ \rho \bm{u}_i &= (\rho e) v_{1+i}, \qquad i = 1,\ldots,d\\
+ E &= (\rho e)\LRp{1 - \frac{\sum_{j=1}^d{v_{1+j}^2}}{2 v_{d+2}}},
+\end{align*}
+where the quantities $\rho e$ and $s$ in terms of the entropy variables are 
+\begin{equation*}
+\rho e = \LRp{\frac{(\gamma-1)}{\LRp{-v_{d+2}}^{\gamma}}}^{1/(\gamma-1)}e^{\frac{-s}{\gamma-1}}, \qquad s = \gamma - v_1 + \frac{\sum_{j=1}^d{v_{1+j}^2}}{2v_{d+2}}.
+\end{equation*}
+Explicit expressions for entropy conservative numerical fluxes in two dimensions  are given by Chandrashekar \cite{chandrashekar2013kinetic}
+\begin{align*}
+&f^1_{1,S}(\bm{u}_L,\bm{u}_R) = \avg{\rho}^{\log} \avg{u},& &f^1_{2,S}(\bm{u}_L,\bm{u}_R) = \avg{\rho}^{\log} \avg{v},&\\
+&f^2_{1,S}(\bm{u}_L,\bm{u}_R) = f^1_{1,S} \avg{u} + p_{\rm avg},&  &f^2_{2,S}(\bm{u}_L,\bm{u}_R) = f^1_{2,S} \avg{u},&\nonumber\\
+&f^3_{1,S}(\bm{u}_L,\bm{u}_R) = f^2_{2,S},& &f^3_{2,S}(\bm{u}_L,\bm{u}_R) = f^1_{2,S} \avg{v} + p_{\rm avg},&\nonumber\\
+&f^4_{1,S}(\bm{u}_L,\bm{u}_R) = \LRp{E_{\rm avg} + p_{\rm avg}}\avg{u},& &f^4_{2,S}(\bm{u}_L,\bm{u}_R) = \LRp{E_{\rm avg} + p_{\rm avg} }\avg{v},& \nonumber
+\end{align*}
+where we have defined the auxiliary quantities 
+\begin{gather*}
+p_{\rm avg} = \frac{\avg{\rho}}{2\avg{\beta}}, \qquad E_{\rm avg} = \frac{\avg{\rho}^{\log}}{2\avg{\beta}^{\log}\LRp{\gamma -1}}   + \frac{\nor{\bm{u}}^2_{\rm avg}}{2}, \\
+ \nor{\bm{u}}^2_{\rm avg} = 2(\avg{u}^2 + \avg{v}^2) - \LRp{\avg{u^2} +\avg{v^2}} \nonumber.  
+\end{gather*}
+Expressions for entropy conservative numerical fluxes for the three-dimensional compressible Euler equations can also be explicitly written as
+\begin{gather*}
+\bm{f}_{1,S} = \LRp{\begin{array}{c}
+\avg{\rho}^{\log}\avg{u}\\
+\avg{\rho}^{\log}\avg{u}^2 + p_{\rm avg}\\
+\avg{\rho}^{\log}\avg{u}\avg{v}\\
+\avg{\rho}^{\log}\avg{u}\avg{w}\\
+(E_{\rm avg}+ p_{\rm avg})\avg{u}\\
+\end{array}}, 
+\qquad 
+\bm{f}_{2,S} = \LRp{\begin{array}{c}
+\avg{\rho}^{\log}\avg{v}\\
+\avg{\rho}^{\log}\avg{u}\avg{v}\\
+\avg{\rho}^{\log}\avg{v}^2 + p_{\rm avg}\\
+\avg{\rho}^{\log}\avg{v}\avg{w}\\
+(E_{\rm avg}+ p_{\rm avg})\avg{v}\\
+\end{array}},\\
+\bm{f}_{3,S} = \LRp{\begin{array}{c}
+\avg{\rho}^{\log}\avg{w}\\
+\avg{\rho}^{\log}\avg{u}\avg{w}\\
+\avg{\rho}^{\log}\avg{v}\avg{w}\\
+\avg{\rho}^{\log}\avg{w}^2 + p_{\rm avg}\\
+(E_{\rm avg}+ p_{\rm avg})\avg{w}\\
+\end{array}}.\nonumber
+%&f^1_{1,S}(\bm{u}_L,\bm{u}_R) = \avg{\rho}^{\log} \avg{u},& &f^1_{2,S}(\bm{u}_L,\bm{u}_R) = \avg{\rho}^{\log} \avg{v},&\\
+%&f^2_{1,S}(\bm{u}_L,\bm{u}_R) = f^1_{1,S} \avg{u} + p_{\rm avg},&  &f^2_{2,S}(\bm{u}_L,\bm{u}_R) = f^1_{2,S} \avg{u},&\nonumber\\
+%&f^3_{1,S}(\bm{u}_L,\bm{u}_R) = f^2_{2,S},& &f^3_{2,S}(\bm{u}_L,\bm{u}_R) = f^1_{2,S} \avg{v} + p_{\rm avg},&\nonumber\\
+%&f^4_{1,S}(\bm{u}_L,\bm{u}_R) = \LRp{\frac{p_{\rm avg}^{\log}}{\gamma -1} + p_{\rm avg} + \frac{\nor{\bm{u}}^2_{\rm avg}}{2}}\avg{u},& &f^4_{2,S}(\bm{u}_L,\bm{u}_R) = \LRp{\frac{p_{\rm avg}^{\log}}{\gamma -1} + p_{\rm avg} + \frac{\nor{\bm{u}}^2_{\rm avg}}{2}}\avg{v},& \nonumber
+\end{gather*}
+with auxiliary quantities 
+\begin{align*}
+p_{\rm avg} &= \frac{\avg{\rho}}{2\avg{\beta}}, \qquad E_{\rm avg} = \frac{\avg{\rho}^{\log}}{2(\gamma-1)\avg{\beta}^{\log}} + \frac{1}{2}\avg{\rho}^{\log}\nor{\bm{u}}^2_{\rm avg}\\
+\nor{\bm{u}}^2_{\rm avg} &= 2(\avg{u}^2 + \avg{v}^2 + \avg{w}^2) - \LRp{\avg{u^2} +\avg{v^2} + \avg{w^2}}.\nonumber
+\end{align*}
+
+In all problems, we estimate the timestep size $dt$ using $J, J^f$, and degree-dependent $L^2$ trace constants $C_N$ 
+\[
+dt = C_{\rm CFL}\frac{ h}{C_N}, \qquad h = \frac{ \nor{J^f}_{L^{\infty}}}{\nor{J^{-1}}_{L^{\infty}}},
+\]
+where $C_{\rm CFL}$ is some user-defined CFL constant.  For isotropic elements, the ratio of $J$ to $J^f$ scales as the mesh size $h$, while $C_N$ captures the dependence of the maximum stable timestep on the polynomial degree $N$.  For hexahedral elements, $C_N$ varies depending on the choice of quadrature.  It was shown in \cite{chan2015gpu} that 
+\[
+C_N =\begin{cases}
+ d\frac{N(N+1)}{2} & \text{for GLL nodes}\\
+d\frac{(N+1)(N+2)}{2} & \text{for Gauss nodes}
+\end{cases}.
+\]
+Thus, based on this rough estimate of the maximum stable timestep, GLL collocation schemes should be able to take a timestep which is roughly $(1 + 2/N)$ times larger than the maximum stable timestep for Gauss collocation schemes.  We do not account for this discrepancy in this work, and instead set the timestep for both GLL and Gauss collocation schemes based on the more conservative Gauss collocation estimate of $dt$.  %Unless stated otherwise, all experiments utilize $C_{\rm CFL} = .5$.  
+
+\subsection{2D isentropic vortex problem}
+
+We begin by examining high order convergence of the proposed methods in two dimensions using the isentropic vortex problem \cite{shu1998essentially, crean2017high}.  The analytical solution is 
+\begin{align}
+\rho(\bm{x},t) &= \LRp{1 - \frac{\frac{1}{2}(\gamma-1)(\beta e^{1-r(\bm{x},t)^2})^2}{8\gamma \pi^2}}^{\frac{1}{\gamma-1}}, \qquad p = \rho^{\gamma},\\
+u(\bm{x},t) &= 1 - \frac{\beta}{2\pi} e^{1-r(\bm{x},t)^2}(y-y_0), \qquad v(\bm{x},t) = \frac{\beta}{2\pi} e^{1-r(\bm{x},t)^2}(y-y_0),\nonumber
+\end{align}
+where $u, v$ are the $x$ and $y$ velocity and $r(\bm{x},t) = \sqrt{(x-x_0-t)^2 + (y-y_0)^2}$.  Here, we take $x_0 = 5, y_0 = 0$ and $\beta = 5$.  
+
+\begin{figure}
+\centering
+\subfloat[Moderately warped mesh]{\includegraphics[width=.45\textwidth]{figs/warp2d_a125.png}}
+\hspace{1em}
+\subfloat[Heavily warped mesh]{\includegraphics[width=.45\textwidth]{figs/warp2d_a25.png}}
+\caption{Examples of moderate and heavily warped meshes for $N=4, K= 16$.  }
+\label{fig:warp2d}
+\end{figure}
+
+We solve on a periodic rectangular domain $[0, 20] \times [-5,5]$ until final time $T=5$, and compute errors over all all solution fields.  For a degree $N$ approximation, we approximate the $L^2$ error using an $(N+2)$ point Gauss quadrature rule.  We also examine the influence of element curvature for both GLL and Gauss collocation schemes by examining $L^2$ errors on a sequence of moderately and heavily warped curvilinear meshes (see Figure~\ref{fig:warp2d}).  The following results are computed using $C_{\rm CFL} = 1/2$ and Lax-Friedrichs interface dissipation.
+
+%\begin{center}
+%\begin{tabular}{|c || c ||c ||c ||c ||c ||c |}
+%\hline
+%& $N=2$ & $N=3$& $N=4$& $N=5$& $N=6$& $N=7$\\
+%\hline\hline
+%$h = 1/4$ & $1.229e{0}$ & $4.144e{-1}$ & $1.235e{-1}$ & $3.325e{-2}$ & $1.068e{-2}$ & $3.309e{-3}$ \\
+%$h = 1/8$ & $2.366e{-1}$ & $4.122e{-2}$ & $4.393e{-3}$ & $9.701e{-4}$ & $1.333e{-4}$ & $1.678e{-5}$ \\
+%$h = 1/16$ & $2.589e{-2}$ & $2.930e{-3}$ & $1.269e{-4}$ & $2.103e{-5}$ & $7.970e{-7}$ & $1.327e{-7}$   
+%\end{tabular}
+%\end{center}
+\begin{figure}
+\centering
+\subfloat[Affine mesh]{
+\begin{tikzpicture}
+\begin{loglogaxis}[
+    width=.5\textwidth,
+    xlabel={Mesh size $h$},
+    ylabel={$L^2$ errors}, 
+%    xmin=.0125, 
+    ymin=5e-8, ymax=5,
+    legend pos=south east, legend cell align=left, legend style={font=\tiny},	
+    xmajorgrids=true, ymajorgrids=true, grid style=dashed,
+    legend entries={GLL, Gauss}    
+]
+\pgfplotsset{
+cycle list={{blue, mark=*}, {red, dashed ,mark=square*}}
+}
+\addplot+[semithick, mark options={solid, fill=markercolor}]
+coordinates{(0.125,1.22861)(0.0625,0.236646)(0.03125,0.0258883)};
+\addplot+[semithick, mark options={solid, fill=markercolor}]
+coordinates{(0.125,0.553435)(0.0625,0.0625441)(0.03125,0.0117156)};
+
+\addplot+[semithick, mark options={solid, fill=markercolor}]
+coordinates{(0.125,0.414449)(0.0625,0.0412224)(0.03125,0.00293039)};
+\addplot+[semithick, mark options={solid, fill=markercolor}]
+coordinates{(0.125,0.25082)(0.0625,0.0198863)(0.03125,0.000673152)};
+
+\addplot+[semithick, mark options={solid, fill=markercolor}]
+coordinates{(0.125,0.123516)(0.0625,0.00439285)(0.03125,0.000126852)};
+\addplot+[semithick, mark options={solid, fill=markercolor}]
+coordinates{(0.125,0.0768018)(0.0625,0.0020579)(0.03125,5.55322e-05)};
+
+\addplot+[semithick, mark options={solid, fill=markercolor}]
+coordinates{(0.125,0.0332509)(0.0625,0.000970148)(0.03125,2.10334e-05)};
+\addplot+[semithick, mark options={solid, fill=markercolor}]
+coordinates{(0.125,0.0151231)(0.0625,0.000454595)(0.03125,1.00203e-05)};
+
+\addplot+[semithick, mark options={solid, fill=markercolor}]
+coordinates{(0.125,0.0106752)(0.0625,0.000133284)(0.03125,7.97032e-07)};
+\addplot+[semithick, mark options={solid, fill=markercolor}]
+coordinates{(0.125,0.00657096)(0.0625,9.22845e-05)(0.03125,3.60025e-07)};
+
+\addplot+[semithick, mark options={solid, fill=markercolor}]
+coordinates{(0.125,0.00330917)(0.0625,1.67825e-05)(0.03125,1.32696e-07)};
+\addplot+[semithick, mark options={solid, fill=markercolor}]
+coordinates{(0.125,0.00185273)(0.0625,1.21465e-05)(0.03125,1.14289e-07)};
+\end{loglogaxis}
+\end{tikzpicture}
+}
+\subfloat[Moderately warped mesh]{
+\begin{tikzpicture}
+\begin{loglogaxis}[
+    width=.5\textwidth,
+    xlabel={Mesh size $h$},
+%    ylabel={$L^2$ errors}, 
+%    xmin=.0125,
+    ymin=5e-8, ymax=5,    
+    legend pos=south east, legend cell align=left, legend style={font=\tiny},	
+    xmajorgrids=true, ymajorgrids=true, grid style=dashed,
+    legend entries={GLL, Gauss}    
+]
+\pgfplotsset{
+cycle list={{blue, mark=*}, {red, dashed ,mark=square*}}
+}
+\addplot+[semithick, mark options={solid, fill=markercolor}]
+coordinates{(0.125,1.64274)(0.0625,0.445945)(0.03125,0.0720148)};
+\addplot+[semithick, mark options={solid, fill=markercolor}]
+coordinates{(0.125,0.882247)(0.0625,0.138116)(0.03125,0.0268145)};
+
+\addplot+[semithick, mark options={solid, fill=markercolor}]
+coordinates{(0.125,0.662165)(0.0625,0.146131)(0.03125,0.0234934)};
+\addplot+[semithick, mark options={solid, fill=markercolor}]
+coordinates{(0.125,0.368084)(0.0625,0.0734059)(0.03125,0.00420438)};
+
+\addplot+[semithick, mark options={solid, fill=markercolor}]
+coordinates{(0.125,0.349184)(0.0625,0.0508268)(0.03125,0.00234785)};
+\addplot+[semithick, mark options={solid, fill=markercolor}]
+coordinates{(0.125,0.183472)(0.0625,0.0127617)(0.03125,0.000251929)};
+
+\addplot+[semithick, mark options={solid, fill=markercolor}]
+coordinates{(0.125,0.171986)(0.0625,0.0103578)(0.03125,0.000386834)};
+\addplot+[semithick, mark options={solid, fill=markercolor}]
+coordinates{(0.125,0.0924215)(0.0625,0.00276519)(0.03125,6.80528e-05)};
+
+\addplot+[semithick, mark options={solid, fill=markercolor}]
+coordinates{(0.125,0.0729963)(0.0625,0.00276104)(0.03125,4.11305e-05)};
+\addplot+[semithick, mark options={solid, fill=markercolor}]
+coordinates{(0.125,0.0378013)(0.0625,0.0007649)(0.03125,4.15848e-06)};
+
+\addplot+[semithick, mark options={solid, fill=markercolor}]
+coordinates{(0.125,0.026577)(0.0625,0.000589552)(0.03125,5.3039e-06)};
+\addplot+[semithick, mark options={solid, fill=markercolor}]
+coordinates{(0.125,0.0154563)(0.0625,0.000146207)(0.03125,8.83156e-07)};
+
+\end{loglogaxis}
+\end{tikzpicture}
+}\\
+\subfloat[Heavily warped mesh]{
+\begin{tikzpicture}
+\begin{loglogaxis}[
+    width=.5\textwidth,
+    xlabel={Mesh size $h$},
+%    ylabel={$L^2$ errors}, 
+%    xmin=.0125,
+    ymin=5e-8, ymax=5,    
+    legend pos=south east, legend cell align=left, legend style={font=\tiny},	
+    xmajorgrids=true, ymajorgrids=true, grid style=dashed,
+    legend entries={GLL, Gauss}    
+]
+\pgfplotsset{
+cycle list={{blue, mark=*}, {red, dashed ,mark=square*}}
+}
+\addplot+[semithick, mark options={solid, fill=markercolor}]
+coordinates{(0.125,2.08578)(0.0625,1.33668)(0.03125,0.433653)(0.015625,0.0721002)};
+\addplot+[semithick, mark options={solid, fill=markercolor}]
+coordinates{(0.125,1.82833)(0.0625,0.746283)(0.03125,0.11006)(0.015625,0.0110115)};
+\addplot+[semithick, mark options={solid, fill=markercolor}]
+coordinates{(0.125,1.74649)(0.0625,0.546097)(0.03125,0.0879841)(0.015625,0.0090851)};
+\addplot+[semithick, mark options={solid, fill=markercolor}]
+coordinates{(0.125,1.39268)(0.0625,0.245852)(0.03125,0.0255562)(0.015625,0.00165226)};
+\addplot+[semithick, mark options={solid, fill=markercolor}]
+coordinates{(0.125,1.06289)(0.0625,0.218361)(0.03125,0.0209471)(0.015625,0.000665425)};
+\addplot+[semithick, mark options={solid, fill=markercolor}]
+coordinates{(0.125,0.740071)(0.0625,0.105075)(0.03125,0.003505)(0.015625,8.26421e-05)};
+\addplot+[semithick, mark options={solid, fill=markercolor}]
+coordinates{(0.125,0.695283)(0.0625,0.0996971)(0.03125,0.00390099)(0.015625,0.000118992)};
+\addplot+[semithick, mark options={solid, fill=markercolor}]
+coordinates{(0.125,0.457324)(0.0625,0.0354479)(0.03125,0.000767746)(0.015625,1.95823e-05)};
+\addplot+[semithick, mark options={solid, fill=markercolor}]
+coordinates{(0.125,0.449493)(0.0625,0.0374955)(0.03125,0.000909834)(0.015625,7.70064e-06)};
+\addplot+[semithick, mark options={solid, fill=markercolor}]
+coordinates{(0.125,0.274721)(0.0625,0.0120499)(0.03125,0.000157175)(0.015625,9.61243e-07)};
+\addplot+[semithick, mark options={solid, fill=markercolor}]
+coordinates{(0.125,0.294238)(0.0625,0.0162153)(0.03125,0.000166829)(.015625,1.19661e-06)};
+\addplot+[semithick, mark options={solid, fill=markercolor}]
+coordinates{(0.125,0.150916)(0.0625,0.00538908)(0.03125,2.79182e-05)};
+\end{loglogaxis}
+\end{tikzpicture}
+}
+\caption{$L^2$ errors for the 2D isentropic vortex at time $T=5$ for degree $N = 2,\ldots,7$ GLL and Gauss collocation schemes.}
+\label{fig:err2d}
+\end{figure}
+
+
+
+%\note{Investigate robustness with respect to mesh distortion: GLL vs GQ errors.  GQ is better for more curved meshes.  Note that there is little difference between bilinear/trilinear and high order curved.  }
+
+\subsection{3D isentropic vortex problem}
+
+As in two dimensions, we test the accuracy of the proposed scheme using an isentropic vortex solution adapted to three dimensions.  We take the solution to be the extruded 2D vortex propagating in the $x_2$ direction, whose analytic expression is derived from \cite{williams2013nodal}
+\begin{align*}
+\rho(\bm{x},t) &= \LRp{1-\frac{(\gamma-1)}{2}\Pi^2}^{\frac{1}{\gamma-1}}\\
+\bm{u}(\bm{x},t) &= \Pi \bm{r}, \\
+E(\bm{x},t) &= \frac{p_0}{\gamma-1}\LRp{1-\frac{\gamma-1}{2}\Pi^2}^{\frac{\gamma}{\gamma-1}} + \frac{\rho}{2}\LRb{\bm{u}}.
+\end{align*}
+where $\bm{u} = (u,v,w)^T$ is the velocity vector and % $\Pi$, $\bm{r}$ are defined as
+\[
+\Pi = \Pi_{\max}e^{\frac{1-\bm{r}^T\bm{r}}{2}}, \qquad \bm{r} = \begin{pmatrix}
+-(x_2-c_2-t)\\
+x_1-c_1\\
+0
+\end{pmatrix}.
+\]
+In this problem, we take $c_1 = c_2 = 5$, $p_0 = {1}/{\gamma}$, and $\Pi_{\max} = 0.4$.  The problem is solved on the domain $[0,10]\times [0,20]\times [0,10]$.  As in the 2D case, we also examine the effect of curvilinear mesh warping.  As in \cite{chan2018discretely}, we construct a curved warping of the initial Cartesian mesh by mapping nodes on each hexahedron to warped nodal positions $(\tilde{x_1},\tilde{x_2},\tilde{x_3})$ through the transformation
+\begin{align*}
+\tilde{\bm{x}} &= \bm{x} + \frac{1}{2}\sin\LRp{\pi \frac{(x_1-5)}{5}}\sin\LRp{2\pi \frac{(x_2-10)}{10}}\sin\LRp{\pi \frac{(x_3-5)}{5}}.
+\end{align*} 
+
+
+
+\subsection{Shock-vortex interaction}
+
+
+\subsection{Inviscid Taylor-Green vortex}
+
+We conclude by investigating the behavior of entropy stable Gauss collocation schemes for the inviscid Taylor--Green vortex \cite{ae1937mechanism, gassner2016split, crean2018entropy}.  This problem is posed on the periodic box $[-\pi,\pi]^3$, with initial conditions 
+\begin{align*}
+\rho &= 1\\
+u &= \sin(x_1)\cos(x_2)\cos(x_3),\\
+v &= -\cos(x_1)\sin(x_2)\cos(x_3),\\ 
+w &= 0,\\
+p &= \frac{100}{\gamma} + \frac{1}{16} \LRp{\cos(2x_1) + \cos(2x_2)}\LRp{2+\cos(2x_3)}.
+\end{align*}
+The Taylor--Green vortex is used to study the transition and decay of turbulence \cite{debonis2013solutions}.  Under an inviscid assumption, the Taylor--Green vortex develops successively smaller scales.  As a result, the solution is guaranteed to contain under-resolved features after a sufficiently large time.  We study the evolution of the kinetic energy $\kappa(t)$ 
+\[
+\kappa(t) =\frac{1}{\LRb{\Omega}} \int_{\Omega} \rho \bm{u}\cdot\bm{u} \diff{\bm{x}},
+\]
+as well as the kinetic energy dissipation rate $-\pd{\kappa}{t}$, which is approximated by differencing $\kappa(t)$.  
+
+\section{Conclusion}
+
+\note{blah}
+
+\appendix
+
+\section{Decoupled SBP operators}
+\label{app:decoupled}
+
+For general choices of quadrature and basis, decoupled projection operators involve a volume quadrature interpolation matrix $\bm{V}_q$, a face quadrature interpolation matrix $\bm{V}_f$, and a quadrature-based $L^2$ projection matrix $\bm{P}_q$.  Let $\LRc{\phi_j}_{j=1}^{N_p}$ denote a set of $N_p$ basis functions, and let $\LRc{\bm{x}_i, \bm{w}_i}_{i = 1}^{N_q}$ denote a set of $N_q$ volume quadrature points and weights in $d$ dimensions.  
+Then, $\bm{V}_q, \bm{V}_f$ are given as 
+\begin{align*}
+\LRp{\bm{V}_q}_{ij} &= \phi_j(\bm{x}_i), \quad 1 \leq i,j \leq N_q,\\
+\LRp{\bm{V}_f}_{ij} &= \phi_j\LRp{\bm{x}^f_i}, \quad 1 \leq i \leq N_q, \quad 1\leq j \leq N^f_q.
+\end{align*}
+These matrices can be used to define the quadrature-based $L^2$ projection matrix $\bm{P}_q$.  Let $\bm{W}$ denote the diagonal matrix of quadrature weights.  Then, 
+\[
+\bm{M} = \bm{V}_q^T\bm{W}\bm{V}_q, \qquad \bm{P}_q = \bm{M}^{-1}\bm{V}_q^T\bm{W}.  
+\]
+Let $\bm{D}^i$ now denote a modal differentiation matrix with respect to the $i$th coordinate, which maps coefficients in the basis $\phi_j$ to coefficients of the $i$th derivative.  By composing this matrix with interpolation and projection matrices, one can define differencing operators $\bm{D}_q^i = \bm{V}_q\bm{D}^i\bm{P}_q$ which map values at quadrature points to values of approximate derivatives at quadrature points. It was shown in \cite{chan2017discretely} that $\bm{Q}^i = \bm{W}\bm{D}_q^i$ satisfies a generalized SBP property involving the face interpolation and projection matrices $\bm{V}_f, \bm{P}_q$.  
+
+The decoupled SBP operator $\bm{Q}_N^i$ is then given as
+\[
+\bm{Q}_N^i = \begin{bmatrix}
+\bm{Q}^i - \frac{1}{2}\LRp{\bm{V}_f\bm{P}_q}^T\bm{W}_f \diag{\bm{n}_i}{\bm{V}_f\bm{P}_q} & \frac{1}{2}\LRp{\bm{V}_f\bm{P}_q}^T\bm{W}_f \diag{\bm{n}_i}\\
+-\frac{1}{2}\bm{W}_f \diag{\bm{n}_i}{\bm{V}_f\bm{P}_q} & \frac{1}{2}\bm{W}_f \diag{\bm{n}_i}
+\end{bmatrix}.
+\]
+A straightforward computation shows that $\bm{Q}_N^i$ satisfies an SBP property \cite{chan2017discretely}.  
+%\[
+%\bm{Q}_N^i + \LRp{\bm{Q}_N^i}^T = \begin{bmatrix}\bm{0} &\\
+%& \bm{W}_f \diag{\bm{n}_i}\end{bmatrix}.
+%\]
+
+It is worth noting that the form of $\bm{Q}_N^i$ does not depend on the choice of basis.  So long as the approximation space spanned by the basis $\phi_j$ does not change, the domain and range of $\bm{Q}_N^i$ depend solely on the choice of volume and surface quadrature points.  
+
+Assuming that the solution is represented using degree $N$ Lagrange polynomials at $(N+1)$ quadrature points, these matrices reduce down to
+\[
+\LRp{\bm{V}_q}_{ij} = \delta_{ij}, \qquad \bm{M} = \bm{W}, \qquad \bm{P}_q = \bm{M}^{-1}\bm{V}_q^T\bm{W} = \bm{I}.
+\]
+
+
+
+\note{Todo: add.}
+
+\bibliographystyle{unsrt}
+\bibliography{dg}
+
+
+\end{document}
+
+
