@@ -162,14 +162,28 @@ int main(int argc, char **argv){
 #endif
   
 #if VORTEX
+
   MatrixXd xx = PI*(x.array()-5.0)/5.0;
   MatrixXd yy = 2.0*PI*(y.array()-10.0)/10.0;
   MatrixXd zz = PI*(z.array()-5.0)/5.0;
   MatrixXd d = xx.array().sin()*yy.array().sin()*zz.array().sin();
-
-  x = x + a*d;
-  y = y + a*d;
-  z = z + a*d;
+  MatrixXd dx = d;
+  MatrixXd dy = d;
+  MatrixXd dz = d;  
+  /*
+  MatrixXd xx1 = .5*PI*(x.array()-5.0)/5.0;
+  MatrixXd yy1 = 1.5*PI*(y.array()-10.0)/10.0;
+  MatrixXd zz1 = .5*PI*(z.array()-5.0)/5.0;
+  MatrixXd xx2 = 1.5*PI*(x.array()-5.0)/5.0;
+  MatrixXd yy2 = .5*PI*(y.array()-10.0)/10.0;
+  MatrixXd zz2 = 1.5*PI*(z.array()-5.0)/5.0;
+  MatrixXd dx = xx1.array().cos()*yy1.array().cos()*zz1.array().cos();
+  MatrixXd dy = xx2.array().cos()*yy2.array().cos()*zz2.array().cos();
+  MatrixXd dz = xx1.array().cos()*yy1.array().cos()*zz1.array().cos();
+  */
+  x = x + a*dx;
+  y = y + a*dy;
+  z = z + a*dz;
   mesh->x = x;
   mesh->y = y;
   mesh->z = z;

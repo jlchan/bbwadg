@@ -45,6 +45,13 @@ int main(int argc, char **argv){
   double FinalTime = 5.0;
   double CFL = .5;  
   double a = .25; // curved warping
+
+  if (argc > 5){
+    CFL = atof(argv[3]);
+    FinalTime = atof(argv[4]);
+    a = atof(argv[5]);
+    printf("setting CFL = %f, T = %f, curved warping a =%f\n",CFL,FinalTime,a);
+  }
   
   //Mesh *mesh = (Mesh*) calloc(1, sizeof(Mesh));
   Mesh *mesh = new Mesh;
