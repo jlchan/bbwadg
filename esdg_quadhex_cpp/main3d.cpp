@@ -197,7 +197,10 @@ int main(int argc, char **argv){
   */  
   
   //GeometricFactors3d(mesh);
-  GeometricFactors3d_Ngeo(mesh,1);
+  // 2Ngeo-2 <= N, so Ngeo <= floor(N/2) + 1
+  int Ngeo = (N/2) + 1; // int divide auto floors
+  printf("Using geometry order %d\n",Ngeo);
+  GeometricFactors3d_Ngeo(mesh,Ngeo);
   Normals3d(mesh);
  
   MatrixXd xf = (mesh->Vf)*(mesh->x);

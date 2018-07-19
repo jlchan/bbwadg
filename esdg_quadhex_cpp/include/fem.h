@@ -29,6 +29,7 @@ void HexMesh3d(Mesh *mesh, int Nx, int Ny, int Nz);
 void InitRefData3d(Mesh *mesh, int N);
 void MapNodes3d(Mesh *mesh);
 void GeometricFactors3d(Mesh *mesh);
+void GeometricFactors3d_Ngeo(Mesh *mesh,int Ngeo);
 void Normals3d(Mesh *mesh);
 void MakeNodeMapsPeriodic3d(Mesh *mesh, MatrixXd xf, MatrixXd yf, MatrixXd zf,
 			    double DX, double DY, double DZ, MatrixXi &mapP);

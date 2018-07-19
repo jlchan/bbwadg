@@ -780,13 +780,13 @@ void GeometricFactors3d_Ngeo(Mesh *mesh, int Ngeo){
   MatrixXd D1D = mrdivide(Vr1D,V1D);
   MatrixXd I1D = MatrixXd::Identity(Np1,Np1);
   MatrixXd I2D = MatrixXd::Identity(Np2,Np2);  
-  MatrixXd V = Vandermonde3DHex(N,r,s,t);
   MatrixXd Dr = kron(I1D,kron(D1D,I1D));
   MatrixXd Ds = kron(I2D,D1D);
   MatrixXd Dt = kron(D1D,I2D);
 
-  MatrixXd VdmNgeo = Vandermonde3DHex(N,rNg,sNg,tNg);
-  MatrixXd VNNgeo = mrdivide(VdmNgeo,mesh->V); // interp degree N nodes to Ngeo
+  // interp degree N nodes to Ngeo
+  MatrixXd VdmNgeo = Vandermonde3DHex(mesh->N,rNg,sNg,tNg);
+  MatrixXd VNNgeo = mrdivide(VdmNgeo,mesh->V); 
   
   // construct degree Ngeo nodes
   MatrixXd x = VNNgeo * mesh->x;
@@ -820,24 +820,17 @@ void GeometricFactors3d_Ngeo(Mesh *mesh, int Ngeo){
   MatrixXd VdmN = Vandermonde3DHex(Ngeo,mesh->r,mesh->s,mesh->t);
   MatrixXd VNgeo = Vandermonde3DHex(Ngeo,rNg,sNg,tNg);
   MatrixXd VNgeoN = mrdivide(VdmN,VNgeo); // interp degree N nodes to Ngeo  
-  mesh->rxJ = rxJ;
-  mesh->sxJ = sxJ;
-  mesh->txJ = txJ;  
-  mesh->ryJ = ryJ;
-  mesh->syJ = syJ;
-  mesh->tyJ = tyJ;  
-  mesh->rzJ = rzJ;
-  mesh->szJ = szJ;
-  mesh->tzJ = tzJ;  
-  mesh->J = J;
-
-#if 0
-  double err = (Dr*rxJ + Ds*sxJ + Dt*txJ).cwiseAbs().sum() +
-    (Dr*ryJ + Ds*syJ + Dt*tyJ).cwiseAbs().sum() +
-    (Dr*rzJ + Ds*szJ + Dt*tzJ).cwiseAbs().sum();
-  printf("GCL err = %g\n",err);
-#endif
-  
+  mesh->rxJ = VNgeoN*rxJ;
+  mesh->sxJ = VNgeoN*sxJ;
+  mesh->txJ = VNgeoN*txJ;  
+  mesh->ryJ = VNgeoN*ryJ;
+  mesh->syJ = VNgeoN*syJ;
+  mesh->tyJ = VNgeoN*tyJ;  
+  mesh->rzJ = VNgeoN*rzJ;
+  mesh->szJ = VNgeoN*szJ;
+  mesh->tzJ = VNgeoN*tzJ;  
+  mesh->J = VNgeoN*J;
+ 
 #if 0
   printf("vgeo = [\n");
   for (int e = 0; e < K; ++e){
