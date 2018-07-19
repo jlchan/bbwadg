@@ -182,7 +182,8 @@ int main(int argc, char **argv){
   return 0;
   */  
   
-  GeometricFactors3d(mesh);
+  //GeometricFactors3d(mesh);
+  GeometricFactors3d_Ngeo(mesh,1);
   Normals3d(mesh);
  
   MatrixXd xf = (mesh->Vf)*(mesh->x);
