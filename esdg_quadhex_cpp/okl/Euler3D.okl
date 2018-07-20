@@ -718,3 +718,50 @@ void euler3d_flux(dfloat rho_i, dfloat rho_j, dfloat u_i, dfloat u_j,
     }
   }
 }
+
+// compute auxiliary quantities
+@kernel void compute_aux(const int K,
+			 const dfloat * wJq,
+			 const dfloat * Q,
+			 dfloat *aux)
+{
+  for (int e = 0; e < K; ++e; @outer(0)){
+    
+    @shared dfloat sKE[p_ceilNq2];
+    
+    for (int i = 0; i < p_ceilNq2; ++i; @inner(0)){
+
+      sKE[i] = 0.f;
+      
+      if (i < p_Nq3){
+	const int id = i + e*p_Nq3*p_Nfields;
+	const dfloat rho = Q[id + 0 * p_Nq3];
+	const dfloat rhou = Q[id + 1 * p_Nq3];
+	const dfloat rhov = Q[id + 2 * p_Nq3];
+	const dfloat rhow = Q[id + 3 * p_Nq3];
+	const dfloat E = Q[id + 4 * p_Nq3];
+	const dfloat wJqi = wJq[i + e*p_Nq3];
+	sKE[i] = .5f*(rhou*rhou + rhov*rhov + rhow*rhow)/rho * wJqi;
+      }
+    }
+    @barrier("localMemFence");
+    
+    // slowish parallel reduction
+    for (int sk = p_ceilNq2/2; sk > 0; sk/=2){
+      for (int i = 0; i < p_ceilNq2; ++i; @inner(0)){
+	if (i < sk){
+	  sKE[i] +=  sKE[i + sk];
+	}
+      }
+      @barrier("localMemFence");
+    }
+    
+    for (int i = 0; i < p_ceilNq2; ++i; @inner(0)){
+      if (i==0){
+	aux[e] = sKE[0];
+      }
+    }
+  }
+}
+
+
