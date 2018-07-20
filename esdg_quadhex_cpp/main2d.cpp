@@ -1,6 +1,6 @@
 #include "fem.h"
 
-#define GAMMA 1.4f
+#define GAMMA 1.4
 
 static void VortexSolution2d(MatrixXd x,MatrixXd y,double t,
 		      MatrixXd &rho, MatrixXd &u, MatrixXd &v, MatrixXd &p){
@@ -126,7 +126,11 @@ int main(int argc, char **argv){
 
   app->props["defines/p_gamma"] = GAMMA;
   app->props["defines/p_Nfields"] = Nfields;
-  app->props["defines/p_tau"] = 1.0;  
+  if (sizeof(dfloat)==4){
+    app->props["defines/p_tau"] = 1.f;
+  }else{
+    app->props["defines/p_tau"] = 1.0;
+  }
   
   // build occa kernels  
   string path = "okl/Euler2D.okl";
