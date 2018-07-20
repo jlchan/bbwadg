@@ -19,8 +19,9 @@ void InitRefData2d(Mesh *mesh, int N){
 
   // quad points 
   VectorXd rq1D, wq1D;
-  JacobiGL(N, 0, 0, rq1D, wq1D);
-  //JacobiGQ(N, 0, 0, rq1D, wq1D);  
+  //JacobiGL(N, 0, 0, rq1D, wq1D); printf("using GLL nodes\n");
+  JacobiGQ(N, 0, 0, rq1D, wq1D); printf("using GQ nodes\n");
+
   
   //cout << "rq,wq for GQ = " << rq1D << ", " << wq1D << endl;
   

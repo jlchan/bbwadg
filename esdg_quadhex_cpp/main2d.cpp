@@ -36,7 +36,7 @@ int main(int argc, char **argv){
   int K1D = 16;
 
   //printf("argc = %d\n",argc);
-  if (argc == 3){
+  if (argc > 2){
     N = atoi(argv[1]);
     K1D = atoi(argv[2]);
     printf("setting N = %d, K1D = %d\n",N,K1D);
@@ -46,7 +46,7 @@ int main(int argc, char **argv){
   double CFL = .5;  
   double a = .25; // curved warping
 
-  if (argc > 5){
+  if (argc > 4){
     CFL = atof(argv[3]);
     FinalTime = atof(argv[4]);
     a = atof(argv[5]);
