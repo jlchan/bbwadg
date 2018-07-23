@@ -88,8 +88,8 @@ int main(int argc, char **argv){
   
   Mesh *mesh = (Mesh*) calloc(1, sizeof(Mesh));  
 
-#define VORTEX 0
-#define TAYLOR_GREEN 1
+#define VORTEX 1
+#define TAYLOR_GREEN 0
 
 #if VORTEX   // isentropic vortex
   // [0,10] x [0,20] x [0,10] for vortex  
@@ -226,19 +226,18 @@ int main(int argc, char **argv){
   app->surface = app->device.buildKernel(path.c_str(),"surface",app->props);
   app->update = app->device.buildKernel(path.c_str(),"update",app->props);
   app->eval_surface = app->device.buildKernel(path.c_str(),"eval_surface",app->props);  
-  occa::kernel compute_aux = app->device.buildKernel(path.c_str(),"compute_aux",app->props); 
+  occa::kernel compute_aux = app->device.buildKernel(path.c_str(),"compute_aux",app->props);
   
 
 #if 0
   app->eval_surface(K, app->o_Vf1D,app->o_Q, app->o_Qf);
-  MatrixXd Qf(Nfields*NfpNfaces,K);
-
+  //  MatrixXd Qf(Nfields*NfpNfaces,K);
   //  getOccaArray(app,app->o_Qf,Qf);
   //  MatrixXd rhof = Qf.middleRows(0,NfpNfaces);
   //  cout << "rhof = " << rhof << endl;
   
   // test rhs eval
-  app->volume(K, app->o_vgeo, app->o_vfgeo,
+  app->volume(K, app->o_vgeo, app->o_vfgeo,app->o_fgeo,
 	      app->o_D1D, app->o_Vf1D, app->o_Lf1D,
 	      app->o_Q, app->o_Qf,
 	      app->o_rhs, app->o_rhsf);
@@ -287,7 +286,7 @@ int main(int argc, char **argv){
       const dfloat fa  = (dfloat) mesh->rk4a[INTRK];
       const dfloat fb  = (dfloat) mesh->rk4b[INTRK];
 
-      app->volume(K,app->o_vgeo, app->o_vfgeo,
+      app->volume(K,app->o_vgeo, app->o_vfgeo, app->o_fgeo,
 		  app->o_D1D, app->o_Vf1D, app->o_Lf1D,
 		  app->o_Q,app->o_Qf,app->o_rhs,app->o_rhsf);
       
@@ -300,14 +299,19 @@ int main(int argc, char **argv){
       app->eval_surface(K, app->o_Vf1D,app->o_Q, app->o_Qf);
     }
 
+#if TAYLOR_GREEN    
     compute_aux(K, o_wJq, app->o_Q, o_KE);
     getOccaArray(app,o_KE,KE);
     KE_time(i) = KE.sum();
-    
     if (i % interval == 0){
-      //printf("on timestep %d out of %d\n",i,Nsteps);
       printf("on timestep %d out of %d: KE = %g\n",i,Nsteps,KE_time(i));
+    }    
+#else
+    if (i % interval == 0){
+      printf("on timestep %d out of %d\n",i,Nsteps);
     }
+#endif
+    
   }
   getOccaArray(app,app->o_Q,Q);
   rho = Q.middleRows(0,Np);

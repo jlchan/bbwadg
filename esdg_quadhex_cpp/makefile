@@ -43,6 +43,7 @@ clean:
 	rm -f main;
 	rm -f main2d;
 	rm -f main3d;
-	rm -rf main.dSYM/;
+	rm -rf main2d.dSYM/;
+	rm -rf main3d.dSYM/;
 
 #=================================================
