@@ -253,11 +253,11 @@ void euler3d_flux(dfloat rho_i, dfloat rho_j, dfloat u_i, dfloat u_j,
     @shared dfloat s_Vf[p_Nq1];        
 
     @shared dfloat s_Q[p_Nfields][p_Nq1][p_Nq1][p_Nq1];
-    @shared dfloat s_Qf[p_Nfields][p_Nfaces][p_Nq1][p_Nq1];
 
-    //@shared dfloat s_G[p_Nvgeo][p_Nq1][p_Nq1][p_Nq1];
+    // store geofacs/face values dimension by dimension
     @shared dfloat s_G[3][p_Nq1][p_Nq1][p_Nq1];
-    @shared dfloat s_nJ[3][p_Nfaces][p_Nq1][p_Nq1];        
+    @shared dfloat s_nJ[3][2][p_Nq1][p_Nq1];
+    @shared dfloat s_Qf[p_Nfields][2][p_Nq1][p_Nq1];            
 
     // temp storage for rhs
     @exclusive dfloat r_val[p_Nfields];    
@@ -290,28 +290,6 @@ void euler3d_flux(dfloat rho_i, dfloat rho_j, dfloat u_i, dfloat u_j,
 	id += p_Nq3;
       }
 
-      // load surface geo
-      int j = i;
-      while (j < p_NfpNfaces){
-	const int f = j / p_Nfp;
-	const int fid = j % p_Nfp;
-	const int fid1 = fid / p_Nq1;
-	const int fid2 = fid % p_Nq1;
-
-	int idf = j + p_NfpNfaces * p_Nfields * e;
-	for (int fld = 0; fld < p_Nfields; ++fld){
-	  s_Qf[fld][f][fid1][fid2] = Qf[idf];
-	  idf += p_NfpNfaces;
-	}
-
-	// load normals
-	idf = j + p_NfpNfaces * p_Nfgeo * e;
-	s_nJ[0][f][fid1][fid2] = fgeo[idf];
-	s_nJ[1][f][fid1][fid2] = fgeo[idf + p_NfpNfaces];
-	s_nJ[2][f][fid1][fid2] = fgeo[idf + 2*p_NfpNfaces];
-	j += p_Nq3;
-      }
-
     }
     @barrier("localMemFence");
 
@@ -327,15 +305,39 @@ void euler3d_flux(dfloat rho_i, dfloat rho_j, dfloat u_i, dfloat u_j,
 	const int jj = i % p_Nq1; // x-id
 	
       	// load next set of vol geofacs
-	const int id = i + (geoid * p_Nq3) +  p_Nq3 * p_Nvgeo * e;
-	
+	const int id = i + (geoid * p_Nq3) +  p_Nq3 * p_Nvgeo * e;	
 	s_G[0][ii][jj][kk] = vgeo[id + 0];
 	s_G[1][ii][jj][kk] = vgeo[id + p_Nq3];
-	s_G[2][ii][jj][kk] = vgeo[id + 2*p_Nq3];	
+	s_G[2][ii][jj][kk] = vgeo[id + 2*p_Nq3];
+
+	// load surface geofacs/values
+	int j = i;
+	while (j < p_Nfp2){
+	  const int ff = j / p_Nfp;
+	  const int f = 2*dim + ff;
+	  
+	  const int fid = j % p_Nfp;
+	  const int fid1 = fid / p_Nq1;
+	  const int fid2 = fid % p_Nq1;
+
+	  const int jid = j + (2*dim)*p_Nfp;
+	  int idf = jid + p_NfpNfaces * p_Nfields * e;
+	  for (int fld = 0; fld < p_Nfields; ++fld){
+	    s_Qf[fld][ff][fid1][fid2] = Qf[idf];
+	    idf += p_NfpNfaces;
+	  }
+	  
+	  // load normals
+	  idf = jid + p_NfpNfaces * p_Nfgeo * e;
+	  s_nJ[0][ff][fid1][fid2] = fgeo[idf];
+	  s_nJ[1][ff][fid1][fid2] = fgeo[idf + p_NfpNfaces];
+	  s_nJ[2][ff][fid1][fid2] = fgeo[idf + 2*p_NfpNfaces];
+	  j += p_Nq3;
+	}
+	
       }
       // barrier for geofacs in smem
-      @barrier("localMemFence");
-      
+      @barrier("localMemFence");      
 	
       // differentiate fluxes
       for (int i = 0; i < p_Nq3; ++i; @inner(0)){
@@ -416,12 +418,13 @@ void euler3d_flux(dfloat rho_i, dfloat rho_j, dfloat u_i, dfloat u_j,
 	  
 	for (int ff = 0; ff < 2; ++ff){
 	  const int f = 2*dim+ff; 
-	  const dfloat rho_j = s_Qf[0][f][idj][idk];
+
+	  const dfloat rho_j = s_Qf[0][ff][idj][idk];
 	  const dfloat inv_rho_j = 1.f/rho_j;
-	  const dfloat u_j = s_Qf[1][f][idj][idk] * inv_rho_j;
-	  const dfloat v_j = s_Qf[2][f][idj][idk] * inv_rho_j;
-	  const dfloat w_j = s_Qf[3][f][idj][idk] * inv_rho_j;	
-	  const dfloat E_j = s_Qf[4][f][idj][idk];
+	  const dfloat u_j = s_Qf[1][ff][idj][idk] * inv_rho_j;
+	  const dfloat v_j = s_Qf[2][ff][idj][idk] * inv_rho_j;
+	  const dfloat w_j = s_Qf[3][ff][idj][idk] * inv_rho_j;	
+	  const dfloat E_j = s_Qf[4][ff][idj][idk];
 	  const dfloat beta_j = beta(rho_j,u_j,v_j,w_j,E_j);
 	  euler3d_flux(rho_i, rho_j, u_i, u_j, v_i, v_j, w_i, w_j,
 		       E_i, E_j, beta_i, beta_j, FxS, FyS, FzS);
@@ -430,9 +433,9 @@ void euler3d_flux(dfloat rho_i, dfloat rho_j, dfloat u_i, dfloat u_j,
 	  const dfloat nsgn = (ff==0) ? -1.f : 1.f; 
 	  const int lid = (ff==0) ? idi : p_Nq1-idi-1;  
 
-	  const dfloat geox = .5f * (nsgn * s_G[0][ii][jj][kk] + s_nJ[0][f][idj][idk]);
-	  const dfloat geoy = .5f * (nsgn * s_G[1][ii][jj][kk] + s_nJ[1][f][idj][idk]);
-	  const dfloat geoz = .5f * (nsgn * s_G[2][ii][jj][kk] + s_nJ[2][f][idj][idk]);	    
+	  const dfloat geox = .5f * (nsgn * s_G[0][ii][jj][kk] + s_nJ[0][ff][idj][idk]);
+	  const dfloat geoy = .5f * (nsgn * s_G[1][ii][jj][kk] + s_nJ[1][ff][idj][idk]);
+	  const dfloat geoz = .5f * (nsgn * s_G[2][ii][jj][kk] + s_nJ[2][ff][idj][idk]);	    
 	  const dfloat Lx = geox * s_Lf[lid];
 	  const dfloat Ly = geoy * s_Lf[lid];
 	  const dfloat Lz = geoz * s_Lf[lid];
@@ -456,12 +459,12 @@ void euler3d_flux(dfloat rho_i, dfloat rho_j, dfloat u_i, dfloat u_j,
 	    for (int fld = 0; fld < p_Nfields; ++fld){
 	      valf[fld] = 0.f;
 	    }
-	    const dfloat rho_i = s_Qf[0][f][fid1][fid2];
+	    const dfloat rho_i = s_Qf[0][ff][fid1][fid2];
 	    const dfloat invrho_i = 1.f/rho_i;
-	    const dfloat u_i = s_Qf[1][f][fid1][fid2] * invrho_i;
-	    const dfloat v_i = s_Qf[2][f][fid1][fid2] * invrho_i;
-	    const dfloat w_i = s_Qf[3][f][fid1][fid2] * invrho_i;	
-	    const dfloat E_i = s_Qf[4][f][fid1][fid2];
+	    const dfloat u_i = s_Qf[1][ff][fid1][fid2] * invrho_i;
+	    const dfloat v_i = s_Qf[2][ff][fid1][fid2] * invrho_i;
+	    const dfloat w_i = s_Qf[3][ff][fid1][fid2] * invrho_i;	
+	    const dfloat E_i = s_Qf[4][ff][fid1][fid2];
 	    const dfloat beta_i = beta(rho_i,u_i,v_i,w_i,E_i);
 
 	    dfloat FxS[p_Nfields],FyS[p_Nfields],FzS[p_Nfields];	
@@ -479,9 +482,9 @@ void euler3d_flux(dfloat rho_i, dfloat rho_j, dfloat u_i, dfloat u_j,
 	      const int jid = (ff==0) ? j : p_Nq1-j-1;
 	      const dfloat Vfj = .5f * s_Vf[jid];
 	  
-	      const dfloat Vfx = (s_nJ[0][f][fid1][fid2] + nsgn*s_G[0][idi][idj][idk]) * Vfj;
-	      const dfloat Vfy = (s_nJ[1][f][fid1][fid2] + nsgn*s_G[1][idi][idj][idk]) * Vfj;
-	      const dfloat Vfz = (s_nJ[2][f][fid1][fid2] + nsgn*s_G[2][idi][idj][idk]) * Vfj;	    
+	      const dfloat Vfx = (s_nJ[0][ff][fid1][fid2] + nsgn*s_G[0][idi][idj][idk]) * Vfj;
+	      const dfloat Vfy = (s_nJ[1][ff][fid1][fid2] + nsgn*s_G[1][idi][idj][idk]) * Vfj;
+	      const dfloat Vfz = (s_nJ[2][ff][fid1][fid2] + nsgn*s_G[2][idi][idj][idk]) * Vfj;	    
 	  	
 	      const dfloat rho_j = s_Q[0][idi][idj][idk];
 	      const dfloat invrho_j = 1.f/rho_j;
