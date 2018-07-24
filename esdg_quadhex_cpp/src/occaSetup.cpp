@@ -126,6 +126,7 @@ void setupOccaMesh3d(Mesh *mesh, App *app){
     
   app->props["defines/p_Nfaces"] = mesh->Nfaces;
   app->props["defines/p_Nfp"] = mesh->Nfp;
+  app->props["defines/p_Nfp2"] = 2*mesh->Nfp;  
   app->props["defines/p_NfpNfaces"] = mesh->Nfp * mesh->Nfaces;
   app->props["defines/p_T"] = max(mesh->Nfp * mesh->Nfaces,mesh->Np);
 
