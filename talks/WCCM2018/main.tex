@@ -559,21 +559,29 @@ m\\
 
 \frame{
 \frametitle{Entropy stable schemes in a nutshell}
-
+\begin{columns}
+\begin{column}{.65\textwidth}
 \begin{figure}
 \centering
-\includegraphics[width=.5\textwidth]{figs/gll1D.png}
+\vspace{-.5em}
+\includegraphics[width=.8\textwidth]{figs/gll1D.png}
 \end{figure}
-
-\begin{itemize}
-\item<1-> Collocate solution at Gauss-Legendre-Lobatto nodes 
+\end{column}
+\begin{column}{.3\textwidth}
 \[
-\td{\bm{u}}{t} + \bm{D}\bm{f}(\bm{u}) = 0 \quad  \Longrightarrow \quad \td{\bm{u}_i}{t} + \sum_{j} \bm{D}_{ij} \bm{f}\LRp{\bm{u}_i} = 0,
-\qquad \bm{D}_{ij} = \LRl{\pd{\ell_j}{x}}_{x=x_i}.
+\bm{D}_{ij} = \LRl{\pd{\ell_j}{x}}_{x=x_i}
+\]
+\end{column}
+\end{columns}
+\vspace{1em}
+\begin{itemize}
+\item<1-> Collocation scheme using Gauss-Legendre-Lobatto quadrature points 
+\[
+\td{\bm{u}}{t} + \bm{D}\bm{f}(\bm{u}) = 0 \quad  \Longrightarrow \quad \td{\bm{u}_i}{t} + \sum_{j} \bm{D}_{ij} \bm{f}\LRp{\bm{u}_i} = 0.
 \]
 \item<2-> Flux differencing: recover above form if $\bm{f}_S(\bm{u}_i,\bm{u}_j) = \frac{1}{2}\LRp{\bm{u}_i+\bm{u}_j}$.
 \[
-\td{\bm{u}_i}{t} + \sum_{j} \bm{D}_{ij} \note{\bm{f}_S\LRp{\bm{u}_i,\bm{u}_j}} = 0 \quad \Longrightarrow \quad \td{\bm{u}}{t} + \LRp{\bm{D}\circ\bm{F}_S}\bm{1} = 0.
+\td{\bm{u}_i}{t} + \sum_{j} \bm{D}_{ij} \note{2\bm{f}_S\LRp{\bm{u}_i,\bm{u}_j}} = 0 \quad \Longrightarrow \quad \td{\bm{u}}{t} + 2\LRp{\bm{D}\circ\bm{F}_S}\bm{1} = 0.
 \]
 \item<3-> Semi-discrete entropy equality (add dissipation for inequality)
 \[
@@ -618,134 +626,54 @@ m\\
 \let\thefootnote\relax\footnotetext{\tiny Fisher and Carpenter (2013), Gassner, Winters, and Kopriva (2016), Chen and Shu (2017), Crean, Hicken, et al.\ (2018). }
 }
 
-%\frame{
-%\frametitle{Quadrature-based matrices for polynomial bases}
-%
-%\begin{itemize}
-%\item Volume and surface quadratures $(\bm{x}^q_i,\bm{w}^q_i)$, $(\bm{x}^f_i, \bm{w}^f_i)$, exact for degree $2N$ polynomials.  Define diagonal quadrature weight matrices
-%\[
-%\bm{W} = {\rm diag}\LRp{\bm{w}^q}, \qquad \bm{W}_f = {\rm diag}\LRp{\bm{w}^f}.
-%\]
-%\item Assume some polynomial basis $\phi_1,\ldots,\phi_{N_p}$.  Define 
-%``modal'' differentiation matrix $\bm{D}^i$, 
-%the interpolation matrices $\bm{V}_q, \bm{V}_f$
-%\[
-%\LRp{\bm{V}_q}_{ij} = \phi_j(\bm{x}^q_i), \qquad \LRp{\bm{V}_f}_{ij} = \phi_j(\bm{x}^f_i).
-%\]
-%\item Introduce \note{quadrature-based $L^2$ projection} and \note{lifting} matrices
-%\[
-%\bm{P}_q = \bm{M}^{-1}\bm{V}_q^T\bm{W}, \qquad \bm{L}_f = \bm{M}^{-1}\bm{V}_f^T\bm{W}_f.  
-%\]
-%\item These matrices map to and from \note{polynomial} and \note{quadrature} spaces.
-%\end{itemize}
-%}
-%
-%\frame{
-%\frametitle{Quadrature-based differentiation matrices}
-%
-%\begin{itemize}
-%\item Matrix $\bm{D}^i_q$: evaluates derivative of $L^2$ projection at points $\bm{x}^q$.
-%\[
-%\bm{D}^i_q = \bm{V}_q\bm{D}^i\bm{P}_q, \qquad \bm{D}^i = \text{ modal differentiation matrix.}
-%\]
-%\item Summation-by-parts involving $L^2$ projection:
-%\[
-%\bm{W}\bm{D}^i_q + \LRp{\bm{W}\bm{D}^i_q }^T = \LRp{\bm{V}_f\bm{P}_q}^T\bm{W}_f{\rm diag}\LRp{\bm{n}_i}\bm{V}_f\bm{P}_q.
-%\]
-%\item Equivalent to integration-by-parts + quadrature: for $u, v \in L^2\LRp{\hat{D}}$ 
-%\[
-%\int_{\hat{D}} \pd{P_N u}{x_i}v + \int_{\hat{D}} u\pd{P_N v}{x_i} = \int_{\partial \hat{D}} \LRp{P_N u}\LRp{P_N v} \hat{n}_i
-%\]
-%\item Recovers GSBP, but entropy stable \note{interface terms} are expensive.  
-%\end{itemize}
-%}
-%
-%\frame{
-%\frametitle{A ``decoupled'' block SBP operator}
-%\begin{itemize}
-%\item Approx.\ derivatives also using \note{boundary traces} (compact coupling).
-%\vspace{.5em}
-%\item On an element $D^k$ with unit normal vector $\bm{n}$: approximate $i$th derivative (block matrix operating on \note{volume} + \note{surface} values).
-%\begin{align*}
-%\bm{D}^i_N  &= \LRs{
-%\begin{array}{cc}
-%\bm{D}^i_q - \frac{1}{2}\bm{V}_q \bm{L}_f {\rm diag}({\bm{n}}_i) \bm{V}_f\bm{P}_q &  \frac{1}{2}\bm{V}_q\bm{L}_f{\rm diag}({\bm{n}}_i)\\
-%-\frac{1}{2}{\rm diag}({\bm{n}}_i)\bm{V}_f\bm{P}_q & \frac{1}{2}{\rm diag}({\bm{n}}_i)
-%\end{array}},
-%\label{eq:DN}
-%\end{align*}
-%\item $\bm{D}^i_N$ satisfies a summation-by-parts (SBP) property + $\bm{D}^i_N \bm{1} = 0$
-%\begin{gather*}
-%\bm{Q}^i_N = \LRs{\begin{array}{cc}
-%\bm{W} & \\
-%& \bm{W}_f
-%\end{array}}
-%\bm{D}^i_N, \qquad \bm{B}_N = \LRs{\begin{array}{cc}
-%0 & \\
-%& \bm{W}_f\bm{n}_i
-%\end{array}},
-%\end{gather*}
-%\[
-%\boxed{\bm{Q}^i_N + \LRp{\bm{Q}^i_N}^T = \bm{B}_N} \sim \boxed{\int_{D^k} \pd{f}{x_i} g + f\pd{g}{x_i} = \int_{\partial D^k} fg\bm{n}_i}.
-%\]
-%\end{itemize}
-%
-%\let\thefootnote\relax\footnotetext{\tiny Chen and Shu (2017). \textit{ES high order DG methods with suitable quadrature rules for hyperbolic conservation laws.}}
-%}
-%
-%\frame{
-%\frametitle{Differentiation using decoupled SBP operators}
-%
-%\only<1>{
-%\begin{itemize}
-%\item Note: $\bm{D}^i_N$ is \note{not} a differentiation matrix on its own.
-%\vspace{.5em}
-%\item $\bm{P}_q, \bm{L}_f$, and $\bm{D}^i_N$ produce a high order polynomial approximation of $f\pd{g}{x}$ given data at quadrature points $\bm{x} = [\bm{x}^q, \bm{x}^f]$.
-%\[
-%f\pd{g}{x} \approx \LRs{\begin{array}{cc}
-%\bm{P}_q & \bm{L}_f\end{array}} {\rm diag}\LRp{\bm{f}}\bm{D}_N \bm{g}, \qquad \bm{f}_i, \bm{g}_i = f(\bm{x}_i), g(\bm{x}_i).
-%\]
-%\item Equivalent to solving variational problem for $u(\bm{x}) \approx f\pd{g}{x}$
-%\[
-%\int_{D^k}u(\bm{x})v(\bm{x})  = \int_{D^k}{f\pd{P_Ng}{x}v} + \int_{\partial D^k}{(f-P_Nf)\frac{\LRp{gv + P_N(gv)}}{2}}.
-%\]
-%\item $\bm{D}^i_N \bm{1} = 0$ holds (necessary for discrete entropy conservation).
-%\end{itemize}
-%}
-%}
-
 \frame{
-\frametitle{Making DG look like FD: quadrature-based matrices }
+\frametitle{Quadrature-based matrices for polynomial bases}
 
 \begin{itemize}
-\item \note{Volume and surface quadratures} $(\bm{x}^q_i,\bm{w}^q_i)$, $(\bm{x}^f_i, \bm{w}^f_i)$, exact for degree $2N-1$ (volume) and $2N$ (surface).  Define diagonal weight matrices
+\item Volume and surface quadratures $(\bm{x}^q_i,\bm{w}^q_i)$, $(\bm{x}^f_i, \bm{w}^f_i)$, exact for degree $2N$ polynomials.  Define diagonal quadrature weight matrices
 \[
 \bm{W} = {\rm diag}\LRp{\bm{w}^q}, \qquad \bm{W}_f = {\rm diag}\LRp{\bm{w}^f}.
 \]
-\item Assume some polynomial basis $\phi_1,\ldots,\phi_{N_p}$.  Define differentiation matrix $\bm{D}^i$, interpolation matrices $\bm{V}_q, \bm{V}_f$, mass matrix $\bm{M}$
+\item Assume some polynomial basis $\phi_1,\ldots,\phi_{N_p}$.  Define 
+``modal'' differentiation matrix $\bm{D}^i$, 
+the interpolation matrices $\bm{V}_q, \bm{V}_f$
 \[
-\LRp{\bm{V}_q}_{ij} = \phi_j(\bm{x}^q_i), \qquad \LRp{\bm{V}_f}_{ij} = \phi_j(\bm{x}^f_i), \qquad \bm{M} = \bm{V}_q^T\bm{W}\bm{V}_q.
+\LRp{\bm{V}_q}_{ij} = \phi_j(\bm{x}^q_i), \qquad \LRp{\bm{V}_f}_{ij} = \phi_j(\bm{x}^f_i).
 \]
-\vspace{.1em}
-\item<2-> Key tools: quadrature-based $L^2$ \note{projection} and \note{lifting} matrices
+\item Introduce \note{quadrature-based $L^2$ projection} and \note{lifting} matrices
 \[
 \bm{P}_q = \bm{M}^{-1}\bm{V}_q^T\bm{W}, \qquad \bm{L}_f = \bm{M}^{-1}\bm{V}_f^T\bm{W}_f.  
 \]
-\item<3-> $\bm{D}^i_q = \bm{V}_q\bm{D}^i\bm{P}_q$: evaluates $i$th derivative of $L^2$ projection at $\bm{x}^q_i$.
-\[
-\bm{W}\bm{D}^i_q + \LRp{\bm{W}\bm{D}^i_q }^T = \LRp{\bm{V}_f\bm{P}_q}^T\bm{W}_f{\rm diag}\LRp{\bm{n}_i}\bm{V}_f\bm{P}_q, \qquad \text{(SBP property)}.  
-\]
+\item These matrices map to and from \note{polynomial} and \note{quadrature} spaces.
 \end{itemize}
 }
 
 \frame{
-\frametitle{A ``decoupled'' block SBP operator}
-%\begin{figure}
-%\centering
-%\includegraphics[width=.65\textwidth]{figs/decoupledSBPfig.png}
-%\end{figure}
+\frametitle{Quadrature-based differentiation matrices}
+
 \begin{itemize}
-\item Decoupled SBP: improve approx.\ by incorporating boundary points:
+\item Matrix $\bm{D}^i_q$: evaluates derivative of $L^2$ projection at points $\bm{x}^q$.
+\[
+\bm{D}^i_q = \bm{V}_q\bm{D}^i\bm{P}_q, \qquad \bm{D}^i = \text{ modal differentiation matrix.}
+\]
+\item Summation-by-parts involving $L^2$ projection:
+\[
+\bm{W}\bm{D}^i_q + \LRp{\bm{W}\bm{D}^i_q }^T = \LRp{\bm{V}_f\bm{P}_q}^T\bm{W}_f{\rm diag}\LRp{\bm{n}_i}\bm{V}_f\bm{P}_q.
+\]
+\item Equivalent to integration-by-parts + quadrature: for $u, v \in L^2\LRp{\hat{D}}$ 
+\[
+\int_{\hat{D}} \pd{P_N u}{x_i}v + \int_{\hat{D}} u\pd{P_N v}{x_i} = \int_{\partial \hat{D}} \LRp{P_N u}\LRp{P_N v} \hat{n}_i
+\]
+\item Recovers GSBP, but entropy stable \note{interface terms} are expensive.  
+\end{itemize}
+}
+
+\frame{
+\frametitle{Making DG look like FD:  ``decoupled'' SBP operator}
+\begin{itemize}
+\item Approx.\ derivatives also using \note{boundary traces} (compact coupling).
+\vspace{.5em}
+\item On an element $D^k$ with unit normal vector $\bm{n}$: approximate $i$th derivative (block matrix operating on \note{volume} + \note{surface} values).
 \begin{align*}
 \bm{D}^i_N  &= \LRs{
 \begin{array}{cc}
@@ -754,33 +682,122 @@ m\\
 \end{array}},
 \label{eq:DN}
 \end{align*}
-\item<2-> $\bm{D}^i_N$ produces a high order approximation of $f\pd{g}{x}$ at $\bm{x} = [\bm{x}^q, \bm{x}^f]$.
-\[
-f\pd{g}{x} \approx \LRs{\begin{array}{cc}
-\bm{P}_q & \bm{L}_f\end{array}} {\rm diag}\LRp{\bm{f}}\bm{D}_N \bm{g}, \qquad \bm{f}_i, \bm{g}_i = f(\bm{x}_i), g(\bm{x}_i). 
-\]
-\item<2-> Equivalent to solving variational problem for $u \approx {f\pd{g}{x}}$
-\[
-\int_{D^k}{uv} = \int_{D^k}{f\pd{P_Ng}{x}v} + \int_{\partial D^k}{(f-P_Nf)\frac{\LRp{gv + P_N(gv)}}{2}}.
-\]
-\item<3-> $\bm{Q}^i_N = \diag\LRp{\begin{bmatrix} \bm{w}^q & \bm{w}_f \end{bmatrix}}
-\bm{D}^i_N$ also satisfies an SBP property
+\item $\bm{D}^i_N$ satisfies a summation-by-parts (SBP) property + $\bm{D}^i_N \bm{1} = 0$
+\begin{gather*}
+\bm{Q}^i_N = \LRs{\begin{array}{cc}
+\bm{W} & \\
+& \bm{W}_f
+\end{array}}
+\bm{D}^i_N, \qquad \bm{B}_N = \LRs{\begin{array}{cc}
+0 & \\
+& \bm{W}_f\bm{n}_i
+\end{array}},
+\end{gather*}
 \[
 \boxed{\bm{Q}^i_N + \LRp{\bm{Q}^i_N}^T = \bm{B}_N} \sim \boxed{\int_{D^k} \pd{f}{x_i} g + f\pd{g}{x_i} = \int_{\partial D^k} fg\bm{n}_i}.
 \]
-%\begin{align*}
-%\bm{Q}^i_N &= \LRs{\begin{array}{cc}
-%\bm{W} & \\
-%& \bm{W}_f
-%\end{array}}
-%\bm{D}^i_N, \qquad
-%\bm{Q}^i_N + \LRp{\bm{Q}^i_N}^T &= \LRs{\begin{array}{cc}
-%0 & \\
-%& \bm{W}_f\bm{n}_i
-%\end{array}}% \sim \int_{D^k} \pd{f}{x_i} g + f\pd{g}{x_i} = \int_{\partial D^k} fg\bm{n}_i.
-%\end{align*}
+\end{itemize}
+
+\let\thefootnote\relax\footnotetext{\tiny Chen and Shu (2017). \textit{ES high order DG methods with suitable quadrature rules for hyperbolic conservation laws.}}
+}
+
+\frame{
+\frametitle{Differentiation using decoupled SBP operators}
+
+\only<1>{
+\begin{itemize}
+\item Note: $\bm{D}^i_N$ is \note{not} a differentiation matrix on its own.
+\vspace{.5em}
+\item $\bm{P}_q, \bm{L}_f$, and $\bm{D}^i_N$ produce a high order polynomial approximation of $f\pd{g}{x}$ given data at quadrature points $\bm{x} = [\bm{x}^q, \bm{x}^f]$.
+\[
+f\pd{g}{x} \approx \LRs{\begin{array}{cc}
+\bm{P}_q & \bm{L}_f\end{array}} {\rm diag}\LRp{\bm{f}}\bm{D}_N \bm{g}, \qquad \bm{f}_i, \bm{g}_i = f(\bm{x}_i), g(\bm{x}_i).
+\]
+\item Equivalent to solving variational problem for $u(\bm{x}) \approx f\pd{g}{x}$
+\[
+\int_{D^k}u(\bm{x})v(\bm{x})  = \int_{D^k}{f\pd{P_Ng}{x}v} + \int_{\partial D^k}{(f-P_Nf)\frac{\LRp{gv + P_N(gv)}}{2}}.
+\]
+\item $\bm{D}^i_N \bm{1} = 0$ holds (necessary for discrete entropy conservation).
 \end{itemize}
 }
+}
+
+\frame{
+\frametitle{Accuracy of $\bm{D}_N^i$}
+
+\begin{figure}
+\centering
+\includegraphics[width=.9\textwidth]{figs/decoupledSBPfig.png}
+\end{figure}
+}
+
+%\frame{
+%\frametitle{Making DG look like FD: quadrature-based matrices }
+%
+%\begin{itemize}
+%\item \note{Volume and surface quadratures} $(\bm{x}^q_i,\bm{w}^q_i)$, $(\bm{x}^f_i, \bm{w}^f_i)$, exact for degree $2N-1$ (volume) and $2N$ (surface).  Define diagonal weight matrices
+%\[
+%\bm{W} = {\rm diag}\LRp{\bm{w}^q}, \qquad \bm{W}_f = {\rm diag}\LRp{\bm{w}^f}.
+%\]
+%\item Assume some polynomial basis $\phi_1,\ldots,\phi_{N_p}$.  Define differentiation matrix $\bm{D}^i$, interpolation matrices $\bm{V}_q, \bm{V}_f$, mass matrix $\bm{M}$
+%\[
+%\LRp{\bm{V}_q}_{ij} = \phi_j(\bm{x}^q_i), \qquad \LRp{\bm{V}_f}_{ij} = \phi_j(\bm{x}^f_i), \qquad \bm{M} = \bm{V}_q^T\bm{W}\bm{V}_q.
+%\]
+%\vspace{.1em}
+%\item<2-> Key tools: quadrature-based $L^2$ \note{projection} and \note{lifting} matrices
+%\[
+%\bm{P}_q = \bm{M}^{-1}\bm{V}_q^T\bm{W}, \qquad \bm{L}_f = \bm{M}^{-1}\bm{V}_f^T\bm{W}_f.  
+%\]
+%\item<3-> $\bm{D}^i_q = \bm{V}_q\bm{D}^i\bm{P}_q$: evaluates $i$th derivative of $L^2$ projection at $\bm{x}^q_i$.
+%\[
+%\bm{W}\bm{D}^i_q + \LRp{\bm{W}\bm{D}^i_q }^T = \LRp{\bm{V}_f\bm{P}_q}^T\bm{W}_f{\rm diag}\LRp{\bm{n}_i}\bm{V}_f\bm{P}_q, \qquad \text{(SBP property)}.  
+%\]
+%\end{itemize}
+%}
+
+%\frame{
+%\frametitle{A ``decoupled'' block SBP operator}
+%%\begin{figure}
+%%\centering
+%%\includegraphics[width=.65\textwidth]{figs/decoupledSBPfig.png}
+%%\end{figure}
+%\begin{itemize}
+%\item Decoupled SBP: improve approx.\ by incorporating boundary points:
+%\begin{align*}
+%\bm{D}^i_N  &= \LRs{
+%\begin{array}{cc}
+%\bm{D}^i_q - \frac{1}{2}\bm{V}_q \bm{L}_f {\rm diag}({\bm{n}}_i) \bm{V}_f\bm{P}_q &  \frac{1}{2}\bm{V}_q\bm{L}_f{\rm diag}({\bm{n}}_i)\\
+%-\frac{1}{2}{\rm diag}({\bm{n}}_i)\bm{V}_f\bm{P}_q & \frac{1}{2}{\rm diag}({\bm{n}}_i)
+%\end{array}},
+%\label{eq:DN}
+%\end{align*}
+%\item<2-> $\bm{D}^i_N$ produces a high order approximation of $f\pd{g}{x}$ at $\bm{x} = [\bm{x}^q, \bm{x}^f]$.
+%\[
+%f\pd{g}{x} \approx \LRs{\begin{array}{cc}
+%\bm{P}_q & \bm{L}_f\end{array}} {\rm diag}\LRp{\bm{f}}\bm{D}_N \bm{g}, \qquad \bm{f}_i, \bm{g}_i = f(\bm{x}_i), g(\bm{x}_i). 
+%\]
+%\item<2-> Equivalent to solving variational problem for $u \approx {f\pd{g}{x}}$
+%\[
+%\int_{D^k}{uv} = \int_{D^k}{f\pd{P_Ng}{x}v} + \int_{\partial D^k}{(f-P_Nf)\frac{\LRp{gv + P_N(gv)}}{2}}.
+%\]
+%\item<3-> $\bm{Q}^i_N = \diag\LRp{\begin{bmatrix} \bm{w}^q & \bm{w}_f \end{bmatrix}}
+%\bm{D}^i_N$ also satisfies an SBP property
+%\[
+%\boxed{\bm{Q}^i_N + \LRp{\bm{Q}^i_N}^T = \bm{B}_N} \sim \boxed{\int_{D^k} \pd{f}{x_i} g + f\pd{g}{x_i} = \int_{\partial D^k} fg\bm{n}_i}.
+%\]
+%%\begin{align*}
+%%\bm{Q}^i_N &= \LRs{\begin{array}{cc}
+%%\bm{W} & \\
+%%& \bm{W}_f
+%%\end{array}}
+%%\bm{D}^i_N, \qquad
+%%\bm{Q}^i_N + \LRp{\bm{Q}^i_N}^T &= \LRs{\begin{array}{cc}
+%%0 & \\
+%%& \bm{W}_f\bm{n}_i
+%%\end{array}}% \sim \int_{D^k} \pd{f}{x_i} g + f\pd{g}{x_i} = \int_{\partial D^k} fg\bm{n}_i.
+%%\end{align*}
+%\end{itemize}
+%}
 
 
 \section{Entropy stable formulations through flux differencing}
@@ -1933,7 +1950,7 @@ coordinates{(0.25,5.32822e-05)(0.125,1.5792e-05)(0.0625,9.458e-07)(0.03125,3.050
 \vspace{.25em}
 \item Challenges: BCs, positivity, strong shocks, computational cost.  
 \vspace{.25em}
-\item Current work: Gauss collocation (with DCDR Fernandez, M.\ Carpenter), adaptivity + hybrid meshes, multi-GPU (with L.\ Wilcox).  
+\item Current work: SWE, Gauss collocation (with DCDR Fernandez, M.\ Carpenter), adaptivity + hybrid meshes, multi-GPU (with L.\ Wilcox).  
 \vspace{.25em}
 \item This work is supported by DMS-1719818 and DMS-1712639. 
 \end{itemize}
@@ -1959,13 +1976,47 @@ Thank you!  Questions?
 \end{frame}
 
 \frame[noframenumbering]{
-\frametitle{Accuracy of $\bm{D}_N^i$}
+\frametitle{Entropy stable shallow water fluxes}
 
+\begin{itemize}
+\item 1D shallow water equations
+\begin{align*}
+\pd{h}{t} + \pd{(hu)}{x} &= 0\\
+\pd{(hu)}{t} + \pd{}{x}\LRp{hu^2+\frac{1}{2}gh^2}  &=-g h\pd{b}{x}.
+\end{align*}
+\item Entropy stable finite volume fluxes (include $b$ for well-balanced)
+\begin{align*}
+\bm{f}_S\LRp{\bm{u}_L,\bm{u}_R} =
+\begin{bmatrix}
+\avg{hu}\\
+\avg{hu}\avg{u} + \frac{1}{2} g h_L h_R
+\end{bmatrix}
+\end{align*}
+\item For collocation: equivalent to \note{split} form of momentum equation.
+\[
+\pd{hu}{t} + \frac{1}{2}\LRp{\pd{{hu^2}}{x} + hu \pd{u}{x}}  + gh\pd{(h+b)}{x} =0.
+\]
+\end{itemize}
+
+\let\thefootnote\relax\footnotetext{\tiny Wintermeyer, Winters, Gassner, Warburton (2018).  \emph{An entropy stable discontinuous Galerkin method for the shallow water equations on curvilinear meshes with wet/dry fronts accelerated by GPUs}.}
+}
+
+\frame[noframenumbering]{
+\frametitle{GPUs and flux differencing: when FLOPS are free}
 \begin{figure}
 \centering
-\includegraphics[width=.9\textwidth]{figs/decoupledSBPfig.png}
+\includegraphics[width=.85\textwidth]{figs/esdg_gpu.png}
 \end{figure}
+\vspace{-1em}
+\begin{itemize}
+\item High arithmetic intensity: compute while waiting for global memory.
+\item On GPUs, extra operations don't increase runtime until $N \geq 9$!
+\end{itemize}
+
+\let\thefootnote\relax\footnotetext{\tiny Wintermeyer, Winters, Gassner, Warburton (2018).  \emph{An entropy stable discontinuous Galerkin method for the shallow water equations on curvilinear meshes with wet/dry fronts accelerated by GPUs}.}
 }
+
+
 
 \frame[noframenumbering]{
 \frametitle{Over-integration is ineffective without $L^2$ projection}
@@ -2103,20 +2154,8 @@ coordinates{(0.00647249,0)(0.110032,6.52844e-05)(0.213592,8.08628e-05)(0.317152,
 \end{figure}
 }
 
-\frame[noframenumbering]{
-\frametitle{GPUs and flux differencing: when FLOPS are free}
-\begin{figure}
-\centering
-\includegraphics[width=.85\textwidth]{figs/esdg_gpu.png}
-\end{figure}
-\vspace{-1em}
-\begin{itemize}
-\item High arithmetic intensity: compute while waiting for global memory.
-\item On GPUs, extra operations don't increase runtime until $N \geq 9$!
-\end{itemize}
 
-\let\thefootnote\relax\footnotetext{\tiny Wintermeyer, Winters, Gassner, Warburton (2018).  \emph{An entropy stable discontinuous Galerkin method for the shallow water equations on curvilinear meshes with wet/dry fronts accelerated by GPUs}.}
-}
+
 
 \bibliographystyle{plain}
 {\scriptsize

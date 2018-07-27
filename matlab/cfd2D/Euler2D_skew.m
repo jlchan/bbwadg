@@ -1,32 +1,27 @@
 clear
 Globals2D
 
-a = 1/8; % warping factor
+a = 0/8; % warping factor
 % FinalTime = 10;
 
-N = 4;
-K1D = 8;
-FinalTime = 1.1;
+N = 2;
+K1D = 16;
+FinalTime = 1;
 
 wadgProjEntropyVars = abs(a)>1e-8;
-CFL = .5;
+CFL = .25;
 global tau
-tau = 0;
+tau = 1;
 global useSkew;
 useSkew = 1;
-useGLL = 1;
+useGLL = 0;
 
 
 % Lx = 7.5; Ly = 5; ratiox = 3/4; ratioy = .5;
 Lx = 10; Ly = 5; ratiox = 1; ratioy = Ly/Lx;
 [Nv, VX, VY, K, EToV] = unif_tri_mesh(round(ratiox*K1D),round(K1D*ratioy));
-
-% ids = abs(abs(VX)-1)>1e-8 & abs(abs(VY)-1)>1e-8;
-% VY(ids) = VY(ids) + .05*randn(size(VX(ids)));
-
-
-VX = VX/max(abs(VX));  VY = VY/max(abs(VY));
-VX = (VX+1)*Lx; VY = VY*Ly;
+% VX = VX/max(abs(VX));  VY = VY/max(abs(VY));
+% VX = (VX+1)*Lx; VY = VY*Ly;
 
 % VX = VX + randn(size(VX));
 StartUp2D;
@@ -44,7 +39,7 @@ global M Vq Pq Lq Vfqf Vfq Pfqf VqPq VqLq
 global rxJ sxJ ryJ syJ rxJf sxJf ryJf syJf
 global nxJ nyJ nrJ nsJ nrJq nsJq wfq
 global mapPq
-Nq = 2*N+1;
+Nq = 2*N;
 [rq sq wq] = Cubature2D(Nq); % integrate u*v*c
 [rq sq wq] = QNodes2D(N); if length(rq)~=Np;  keyboard; end
 
@@ -174,6 +169,15 @@ for e = 1:K
     end
 end
 
+global mapBwall
+%mapBwall = find(abs(xf-max(x(:)))<1e-8 | abs(xf-min(x(:)))<1e-8);
+mapBwall = find(abs(yf-max(y(:)))<1e-8 | abs(yf-min(y(:)))<1e-8);
+
+% plot(xf,yf,'o')
+% hold on
+% plot(xf(mapBwall),yf(mapBwall),'x','markersize',15)
+% return
+
 
 %% make curvilinear mesh 
 
@@ -295,7 +299,7 @@ E    = Pq*(pq/(gamma-1) + .5*rhoq.*(uq.^2+vq.^2));
 % rhov = 0*x;
 % E = 0*x;
 % keyboard
-% vv = Vp*rho; color_line3(xp,yp,vv,vv,'.'); return
+% vv = Vp*E; color_line3(xp,yp,vv,vv,'.'); return
 
 rho = Vq*rho;
 rhou = Vq*rhou;
@@ -415,7 +419,7 @@ for i = 1:Nsteps
         axis tight
         colorbar
         title(sprintf('time = %f, N = %d, K1D = %d',dt*i,N,K1D))
-        %                 view(3)
+        view(3)
         drawnow
     end    
 end
@@ -476,14 +480,19 @@ pM = (gamma-1)*(EM - .5*rhoM.*unorm2);
 cvel = sqrt(gamma*pM./rhoM);
 lam = sqrt(unorm2)+cvel;
 LFc = max(lam(mapPq),lam);
-QP{1} = QM{1}(mapPq); QP{2} = QM{2}(mapPq);
-QP{3} = QM{3}(mapPq); QP{4} = QM{4}(mapPq);
 
-% rhoUn = (rhoP.*uP-rhoM.*uM).*nx + (rhoP.*vP-rhoM.*vM).*ny;
-dQ1 = QP{1}-QM{1};
-dQ2 = QP{2}-QM{2};
-dQ3 = QP{3}-QM{3};
-dQ4 = QP{4}-QM{4};
+global mapBwall
+uP(mapBwall) = uM(mapBwall);
+vP(mapBwall) = -vM(mapBwall);
+rhoP(mapBwall) = rhoM(mapBwall);
+pP = pM(mapPq);
+pP(mapBwall) = pM(mapBwall);
+EP(mapBwall) = pP(mapBwall)/(gamma-1) + .5*rhoP(mapBwall).*(uP(mapBwall).^2+vP(mapBwall).^2); 
+
+dQ1 = rhoP-rhoM;
+dQ2 = rhoP.*uP-rhoM.*uM;
+dQ3 = rhoP.*vP-rhoM.*vM;
+dQ4 = EP-EM;
 Lf1 = tau*LFc.*dQ1.*sJ;
 Lf2 = tau*LFc.*dQ2.*sJ;
 Lf3 = tau*LFc.*dQ3.*sJ;
@@ -592,13 +601,24 @@ p = rho.^gamma;
 % v = zeros(size(x));
 % p = ones(size(x));
 
-if 1
+if 0
     % pulse condition
     x0 = 5;
-    rho = 2 + (abs(x-x0) < 5);
+    rho = 2 + (abs(x-x0) < 2.5);
     u = 0*rho;
     v = 0*rho;
-    p = rho.^gamma;
+    p = rho.^gamma;    
+end
+
+if 1 % sod
+    x0 = 0;
+    rhoL = 1; rhoR = .125;
+    pL = 1; pR = .1;        
+    
+    rho = (rhoL*(x < x0) + rhoR*(x > x0));
+    u = 0*x;
+    v = 0*x;
+    p = (pL*(x < x0) + pR*(x > x0));
     
 end
 

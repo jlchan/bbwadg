@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.18 (TeX Live 2017) (preloaded format=pdflatex 2017.5.23)  13 JUN 2018 12:10
+This is pdfTeX, Version 3.14159265-2.6-1.40.18 (TeX Live 2017) (preloaded format=pdflatex 2017.5.23)  23 JUL 2018 13:59
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
@@ -1725,7 +1725,7 @@ LaTeX Warning: File `figs/wave_N1.eps' not found on input line 308.
 
 Package epstopdf Info: Source file: <figs/wave_N1.eps>
 (epstopdf)             Output file: <figs/wave_N1-eps-converted-to.pdf>
-(epstopdf)                    date: 2017-09-16 23:26:53
+(epstopdf)                    date: 2017-09-16 17:26:53
 (epstopdf)                    size: 26117 bytes
 (epstopdf)             Command: <repstopdf --outfile=figs/wave_N1-eps-converted
 -to.pdf figs/wave_N1.eps>
@@ -1750,7 +1750,7 @@ LaTeX Warning: File `figs/wave_N2.eps' not found on input line 308.
 
 Package epstopdf Info: Source file: <figs/wave_N2.eps>
 (epstopdf)             Output file: <figs/wave_N2-eps-converted-to.pdf>
-(epstopdf)                    date: 2017-09-16 23:26:53
+(epstopdf)                    date: 2017-09-16 17:26:53
 (epstopdf)                    size: 14735 bytes
 (epstopdf)             Command: <repstopdf --outfile=figs/wave_N2-eps-converted
 -to.pdf figs/wave_N2.eps>
@@ -1811,412 +1811,411 @@ Package pdftex.def Info: figs/gpu.pdf used on input line 308.
 (pdftex.def)             Requested size: 158.52852pt x 85.12172pt.
  [8
 
-] [9
-
 ]
-<figs/burgersStable_1.png, id=133, 455.7828pt x 390.258pt>
+<figs/burgersStable_1.png, id=120, 455.7828pt x 390.258pt>
 File: figs/burgersStable_1.png Graphic file (type png)
 
 <use figs/burgersStable_1.png>
-Package pdftex.def Info: figs/burgersStable_1.png used on input line 359.
+Package pdftex.def Info: figs/burgersStable_1.png used on input line 341.
 (pdftex.def)             Requested size: 109.537pt x 93.78888pt.
 
-Overfull \hbox (2.45265pt too wide) in paragraph at lines 359--359
+Overfull \hbox (2.45265pt too wide) in paragraph at lines 341--341
 [] [] 
  []
 
-<figs/burgersUnstable_1.png, id=134, 455.7828pt x 390.258pt>
+<figs/burgersUnstable_1.png, id=121, 455.7828pt x 390.258pt>
 File: figs/burgersUnstable_1.png Graphic file (type png)
 
 <use figs/burgersUnstable_1.png>
-Package pdftex.def Info: figs/burgersUnstable_1.png used on input line 359.
+Package pdftex.def Info: figs/burgersUnstable_1.png used on input line 341.
 (pdftex.def)             Requested size: 109.537pt x 93.78888pt.
 
-Overfull \hbox (2.45265pt too wide) in paragraph at lines 359--359
+Overfull \hbox (2.45265pt too wide) in paragraph at lines 341--341
+[] [] 
+ []
+
+[9
+
+ <./figs/burgersStable_1.png> <./figs/burgersUnstable_1.png>]
+<figs/burgersStable_2.png, id=138, 455.7828pt x 390.258pt>
+File: figs/burgersStable_2.png Graphic file (type png)
+
+<use figs/burgersStable_2.png>
+Package pdftex.def Info: figs/burgersStable_2.png used on input line 341.
+(pdftex.def)             Requested size: 109.537pt x 93.78888pt.
+
+Overfull \hbox (2.45265pt too wide) in paragraph at lines 341--341
+[] [] 
+ []
+
+<figs/burgersUnstable_2.png, id=139, 455.7828pt x 390.258pt>
+File: figs/burgersUnstable_2.png Graphic file (type png)
+
+<use figs/burgersUnstable_2.png>
+Package pdftex.def Info: figs/burgersUnstable_2.png used on input line 341.
+(pdftex.def)             Requested size: 109.537pt x 93.78888pt.
+
+Overfull \hbox (2.45265pt too wide) in paragraph at lines 341--341
 [] [] 
  []
 
 [10
 
- <./figs/burgersStable_1.png> <./figs/burgersUnstable_1.png>]
-<figs/burgersStable_2.png, id=146, 455.7828pt x 390.258pt>
-File: figs/burgersStable_2.png Graphic file (type png)
+ <./figs/burgersStable_2.png> <./figs/burgersUnstable_2.png>]
+<figs/burgersStable_3.png, id=146, 455.7828pt x 390.258pt>
+File: figs/burgersStable_3.png Graphic file (type png)
 
-<use figs/burgersStable_2.png>
-Package pdftex.def Info: figs/burgersStable_2.png used on input line 359.
+<use figs/burgersStable_3.png>
+Package pdftex.def Info: figs/burgersStable_3.png used on input line 341.
 (pdftex.def)             Requested size: 109.537pt x 93.78888pt.
 
-Overfull \hbox (2.45265pt too wide) in paragraph at lines 359--359
+Overfull \hbox (2.45265pt too wide) in paragraph at lines 341--341
 [] [] 
  []
 
-<figs/burgersUnstable_2.png, id=147, 455.7828pt x 390.258pt>
-File: figs/burgersUnstable_2.png Graphic file (type png)
+<figs/burgersUnstable_3.png, id=147, 455.7828pt x 390.258pt>
+File: figs/burgersUnstable_3.png Graphic file (type png)
 
-<use figs/burgersUnstable_2.png>
-Package pdftex.def Info: figs/burgersUnstable_2.png used on input line 359.
+<use figs/burgersUnstable_3.png>
+Package pdftex.def Info: figs/burgersUnstable_3.png used on input line 341.
 (pdftex.def)             Requested size: 109.537pt x 93.78888pt.
 
-Overfull \hbox (2.45265pt too wide) in paragraph at lines 359--359
+Overfull \hbox (2.45265pt too wide) in paragraph at lines 341--341
 [] [] 
  []
 
 [11
 
- <./figs/burgersStable_2.png> <./figs/burgersUnstable_2.png>]
-<figs/burgersStable_3.png, id=154, 455.7828pt x 390.258pt>
-File: figs/burgersStable_3.png Graphic file (type png)
+ <./figs/burgersStable_3.png> <./figs/burgersUnstable_3.png>]
+<figs/burgersStable_4.png, id=154, 455.7828pt x 390.258pt>
+File: figs/burgersStable_4.png Graphic file (type png)
 
-<use figs/burgersStable_3.png>
-Package pdftex.def Info: figs/burgersStable_3.png used on input line 359.
+<use figs/burgersStable_4.png>
+Package pdftex.def Info: figs/burgersStable_4.png used on input line 341.
 (pdftex.def)             Requested size: 109.537pt x 93.78888pt.
 
-Overfull \hbox (2.45265pt too wide) in paragraph at lines 359--359
+Overfull \hbox (2.45265pt too wide) in paragraph at lines 341--341
 [] [] 
  []
 
-<figs/burgersUnstable_3.png, id=155, 455.7828pt x 390.258pt>
-File: figs/burgersUnstable_3.png Graphic file (type png)
+<figs/burgersUnstable_4.png, id=155, 455.7828pt x 390.258pt>
+File: figs/burgersUnstable_4.png Graphic file (type png)
 
-<use figs/burgersUnstable_3.png>
-Package pdftex.def Info: figs/burgersUnstable_3.png used on input line 359.
+<use figs/burgersUnstable_4.png>
+Package pdftex.def Info: figs/burgersUnstable_4.png used on input line 341.
 (pdftex.def)             Requested size: 109.537pt x 93.78888pt.
 
-Overfull \hbox (2.45265pt too wide) in paragraph at lines 359--359
+Overfull \hbox (2.45265pt too wide) in paragraph at lines 341--341
 [] [] 
  []
 
 [12
 
- <./figs/burgersStable_3.png> <./figs/burgersUnstable_3.png>]
-<figs/burgersStable_4.png, id=162, 455.7828pt x 390.258pt>
-File: figs/burgersStable_4.png Graphic file (type png)
+ <./figs/burgersStable_4.png> <./figs/burgersUnstable_4.png>] [13
 
-<use figs/burgersStable_4.png>
-Package pdftex.def Info: figs/burgersStable_4.png used on input line 359.
-(pdftex.def)             Requested size: 109.537pt x 93.78888pt.
-
-Overfull \hbox (2.45265pt too wide) in paragraph at lines 359--359
-[] [] 
- []
-
-<figs/burgersUnstable_4.png, id=163, 455.7828pt x 390.258pt>
-File: figs/burgersUnstable_4.png Graphic file (type png)
-
-<use figs/burgersUnstable_4.png>
-Package pdftex.def Info: figs/burgersUnstable_4.png used on input line 359.
-(pdftex.def)             Requested size: 109.537pt x 93.78888pt.
-
-Overfull \hbox (2.45265pt too wide) in paragraph at lines 359--359
-[] [] 
- []
-
-[13
-
- <./figs/burgersStable_4.png> <./figs/burgersUnstable_4.png>]
-<figs/ndgFilter.pdf, id=171, 602.25pt x 770.88pt>
-File: figs/ndgFilter.pdf Graphic file (type pdf)
- <use figs/ndgFilter.pdf>
-Package pdftex.def Info: figs/ndgFilter.pdf used on input line 386.
-(pdftex.def)             Requested size: 162.58974pt x 208.11685pt.
-
-[14
-
- <./figs/ndgFilter.pdf>] <figs/ndgFilter2.pdf, id=215, 602.25pt x 770.88pt>
-File: figs/ndgFilter2.pdf Graphic file (type pdf)
-
-<use figs/ndgFilter2.pdf>
-Package pdftex.def Info: figs/ndgFilter2.pdf used on input line 386.
-(pdftex.def)             Requested size: 162.58974pt x 208.11685pt.
- [15
-
- <./figs/ndgFilter2.pdf>] (./main.toc) [16
+] [14
 
 ]
-(./main.toc) [17
+<figs/balancing.pdf, id=177, 1027.84pt x 770.88pt>
+File: figs/balancing.pdf Graphic file (type pdf)
+ <use figs/balancing.pdf>
+Package pdftex.def Info: figs/balancing.pdf used on input line 416.
+(pdftex.def)             Requested size: 171.14764pt x 128.35422pt.
 
-] <figs/SEM_stencil_1.pdf, id=289, 486.81876pt x 392.46625pt>
+[15
+
+ <./figs/balancing.pdf>]
+File: figs/balancing.pdf Graphic file (type pdf)
+ <use figs/balancing.pdf>
+Package pdftex.def Info: figs/balancing.pdf used on input line 416.
+(pdftex.def)             Requested size: 171.14764pt x 128.35422pt.
+ [16
+
+] (./main.toc) [17
+
+]
+(./main.toc) [18
+
+] <figs/SEM_stencil_1.pdf, id=230, 486.81876pt x 392.46625pt>
 File: figs/SEM_stencil_1.pdf Graphic file (type pdf)
 
 <use figs/SEM_stencil_1.pdf>
-Package pdftex.def Info: figs/SEM_stencil_1.pdf used on input line 588.
+Package pdftex.def Info: figs/SEM_stencil_1.pdf used on input line 596.
 (pdftex.def)             Requested size: 77.01852pt x 62.08922pt.
 
-<figs/gsbp_coupling.pdf, id=290, 1927.2pt x 1084.05pt>
+<figs/gsbp_coupling.pdf, id=231, 1927.2pt x 1084.05pt>
 File: figs/gsbp_coupling.pdf Graphic file (type pdf)
 
 <use figs/gsbp_coupling.pdf>
-Package pdftex.def Info: figs/gsbp_coupling.pdf used on input line 588.
+Package pdftex.def Info: figs/gsbp_coupling.pdf used on input line 596.
 (pdftex.def)             Requested size: 128.36073pt x 72.20255pt.
 
-<figs/triCubature.png, id=291, 562.2606pt x 421.575pt>
+<figs/triCubature.png, id=232, 562.2606pt x 421.575pt>
 File: figs/triCubature.png Graphic file (type png)
 
 <use figs/triCubature.png>
-Package pdftex.def Info: figs/triCubature.png used on input line 588.
+Package pdftex.def Info: figs/triCubature.png used on input line 596.
 (pdftex.def)             Requested size: 94.1291pt x 70.57323pt.
- [18
+ [19
 
  <./figs/SEM_stencil_1.pdf> <./figs/gsbp_coupling.pdf> <./figs/triCubature.png 
 (PNG copy)>]
 File: figs/SEM_stencil_1.pdf Graphic file (type pdf)
  <use figs/SEM_stencil_1.pdf>
-Package pdftex.def Info: figs/SEM_stencil_1.pdf used on input line 588.
+Package pdftex.def Info: figs/SEM_stencil_1.pdf used on input line 596.
 (pdftex.def)             Requested size: 77.01852pt x 62.08922pt.
 File: figs/gsbp_coupling.pdf Graphic file (type pdf)
 
 <use figs/gsbp_coupling.pdf>
-Package pdftex.def Info: figs/gsbp_coupling.pdf used on input line 588.
+Package pdftex.def Info: figs/gsbp_coupling.pdf used on input line 596.
 (pdftex.def)             Requested size: 128.36073pt x 72.20255pt.
 File: figs/triCubature.png Graphic file (type png)
  <use figs/triCubature.png>
-Package pdftex.def Info: figs/triCubature.png used on input line 588.
-(pdftex.def)             Requested size: 94.1291pt x 70.57323pt.
- [19
-
-]
-File: figs/SEM_stencil_1.pdf Graphic file (type pdf)
-
-<use figs/SEM_stencil_1.pdf>
-Package pdftex.def Info: figs/SEM_stencil_1.pdf used on input line 588.
-(pdftex.def)             Requested size: 77.01852pt x 62.08922pt.
-File: figs/gsbp_coupling.pdf Graphic file (type pdf)
- <use figs/gsbp_coupling.pdf>
-Package pdftex.def Info: figs/gsbp_coupling.pdf used on input line 588.
-(pdftex.def)             Requested size: 128.36073pt x 72.20255pt.
-File: figs/triCubature.png Graphic file (type png)
-
-<use figs/triCubature.png>
-Package pdftex.def Info: figs/triCubature.png used on input line 588.
+Package pdftex.def Info: figs/triCubature.png used on input line 596.
 (pdftex.def)             Requested size: 94.1291pt x 70.57323pt.
  [20
 
 ]
 File: figs/SEM_stencil_1.pdf Graphic file (type pdf)
+
+<use figs/SEM_stencil_1.pdf>
+Package pdftex.def Info: figs/SEM_stencil_1.pdf used on input line 596.
+(pdftex.def)             Requested size: 77.01852pt x 62.08922pt.
+File: figs/gsbp_coupling.pdf Graphic file (type pdf)
+ <use figs/gsbp_coupling.pdf>
+Package pdftex.def Info: figs/gsbp_coupling.pdf used on input line 596.
+(pdftex.def)             Requested size: 128.36073pt x 72.20255pt.
+File: figs/triCubature.png Graphic file (type png)
+
+<use figs/triCubature.png>
+Package pdftex.def Info: figs/triCubature.png used on input line 596.
+(pdftex.def)             Requested size: 94.1291pt x 70.57323pt.
+ [21
+
+]
+File: figs/SEM_stencil_1.pdf Graphic file (type pdf)
  <use figs/SEM_stencil_1.pdf>
-Package pdftex.def Info: figs/SEM_stencil_1.pdf used on input line 588.
+Package pdftex.def Info: figs/SEM_stencil_1.pdf used on input line 596.
 (pdftex.def)             Requested size: 77.01852pt x 62.08922pt.
 File: figs/gsbp_coupling.pdf Graphic file (type pdf)
 
 <use figs/gsbp_coupling.pdf>
-Package pdftex.def Info: figs/gsbp_coupling.pdf used on input line 588.
+Package pdftex.def Info: figs/gsbp_coupling.pdf used on input line 596.
 (pdftex.def)             Requested size: 128.36073pt x 72.20255pt.
 File: figs/triCubature.png Graphic file (type png)
  <use figs/triCubature.png>
-Package pdftex.def Info: figs/triCubature.png used on input line 588.
+Package pdftex.def Info: figs/triCubature.png used on input line 596.
 (pdftex.def)             Requested size: 94.1291pt x 70.57323pt.
- [21
-
-] [22
+ [22
 
 ] [23
 
 ] [24
 
-]
-[25
+] [25
 
-] [26
+]
+[26
 
 ] [27
 
-] (./main.toc) [28
+] [28
+
+] (./main.toc) [29
 
 ]
-<figs/burgersStableEC_1.png, id=388, 455.7828pt x 390.258pt>
+<figs/burgersStableEC_1.png, id=329, 455.7828pt x 390.258pt>
 File: figs/burgersStableEC_1.png Graphic file (type png)
 
 <use figs/burgersStableEC_1.png>
-Package pdftex.def Info: figs/burgersStableEC_1.png used on input line 1010.
+Package pdftex.def Info: figs/burgersStableEC_1.png used on input line 1018.
 (pdftex.def)             Requested size: 136.91603pt x 117.22716pt.
 
-<figs/burgersStableLF_1.png, id=389, 455.7828pt x 390.258pt>
+<figs/burgersStableLF_1.png, id=330, 455.7828pt x 390.258pt>
 File: figs/burgersStableLF_1.png Graphic file (type png)
 
 <use figs/burgersStableLF_1.png>
-Package pdftex.def Info: figs/burgersStableLF_1.png used on input line 1010.
+Package pdftex.def Info: figs/burgersStableLF_1.png used on input line 1018.
 (pdftex.def)             Requested size: 136.91603pt x 117.22716pt.
 
-Overfull \vbox (19.9919pt too high) detected at line 1010
- []
-
-[29
-
- <./figs/burgersStableEC_1.png> <./figs/burgersStableLF_1.png>]
-<figs/burgersStableEC_2.png, id=398, 455.7828pt x 390.258pt>
-File: figs/burgersStableEC_2.png Graphic file (type png)
-
-<use figs/burgersStableEC_2.png>
-Package pdftex.def Info: figs/burgersStableEC_2.png used on input line 1010.
-(pdftex.def)             Requested size: 136.91603pt x 117.22716pt.
-
-<figs/burgersStableLF_2.png, id=399, 455.7828pt x 390.258pt>
-File: figs/burgersStableLF_2.png Graphic file (type png)
-
-<use figs/burgersStableLF_2.png>
-Package pdftex.def Info: figs/burgersStableLF_2.png used on input line 1010.
-(pdftex.def)             Requested size: 136.91603pt x 117.22716pt.
-
-Overfull \vbox (19.9919pt too high) detected at line 1010
+Overfull \vbox (19.9919pt too high) detected at line 1018
  []
 
 [30
 
- <./figs/burgersStableEC_2.png> <./figs/burgersStableLF_2.png>]
-<figs/burgersStableEC_3.png, id=407, 455.7828pt x 390.258pt>
-File: figs/burgersStableEC_3.png Graphic file (type png)
+ <./figs/burgersStableEC_1.png> <./figs/burgersStableLF_1.png>]
+<figs/burgersStableEC_2.png, id=339, 455.7828pt x 390.258pt>
+File: figs/burgersStableEC_2.png Graphic file (type png)
 
-<use figs/burgersStableEC_3.png>
-Package pdftex.def Info: figs/burgersStableEC_3.png used on input line 1010.
+<use figs/burgersStableEC_2.png>
+Package pdftex.def Info: figs/burgersStableEC_2.png used on input line 1018.
 (pdftex.def)             Requested size: 136.91603pt x 117.22716pt.
 
-<figs/burgersStableLF_3.png, id=408, 455.7828pt x 390.258pt>
-File: figs/burgersStableLF_3.png Graphic file (type png)
+<figs/burgersStableLF_2.png, id=340, 455.7828pt x 390.258pt>
+File: figs/burgersStableLF_2.png Graphic file (type png)
 
-<use figs/burgersStableLF_3.png>
-Package pdftex.def Info: figs/burgersStableLF_3.png used on input line 1010.
+<use figs/burgersStableLF_2.png>
+Package pdftex.def Info: figs/burgersStableLF_2.png used on input line 1018.
 (pdftex.def)             Requested size: 136.91603pt x 117.22716pt.
 
-Overfull \vbox (19.9919pt too high) detected at line 1010
+Overfull \vbox (19.9919pt too high) detected at line 1018
  []
 
 [31
 
- <./figs/burgersStableEC_3.png> <./figs/burgersStableLF_3.png>]
-<figs/burgersStableEC_4.png, id=417, 455.7828pt x 390.258pt>
-File: figs/burgersStableEC_4.png Graphic file (type png)
+ <./figs/burgersStableEC_2.png> <./figs/burgersStableLF_2.png>]
+<figs/burgersStableEC_3.png, id=349, 455.7828pt x 390.258pt>
+File: figs/burgersStableEC_3.png Graphic file (type png)
 
-<use figs/burgersStableEC_4.png>
-Package pdftex.def Info: figs/burgersStableEC_4.png used on input line 1010.
+<use figs/burgersStableEC_3.png>
+Package pdftex.def Info: figs/burgersStableEC_3.png used on input line 1018.
 (pdftex.def)             Requested size: 136.91603pt x 117.22716pt.
 
-<figs/burgersStableLF_4.png, id=418, 455.7828pt x 390.258pt>
-File: figs/burgersStableLF_4.png Graphic file (type png)
+<figs/burgersStableLF_3.png, id=350, 455.7828pt x 390.258pt>
+File: figs/burgersStableLF_3.png Graphic file (type png)
 
-<use figs/burgersStableLF_4.png>
-Package pdftex.def Info: figs/burgersStableLF_4.png used on input line 1010.
+<use figs/burgersStableLF_3.png>
+Package pdftex.def Info: figs/burgersStableLF_3.png used on input line 1018.
 (pdftex.def)             Requested size: 136.91603pt x 117.22716pt.
 
-Overfull \vbox (19.9919pt too high) detected at line 1010
+Overfull \vbox (19.9919pt too high) detected at line 1018
  []
 
 [32
 
- <./figs/burgersStableEC_4.png> <./figs/burgersStableLF_4.png>]
-<figs/burgersStableEC_5.png, id=427, 455.7828pt x 390.258pt>
-File: figs/burgersStableEC_5.png Graphic file (type png)
+ <./figs/burgersStableEC_3.png> <./figs/burgersStableLF_3.png>]
+<figs/burgersStableEC_4.png, id=358, 455.7828pt x 390.258pt>
+File: figs/burgersStableEC_4.png Graphic file (type png)
 
-<use figs/burgersStableEC_5.png>
-Package pdftex.def Info: figs/burgersStableEC_5.png used on input line 1010.
+<use figs/burgersStableEC_4.png>
+Package pdftex.def Info: figs/burgersStableEC_4.png used on input line 1018.
 (pdftex.def)             Requested size: 136.91603pt x 117.22716pt.
 
-<figs/burgersStableLF_5.png, id=428, 455.7828pt x 390.258pt>
-File: figs/burgersStableLF_5.png Graphic file (type png)
+<figs/burgersStableLF_4.png, id=359, 455.7828pt x 390.258pt>
+File: figs/burgersStableLF_4.png Graphic file (type png)
 
-<use figs/burgersStableLF_5.png>
-Package pdftex.def Info: figs/burgersStableLF_5.png used on input line 1010.
+<use figs/burgersStableLF_4.png>
+Package pdftex.def Info: figs/burgersStableLF_4.png used on input line 1018.
 (pdftex.def)             Requested size: 136.91603pt x 117.22716pt.
 
-Overfull \vbox (19.9919pt too high) detected at line 1010
+Overfull \vbox (19.9919pt too high) detected at line 1018
  []
 
 [33
 
- <./figs/burgersStableEC_5.png> <./figs/burgersStableLF_5.png>]
-<figs/burgersStableEC_6.png, id=436, 455.7828pt x 390.258pt>
-File: figs/burgersStableEC_6.png Graphic file (type png)
+ <./figs/burgersStableEC_4.png> <./figs/burgersStableLF_4.png>]
+<figs/burgersStableEC_5.png, id=368, 455.7828pt x 390.258pt>
+File: figs/burgersStableEC_5.png Graphic file (type png)
 
-<use figs/burgersStableEC_6.png>
-Package pdftex.def Info: figs/burgersStableEC_6.png used on input line 1010.
+<use figs/burgersStableEC_5.png>
+Package pdftex.def Info: figs/burgersStableEC_5.png used on input line 1018.
 (pdftex.def)             Requested size: 136.91603pt x 117.22716pt.
 
-<figs/burgersStableLF_6.png, id=437, 455.7828pt x 390.258pt>
-File: figs/burgersStableLF_6.png Graphic file (type png)
+<figs/burgersStableLF_5.png, id=369, 455.7828pt x 390.258pt>
+File: figs/burgersStableLF_5.png Graphic file (type png)
 
-<use figs/burgersStableLF_6.png>
-Package pdftex.def Info: figs/burgersStableLF_6.png used on input line 1010.
+<use figs/burgersStableLF_5.png>
+Package pdftex.def Info: figs/burgersStableLF_5.png used on input line 1018.
 (pdftex.def)             Requested size: 136.91603pt x 117.22716pt.
 
-Overfull \vbox (19.9919pt too high) detected at line 1010
+Overfull \vbox (19.9919pt too high) detected at line 1018
  []
 
 [34
 
- <./figs/burgersStableEC_6.png> <./figs/burgersStableLF_6.png>]
-<figs/burgersStableEC_7.png, id=445, 455.7828pt x 390.258pt>
-File: figs/burgersStableEC_7.png Graphic file (type png)
+ <./figs/burgersStableEC_5.png> <./figs/burgersStableLF_5.png>]
+<figs/burgersStableEC_6.png, id=377, 455.7828pt x 390.258pt>
+File: figs/burgersStableEC_6.png Graphic file (type png)
 
-<use figs/burgersStableEC_7.png>
-Package pdftex.def Info: figs/burgersStableEC_7.png used on input line 1010.
+<use figs/burgersStableEC_6.png>
+Package pdftex.def Info: figs/burgersStableEC_6.png used on input line 1018.
 (pdftex.def)             Requested size: 136.91603pt x 117.22716pt.
 
-<figs/burgersStableLF_7.png, id=446, 455.7828pt x 390.258pt>
-File: figs/burgersStableLF_7.png Graphic file (type png)
+<figs/burgersStableLF_6.png, id=378, 455.7828pt x 390.258pt>
+File: figs/burgersStableLF_6.png Graphic file (type png)
 
-<use figs/burgersStableLF_7.png>
-Package pdftex.def Info: figs/burgersStableLF_7.png used on input line 1010.
+<use figs/burgersStableLF_6.png>
+Package pdftex.def Info: figs/burgersStableLF_6.png used on input line 1018.
 (pdftex.def)             Requested size: 136.91603pt x 117.22716pt.
 
-Overfull \vbox (19.9919pt too high) detected at line 1010
+Overfull \vbox (19.9919pt too high) detected at line 1018
  []
 
 [35
 
- <./figs/burgersStableEC_7.png> <./figs/burgersStableLF_7.png>]
-<figs/burgersStableEC_8.png, id=454, 455.7828pt x 390.258pt>
-File: figs/burgersStableEC_8.png Graphic file (type png)
+ <./figs/burgersStableEC_6.png> <./figs/burgersStableLF_6.png>]
+<figs/burgersStableEC_7.png, id=386, 455.7828pt x 390.258pt>
+File: figs/burgersStableEC_7.png Graphic file (type png)
 
-<use figs/burgersStableEC_8.png>
-Package pdftex.def Info: figs/burgersStableEC_8.png used on input line 1010.
+<use figs/burgersStableEC_7.png>
+Package pdftex.def Info: figs/burgersStableEC_7.png used on input line 1018.
 (pdftex.def)             Requested size: 136.91603pt x 117.22716pt.
 
-<figs/burgersStableLF_8.png, id=455, 455.7828pt x 390.258pt>
-File: figs/burgersStableLF_8.png Graphic file (type png)
+<figs/burgersStableLF_7.png, id=387, 455.7828pt x 390.258pt>
+File: figs/burgersStableLF_7.png Graphic file (type png)
 
-<use figs/burgersStableLF_8.png>
-Package pdftex.def Info: figs/burgersStableLF_8.png used on input line 1010.
+<use figs/burgersStableLF_7.png>
+Package pdftex.def Info: figs/burgersStableLF_7.png used on input line 1018.
 (pdftex.def)             Requested size: 136.91603pt x 117.22716pt.
 
-Overfull \vbox (19.9919pt too high) detected at line 1010
+Overfull \vbox (19.9919pt too high) detected at line 1018
  []
 
 [36
 
- <./figs/burgersStableEC_8.png> <./figs/burgersStableLF_8.png>]
-<figs/burgersSplitEnergyEC.png, id=464, 489.9906pt x 382.5492pt>
-File: figs/burgersSplitEnergyEC.png Graphic file (type png)
+ <./figs/burgersStableEC_7.png> <./figs/burgersStableLF_7.png>]
+<figs/burgersStableEC_8.png, id=395, 455.7828pt x 390.258pt>
+File: figs/burgersStableEC_8.png Graphic file (type png)
 
-<use figs/burgersSplitEnergyEC.png>
-Package pdftex.def Info: figs/burgersSplitEnergyEC.png used on input line 1010.
+<use figs/burgersStableEC_8.png>
+Package pdftex.def Info: figs/burgersStableEC_8.png used on input line 1018.
+(pdftex.def)             Requested size: 136.91603pt x 117.22716pt.
 
-(pdftex.def)             Requested size: 143.7634pt x 112.23811pt.
+<figs/burgersStableLF_8.png, id=396, 455.7828pt x 390.258pt>
+File: figs/burgersStableLF_8.png Graphic file (type png)
 
-Overfull \hbox (5.13422pt too wide) in paragraph at lines 1010--1010
-[] [] 
- []
+<use figs/burgersStableLF_8.png>
+Package pdftex.def Info: figs/burgersStableLF_8.png used on input line 1018.
+(pdftex.def)             Requested size: 136.91603pt x 117.22716pt.
 
-<figs/burgersSplitEnergyLF.png, id=465, 489.9906pt x 382.5492pt>
-File: figs/burgersSplitEnergyLF.png Graphic file (type png)
-
-<use figs/burgersSplitEnergyLF.png>
-Package pdftex.def Info: figs/burgersSplitEnergyLF.png used on input line 1010.
-
-(pdftex.def)             Requested size: 143.7634pt x 112.23811pt.
-
-Overfull \hbox (5.13422pt too wide) in paragraph at lines 1010--1010
-[] [] 
- []
-
-
-Overfull \vbox (15.00285pt too high) detected at line 1010
+Overfull \vbox (19.9919pt too high) detected at line 1018
  []
 
 [37
 
- <./figs/burgersSplitEnergyEC.png> <./figs/burgersSplitEnergyLF.png>]
+ <./figs/burgersStableEC_8.png> <./figs/burgersStableLF_8.png>]
+<figs/burgersSplitEnergyEC.png, id=405, 489.9906pt x 382.5492pt>
+File: figs/burgersSplitEnergyEC.png Graphic file (type png)
+
+<use figs/burgersSplitEnergyEC.png>
+Package pdftex.def Info: figs/burgersSplitEnergyEC.png used on input line 1018.
+
+(pdftex.def)             Requested size: 143.7634pt x 112.23811pt.
+
+Overfull \hbox (5.13422pt too wide) in paragraph at lines 1018--1018
+[] [] 
+ []
+
+<figs/burgersSplitEnergyLF.png, id=406, 489.9906pt x 382.5492pt>
+File: figs/burgersSplitEnergyLF.png Graphic file (type png)
+
+<use figs/burgersSplitEnergyLF.png>
+Package pdftex.def Info: figs/burgersSplitEnergyLF.png used on input line 1018.
+
+(pdftex.def)             Requested size: 143.7634pt x 112.23811pt.
+
+Overfull \hbox (5.13422pt too wide) in paragraph at lines 1018--1018
+[] [] 
+ []
+
+
+Overfull \vbox (15.00285pt too high) detected at line 1018
+ []
+
 [38
 
-] [39
+ <./figs/burgersSplitEnergyEC.png> <./figs/burgersSplitEnergyLF.png>]
+[39
 
 ] [40
 
@@ -2230,196 +2229,174 @@ Overfull \vbox (15.00285pt too high) detected at line 1010
 
 ] [45
 
+] (./main.toc) [46
+
+] [47
+
 ]
-<figs/gsbp.png, id=538, 357.4956pt x 357.4956pt>
-File: figs/gsbp.png Graphic file (type png)
- <use figs/gsbp.png>
-Package pdftex.def Info: figs/gsbp.png used on input line 1253.
-(pdftex.def)             Requested size: 81.0549pt x 81.05858pt.
-
-<figs/staggered.png, id=539, 357.4956pt x 357.4956pt>
-File: figs/staggered.png Graphic file (type png)
- <use figs/staggered.png>
-Package pdftex.def Info: figs/staggered.png used on input line 1253.
-(pdftex.def)             Requested size: 81.0549pt x 81.05858pt.
-
-<figs/creanSBP.png, id=540, 683.55376pt x 594.22pt>
-File: figs/creanSBP.png Graphic file (type png)
- <use figs/creanSBP.png>
-Package pdftex.def Info: figs/creanSBP.png used on input line 1253.
-(pdftex.def)             Requested size: 93.24577pt x 81.05858pt.
-
-[46
-
- <./figs/gsbp.png> <./figs/staggered.png> <./figs/creanSBP.png>] (./main.toc) [
-47
-
-] [48
-
-] <figs/dS_ECLF.png, id=569, 999.735pt x 812.03375pt>
+<figs/dS_ECLF.png, id=490, 999.735pt x 812.03375pt>
 File: figs/dS_ECLF.png Graphic file (type png)
-
-<use figs/dS_ECLF.png>
-Package pdftex.def Info: figs/dS_ECLF.png used on input line 1497.
+ <use figs/dS_ECLF.png>
+Package pdftex.def Info: figs/dS_ECLF.png used on input line 1505.
 (pdftex.def)             Requested size: 152.32391pt x 123.72035pt.
- <figs/sol_ECLF.png, id=570, 468.3096pt x 368.577pt>
-File: figs/sol_ECLF.png Graphic file (type png)
 
-<use figs/sol_ECLF.png>
-Package pdftex.def Info: figs/sol_ECLF.png used on input line 1497.
+<figs/sol_ECLF.png, id=491, 468.3096pt x 368.577pt>
+File: figs/sol_ECLF.png Graphic file (type png)
+ <use figs/sol_ECLF.png>
+Package pdftex.def Info: figs/sol_ECLF.png used on input line 1505.
 (pdftex.def)             Requested size: 157.45813pt x 123.92537pt.
 
-Overfull \vbox (8.38206pt too high) detected at line 1497
+Overfull \vbox (8.38206pt too high) detected at line 1505
  []
+
+[48
+
+ <./figs/dS_ECLF.png> <./figs/sol_ECLF.png>]
+<figs/sodGLL.png, id=501, 1381.3206pt x 766.062pt>
+File: figs/sodGLL.png Graphic file (type png)
+ <use figs/sodGLL.png>
+Package pdftex.def Info: figs/sodGLL.png used on input line 1519.
+(pdftex.def)             Requested size: 273.83728pt x 151.86543pt.
 
 [49
 
- <./figs/dS_ECLF.png> <./figs/sol_ECLF.png>]
-<figs/sodGLL.png, id=581, 1381.3206pt x 766.062pt>
-File: figs/sodGLL.png Graphic file (type png)
- <use figs/sodGLL.png>
-Package pdftex.def Info: figs/sodGLL.png used on input line 1511.
-(pdftex.def)             Requested size: 273.83728pt x 151.86543pt.
-
-[50
-
- <./figs/sodGLL.png>] <figs/sodGQ2.png, id=589, 1381.3206pt x 766.062pt>
+ <./figs/sodGLL.png>] <figs/sodGQ2.png, id=510, 1381.3206pt x 766.062pt>
 File: figs/sodGQ2.png Graphic file (type png)
 
 <use figs/sodGQ2.png>
-Package pdftex.def Info: figs/sodGQ2.png used on input line 1511.
+Package pdftex.def Info: figs/sodGQ2.png used on input line 1519.
 (pdftex.def)             Requested size: 273.83728pt x 151.86543pt.
- [51
+ [50
 
  <./figs/sodGQ2.png>]
-<figs/sineShockGLL.png, id=597, 1341.3312pt x 765.5802pt>
+<figs/sineShockGLL.png, id=518, 1341.3312pt x 765.5802pt>
 File: figs/sineShockGLL.png Graphic file (type png)
 
 <use figs/sineShockGLL.png>
-Package pdftex.def Info: figs/sineShockGLL.png used on input line 1526.
+Package pdftex.def Info: figs/sineShockGLL.png used on input line 1534.
 (pdftex.def)             Requested size: 273.83728pt x 156.29077pt.
- [52
+ [51
 
  <./figs/sineShockGLL.png>]
-<figs/sineShockGQ2.png, id=606, 1341.3312pt x 765.5802pt>
+<figs/sineShockGQ2.png, id=526, 1341.3312pt x 765.5802pt>
 File: figs/sineShockGQ2.png Graphic file (type png)
 
 <use figs/sineShockGQ2.png>
-Package pdftex.def Info: figs/sineShockGQ2.png used on input line 1526.
+Package pdftex.def Info: figs/sineShockGQ2.png used on input line 1534.
 (pdftex.def)             Requested size: 273.83728pt x 156.29077pt.
- [53
+ [52
 
  <./figs/sineShockGQ2.png>]
-<figs/riemannBig.png, id=614, 776.6616pt x 714.9912pt>
+<figs/riemannBig.png, id=534, 776.6616pt x 714.9912pt>
 File: figs/riemannBig.png Graphic file (type png)
 
 <use figs/riemannBig.png>
-Package pdftex.def Info: figs/riemannBig.png used on input line 1666.
+Package pdftex.def Info: figs/riemannBig.png used on input line 1674.
 (pdftex.def)             Requested size: 145.47655pt x 133.91869pt.
 
-<figs/riemannSmall.png, id=615, 780.0342pt x 715.9548pt>
+<figs/riemannSmall.png, id=535, 780.0342pt x 715.9548pt>
 File: figs/riemannSmall.png Graphic file (type png)
 
 <use figs/riemannSmall.png>
-Package pdftex.def Info: figs/riemannSmall.png used on input line 1666.
+Package pdftex.def Info: figs/riemannSmall.png used on input line 1674.
 (pdftex.def)             Requested size: 145.47655pt x 133.52017pt.
- [54
+ [53
 
  <./figs/riemannBig.png> <./figs/riemannSmall.png>] <figs/shockVortexTp3.png, i
-d=624, 1236.7806pt x 726.5544pt>
+d=544, 1236.7806pt x 726.5544pt>
 File: figs/shockVortexTp3.png Graphic file (type png)
 
 <use figs/shockVortexTp3.png>
-Package pdftex.def Info: figs/shockVortexTp3.png used on input line 1685.
+Package pdftex.def Info: figs/shockVortexTp3.png used on input line 1693.
 (pdftex.def)             Requested size: 154.03183pt x 90.48648pt.
 
-<figs/shockVortexTp7.png, id=625, 1243.044pt x 725.5908pt>
+<figs/shockVortexTp7.png, id=545, 1243.044pt x 725.5908pt>
 File: figs/shockVortexTp7.png Graphic file (type png)
 
 <use figs/shockVortexTp7.png>
-Package pdftex.def Info: figs/shockVortexTp7.png used on input line 1685.
+Package pdftex.def Info: figs/shockVortexTp7.png used on input line 1693.
 (pdftex.def)             Requested size: 154.03183pt x 89.90146pt.
- [55
+ [54
 
  <./figs/shockVortexTp3.png> <./figs/shockVortexTp7.png>] <figs/mesh2d_affine_c
-onverge2.png, id=634, 438.438pt x 220.6644pt>
+onverge2.png, id=553, 438.438pt x 220.6644pt>
 File: figs/mesh2d_affine_converge2.png Graphic file (type png)
 
 <use figs/mesh2d_affine_converge2.png>
-Package pdftex.def Info: figs/mesh2d_affine_converge2.png used on input line 17
-95.
+Package pdftex.def Info: figs/mesh2d_affine_converge2.png used on input line 18
+03.
 (pdftex.def)             Requested size: 128.36073pt x 64.60384pt.
 
-<figs/mesh2d_curved_converge2.png, id=635, 438.438pt x 220.6644pt>
+<figs/mesh2d_curved_converge2.png, id=554, 438.438pt x 220.6644pt>
 File: figs/mesh2d_curved_converge2.png Graphic file (type png)
 
 <use figs/mesh2d_curved_converge2.png>
-Package pdftex.def Info: figs/mesh2d_curved_converge2.png used on input line 17
-95.
+Package pdftex.def Info: figs/mesh2d_curved_converge2.png used on input line 18
+03.
 (pdftex.def)             Requested size: 128.36073pt x 64.60384pt.
- [56
+ [55
 
- <./figs/mesh2d_affine_converge2.png> <./figs/mesh2d_curved_converge2.png>] [57
+ <./figs/mesh2d_affine_converge2.png> <./figs/mesh2d_curved_converge2.png>] [56
 
-] [58
+] [57
 
 ]
-<figs/nsf.jpg, id=660, 166.6225pt x 167.62625pt>
+<figs/nsf.jpg, id=580, 166.6225pt x 167.62625pt>
 File: figs/nsf.jpg Graphic file (type jpg)
  <use figs/nsf.jpg>
-Package pdftex.def Info: figs/nsf.jpg used on input line 1950.
+Package pdftex.def Info: figs/nsf.jpg used on input line 1958.
 (pdftex.def)             Requested size: 51.3422pt x 51.65154pt.
- [59
+ [58
 
- <./figs/nsf.jpg>] [60
+ <./figs/nsf.jpg>] [59
 
-] <figs/decoupledSBPfig.png, id=675, 1927.2pt x 1084.05pt>
+] <figs/decoupledSBPfig.png, id=596, 1927.2pt x 1084.05pt>
 File: figs/decoupledSBPfig.png Graphic file (type png)
 
 <use figs/decoupledSBPfig.png>
-Package pdftex.def Info: figs/decoupledSBPfig.png used on input line 1966.
+Package pdftex.def Info: figs/decoupledSBPfig.png used on input line 1974.
 (pdftex.def)             Requested size: 308.06367pt x 173.28613pt.
- [61
+ [60
 
  <./figs/decoupledSBPfig.png>]
-<figs/sbpGLL.png, id=686, 1345.1856pt x 739.563pt>
+<figs/sbpGLL.png, id=606, 1345.1856pt x 739.563pt>
 File: figs/sbpGLL.png Graphic file (type png)
  <use figs/sbpGLL.png>
-Package pdftex.def Info: figs/sbpGLL.png used on input line 1983.
+Package pdftex.def Info: figs/sbpGLL.png used on input line 1991.
 (pdftex.def)             Requested size: 154.03183pt x 84.6812pt.
 
-Overfull \hbox (8.5579pt too wide) in paragraph at lines 1983--1983
+Overfull \hbox (8.5579pt too wide) in paragraph at lines 1991--1991
 [] [] 
  []
 
-<figs/sbpGLLNp4.png, id=687, 1345.1856pt x 739.563pt>
+<figs/sbpGLLNp4.png, id=607, 1345.1856pt x 739.563pt>
 File: figs/sbpGLLNp4.png Graphic file (type png)
  <use figs/sbpGLLNp4.png>
-Package pdftex.def Info: figs/sbpGLLNp4.png used on input line 1983.
+Package pdftex.def Info: figs/sbpGLLNp4.png used on input line 1991.
 (pdftex.def)             Requested size: 154.03183pt x 84.6812pt.
 
-Overfull \hbox (8.5579pt too wide) in paragraph at lines 1983--1983
+Overfull \hbox (8.5579pt too wide) in paragraph at lines 1991--1991
 [] [] 
  []
 
-[62
+[61
 
  <./figs/sbpGLL.png> <./figs/sbpGLLNp4.png>]
-<figs/sineShockQ3Compare.png, id=696, 467.8278pt x 368.577pt>
+<figs/sineShockQ3Compare.png, id=617, 467.8278pt x 368.577pt>
 File: figs/sineShockQ3Compare.png Graphic file (type png)
 
 <use figs/sineShockQ3Compare.png>
-Package pdftex.def Info: figs/sineShockQ3Compare.png used on input line 2001.
+Package pdftex.def Info: figs/sineShockQ3Compare.png used on input line 2009.
 (pdftex.def)             Requested size: 154.03183pt x 121.3552pt.
 
-<figs/sineShockDensityCompare.png, id=697, 457.71pt x 368.577pt>
+<figs/sineShockDensityCompare.png, id=618, 457.71pt x 368.577pt>
 File: figs/sineShockDensityCompare.png Graphic file (type png)
 
 <use figs/sineShockDensityCompare.png>
 Package pdftex.def Info: figs/sineShockDensityCompare.png used on input line 20
-01.
+09.
 (pdftex.def)             Requested size: 150.61076pt x 121.28209pt.
- [63
+ [62
 
  <./figs/sineShockQ3Compare.png> <./figs/sineShockDensityCompare.png>]
 NOTE: coordinate (1Y2.5641e-2],0Y0.0e0]) has been dropped because it is unbound
@@ -2434,7 +2411,7 @@ NOTE: coordinate (1Y1.29032e-2],0Y0.0e0]) has been dropped because it is unboun
 ded (in y). (see also unbounded coords=jump). 
 NOTE: coordinate (1Y6.47249e-3],0Y0.0e0]) has been dropped because it is unboun
 ded (in y). (see also unbounded coords=jump). 
-[64
+[63
 
 ]
 No file main.bbl.
@@ -2447,11 +2424,11 @@ No file main.bbl.
 \tf@snm=\write9
 \openout9 = `main.snm'.
 
-Package atveryend Info: Empty hook `BeforeClearDocument' on input line 2111.
-Package atveryend Info: Empty hook `AfterLastShipout' on input line 2111.
+Package atveryend Info: Empty hook `BeforeClearDocument' on input line 2119.
+Package atveryend Info: Empty hook `AfterLastShipout' on input line 2119.
 (./main.aux)
-Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 2111.
-Package atveryend Info: Executing hook `AtEndAfterFileList' on input line 2111.
+Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 2119.
+Package atveryend Info: Executing hook `AtEndAfterFileList' on input line 2119.
 
 Package rerunfilecheck Info: File `main.out' has not changed.
 (rerunfilecheck)             Checksum: F5B3ACDAE738B361B23D90ECFD4FE525;201.
@@ -2462,10 +2439,10 @@ LaTeX Font Warning: Size substitutions with differences
 
  ) 
 Here is how much of TeX's memory you used:
- 42713 strings out of 492995
- 979063 string characters out of 6132704
- 1224190 words of memory out of 5000000
- 45296 multiletter control sequences out of 15000+600000
+ 42689 strings out of 492995
+ 978637 string characters out of 6132704
+ 1222805 words of memory out of 5000000
+ 45278 multiletter control sequences out of 15000+600000
  40041 words of font info for 122 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
  64i,20n,113p,10341b,2420s stack positions out of 5000i,500n,10000p,200000b,80000s
@@ -2498,10 +2475,10 @@ xlive/2017/texmf-dist/fonts/type1/public/cm-super/sfso0800.pfb></usr/local/texl
 ive/2017/texmf-dist/fonts/type1/public/cm-super/sfso0900.pfb></usr/local/texliv
 e/2017/texmf-dist/fonts/type1/public/cm-super/sfso1000.pfb></usr/local/texlive/
 2017/texmf-dist/fonts/type1/public/cm-super/sfso1200.pfb>
-Output written on main.pdf (64 pages, 4595107 bytes).
+Output written on main.pdf (63 pages, 4023512 bytes).
 PDF statistics:
- 837 PDF objects out of 1000 (max. 8388607)
- 620 compressed objects within 7 object streams
- 136 named destinations out of 1000 (max. 500000)
- 393 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 758 PDF objects out of 1000 (max. 8388607)
+ 574 compressed objects within 6 object streams
+ 134 named destinations out of 1000 (max. 500000)
+ 373 words of extra memory for PDF output out of 10000 (max. 10000000)
 

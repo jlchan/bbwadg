@@ -7,12 +7,12 @@ Globals2D
 
 if nargin==0
     K1D = 4;
-    N = 3;
+    N = 4;
 end
 c_flag = 0;
-FinalTime = 5;
+FinalTime = 1;%5;
 
-tau0 = 0;
+tau0 = 1;
 
 aa = 2;    
 if 1

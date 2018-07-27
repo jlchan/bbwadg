@@ -227,7 +227,7 @@ title style={font=\footnotesize}
 
 
 \title[Discretely stable DG]{Entropy stable discontinuous Galerkin methods with arbitrary bases and quadratures}
-\date[7/12/2018]{ICOSAHOM 2018\\July 12, 2018}
+\date[7/25/2018]{ICOSAHOM 2018\\July 25, 2018}
 \author[J.\ Chan]{Jesse Chan}
 \institute[Rice CAAM]{\inst{1}Department of Computational and Applied Math}
 
@@ -242,84 +242,71 @@ title style={font=\footnotesize}
 
 %%% =================================================
 
-%\frame{
-%\frametitle{Acknowledgments}
-%
-%\begin{itemize}
-%\item Carpenter, Fisher, Nordstrom
-%\vspace{1em}
-%\item Gassner, Kopriva, Winters, Wintermeyer.  
-%\vspace{1em}
-%\item Hicken, DCDR Fernandez, Crean.
-%\vspace{1em}
-%\item Chen and Shu.  
-%\end{itemize}
-%}
 
-%\frame{
-%\frametitle{High order methods for time-dependent hyperbolic PDEs}
-%\setcounter{subfigure}{0}
-%%\vspace{-1.5em}
-%\begin{overlayarea}{\textwidth}{.785\textheight}
-%\begin{columns}
-%\begin{column}{.5\textwidth}
-%\begin{itemize}
-%\item<1-> Accurate resolution of propagating waves and vortices.
-%\vspace{.5em}
-%\item<2-> High order: low numerical dissipation and dispersion.
-%\vspace{.5em}
-%\item<5-> High order approximations: more accurate per unknown.
-%\vspace{.5em}
-%\item<6-> Many-core architectures (efficient explicit time-stepping).
-%\end{itemize}
-%\end{column}
-%\begin{column}{.475\textwidth}
-%\begin{figure}
-%\centering
-%\begin{overlayarea}{\textwidth}{.5\textheight}
-%\only<1>{
+\frame{
+\frametitle{High order methods for time-dependent hyperbolic PDEs}
+\setcounter{subfigure}{0}
 %\vspace{-1.5em}
-%\includegraphics[width=\textwidth]{figs/vortexWave.png}
-%%\hspace{-.25em}\hbox{\includegraphics[width=.825\textwidth]{figs/wave.png}}\\
-%%\vspace{-5.5em}
-%%\hspace{10em}\hbox{\includegraphics[width=.825\textwidth]{figs/wingflow.png}}
-%\caption*{\tiny Figures courtesy of T.\ Warburton, A.\ Modave.}
-%}
-%\only<2>{
-%\includegraphics[width=.95\textwidth]{figs/wave_N1.eps}
-%\caption*{\textbf{Fine} linear approximation.}
-%}
-%\only<3>{
-%\includegraphics[width=.95\textwidth]{figs/wave_N2.eps}
-%\caption*{\textbf{Coarse} quadratic approximation.}
-%}
-%\only<4-5>{
-%\vspace{1em}
-%\includegraphics[width=.975\textwidth]{figs/turbulent1.png}\\
-%\vspace{.5em}
-%\includegraphics[width=.975\textwidth]{figs/turbulent2.png}
-%\caption*{\tiny Figure from Per-Olof Persson.}
-%}
-%\only<6->{
-%\includegraphics[width=.975\textwidth]{figs/gpu.pdf}
-%\caption*{A graphics processing unit (GPU).}
-%}
-%%\caption*{Image courtesy of Axel Modave.}
-%\end{overlayarea}
-%\end{figure}
-%\end{column}
-%\end{columns}
-%\vspace{1.5em}
-%\uncover<7>{
-%\begin{center}
-%\ovalbox{Goal: address \note{instability} of high order methods!}
-%\end{center}
-%}
-%\end{overlayarea}
-%
-%%\visible<1>{\let\thefootnote\relax\footnotetext[1]{\tiny Figures courtesy of T.\ Warburton, A.\ Modave.}}
-%%\visible<5>{\let\thefootnote\relax\footnotetext[5]{\tiny Figure courtesy of T.\ Warburton, Nvidia.}}
-%}
+\begin{overlayarea}{\textwidth}{.785\textheight}
+\begin{columns}
+\begin{column}{.5\textwidth}
+\begin{itemize}
+\item<1-> Accurate resolution of propagating waves and vortices.
+\vspace{.5em}
+\item<2-> High order: low numerical dissipation and dispersion.
+\vspace{.5em}
+\item<5-> High order approximations: more accurate per unknown.
+\vspace{.5em}
+\item<6-> Many-core architectures (efficient explicit time-stepping).
+\end{itemize}
+\end{column}
+\begin{column}{.475\textwidth}
+\begin{figure}
+\centering
+\begin{overlayarea}{\textwidth}{.5\textheight}
+\only<1>{
+\vspace{-1.5em}
+\includegraphics[width=\textwidth]{figs/vortexWave.png}
+%\hspace{-.25em}\hbox{\includegraphics[width=.825\textwidth]{figs/wave.png}}\\
+%\vspace{-5.5em}
+%\hspace{10em}\hbox{\includegraphics[width=.825\textwidth]{figs/wingflow.png}}
+\caption*{\tiny Figures courtesy of T.\ Warburton, A.\ Modave.}
+}
+\only<2>{
+\includegraphics[width=.95\textwidth]{figs/wave_N1.eps}
+\caption*{\textbf{Fine} linear approximation.}
+}
+\only<3>{
+\includegraphics[width=.95\textwidth]{figs/wave_N2.eps}
+\caption*{\textbf{Coarse} quadratic approximation.}
+}
+\only<4-5>{
+\vspace{1em}
+\includegraphics[width=.975\textwidth]{figs/turbulent1.png}\\
+\vspace{.5em}
+\includegraphics[width=.975\textwidth]{figs/turbulent2.png}
+\caption*{\tiny Figure from Per-Olof Persson.}
+}
+\only<6->{
+\includegraphics[width=.975\textwidth]{figs/gpu.pdf}
+\caption*{A graphics processing unit (GPU).}
+}
+%\caption*{Image courtesy of Axel Modave.}
+\end{overlayarea}
+\end{figure}
+\end{column}
+\end{columns}
+\vspace{1.5em}
+\uncover<7>{
+\begin{center}
+\ovalbox{Goal: address \note{instability} of high order methods!}
+\end{center}
+}
+\end{overlayarea}
+
+%\visible<1>{\let\thefootnote\relax\footnotetext[1]{\tiny Figures courtesy of T.\ Warburton, A.\ Modave.}}
+%\visible<5>{\let\thefootnote\relax\footnotetext[5]{\tiny Figure courtesy of T.\ Warburton, Nvidia.}}
+}
 
 \frame{
 \frametitle{Why are high order methods for nonlinear PDEs unstable?}
@@ -366,8 +353,8 @@ title style={font=\footnotesize}
 &\int_{\Omega} \bm{v}^T\LRp{\pd{\bm{u}}{t} + \pd{\bm{f}(\bm{u})}{x}} = 0, \qquad \bm{v} = \pd{S}{\bm{u}} \\
 &\Longrightarrow \int_{\Omega}\pd{S(\bm{u})}{t} + \LRu{\LRp{\bm{v}^T\bm{f}(\bm{u}) - \psi(\bm{u})}}_{-1}^1 \leq 0.
 \end{align*}
-\vspace{.01em}
-\item Proof of entropy inequality relies on \note{chain rule}, integration by parts.  
+%\vspace{.01em}
+\item Proof of entropy inequality relies on integration by parts, \note{chain rule}.  
 \end{itemize}
 }
 
@@ -391,9 +378,9 @@ title style={font=\footnotesize}
 \begin{itemize}
 \item<1-> Existing discrete stability theory: regularization, viscosity, TVD, etc.
 \vspace{.75em}
-\item<1-> Can result in a balancing act between accuracy, stability, and robustness.  
+\item<1-> Can result in a balancing act between high order accuracy, stability, and robustness.  
 \vspace{.5em}
-\item<2-> Goal: make stability \note{independent} of artificial viscosity, limiters, and quadrature accuracy.
+\item<2-> Goal: aim for stability \note{independently} of artificial viscosity, limiters, and quadrature accuracy.
 \end{itemize}
 \end{column}
 \end{columns}
@@ -518,7 +505,7 @@ title style={font=\footnotesize}
 
 %% =================================================
 
-\section{Summation by parts operators}
+\section{``Decoupled'' summation by parts operators}
 
 \frame[noframenumbering]{
 \frametitle{Talk outline}
@@ -579,7 +566,7 @@ title style={font=\footnotesize}
 %\item Collocation at GLL nodes: underintegration errors.  
 \item<2-> GSBP (e.g.\ Gauss collocation): higher accuracy, but require \note{non-compact coupling conditions} between neighboring elements.
 \vspace{.25em}
-\item<3-> Tetrahedra, prism/pyramids, splines (over-integration, dense norms)?
+\item<3-> Tetrahedra, prisms, pyramids, etc (over-integration, dense norms)?
 \end{itemize}
 
 
@@ -623,14 +610,14 @@ title style={font=\footnotesize}
 \frame{
 \frametitle{Quadrature-based matrices for polynomial bases}
 
-
-
 \begin{itemize}
 \item Volume and surface quadratures $(\bm{x}^q_i,\bm{w}^q_i)$, $(\bm{x}^f_i, \bm{w}^f_i)$, exact for degree $2N$ polynomials.  Define diagonal quadrature weight matrices
 \[
 \bm{W} = {\rm diag}\LRp{\bm{w}^q}, \qquad \bm{W}_f = {\rm diag}\LRp{\bm{w}^f}.
 \]
-\item Assume some polynomial basis $\phi_1,\ldots,\phi_{N_p}$.  Define differentiation matrix $\bm{D}^i$, interpolation matrices $\bm{V}_q, \bm{V}_f$
+\item Assume some polynomial basis $\phi_1,\ldots,\phi_{N_p}$.  Define 
+%``modal'' differentiation matrix $\bm{D}^i$, 
+the interpolation matrices $\bm{V}_q, \bm{V}_f$
 \[
 \LRp{\bm{V}_q}_{ij} = \phi_j(\bm{x}^q_i), \qquad \LRp{\bm{V}_f}_{ij} = \phi_j(\bm{x}^f_i).
 \]
@@ -638,6 +625,7 @@ title style={font=\footnotesize}
 \[
 \bm{P}_q = \bm{M}^{-1}\bm{V}_q^T\bm{W}, \qquad \bm{L}_f = \bm{M}^{-1}\bm{V}_f^T\bm{W}_f.  
 \]
+\item These matrices map to and from \note{modal} and \note{quadrature} spaces.
 \end{itemize}
 }
 
@@ -647,7 +635,7 @@ title style={font=\footnotesize}
 \begin{itemize}
 \item Matrix $\bm{D}^i_q$: evaluates derivative of $L^2$ projection at points $\bm{x}^q$.
 \[
-\bm{D}^i_q = \bm{V}_q\bm{D}^i\bm{P}_q.  
+\bm{D}^i_q = \bm{V}_q\bm{D}^i\bm{P}_q, \qquad \bm{D}^i = \text{ modal differentiation matrix.}
 \]
 \item Summation-by-parts involving $L^2$ projection:
 \[
@@ -666,7 +654,7 @@ title style={font=\footnotesize}
 \begin{itemize}
 \item Approx.\ derivatives also using \note{boundary traces} (compact coupling).
 \vspace{.5em}
-\item On an element $D^k$ with unit normal vector $\bm{n}$: approximate derivative w.r.t.\ the $i$th coordinate.
+\item On an element $D^k$ with unit normal vector $\bm{n}$: approximate $i$th derivative (block matrix operating on \note{volume} + \note{surface} values).
 \begin{align*}
 \bm{D}^i_N  &= \LRs{
 \begin{array}{cc}
@@ -713,12 +701,12 @@ f\pd{g}{x} \approx \LRs{\begin{array}{cc}
 \item $\bm{D}^i_N \bm{1} = 0$ holds (necessary for discrete entropy conservation).
 \end{itemize}
 }
-\only<2>{
-\begin{figure}
-\centering
-\includegraphics[width=.95\textwidth]{figs/decoupledSBPfig.png}
-\end{figure}
-}
+%\only<2>{
+%\begin{figure}
+%\centering
+%\includegraphics[width=.95\textwidth]{figs/decoupledSBPfig.png}
+%\end{figure}
+%}
 }
 
 
@@ -922,7 +910,7 @@ f^{\rho}_S(\bm{u}_L,\bm{u}_R) = \avg{\rho}^{\log} \avg{u}, \qquad \avg{\rho}^{\l
 %\[
 %\bm{v}_q^T \bm{P}_q^T \bm{M} \td{\hat{\bm{u}}}{t} = \bm{v}_q^T \bm{W} \bm{V}_q \bm{M}^{-1}\bm{M} \td{\hat{\bm{u}}}{t} = \bm{v}_q^T \bm{W}  \td{\LRp{\bm{V}_q\hat{\bm{u}}}}{t} = .  
 %\]
-\item<5-> Proof requires $\tilde{\bm{v}} = \bm{v}(\tilde{\bm{u}})$; the entropy variables $\tilde{\bm{v}}$ must be a function of the conservative variables $\tilde{\bm{u}}$.%; modify conservative variables $\tilde{\bm{u}}$ to ensure test function $\bm{v}(\tilde{\bm{u}}) = P_N\bm{v}(\bm{u}) \in P^N$.
+\item<5-> Applying Tadmor shuffle condition requires $\tilde{\bm{v}} = \bm{v}(\tilde{\bm{u}})$; the entropy variables $\tilde{\bm{v}}$ must be a function of the conservative variables $\tilde{\bm{u}}$.%; modify conservative variables $\tilde{\bm{u}}$ to ensure test function $\bm{v}(\tilde{\bm{u}}) = P_N\bm{v}(\bm{u}) \in P^N$.
 %\item<4-> Proof requires $\bm{v} = \bm{v}(\bm{u})$ \textcolor{red}{pointwise}; modify conservative variables $\tilde{\bm{u}}$ to ensure test function $\bm{v}(\tilde{\bm{u}}) = P_N\bm{v}(\bm{u}) \in P^N$.
 \end{itemize} 
 }
@@ -990,6 +978,81 @@ Assuming continuity in time, $\bm{u}_h(\bm{x},t)$ satisfies the quadrature form 
 \let\thefootnote\relax\footnotetext{\tiny Parsani et al.\  (2016). \emph{ES staggered grid disc.\ spectral collocation methods of any order for the comp.\ NS eqns.}}
 \let\thefootnote\relax\footnotetext{\tiny Shi and Shu (2017). \emph{On local conservation of numerical methods for conservation laws}.}
 }
+
+\frame{
+\frametitle{Illustration of main steps of ESDG}
+\begin{columns}
+\begin{column}{.5\textwidth}
+\vspace{-1em}
+%\hspace{-4em}
+\begin{figure}
+%\centering
+\begin{overlayarea}{.75\textwidth}{.425\textheight}
+\only<1>{\includegraphics[height=.425\textheight]{figs/gsbp_tri1.png}}
+\only<2>{\includegraphics[height=.425\textheight]{figs/gsbp_tri2.png}}
+\only<3>{\includegraphics[height=.425\textheight]{figs/gsbp_tri3.png}}
+\only<4>{\includegraphics[height=.425\textheight]{figs/gsbp_tri4.png}}
+\end{overlayarea}
+\end{figure}
+\end{column}
+\hspace{2.5em}
+\begin{column}{.5\textwidth}
+\[
+\only<1>{
+\LRp{\underbrace{\begin{bmatrix}
+\bm{A} & \bm{B}\\
+-\bm{B}^T & \bm{C}
+\end{bmatrix}}_{\bm{Q}_N^i} \circ
+\begin{bmatrix}
+\bm{F}^{vv}_S & \bm{F}^{vf}_S\\
+\bm{F}^{fv}_S & \bm{F}^{ff}_S
+\end{bmatrix} } \bm{1}
+}
+\only<2>{
+\LRp{\underbrace{\begin{bmatrix}
+\note{\bm{A}} & \bm{B}\\
+-\bm{B}^T & \bm{C}
+\end{bmatrix}}_{\bm{Q}_N^i} \circ
+\begin{bmatrix}
+\note{\bm{F}^{vv}_S} & \bm{F}^{vf}_S\\
+\bm{F}^{fv}_S & \bm{F}^{ff}_S
+\end{bmatrix} } \bm{1}
+}
+\only<3>{
+\LRp{\underbrace{\begin{bmatrix}
+\bm{A} & \bm{B}\\
+-\bm{B}^T & \note{\bm{C}}
+\end{bmatrix}}_{\bm{Q}_N^i} \circ
+\begin{bmatrix}
+\bm{F}^{vv}_S & \bm{F}^{vf}_S\\
+\bm{F}^{fv}_S & \note{\bm{F}^{ff}_S}
+\end{bmatrix} } \bm{1}
+}
+\only<4>{
+\LRp{\underbrace{\begin{bmatrix}
+\bm{A} & \note{\bm{B}}\\
+\note{-\bm{B}^T} & \bm{C}
+\end{bmatrix}}_{\bm{Q}_N^i} \circ
+\begin{bmatrix}
+\bm{F}^{vv}_S & \note{\bm{F}^{vf}_S}\\
+\note{\bm{F}^{fv}_S} & \bm{F}^{ff}_S
+\end{bmatrix} } \bm{1}
+}
+\]
+\end{column}
+\end{columns}
+%\vspace{-1em}
+\begin{itemize}
+\item<1-> Interpolate \note{projected entropy variables $P_N \bm{v}(\bm{u})$} to all nodes.  
+\vspace{.25em}
+\item<2-> Perform flux differencing at volume quadrature nodes.
+\vspace{.25em}
+\item<3-> Compute $\bm{f}_S(\bm{u}_L,\bm{u}_R)$ for surface nodes of neighboring elements.
+\vspace{.25em}
+\item<4-> Compute $\bm{f}_S(\bm{u}_L,\bm{u}_R)$ between volume/surface nodes, apply flux differencing with interp.\ matrix + transpose for volume/surface nodes.
+\end{itemize} 
+}
+
 
 %
 %\frame{
@@ -1075,6 +1138,50 @@ Assuming continuity in time, $\bm{u}_h(\bm{x},t)$ satisfies the quadrature form 
 %\let\thefootnote\relax\footnotetext{\tiny Chan, Hewett, and Warburton (2016). \textit{Weight-adjusted discontinuous Galerkin methods: curvilinear meshes}.}
 %}
 
+\frame{
+\frametitle{1D Sod shock tube}
+\begin{itemize}
+\item Circles are cell averages.
+\item CFL of .125 used for both GLL-$(N+1)$and GQ-$(N+2)$.
+\end{itemize}
+\begin{figure}
+\centering
+\only<1>{\includegraphics[width=.8\textwidth]{figs/sodGLL.png}\caption*{$N=4, K = 32$, $(N+1)$ point Gauss-Lobatto-Legendre quadrature.}}
+\only<2>{\includegraphics[width=.8\textwidth]{figs/sodGQ2.png}\caption*{$N=4, K = 32$, $(N+2)$ point Gauss quadrature.}}
+\end{figure}
+}
+
+
+\frame{
+\frametitle{1D sine-shock interaction}
+
+\begin{itemize}
+\item GQ-$(N+2)$ needs smaller CFL (.05 vs .125) for stability.  
+\end{itemize}
+
+\begin{figure}
+\centering
+\only<1>{\includegraphics[width=.8\textwidth]{figs/sineShockGLL.png}\caption*{$N=4, K = 40, CFL = .05$, $(N+1)$ point Gauss-Lobatto-Legendre quadrature.}}
+\only<2>{\includegraphics[width=.8\textwidth]{figs/sineShockGQ2.png}\caption*{$N=4, K = 40, CFL = .05$, $(N+2)$ point Gauss quadrature.}}
+\end{figure}
+}
+
+\frame{
+\frametitle{On CFL restrictions}
+
+\begin{itemize}
+\item For GLL-$(N+1)$ quadrature, $\tilde{\bm{u}} = \bm{u}\LRp{P_N \bm{v}} = \bm{u}$ at GLL points.
+\item For GQ-$(N+2)$, discrepancy between $L^2$ projection and interpolation.
+\item Still need \note{positivity} of thermodynamic quantities for stability!
+\end{itemize}
+\vspace{-1em}
+\begin{figure}
+\centering
+\subfloat[${v}_3(x), \LRp{P_N v_3}(x)$]{\includegraphics[width=.45\textwidth]{figs/sineShockQ3Compare.png}}
+\hspace{1em}
+\subfloat[$\rho(x), \rho\LRp{\LRp{P_N \bm{v}}(x)}$]{\includegraphics[width=.44\textwidth]{figs/sineShockDensityCompare.png}}
+\end{figure}
+}
 
 %% =================================================
 
@@ -1245,50 +1352,6 @@ Assuming continuity in time, $\bm{u}_h(\bm{x},t)$ satisfies the quadrature form 
 %\end{figure}
 %}
 
-\frame{
-\frametitle{1D Sod shock tube}
-\begin{itemize}
-\item Circles are cell averages.
-\item CFL of .125 used for both GLL-$(N+1)$and GQ-$(N+2)$.
-\end{itemize}
-\begin{figure}
-\centering
-\only<1>{\includegraphics[width=.8\textwidth]{figs/sodGLL.png}\caption*{$N=4, K = 32$, $(N+1)$ point Gauss-Lobatto-Legendre quadrature.}}
-\only<2>{\includegraphics[width=.8\textwidth]{figs/sodGQ2.png}\caption*{$N=4, K = 32$, $(N+2)$ point Gauss quadrature.}}
-\end{figure}
-}
-
-
-\frame{
-\frametitle{1D sine-shock interaction}
-
-\begin{itemize}
-\item GQ-$(N+2)$ needs smaller CFL (.05 vs .125) for stability.  
-\end{itemize}
-
-\begin{figure}
-\centering
-\only<1>{\includegraphics[width=.8\textwidth]{figs/sineShockGLL.png}\caption*{$N=4, K = 40, CFL = .05$, $(N+1)$ point Gauss-Lobatto-Legendre quadrature.}}
-\only<2>{\includegraphics[width=.8\textwidth]{figs/sineShockGQ2.png}\caption*{$N=4, K = 40, CFL = .05$, $(N+2)$ point Gauss quadrature.}}
-\end{figure}
-}
-
-\frame{
-\frametitle{On CFL restrictions}
-
-\begin{itemize}
-\item For GLL-$(N+1)$ quadrature, $\tilde{\bm{u}} = \bm{u}\LRp{P_N \bm{v}} = \bm{u}$ at GLL points.
-\item For GQ-$(N+2)$, discrepancy between $L^2$ projection and interpolation.
-\item Still need \note{positivity} of thermodynamic quantities for stability!
-\end{itemize}
-\vspace{-1em}
-\begin{figure}
-\centering
-\subfloat[${v}_3(x), \LRp{P_N v_3}(x)$]{\includegraphics[width=.45\textwidth]{figs/sineShockQ3Compare.png}}
-\hspace{1em}
-\subfloat[$\rho(x), \rho\LRp{\LRp{P_N \bm{v}}(x)}$]{\includegraphics[width=.44\textwidth]{figs/sineShockDensityCompare.png}}
-\end{figure}
-}
 
 \frame{
 \frametitle{2D Riemann problem}
@@ -1303,7 +1366,7 @@ Assuming continuity in time, $\bm{u}_h(\bm{x},t)$ satisfies the quadrature form 
 
 \begin{itemize}
 \item Degree $N$ polynomials, degree $2N$ volume and surface quadratures.
-\item Uniform $64\times 64$ mesh: $N=3$, CFL $.125$, Lax-Friedrichs stabilization.
+\item Uniform $64\times 64$ triangle mesh: $N=3$, CFL $.125$, Lax-Friedrichs flux.
 %\item No limiting or artificial viscosity required to maintain stability!
 \item Periodic on larger domain (``natural'' boundary conditions unstable).
 \end{itemize}
@@ -1323,7 +1386,7 @@ Assuming continuity in time, $\bm{u}_h(\bm{x},t)$ satisfies the quadrature form 
 
 \begin{itemize}
 \item Vortex passing through a shock on a periodic domain (matrix dissipation, degree $N=3$ approximation, mesh size $h = 1/128$).
-\item Entropy stable wall boundary conditions work for decoupled SBP (note: I did not realize this when running this experiment).
+\item Can also impose existing entropy stable wall boundary conditions for compressible Euler with decoupled SBP.  %(note: I did not realize this when running this experiment).
 \end{itemize}
 
 \let\thefootnote\relax\footnotetext{\tiny Winters, Derigs, Gassner, Walch (2017). \textit{A uniquely defined entropy stable matrix dissipation operator for high Mach number ideal MHD and compressible Euler simulations}.}
@@ -1609,9 +1672,9 @@ coordinates{(0.25,5.32822e-05)(0.125,1.5792e-05)(0.0625,9.458e-07)(0.03125,3.050
 %\centering
 \begin{overlayarea}{.75\textwidth}{.425\textheight}
 \only<1>{\includegraphics[height=.425\textheight]{figs/gsbp1.png}}
-\only<2-3>{\includegraphics[height=.425\textheight]{figs/gsbp2.png}}
-\only<4>{\includegraphics[height=.425\textheight]{figs/gsbp3.png}}
-\only<5>{\includegraphics[height=.425\textheight]{figs/gsbp4.png}}
+\only<2>{\includegraphics[height=.425\textheight]{figs/gsbp2.png}}
+\only<3>{\includegraphics[height=.425\textheight]{figs/gsbp3.png}}
+\only<4>{\includegraphics[height=.425\textheight]{figs/gsbp4.png}}
 \end{overlayarea}
 \end{figure}
 \end{column}
@@ -1622,37 +1685,37 @@ coordinates{(0.25,5.32822e-05)(0.125,1.5792e-05)(0.0625,9.458e-07)(0.03125,3.050
 \LRp{\underbrace{\begin{bmatrix}
 \bm{A} & \bm{B}\\
 -\bm{B}^T & \bm{C}
-\end{bmatrix}}_{\bm{D}_N^i} \circ
+\end{bmatrix}}_{\bm{Q}_N^i} \circ
 \begin{bmatrix}
 \bm{F}^{vv}_S & \bm{F}^{vf}_S\\
 \bm{F}^{fv}_S & \bm{F}^{ff}_S
 \end{bmatrix} } \bm{1}
 }
-\only<2-3>{
+\only<2>{
 \LRp{\underbrace{\begin{bmatrix}
 \note{\bm{A}} & \bm{B}\\
 -\bm{B}^T & \bm{C}
-\end{bmatrix}}_{\bm{D}_N^i} \circ
+\end{bmatrix}}_{\bm{Q}_N^i} \circ
 \begin{bmatrix}
 \note{\bm{F}^{vv}_S} & \bm{F}^{vf}_S\\
 \bm{F}^{fv}_S & \bm{F}^{ff}_S
 \end{bmatrix} } \bm{1}
 }
-\only<4>{
+\only<3>{
 \LRp{\underbrace{\begin{bmatrix}
 \bm{A} & \bm{B}\\
 -\bm{B}^T & \note{\bm{C}}
-\end{bmatrix}}_{\bm{D}_N^i} \circ
+\end{bmatrix}}_{\bm{Q}_N^i} \circ
 \begin{bmatrix}
 \bm{F}^{vv}_S & \bm{F}^{vf}_S\\
 \bm{F}^{fv}_S & \note{\bm{F}^{ff}_S}
 \end{bmatrix} } \bm{1}
 }
-\only<5>{
+\only<4>{
 \LRp{\underbrace{\begin{bmatrix}
 \bm{A} & \note{\bm{B}}\\
 \note{-\bm{B}^T} & \bm{C}
-\end{bmatrix}}_{\bm{D}_N^i} \circ
+\end{bmatrix}}_{\bm{Q}_N^i} \circ
 \begin{bmatrix}
 \bm{F}^{vv}_S & \note{\bm{F}^{vf}_S}\\
 \note{\bm{F}^{fv}_S} & \bm{F}^{ff}_S
@@ -1663,13 +1726,13 @@ coordinates{(0.25,5.32822e-05)(0.125,1.5792e-05)(0.0625,9.458e-07)(0.03125,3.050
 \end{columns}
 %\vspace{-1em}
 \begin{itemize}
-\item<2-> Collocate solution $\bm{u}$, perform flux differencing at Gauss nodes.
+\item<1-> Collocate $\bm{u}$, interpolate \note{entropy variables $\bm{v}(\bm{u})$} to surface nodes.  
 \vspace{.25em}
-\item<3-> Interpolate \note{entropy variables $\bm{v}(\bm{u})$} to surface nodes.  
+\item<2-> Perform flux differencing at Gauss nodes.
 \vspace{.25em}
-\item<4-> Compute $\bm{f}_S(\bm{u}_L,\bm{u}_R)$ for surface nodes of neighboring elements.
+\item<3-> Compute $\bm{f}_S(\bm{u}_L,\bm{u}_R)$ for surface nodes of neighboring elements.
 \vspace{.25em}
-\item<5-> Compute $\bm{f}_S(\bm{u}_L,\bm{u}_R)$ between Gauss/boundary nodes, apply flux differencing with interp.\ matrix + transpose for volume/surface nodes.
+\item<4-> Compute $\bm{f}_S(\bm{u}_L,\bm{u}_R)$ between volume/surface nodes, apply flux differencing with interp.\ matrix + transpose for volume/surface nodes.
 \end{itemize} 
 }
 
@@ -1761,15 +1824,15 @@ Curvilinear results: in progress!
 \frametitle{Summary and future work}
 
 \begin{itemize}
-\item Discretely stable time-domain high order discontinuous Galerkin methods: provable semi-discrete stability
+\item Discrete semi-discrete entropy stability for (almost) arbitrary choices of basis, quadrature.  Usual challenges (positivity, Gibbs, BCs) apply.
 \vspace{.25em}
-\item Challenges: strong shocks, positivity, \note{boundary conditions}.  
+\item DG-SEM: volume/surface cross terms cancel out!  
 \vspace{.25em}
 \item Current work: Gauss collocation (with DCDR Fernandez, M.\ Carpenter), adaptivity + hybrid meshes, multi-GPU.  
 \vspace{.25em}
 \item This work is supported by DMS-1719818 and DMS-1712639. 
 \end{itemize}
-\vspace{.25em}
+\vspace{.5em}
 \begin{center}
 Thank you!  Questions?
 \vspace{.25em}
@@ -1800,10 +1863,10 @@ Thank you!  Questions?
  \begin{bmatrix}\bm{V}_q\\ \bm{V}_f\end{bmatrix}^T \LRp{\bm{Q}_N\circ \bm{f}_S\LRp{ \begin{bmatrix}\bm{V}_q\\ \bm{V}_f\end{bmatrix}\bm{P}_q\bm{v}_q}}\bm{1}  = 0.
 % \begin{bmatrix}\bm{V}_q\\ \bm{V}_f\end{bmatrix}^T \LRp{\bm{Q}_N\circ \bm{F}_S}\bm{1} - \bm{V}_f^T\bm{W}_f \bm{f}_S(\tilde{\bm{u}}_f^+,\tilde{\bm{u}}) = 0.
 \]
-\item Test with $L^2$ projection of entropy variables $\bm{P}_q\bm{v}_q = \bm{M}^{-1}\bm{V}_q^T\bm{W}$.  
+\item Test with $L^2$ projection of entropy variables $\bm{P}_q\bm{v}_q = \bm{M}^{-1}\bm{V}_q^T\bm{W}\bm{v}_q$.  
 \begin{align*}
-&\LRp{\bm{P}_q\bm{v}_q}^T\bm{M}\td{\hat{\bm{u}}}{t} = \bm{v}_q\bm{W}\bm{V}_q\bm{M}^{-1}\bm{M}\bm{V}_q\td{\hat{\bm{u}}}{t} \\
-&=  \bm{v}_q\bm{W}\td{(\bm{V}_q\hat{\bm{u}})}{t} = \bm{1}^T\bm{W}\td{S(\bm{u}_q)}{\bm{u}}\td{\bm{u}_q}{t} = \td{{S}(\bm{u}_q)}{t}.
+&\LRp{\bm{P}_q\bm{v}_q}^T\bm{M}\td{\hat{\bm{u}}}{t} = \bm{v}_q^T\bm{W}\bm{V}_q\bm{M}^{-1}\bm{M}\bm{V}_q\td{\hat{\bm{u}}}{t} \\
+&=  \bm{v}_q^T\bm{W}\td{(\bm{V}_q\hat{\bm{u}})}{t} = \bm{1}^T\bm{W}\LRp{\td{S(\bm{u}_q)}{\bm{u}}\td{\bm{u}_q}{t}} = \td{{S}(\bm{u}_q)}{t}.
 %\text{Spatial term: } \LRp{
 % \begin{bmatrix}\bm{V}_q\\ \bm{V}_f\end{bmatrix}\bm{P}_q\bm{v}_q}^T \LRp{\bm{Q}_N\circ \bm{f}_S\LRp{ \begin{bmatrix}\bm{V}_q\\ \bm{V}_f\end{bmatrix}\bm{P}_q\bm{v}_q}}\bm{1} = 0.
 \end{align*}

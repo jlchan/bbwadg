@@ -1,6 +1,7 @@
 *~
 matlab/*/*.m~
 docs/*/*.aux
+docs/*/*.spl
 docs/*/*.bbl
 docs/*/*.blg
 docs/*/*.log

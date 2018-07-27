@@ -227,7 +227,7 @@ title style={font=\footnotesize}
 
 
 \title[Discretely stable methods]{Entropy stable discontinuous Galerkin methods using arbitrary bases and quadratures }
-\date[June 9-15, 2018]{ECCM-CFD 2018\\June 9-15, 2018}
+\date[July 25, 2018]{WCCM 2018\\July 25, 2018}
 \author[J.\ Chan]{Jesse Chan}
 \institute[Rice CAAM]{\inst{1}Department of Computational and Applied Math}
 
@@ -307,24 +307,6 @@ title style={font=\footnotesize}
 %\visible<5>{\let\thefootnote\relax\footnotetext[5]{\tiny Figure courtesy of T.\ Warburton, Nvidia.}}
 }
 
-\frame{
-\frametitle{Entropy stability for nonlinear conservation laws}
-\vspace{-.5em}
-\begin{itemize}
-\item Analogue of energy stability for nonlinear systems of conservation laws (Burgers', shallow water, compressible Euler, MHD).  
-\[
-\pd{\bm{u}}{t} + \pd{\bm{f}(\bm{u})}{x} = 0.  
-\]
-\item Continuous entropy inequality: convex \note{entropy} function $S(\bm{u})$ and ``entropy potential'' $\psi(\bm{u})$.  
-\begin{align*}
-&\int_{\Omega} \bm{v}^T\LRp{\pd{\bm{u}}{t} + \pd{\bm{f}(\bm{u})}{x}} = 0, \qquad \bm{v} = \pd{S}{\bm{u}} \\
-&\Longrightarrow \int_{\Omega}\pd{S(\bm{u})}{t} + \LRu{\LRp{\bm{v}^T\bm{f}(\bm{u}) - \psi(\bm{u})}}_{-1}^1 \leq 0.
-\end{align*}
-\vspace{.01em}
-\item Proof of entropy inequality relies on \note{chain rule}, integration by parts.  
-\end{itemize}
-}
-
 
 \frame{
 \frametitle{Why are discretizations of nonlinear PDEs so unstable?}
@@ -358,6 +340,54 @@ title style={font=\footnotesize}
 \end{itemize}
 }
 
+
+\frame{
+\frametitle{Entropy stability for nonlinear conservation laws}
+\vspace{-.5em}
+\begin{itemize}
+\item Analogue of energy for nonlinear systems of conservation laws
+\[
+\pd{\bm{u}}{t} + \pd{\bm{f}(\bm{u})}{x} = 0.  
+\]
+%\item Examples: Burgers' equation $u^2/2$, shallow water
+\item Weak solutions satisfy a continuous entropy inequality: convex \note{entropy} function $S(\bm{u})$ and ``entropy potential'' $\psi(\bm{u})$.  
+\begin{align*}
+&\int_{\Omega} \bm{v}^T\LRp{\pd{\bm{u}}{t} + \pd{\bm{f}(\bm{u})}{x}} = 0, \qquad \bm{v} = \pd{S}{\bm{u}} \\
+&\Longrightarrow \int_{\Omega}\pd{S(\bm{u})}{t} + \LRu{\LRp{\bm{v}^T\bm{f}(\bm{u}) - \psi(\bm{u})}}_{-1}^1 \leq 0.
+\end{align*}
+\vspace{.01em}
+\item Proof of entropy inequality relies on \note{chain rule}, integration by parts.  
+\end{itemize}
+}
+
+\frame{
+\frametitle{Example: mathematical entropy (compressible flow)}
+
+\begin{itemize}
+\item Burgers': square entropy $S(\bm{u}) = u^2/2$, entropy variables $\bm{v}(\bm{u}) = u$.
+\item Shallow water: entropy is total energy, convex if $h > 0$.
+\[
+S(\bm{u}) = \frac{1}{2}hu^2 + \frac{1}{2}gh^2 + ghb, \qquad   \bm{v}(\bm{u}) = \begin{bmatrix}
+g(h + b) - \frac{u^2}{2} \\
+u\end{bmatrix}.
+\]
+%\item Conservative variables: density, momentum, energy
+%\[
+%\bm{u} = (\rho, \bm{m}, E), \qquad \rho > 0, \qquad E > \frac{1}{2} {\LRb{\bm{m}}^2}/{\rho}.
+%\]
+\item Compressible Euler equations: physical entropy $s(\bm{u})$ always increases; {mathematical entropy $S(\bm{u})$} always decreases.  
+\begin{gather*}
+s(\bm{u}) = \log\LRp{\frac{(\gamma-1) \rho e}{\rho^\gamma}}, \qquad S(\bm{u}) = -\rho s(\bm{u})\\
+\bm{v}(\bm{u}) = \pd{S}{\bm{u}} = \frac{1}{\rho e} \LRp{\begin{array}{c}
+\rho e (\gamma + 1 - s(\bm{u})) - E \\
+m\\
+-\rho
+\end{array}}
+\end{gather*}
+\end{itemize}
+}
+
+
 \frame{
 \frametitle{Why discretely entropy stable (ES) schemes?}
 
@@ -366,20 +396,20 @@ title style={font=\footnotesize}
 \begin{figure}
 \vspace{-1em}
 \centering
-\only<1>{\includegraphics[width=.95\textwidth]{figs/ndgFilter.pdf}}
-\only<2>{\includegraphics[width=.95\textwidth]{figs/ndgFilter2.pdf}}
+%\only<1>{\includegraphics[width=.95\textwidth]{figs/ndgFilter.pdf}}
+%\only<2>{\includegraphics[width=.95\textwidth]{figs/ndgFilter2.pdf}}
 %\hspace{1em}
-%\visible<2>{\raisebox{2.5em}{\includegraphics[width=.49\textwidth]{figs/balancing.pdf}}}
+\raisebox{2.5em}{\includegraphics[width=\textwidth]{figs/balancing.pdf}}
 %\visible<5>{\includegraphics[width=.475\textwidth]{figs/ductTape.png}}
 \end{figure}
 \end{column}
 \begin{column}{.475\textwidth}
 \begin{itemize}
-\item<1-> Stability tied to smoothness, regularization, TVD, etc.
+\item<1-> Existing discrete stability theory: regularization, viscosity, TVD, etc.
 \vspace{.75em}
-\item<1-> Can result in a balancing act between accuracy, stability, and robustness.  
+\item<1-> Can result in a balancing act between high order accuracy, stability, and robustness.  
 \vspace{.5em}
-\item<2-> Seek a stability which is \note{independent} of artificial viscosity, limiters, and quadrature accuracy.
+\item<2-> Goal: aim for stability \note{independently} of artificial viscosity, limiters, and quadrature accuracy.
 \end{itemize}
 \end{column}
 \end{columns}
@@ -439,28 +469,6 @@ title style={font=\footnotesize}
 %% =================================================
 
 
-%\frame{
-%\frametitle{Example: mathematical entropy (compressible flow)}
-%
-%\begin{itemize}
-%\item Conservative variables: density, momentum, energy
-%\[
-%\bm{u} = (\rho, \bm{m}, E), \qquad \rho > 0, \qquad E > \frac{1}{2} {\LRb{\bm{m}}^2}/{\rho}.
-%\]
-%\item Physical entropy $s(\bm{u})$ always increasing; \note{mathematical entropy $S(\bm{u})$} always decreasing (analogous to energy).
-%\[
-%s(\bm{u}) = \log\LRp{\frac{(\gamma-1) \rho e}{\rho^\gamma}}, \qquad S(\bm{u}) = -\rho s(\bm{u}).
-%\]
-%\item Entropy variables $\bm{v}(\bm{u})$: invertible function of $\bm{u}$
-%\[
-%\bm{v}(\bm{u}) = \pd{S}{\bm{u}} = \frac{1}{\rho e} \LRp{\begin{array}{c}
-%\rho e (\gamma + 1 - s(\bm{u})) - E \\
-%m\\
-%-\rho
-%\end{array}}
-%\]
-%\end{itemize}
-%}
 
 
 
@@ -1188,26 +1196,26 @@ Assuming continuity in time, $\bm{u}_h(\bm{x})$ satisfies the quadrature form of
 \let\thefootnote\relax\footnotetext{\tiny Shi and Shu (2017). \emph{On local conservation of numerical methods for conservation laws}.}
 }
 
-\frame{
-\frametitle{Sketch of proof of entropy conservation (one element)}
-
-\begin{itemize}
-\item Multiply by mass matrix on both sides, rewrite as
-\[
-\bm{M}\td{\hat{\bm{u}}}{t} +
- \begin{bmatrix}\bm{V}_q\\ \bm{V}_f\end{bmatrix}^T \LRp{\bm{Q}_N\circ \bm{f}_S\LRp{ \begin{bmatrix}\bm{V}_q\\ \bm{V}_f\end{bmatrix}\bm{P}_q\bm{v}_q}}\bm{1}  = 0.
-% \begin{bmatrix}\bm{V}_q\\ \bm{V}_f\end{bmatrix}^T \LRp{\bm{Q}_N\circ \bm{F}_S}\bm{1} - \bm{V}_f^T\bm{W}_f \bm{f}_S(\tilde{\bm{u}}_f^+,\tilde{\bm{u}}) = 0.
-\]
-\item Test with $L^2$ projection of entropy variables $\bm{P}_q\bm{v}_q = \bm{M}^{-1}\bm{V}_q^T\bm{W}$.  
-\begin{align*}
-&\LRp{\bm{P}_q\bm{v}_q}^T\bm{M}\td{\hat{\bm{u}}}{t} = \bm{v}_q\bm{W}\bm{V}_q\bm{M}^{-1}\bm{M}\bm{V}_q\td{\hat{\bm{u}}}{t} \\
-&=  \bm{v}_q\bm{W}\td{(\bm{V}_q\hat{\bm{u}})}{t} = \bm{1}^T\bm{W}\td{S(\bm{u}_q)}{\bm{u}_q}\td{\bm{u}_q}{t} = \td{{S}(\bm{u}_q)}{t}.
-%\text{Spatial term: } \LRp{
-% \begin{bmatrix}\bm{V}_q\\ \bm{V}_f\end{bmatrix}\bm{P}_q\bm{v}_q}^T \LRp{\bm{Q}_N\circ \bm{f}_S\LRp{ \begin{bmatrix}\bm{V}_q\\ \bm{V}_f\end{bmatrix}\bm{P}_q\bm{v}_q}}\bm{1} = 0.
-\end{align*}
-\item Spatial term vanishes using SBP, skew-symmetry, and properties of $\bm{f}_S$.  
-\end{itemize}
-}
+%\frame{
+%\frametitle{Sketch of proof of entropy conservation (one element)}
+%
+%\begin{itemize}
+%\item Multiply by mass matrix on both sides, rewrite as
+%\[
+%\bm{M}\td{\hat{\bm{u}}}{t} +
+% \begin{bmatrix}\bm{V}_q\\ \bm{V}_f\end{bmatrix}^T \LRp{\bm{Q}_N\circ \bm{f}_S\LRp{ \begin{bmatrix}\bm{V}_q\\ \bm{V}_f\end{bmatrix}\bm{P}_q\bm{v}_q}}\bm{1}  = 0.
+%% \begin{bmatrix}\bm{V}_q\\ \bm{V}_f\end{bmatrix}^T \LRp{\bm{Q}_N\circ \bm{F}_S}\bm{1} - \bm{V}_f^T\bm{W}_f \bm{f}_S(\tilde{\bm{u}}_f^+,\tilde{\bm{u}}) = 0.
+%\]
+%\item Test with $L^2$ projection of entropy variables $\bm{P}_q\bm{v}_q = \bm{M}^{-1}\bm{V}_q^T\bm{W}$.  
+%\begin{align*}
+%&\LRp{\bm{P}_q\bm{v}_q}^T\bm{M}\td{\hat{\bm{u}}}{t} = \bm{v}_q\bm{W}\bm{V}_q\bm{M}^{-1}\bm{M}\bm{V}_q\td{\hat{\bm{u}}}{t} \\
+%&=  \bm{v}_q\bm{W}\td{(\bm{V}_q\hat{\bm{u}})}{t} = \bm{1}^T\bm{W}\td{S(\bm{u}_q)}{\bm{u}_q}\td{\bm{u}_q}{t} = \td{{S}(\bm{u}_q)}{t}.
+%%\text{Spatial term: } \LRp{
+%% \begin{bmatrix}\bm{V}_q\\ \bm{V}_f\end{bmatrix}\bm{P}_q\bm{v}_q}^T \LRp{\bm{Q}_N\circ \bm{f}_S\LRp{ \begin{bmatrix}\bm{V}_q\\ \bm{V}_f\end{bmatrix}\bm{P}_q\bm{v}_q}}\bm{1} = 0.
+%\end{align*}
+%\item Spatial term vanishes using SBP, skew-symmetry, and properties of $\bm{f}_S$.  
+%\end{itemize}
+%}
 
 %
 %\frame{
@@ -1220,37 +1228,37 @@ Assuming continuity in time, $\bm{u}_h(\bm{x})$ satisfies the quadrature form of
 %\let\thefootnote\relax\footnotetext{\tiny Shi and Shu (2017). \emph{On local conservation of numerical methods for conservation laws}.}
 %}
 
-\frame{
-\frametitle{Recovering (some) finite difference SBP formulations}
-\vspace{-1em}
-\begin{figure}
-\centering
-%\subfloat[SBP]{\includegraphics[height=.345\textheight]{figs/SEM_stencil_1.pdf}}
+%\frame{
+%\frametitle{Recovering (some) finite difference SBP formulations}
+%\vspace{-1em}
+%\begin{figure}
+%\centering
+%%\subfloat[SBP]{\includegraphics[height=.345\textheight]{figs/SEM_stencil_1.pdf}}
+%%\hspace{1em}
+%%\begingroup
+%%\captionsetup[subfloat]{width=.27\textwidth}
+%\setcounter{subfigure}{0}
+%\subfloat[Generalized SBP]{\includegraphics[height=.325\textheight]{figs/gsbp.png}}
+%\hspace{2em}
+%\subfloat[Staggered-grid]{\includegraphics[height=.325\textheight]{figs/staggered.png}}
 %\hspace{1em}
-%\begingroup
-%\captionsetup[subfloat]{width=.27\textwidth}
-\setcounter{subfigure}{0}
-\subfloat[Generalized SBP]{\includegraphics[height=.325\textheight]{figs/gsbp.png}}
-\hspace{2em}
-\subfloat[Staggered-grid]{\includegraphics[height=.325\textheight]{figs/staggered.png}}
-\hspace{1em}
-%\subfloat[Triangular SBP]{\includegraphics[height=.35\textheight]{figs/chenShuNodes.png}}
-\subfloat[Triangular SBP]{\includegraphics[height=.325\textheight]{figs/creanSBP.png}}
-%\endgroup
-\end{figure}
-\begin{itemize}
-\item Specific choices of basis and quadrature recover existing entropy stable schemes (DG-SEM, Gauss collocation, staggered grid, etc).  
-\vspace{.25em}
-\item Setting $\bm{P}_q = \bm{I}$ recovers non-basis SBP finite differences on simplices.  
-\vspace{.25em}
-\item Generates \note{new compact inter-element coupling terms} (SBP-SATs).  
-\end{itemize}
-
-\let\thefootnote\relax\footnotetext{\tiny Parsani et al.\  (2016). \emph{ES staggered grid disc.\ spectral collocation methods of any order for the comp.\ NS eqns.}}
-%\let\thefootnote\relax\footnotetext{\tiny Hicken, Del Rey Fernandez, and Zingg (2016). \emph{Multidimensional summation-by-parts operators.}}
-\let\thefootnote\relax\footnotetext{\tiny Crean, Hicken, et al.\ (2018). \textit{Entropy-stable SBP discretization of the Euler equations on general curved elements.}}
-%\let\thefootnote\relax\footnotetext{\tiny Chen and Shu (2017). \textit{ES high order DG methods with suitable quadrature rules for hyperbolic conservation laws.}}
-}
+%%\subfloat[Triangular SBP]{\includegraphics[height=.35\textheight]{figs/chenShuNodes.png}}
+%\subfloat[Triangular SBP]{\includegraphics[height=.325\textheight]{figs/creanSBP.png}}
+%%\endgroup
+%\end{figure}
+%\begin{itemize}
+%\item Specific choices of basis and quadrature recover existing entropy stable schemes (DG-SEM, Gauss collocation, staggered grid, etc).  
+%\vspace{.25em}
+%\item Setting $\bm{P}_q = \bm{I}$ recovers non-basis SBP finite differences on simplices.  
+%\vspace{.25em}
+%\item Generates \note{new compact inter-element coupling terms} (SBP-SATs).  
+%\end{itemize}
+%
+%\let\thefootnote\relax\footnotetext{\tiny Parsani et al.\  (2016). \emph{ES staggered grid disc.\ spectral collocation methods of any order for the comp.\ NS eqns.}}
+%%\let\thefootnote\relax\footnotetext{\tiny Hicken, Del Rey Fernandez, and Zingg (2016). \emph{Multidimensional summation-by-parts operators.}}
+%\let\thefootnote\relax\footnotetext{\tiny Crean, Hicken, et al.\ (2018). \textit{Entropy-stable SBP discretization of the Euler equations on general curved elements.}}
+%%\let\thefootnote\relax\footnotetext{\tiny Chen and Shu (2017). \textit{ES high order DG methods with suitable quadrature rules for hyperbolic conservation laws.}}
+%}
 
 %\frame{
 %\frametitle{Curved meshes and stability}
@@ -1878,7 +1886,7 @@ coordinates{(0.00662,-0)(0.20523,-1.01505e-05)(0.40384,-1.24062e-05)(0.60245,-2.
 \end{axis}\end{tikzpicture}
 }
 %\hspace{1em}
-\subfloat[$\int_{\Omega}U(\bm{u})$ for entropy cons.\ scheme]{
+\subfloat[$\int_{\Omega}U(\bm{u}) \rightarrow 0$ without dissipation]{
 \begin{tikzpicture}
 \begin{loglogaxis}[
         scaled ticks=false, 

@@ -12,7 +12,7 @@ if (N==1)
     return; 
 end;
 
-[xint,w] = JacobiGQ(alpha+1,beta+1,N-2);
+[xint,wq] = JacobiGQ(alpha+1,beta+1,N-2);
 x = [-1, xint', 1]';
 
 if nargout == 2
