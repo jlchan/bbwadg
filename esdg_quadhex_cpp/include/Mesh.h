@@ -76,7 +76,7 @@ typedef struct foo {
   MatrixXd rxJ,ryJ,rzJ,sxJ,syJ,szJ,txJ,tyJ,tzJ,J; // geofacs
   MatrixXd nxJ,nyJ,nzJ,sJ; // surface geofacs
 
-  MatrixXi mapPq; // node map
+  MatrixXi mapPq, bcFlag; // node map
   
   // time stepping constants
   VectorXd rk4a, rk4b, rk4c;  
@@ -100,7 +100,7 @@ typedef struct foobar {
   occa::memory o_Q, o_Qf; // solution and flux vals
   occa::memory o_vgeo, o_vfgeo, o_fgeo; // geometric terms
   occa::memory o_rhs, o_rhsf, o_res; // rhs and RK residual
-  occa::memory o_mapPq; // node map
+  occa::memory o_mapPq, o_bcFlag; // node map
   
 }App;
 

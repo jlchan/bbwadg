@@ -104,7 +104,7 @@ void setupOccaMesh2d(Mesh *mesh, App *app){
   //cout << "mapPq = " << mesh->mapPq << endl;
   //cout << "mapPqNfields = " << mapPqNfields << endl;
   setOccaIntArray(app, mapPqNfields, app->o_mapPq);
-
+  
   setOccaArray(app, mesh->D1D, app->o_D1D); 
   setOccaArray(app, mesh->Vf1D.row(0), app->o_Vf1D); // Vf1D rows 1,2 = mirror images
   setOccaArray(app, mesh->Lf1D.col(0), app->o_Lf1D); // Lf1D cols 1,2 = mirror images  

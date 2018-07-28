@@ -29,6 +29,74 @@ static void VortexSolution2d(MatrixXd x,MatrixXd y,double t,
   */
 }
 
+static void ShockVortex2d(MatrixXd x,MatrixXd y,
+			  MatrixXd &rho, MatrixXd &u, MatrixXd &v, MatrixXd &p){
+
+  rho.resize(x.rows(),x.cols());
+  u.resize(x.rows(),x.cols());
+  v.resize(x.rows(),x.cols());
+  p.resize(x.rows(),x.cols());
+  
+  double xs = .5;
+  double x0 = .25;
+  double y0 = .5;
+
+  double Ms = 1.1;
+
+  double rho_up = 1.0;
+  double u_up = Ms*sqrt(GAMMA);
+  double v_up = 0.0;
+  double p_up = 1.0;
+
+  double rho_ratio_ud = (2.0+(GAMMA-1.0)*Ms*Ms)/((GAMMA+1.0)*Ms*Ms);
+  double u_ratio_ud = 1.0/rho_ratio_ud;
+  double p_ratio_ud = 1.0/(1.0 + 2.0*GAMMA/(GAMMA+1)*(Ms*Ms-1.0));
+
+  MatrixXd xc = x.colwise().sum()/((double) x.rows());
+  MatrixXd yc = y.colwise().sum()/((double) y.rows());
+
+  MatrixXd rhos(x.rows(),x.cols());
+  MatrixXd us(x.rows(),x.cols());
+  MatrixXd vs(x.rows(),x.cols());
+  MatrixXd ps(x.rows(),x.cols());
+
+  vs.fill(0.0);
+  for (int e = 0; e < x.cols(); ++e){
+    for (int i = 0; i < x.rows(); ++i){
+      int id = i + e*x.rows();
+      if (xc(e) < xs){
+	rhos(id) = rho_up;
+	us(id) = u_up;
+	ps(id) = p_up;	
+      }else{
+	rhos(id) = rho_up/rho_ratio_ud;
+	us(id) = u_up/u_ratio_ud;
+	ps(id) = p_up/p_ratio_ud;	
+      }
+    }
+  }
+  MatrixXd r = ((x.array()-x0).square() + (y.array()-y0).square()).sqrt();
+  double epsilon = .3;
+  double alpha = .204;
+  double rc = .05;
+  MatrixXd tau = r.array() / rc;
+  MatrixXd vtheta = epsilon * tau.array() * (alpha*(1-tau.array().square())).exp();
+
+  double Tu = p_up/rho_up;  
+  MatrixXd theta(x.rows(),x.cols());
+  MatrixXd Tvor(x.rows(),x.cols());    
+  for (int i = 0; i < x.rows()*x.cols(); ++i){    
+    theta(i) = atan2(y(i)-y0,x(i)-x0);
+    Tvor(i) = Tu - (GAMMA-1.0)*epsilon*epsilon*exp(2.0*alpha*(1.0-tau(i)*tau(i)))/(4*alpha*GAMMA);    
+  }
+
+  u = us.array() + vtheta.array() * theta.array().sin();
+  v = vs.array() - vtheta.array() * theta.array().cos();
+  rho = rhos.array() * (Tvor.array()/Tu).pow(1.0/(GAMMA-1.0));
+  p = ps.array() * (Tvor.array()/Tu).pow(1.0/(GAMMA-1.0));  
+  
+}
+
 int main(int argc, char **argv){
 
   //occa::printModeInfo();   return 0;
@@ -36,7 +104,7 @@ int main(int argc, char **argv){
   int K1D = 16;
 
   //printf("argc = %d\n",argc);
-  if (argc == 3){
+  if (argc > 2){
     N = atoi(argv[1]);
     K1D = atoi(argv[2]);
     printf("setting N = %d, K1D = %d\n",N,K1D);
@@ -52,8 +120,11 @@ int main(int argc, char **argv){
     a = atof(argv[5]);
     printf("setting CFL = %f, T = %f, curved warping a =%f\n",CFL,FinalTime,a);
   }
+
+#define VORTEX 0
+#define SHOCK_VORTEX 1
   
-  //Mesh *mesh = (Mesh*) calloc(1, sizeof(Mesh));
+#if VORTEX
   Mesh *mesh = new Mesh;
   QuadMesh2d(mesh,2*K1D,K1D); // make Cartesian mesh
 
@@ -62,12 +133,25 @@ int main(int argc, char **argv){
   double Ly = 5;  
   mesh->VX = (mesh->VX.array()+1.0)*Lx;
   mesh->VY = (mesh->VY.array())*Ly;
+#endif
+
+#if SHOCK_VORTEX
+  // [0,2] x [0,1] for shock vortex
+  Mesh *mesh = new Mesh;
+  QuadMesh2d(mesh,2*K1D,K1D); // make Cartesian mesh
+
+  double Lx = 10;
+  double Ly = 5;  
+  mesh->VX = (mesh->VX.array()+1.0);
+  mesh->VY = (mesh->VY.array()+1.0)*.5;
+#endif
 
   // ============ physics independent stuff ===========
 
   InitRefData2d(mesh, N);
   MapNodes2d(mesh); // low order mapping
 
+#if VORTEX
   // curvilinear meshing
   MatrixXd x = mesh->x;
   MatrixXd y = mesh->y;
@@ -75,15 +159,9 @@ int main(int argc, char **argv){
   x = x + a*Lx*dx;
   MatrixXd dy = (2.0*PI*(x.array()-Lx)/Lx).sin()*(.5*PI*y.array()/Ly).cos();
   y = y + a*Ly*dy;
-
   mesh->x = x;
   mesh->y = y;  
-
-  /*
-  cout << "x = [" << mesh->x << "];" << endl;
-  cout << "y = [" << mesh->y << "];" << endl;
-  return 0;
-  */
+#endif
   
   GeometricFactors2d(mesh); 
   Normals2d(mesh); 
@@ -101,13 +179,6 @@ int main(int argc, char **argv){
   double DY = mesh->VY.maxCoeff()-mesh->VY.minCoeff();
   MakeNodeMapsPeriodic2d(mesh,xf,yf,DX,DY,mapPq);
   mesh->mapPq = mapPq;
-  //return 0;
-  /*
-  cout << "xf = [" << xf << "];" << endl;
-  cout << "yf = [" << yf << "];" << endl;
-  cout << "mapPq = [" << mapPq << "];" << endl;
-  return 0;
-  */
 
   // ============ problem dependent stuff ============
 
@@ -118,7 +189,6 @@ int main(int argc, char **argv){
   int Nfields = 4; 
   mesh->Nfields = Nfields;
   
-  //App *app = (App*) calloc(1, sizeof(App));
   App *app = new App;
   //app->device.setup("mode: 'Serial'");
   app->device.setup("mode: 'CUDA', device_id: 0");  
@@ -131,6 +201,21 @@ int main(int argc, char **argv){
   }else{
     app->props["defines/p_tau"] = 1.0;
   }
+
+  MatrixXi bcFlag(xf.rows(),xf.cols());
+  bcFlag.fill(0);
+#if 1 // specify wall BCs - MAY NOT WORK FOR GLL (CORNER PTS)
+  double ymax = yf.maxCoeff();
+  double ymin = yf.minCoeff();    
+  for (int i = 0; i < xf.rows()*xf.cols(); ++i){
+    double xfi = xf(i);
+    double yfi = yf(i);
+    if ((abs(yfi-ymax)<NODETOL) || (abs(yfi-ymin)<NODETOL)){
+      bcFlag(i) = 1;
+    }
+  }
+#endif
+  setOccaIntArray(app, bcFlag, app->o_bcFlag);    
   
   // build occa kernels  
   string path = "okl/Euler2D.okl";
@@ -144,16 +229,26 @@ int main(int argc, char **argv){
   // set initial condition
   MatrixXd xq = mesh->Vq*mesh->x;
   MatrixXd yq = mesh->Vq*mesh->y;  
-
-  // vortex
   MatrixXd rho,u,v,p;
   double time = 0.0;
+  
+#if VORTEX
+  // smooth isentropic vortex
   VortexSolution2d(xq,yq,time,rho,u,v,p);
 
   MatrixXd rhou = rho.array()*u.array();
   MatrixXd rhov = rho.array()*v.array();
   MatrixXd E = p.array()/(GAMMA-1.0) + .5*rho.array()*(u.array().square() + v.array().square());
+#endif
 
+#if SHOCK_VORTEX
+  ShockVortex2d(xq,yq,rho,u,v,p);
+
+  MatrixXd rhou = rho.array()*u.array();
+  MatrixXd rhov = rho.array()*v.array();
+  MatrixXd E = p.array()/(GAMMA-1.0) + .5*rho.array()*(u.array().square() + v.array().square());
+#endif
+  
   /*
   // const sol
   rho.fill(1.0);
@@ -206,7 +301,7 @@ int main(int argc, char **argv){
 #if 0
 
   // test rhs eval
-  app->volume(K, app->o_vgeo, app->o_vfgeo,
+  app->volume(K, app->o_vgeo, app->o_vfgeo, app->o_fgeo,
 	      app->o_D1D, app->o_Vf1D, app->o_Lf1D,
 	      app->o_Q, app->o_Qf,
 	      app->o_rhs, app->o_rhsf);
@@ -214,7 +309,7 @@ int main(int argc, char **argv){
   getOccaArray(app,app->o_rhs,Q);
   cout << "vol only rhs = " << endl << Q.middleRows(0,Np) << endl;
   
-  app->surface(K, app->o_vgeo, app->o_fgeo, app->o_mapPq,
+  app->surface(K, app->o_vgeo, app->o_fgeo, app->o_mapPq, app->o_bcFlag,
 	       app->o_Lf1D, app->o_Qf, app->o_rhsf,
 	       app->o_rhs); 
   
@@ -235,12 +330,12 @@ int main(int argc, char **argv){
       const dfloat fa  = (dfloat) mesh->rk4a[INTRK];
       const dfloat fb  = (dfloat) mesh->rk4b[INTRK];
 
-      app->volume(K, app->o_vgeo, app->o_vfgeo,
+      app->volume(K, app->o_vgeo, app->o_vfgeo, app->o_fgeo,
 		  app->o_D1D, app->o_Vf1D, app->o_Lf1D,
 		  app->o_Q, app->o_Qf,
 		  app->o_rhs, app->o_rhsf);
 
-      app->surface(K, app->o_vgeo, app->o_fgeo, app->o_mapPq,
+      app->surface(K, app->o_vgeo, app->o_fgeo, app->o_mapPq, app->o_bcFlag,
 		   app->o_Lf1D, app->o_Qf, app->o_rhsf,
 		   app->o_rhs); 
       
@@ -263,6 +358,7 @@ int main(int argc, char **argv){
   rhov = Q.middleRows(2*Np,Np);
   E = Q.middleRows(3*Np,Np);
 
+#if VORTEX
   // finer quadrature for error eval
   VectorXd rq1D2, wq1D2;
   JacobiGQ(N+1, 0, 0, rq1D2, wq1D2);
@@ -289,14 +385,6 @@ int main(int argc, char **argv){
   MatrixXd rhoex;
   VortexSolution2d(xq2,yq2,FinalTime,rhoex,u,v,p);
 
-#if 0
-  cout << "xq = [" << xq << "];" << endl;
-  cout << "yq = [" << yq << "];" << endl;
-  cout << "rho = [" << rho << "];" << endl;
-  cout << "rhoex = [" << rhoex << "];" << endl;
-  return 0;
-#endif
-
   MatrixXd wJq = wq2.asDiagonal() * (Vq2*(mesh->Vq*mesh->J));  
   MatrixXd rhouex = rhoex.array()*u.array();
   MatrixXd rhovex = rhoex.array()*v.array();
@@ -307,7 +395,40 @@ int main(int argc, char **argv){
 			       (rhovex - Vq2*rhov).array().square() +
 			       (Eex - Vq2*E).array().square());
   printf("L2 error for rho = %g\n",sqrt(werr.sum()));
+#endif
 
+
+#if SHOCK_VORTEX
+  // interpolate to N=1 for plotting
+  //VectorXd rp1D(2);
+  //rp1D << -1.0/3.0, 1.0/3.0;
+  int Nplot = 2; // if K1D large, Nplot = 1 should be sufficient
+  VectorXd rp1D = VectorXd::LinSpaced(Nplot+1,-1,1); // plot N=2
+
+  int Np1 = rp1D.size();
+  int Np2 = Np1*Np1;
+  VectorXd rp(Np2),sp(Np2);
+  int sk = 0;
+  for (int i = 0; i < Np1; ++i){
+    for (int j = 0; j < Np1; ++j){
+      rp(sk) = rp1D(i);
+      sp(sk) = rp1D(j);      
+      ++sk;
+    }
+  }
+
+  MatrixXd Vqtmp = Vandermonde2DQuad(N,rp,sp);
+  MatrixXd Vq = Vandermonde2DQuad(N,mesh->rq,mesh->sq);  
+  MatrixXd Vp = mrdivide(Vqtmp,Vq);
+  MatrixXd xp = Vp * xq;
+  MatrixXd yp = Vp * yq;
+  MatrixXd rhop = Vp * rho;
+    
+  cout << "x = [" << xp << "];" << endl;
+  cout << "y = [" << yp << "];" << endl;
+  cout << "rho = [" << rhop << "];" << endl;
+#endif
+  
   return 0;
   
 }

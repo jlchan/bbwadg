@@ -19,8 +19,8 @@ void InitRefData2d(Mesh *mesh, int N){
 
   // quad points 
   VectorXd rq1D, wq1D;
-  JacobiGL(N, 0, 0, rq1D, wq1D);
-  //JacobiGQ(N, 0, 0, rq1D, wq1D);  
+  //JacobiGL(N, 0, 0, rq1D, wq1D); printf("using GLL nodes\n");
+  JacobiGQ(N, 0, 0, rq1D, wq1D); printf("using GQ nodes\n");
   
   //cout << "rq,wq for GQ = " << rq1D << ", " << wq1D << endl;
   
@@ -38,6 +38,8 @@ void InitRefData2d(Mesh *mesh, int N){
   int NfqNfaces = Nfaces * rq1D.size();  
   VectorXd rf(NfqNfaces); rf << rq1D, e, rq1D, -e;
   VectorXd sf(NfqNfaces); sf << -e, rq1D, e, rq1D;
+  //VectorXd rf(NfqNfaces); rf << -e, e, rq1D, rq1D;
+  //VectorXd sf(NfqNfaces); sf << rq1D, rq1D, -e, e;
   VectorXd wf(NfqNfaces); wf << wq1D, wq1D, wq1D, wq1D;
   
   // nodal operators
@@ -1163,11 +1165,24 @@ void ConnectElems(Mesh *mesh, int dim){
   // make face lists and fv scaling
   MatrixXi fvlist;
   if (dim==2){
-    fvlist.resize(Nfaces,2); 
+    /*  
+	3-----2
+	|     |
+	|     |
+	0-----1
+     */
+    fvlist.resize(Nfaces,2);
+   /*
+    fvlist << 0,3,
+      1,2,
+      0,1,
+      3,2;
+   */
     fvlist << 0,1,
       1,2,
       2,3,
       3,0;
+
   }else if (dim==3){
     fvlist.resize(Nfaces,4);
     // todo: add 3D face list

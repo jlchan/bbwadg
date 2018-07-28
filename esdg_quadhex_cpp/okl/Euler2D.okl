@@ -221,6 +221,7 @@ void euler2d_flux(dfloat rho_i, dfloat rho_j, dfloat u_i, dfloat u_j,
 @kernel void volume(const int K,
 		    const dfloat *  vgeo,
 		    const dfloat *  vfgeo,
+		    const dfloat *  fgeo,		    
 		    const dfloat *  D1D,
 		    const dfloat *  Vf1D,
 		    const dfloat *  Lf1D,		    
@@ -536,7 +537,8 @@ void euler2d_flux(dfloat rho_i, dfloat rho_j, dfloat u_i, dfloat u_j,
 @kernel void surface(const int K,
 		     const dfloat * vgeo,
 		     const dfloat * fgeo,		     
-		     const int    * mapPq,		     
+		     const int    * mapPq,
+		     const int    * bcFlag,
 		     const dfloat * Lf1D,
 		     const dfloat * Qf,
 		     const dfloat * rhsf,
@@ -565,17 +567,28 @@ void euler2d_flux(dfloat rho_i, dfloat rho_j, dfloat u_i, dfloat u_j,
 	const dfloat rhovM = Qf[idM];  idM += p_NfpNfaces;
 	const dfloat EM = Qf[idM];
 	
-	const dfloat rhoP = Qf[idP];   idP += p_NfpNfaces;
+	dfloat rhoP = Qf[idP];   idP += p_NfpNfaces;
 	const dfloat rhouP = Qf[idP];  idP += p_NfpNfaces;
 	const dfloat rhovP = Qf[idP];  idP += p_NfpNfaces;
-	const dfloat EP = Qf[idP];
+	dfloat EP = Qf[idP];
 
-	const dfloat invrhoM = ONE/rhoM; 
-	const dfloat invrhoP = ONE/rhoP; 
+	const dfloat invrhoM = ONE/rhoM;
 	const dfloat uM = rhouM*invrhoM;
 	const dfloat vM = rhovM*invrhoM;
-	const dfloat uP = rhouP*invrhoP;	
-	const dfloat vP = rhovP*invrhoP;      
+	const dfloat invrhoP = ONE/rhoP; 	
+	dfloat uP = rhouP*invrhoP;	
+	dfloat vP = rhovP*invrhoP;
+
+#if 1
+	// wall BCs on flag = 1
+	if (bcFlag[i + e*p_NfpNfaces]==1){
+	  vP = -vM;
+	  uP = uM;
+	  rhoP = rhoM;
+	  EP = EM;
+	}
+#endif
+	
 	const dfloat betaM = beta(rhoM,uM,vM,EM);
 	const dfloat betaP = beta(rhoP,uP,vP,EP);      
 
