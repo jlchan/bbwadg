@@ -608,6 +608,8 @@ void euler2d_flux(dfloat rho_i, dfloat rho_j, dfloat u_i, dfloat u_j,
 
 	idM = i + e*p_NfpNfaces*p_Nfields;
 
+#if 0
+	// use LF
 	const dfloat unormM = (uM*uM+vM*vM);
 	const dfloat unormP = (uP*uP+vP*vP);	
 	const dfloat pM = (p_gamma-ONE)*(EM - HALF*rhoM*unormM);
@@ -616,11 +618,78 @@ void euler2d_flux(dfloat rho_i, dfloat rho_j, dfloat u_i, dfloat u_j,
 	const dfloat cvelP = sqrt(p_gamma*pP/rhoP);	
 	const dfloat LFc = fmax(sqrt(unormM) + cvelM, sqrt(unormP) + cvelP);	
 	const dfloat Lfscale = HALF*p_tau*LFc*sJ;
+
+	const dfloat dF1 = Lfscale*(rhoP-rhoM);
+	const dfloat dF2 = Lfscale*(rhoP*uP-rhoM*uM);
+	const dfloat dF3 = Lfscale*(rhoP*vP-rhoM*vM);
+	const dfloat dF4 = Lfscale*(EP-EM);
+#else
+	// matrix dissipation flux
+	dfloat V1M,V2M,V3M,V4M,   V1P,V2P,V3P,V4P;
+	VU(rhoM, rhouM, rhovM, EM, V1M, V2M, V3M, V4M);	
+	VU(rhoP, rhouP, rhovP, EP, V1P, V2P, V3P, V4P);	
+	const dfloat dv1 = V1P-V1M;
+	const dfloat dv2 = V2P-V2M;
+	const dfloat dv3 = V3P-V3M;
+	const dfloat dv4 = V4P-V4M;	
+
+	const dfloat u2avg = avg(uM*uM,uP*uP);
+	const dfloat v2avg = avg(vM*vM,vP*vP);
+	const dfloat uavg = avg(uM,uP);
+	const dfloat vavg = avg(vM,vP);
+	const dfloat betalog = logmean(betaM,betaP);
+	const dfloat pavg = avg(rhoM,rhoP)/(TWO*avg(betaM,betaP));
+	const dfloat rholog = logmean(rhoM,rhoP);
+
+	const dfloat ubar = TWO*(uavg*uavg+vavg*vavg)-(u2avg+v2avg);
+	const dfloat nx = nxJ/sJ;
+	const dfloat ny = nyJ/sJ;	
+	const dfloat un = (uavg*nx+vavg*ny);
+	const dfloat h = p_gamma/(TWO*betalog*(p_gamma-ONE)) + HALF*ubar;
+	const dfloat a = sqrt(p_gamma*pavg/rholog);
+
+	const dfloat R11 = ONE;
+	const dfloat R12 = ONE;
+	const dfloat R13 = ZERO;
+	const dfloat R14 = ONE;	
+
+	const dfloat R21 = uavg-a*nx;
+	const dfloat R22 = uavg;
+	const dfloat R23 = ny;
+	const dfloat R24 = uavg+a*nx;	
+
+	const dfloat R31 = vavg-a*ny;
+	const dfloat R32 = vavg;
+	const dfloat R33 = -nx;
+	const dfloat R34 = vavg+a*ny;
+
+	const dfloat R41 = h-a*un;
+	const dfloat R42 = HALF*ubar;
+	const dfloat R43 = uavg*ny - vavg*nx;
+	const dfloat R44 = h+a*un;
+
+	const dfloat D11 = fabs(un - a)*rholog/(TWO*p_gamma);
+	const dfloat D22 = fabs(un)*rholog*(p_gamma-ONE)/p_gamma;
+	const dfloat D33 = fabs(un)*pavg;
+	const dfloat D44 = fabs(un + a)*rholog/(TWO*p_gamma);
+
+	// R*D*R' * [[v]]
+	const dfloat r1 = D11*(R11*dv1 + R21*dv2 + R31*dv3 + R41*dv4);
+	const dfloat r2 = D22*(R12*dv1 + R22*dv2 + R32*dv3 + R42*dv4);
+	const dfloat r3 = D33*(R13*dv1 + R23*dv2 + R33*dv3 + R43*dv4);
+	const dfloat r4 = D44*(R14*dv1 + R24*dv2 + R34*dv3 + R44*dv4);	
+
+	const dfloat Lfscale = p_tau*sJ;	
+	const dfloat dF1 = Lfscale*(R11*r1 + R12*r2 + R13*r3 + R14*r4);
+	const dfloat dF2 = Lfscale*(R21*r1 + R22*r2 + R23*r3 + R24*r4);
+	const dfloat dF3 = Lfscale*(R31*r1 + R32*r2 + R33*r3 + R34*r4);
+	const dfloat dF4 = Lfscale*(R41*r1 + R42*r2 + R43*r3 + R44*r4);
 	
-	const dfloat FnS1 = FxS1*nxJ + FyS1*nyJ - Lfscale*(rhoP-rhoM);
-	const dfloat FnS2 = FxS2*nxJ + FyS2*nyJ - Lfscale*(rhoP*uP-rhoM*uM);
-	const dfloat FnS3 = FxS3*nxJ + FyS3*nyJ - Lfscale*(rhoP*vP-rhoM*vM);
-	const dfloat FnS4 = FxS4*nxJ + FyS4*nyJ - Lfscale*(EP-EM);
+#endif
+	const dfloat FnS1 = FxS1*nxJ + FyS1*nyJ - dF1;
+	const dfloat FnS2 = FxS2*nxJ + FyS2*nyJ - dF2;
+	const dfloat FnS3 = FxS3*nxJ + FyS3*nyJ - dF3;
+	const dfloat FnS4 = FxS4*nxJ + FyS4*nyJ - dF4;
 	s_fnS[0][f][fid] = FnS1 + rhsf[idM]; idM += p_NfpNfaces;
 	s_fnS[1][f][fid] = FnS2 + rhsf[idM]; idM += p_NfpNfaces;
 	s_fnS[2][f][fid] = FnS3 + rhsf[idM]; idM += p_NfpNfaces;
