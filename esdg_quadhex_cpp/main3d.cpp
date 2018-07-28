@@ -61,7 +61,15 @@ static void TaylorGreen3d(MatrixXd x, MatrixXd y, MatrixXd z, double t,
   rhou = rho.array()*u.array();
   rhov = rho.array()*v.array();
   rhow = rho.array()*w.array();  
-  E = p.array() / (GAMMA-1.0) + .5*rho.array()*(u.array().square() + v.array().square() + w.array().square());
+  E = p.array() / (GAMMA-1.0) + .5*rho.array()*(u.array()*u.array() + v.array()*v.array() + w.array()*w.array());
+
+  /*
+  rho.fill(2.0);
+  rhou.fill(.50);
+  rhov.fill(.20);
+  rhow.fill(.10);
+  E.fill(1.0);
+  */
 }
 
 int main(int argc, char **argv){
@@ -88,10 +96,11 @@ int main(int argc, char **argv){
   
   Mesh *mesh = (Mesh*) calloc(1, sizeof(Mesh));  
 
-#define VORTEX 1
-#define TAYLOR_GREEN 0
+#define VORTEX 0
+#define TAYLOR_GREEN 1
 
 #if VORTEX   // isentropic vortex
+  printf("Running isentropic vortex\n");
   // [0,10] x [0,20] x [0,10] for vortex  
   HexMesh3d(mesh,K1D,2*K1D,K1D); // make Cartesian mesh
   double Lx = 5;
@@ -103,6 +112,7 @@ int main(int argc, char **argv){
 #endif  
 
 #if TAYLOR_GREEN   // Taylor Green on [-pi,pi]^3
+  printf("Running Taylor-Green\n");  
   HexMesh3d(mesh,K1D,K1D,K1D); // uniform Cartesian mesh
   mesh->VX = (mesh->VX.array())*PI;
   mesh->VY = (mesh->VY.array())*PI;
@@ -127,6 +137,7 @@ int main(int argc, char **argv){
   MatrixXd dy = d;
   MatrixXd dz = d;      
 #endif
+
 #if TAYLOR_GREEN
   MatrixXd d = x.array().sin()*y.array().sin()*z.array().sin();
   MatrixXd dx = d;
@@ -321,6 +332,21 @@ int main(int argc, char **argv){
   E = Q.middleRows(4*Np,Np);
 
 #if TAYLOR_GREEN
+
+  VectorXd dkedt(KE_time.rows()-1);
+  int t_int = max(1,dkedt.rows()/1000);
+  double scale = 1.0/pow(2*PI,3);
+  cout << "scale = " << scale << endl;
+  printf("dkedt = [");
+  for (int i = 0; i < KE_time.rows()-1; ++i){
+    dkedt(i) = scale*(KE_time(i+1)-KE_time(i))/dt;
+    if (i % t_int==0){
+      printf(" %f", dkedt(i));
+    }
+  }
+  printf("];\n");
+  //Map<VectorXd,0,InnerStride<10> > dkedt2(dkedt.data(), dkedt.size()/10);
+  //cout << "dkedt = [" << dkedt2 << "];" << endl;
   //cout << "KE_time = [" << KE_time << "];" << endl;
 #endif
 

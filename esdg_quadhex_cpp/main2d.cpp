@@ -75,6 +75,7 @@ static void ShockVortex2d(MatrixXd x,MatrixXd y,
       }
     }
   }
+
   MatrixXd r = ((x.array()-x0).square() + (y.array()-y0).square()).sqrt();
   double epsilon = .3;
   double alpha = .204;
@@ -402,8 +403,8 @@ int main(int argc, char **argv){
   // interpolate to N=1 for plotting
   //VectorXd rp1D(2);
   //rp1D << -1.0/3.0, 1.0/3.0;
-  int Nplot = 2; // if K1D large, Nplot = 1 should be sufficient
-  VectorXd rp1D = VectorXd::LinSpaced(Nplot+1,-1,1); // plot N=2
+  int Nplot = N; 
+  VectorXd rp1D = VectorXd::LinSpaced(Nplot+1,-1,1); 
 
   int Np1 = rp1D.size();
   int Np2 = Np1*Np1;
