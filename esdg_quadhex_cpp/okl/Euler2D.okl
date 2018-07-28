@@ -568,8 +568,8 @@ void euler2d_flux(dfloat rho_i, dfloat rho_j, dfloat u_i, dfloat u_j,
 	const dfloat EM = Qf[idM];
 	
 	dfloat rhoP = Qf[idP];   idP += p_NfpNfaces;
-	const dfloat rhouP = Qf[idP];  idP += p_NfpNfaces;
-	const dfloat rhovP = Qf[idP];  idP += p_NfpNfaces;
+	dfloat rhouP = Qf[idP];  idP += p_NfpNfaces;
+	dfloat rhovP = Qf[idP];  idP += p_NfpNfaces;
 	dfloat EP = Qf[idP];
 
 	const dfloat invrhoM = ONE/rhoM;
@@ -586,6 +586,9 @@ void euler2d_flux(dfloat rho_i, dfloat rho_j, dfloat u_i, dfloat u_j,
 	  uP = uM;
 	  rhoP = rhoM;
 	  EP = EM;
+
+	  rhouP = rhoP*uP;
+	  rhovP = rhoP*vP;	  
 	}
 #endif
 	
