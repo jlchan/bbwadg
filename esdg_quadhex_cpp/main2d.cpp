@@ -36,15 +36,18 @@ static void ShockVortex2d(MatrixXd x,MatrixXd y,
   u.resize(x.rows(),x.cols());
   v.resize(x.rows(),x.cols());
   p.resize(x.rows(),x.cols());
-  
-  double xs = .5;
+
+  // shock location  
+  double xs = .5; 
+
+  // vortex center
   double x0 = .25;
   double y0 = .5;
 
   double Ms = 1.1;
 
   double rho_up = 1.0;
-  double u_up = Ms*sqrt(GAMMA);
+  double u_up = sqrt(GAMMA);
   double v_up = 0.0;
   double p_up = 1.0;
 
@@ -79,13 +82,13 @@ static void ShockVortex2d(MatrixXd x,MatrixXd y,
   MatrixXd r = ((x.array()-x0).square() + (y.array()-y0).square()).sqrt();
   double epsilon = .3;
   double alpha = .204;
-  double rc = .05;
+  double rc = .075;
   MatrixXd tau = r.array() / rc;
   MatrixXd vtheta = epsilon * tau.array() * (alpha*(1-tau.array().square())).exp();
 
-  double Tu = p_up/rho_up;  
   MatrixXd theta(x.rows(),x.cols());
-  MatrixXd Tvor(x.rows(),x.cols());    
+  MatrixXd Tvor(x.rows(),x.cols());
+  double Tu = p_up/rho_up;    
   for (int i = 0; i < x.rows()*x.cols(); ++i){    
     theta(i) = atan2(y(i)-y0,x(i)-x0);
     Tvor(i) = Tu - (GAMMA-1.0)*epsilon*epsilon*exp(2.0*alpha*(1.0-tau(i)*tau(i)))/(4*alpha*GAMMA);    
@@ -93,6 +96,7 @@ static void ShockVortex2d(MatrixXd x,MatrixXd y,
 
   u = us.array() + vtheta.array() * theta.array().sin();
   v = vs.array() - vtheta.array() * theta.array().cos();
+
   rho = rhos.array() * (Tvor.array()/Tu).pow(1.0/(GAMMA-1.0));
   p = ps.array() * (Tvor.array()/Tu).pow(1.0/(GAMMA-1.0));  
   
