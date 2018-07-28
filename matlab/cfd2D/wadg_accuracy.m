@@ -2,7 +2,7 @@ clear
 Globals1D;
 
 f = @(x) (x < -pi/8) + (x > pi/8).*exp(x).*(sin(1+pi*x));
-f = @(x) (x > .1) + exp(x).*sin(1+pi*x);
+f = @(x) 0*(x > .1) + exp(x).*sin(1+pi*x);
 w = @(x) 2 + sin(pi*x);
 Kvec = [2 4 8 16 32 64 128 256];
 h = 2./Kvec;
@@ -35,6 +35,63 @@ for K1D = Kvec
 %         fw(:,e) = M\(Vq'*diag(wq./w(xq(:,e)))*Vq)*Pq*(w(xq(:,e)).*f(xq(:,e))
     end
     err = (Vq2*(fp - Pq*((Vq*Pq*(w(xq).*f(xq)))./w(xq)) )).^2;
+%     err = (Vq2*(fp - fw )).^2;
+    L2err(sk) = sqrt(sum(sum(wJq.*err)));    
+    
+%     u = Pq*exp(xq);
+%     for e = 1:K
+%         Tinvwu(:,e) = (Vq'*diag(wq./w(xq(:,e)))*Vq)\(M*u(:,e));
+%     end
+%     err = (Vq2*u - Vq2*(Tinvwu)./w(xq2)).^2;
+%     L2err(sk) = sqrt(sum(sum(wJq.*err)));
+    
+    sk = sk + 1;
+end
+
+loglog(h,L2err,'bx--')
+hold on
+r = N+2;
+loglog(h,5*L2err(1)/h(1).^r*h.^r,'r--')
+
+%%
+
+clear
+Globals1D;
+
+f = @(x) (x < -pi/8) + (x > pi/8).*exp(x).*(sin(1+pi*x));
+f = @(x) 0*(x > .1) + exp(x).*sin(1+pi*x);
+w = @(x) 2 + sin(pi*x);
+Kvec = [2 4 8 16 32 64 128 256];
+h = 2./Kvec;
+sk = 1;
+for K1D = Kvec
+    N = 4;
+    
+    r = JacobiGL(0,0,N);    
+    
+    [rq wq] = JacobiGQ(0,0,N+2);
+    [rq2 wq2] = JacobiGQ(0,0,N+4);
+            
+    [Nv, VX, K, EToV] = MeshGen1D(-1,1,K1D);
+    
+    StartUp1D;
+    
+    V = Vandermonde1D(N,r);
+    Vq = Vandermonde1D(N,rq)/V;
+    M = Vq'*diag(wq)*Vq;
+    
+    Pq = M\(Vq'*diag(wq));
+    xq =  Vandermonde1D(N,rq)/Vandermonde1D(N,JacobiGL(0,0,N))*x;
+    
+    Vq2 = Vandermonde1D(N,rq2)/V;
+    xq2 = Vq2*x;
+    wJq = diag(wq2)*(Vq2*J);
+    
+    for e = 1:K
+        fp(:,e) = (Vq'*diag(wq.*w(xq(:,e)))*Vq) \ (Vq'*diag(wq)*f(xq(:,e)));
+%         fw(:,e) = M\(Vq'*diag(wq./w(xq(:,e)))*Vq)*Pq*(w(xq(:,e)).*f(xq(:,e))
+    end
+    err = (Vq2*(fp - Pq*((Vq*Pq*(f(xq)))./w(xq)) )).^2;
 %     err = (Vq2*(fp - fw )).^2;
     L2err(sk) = sqrt(sum(sum(wJq.*err)));    
     

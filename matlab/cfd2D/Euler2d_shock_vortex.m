@@ -7,10 +7,10 @@ FinalTime = .7;
 % FinalTime = .3;
 
 N = 3;
-K1D = 12; 120;
+K1D = 48; 
 wadgProjEntropyVars = abs(a) > 1e-10;
 
-CFL = .9;
+CFL = .5;
 tau = 1;
 
 % Lx = 7.5; Ly = 5; ratiox = 3/4; ratioy = .5;
@@ -147,9 +147,13 @@ for e = 1:K
     end
 end
 
+global mapBwall
+mapBwall = find(abs(yf-max(y(:)))<1e-8 | abs(yf-min(y(:)))<1e-8);
+
+
 %% filter
 
-F = Filter2D(N,.5,16);
+% F = Filter2D(N,.5,16);
 
 %% make curvilinear mesh (still unstable?)
 
@@ -462,29 +466,39 @@ EP = EM(mapPq);
 
 betaq = beta(rhoq,uq,vq,Eq);
 betafq = beta(rhoM,uM,vM,EM);
-betaN = [betaq;betafq];
 
 % Lax-Friedrichs flux
 global gamma tau
 unorm2 = (uM.^2+vM.^2);
 pM = (gamma-1)*(EM - .5*rhoM.*unorm2);
-cvel = sqrt(gamma*pM./rhoM);
-lam = sqrt(unorm2)+cvel;
-LFc = max(lam(mapPq),lam);
-QP{1} = QM{1}(mapPq); QP{2} = QM{2}(mapPq);
-QP{3} = QM{3}(mapPq); QP{4} = QM{4}(mapPq);
 
-% % boundary conditions
-% global inflow wall 
-% Ms = 1.1;
-% rho_up = 1; u_up = Ms*sqrt(gamma); v_up = 0; p_up = 1;
-% QP{1}(inflow) = rho_up;
-% QP{2}(inflow) = rho_up*u_up;
-% QP{3}(inflow) = rho_up*v_up;
-% QP{4}(inflow) = (p_up/(gamma-1) + .5*rho_up.*(u_up.^2+v_up.^2));
-% QP{3}(wall) = -QM{3}(wall);
+% % % walls = top/bottom
+% global mapBwall
+% uP(mapBwall) = uM(mapBwall);
+% vP(mapBwall) = -vM(mapBwall);
+% rhoP(mapBwall) = rhoM(mapBwall);
+% pP = pM(mapPq);
+% pP(mapBwall) = pM(mapBwall);
+% EP(mapBwall) = pP(mapBwall)/(gamma-1) + .5*rhoP(mapBwall).*(uP(mapBwall).^2+vP(mapBwall).^2); 
 
-if 0
+QM{1} = rhoM;
+QM{2} = rhoM.*uM;
+QM{3} = rhoM.*vM;
+QM{4} = EM;
+
+QP{1} = rhoP;
+QP{2} = rhoP.*uP;
+QP{3} = rhoP.*vP;
+QP{4} = EP;
+
+% QP{1} = QM{1}(mapPq); QP{2} = QM{2}(mapPq);
+% QP{3} = QM{3}(mapPq); QP{4} = QM{4}(mapPq);
+
+if 1
+    cvel = sqrt(gamma*pM./rhoM);
+    lam = sqrt(unorm2)+cvel;
+    LFc = max(lam(mapPq),lam);
+
     dQ1 = QP{1}-QM{1};
     dQ2 = QP{2}-QM{2};
     dQ3 = QP{3}-QM{3};
@@ -524,15 +538,14 @@ else
     D33 = abs((un)).*pavg;
     D44 = abs((un + a)).*rholog/(2*gamma);
     
-%     R11 = 1; R12 = 1; R13 = 0; R14 = 1;
-%     R21 = uavg-a; R22 = uavg; R23 = 0; R24  = uavg+a;
-%     R31 = vavg; R32 = vavg; R33 = 1; R34  = vavg;
-%     R41 = h-a.*uavg; R42 = .5*ubar; R43 = vavg; R44 = h+a.*uavg;
-%     D11 = abs((uavg - a)).*rholog/(2*gamma);
-%     D22 = abs((uavg)).*rholog*(gamma-1)/gamma;
-%     D33 = abs((uavg)).*pavg;
-%     D44 = abs((uavg + a)).*rholog/(2*gamma);
-
+%         R11 = 1; R12 = 1; R13 = 0; R14 = 1;
+%         R21 = uavg-a; R22 = uavg; R23 = 0; R24  = uavg+a;
+%         R31 = vavg; R32 = vavg; R33 = 1; R34  = vavg;
+%         R41 = h-a.*uavg; R42 = .5*ubar; R43 = vavg; R44 = h+a.*uavg;
+%         D11 = abs((uavg - a)).*rholog/(2*gamma);
+%         D22 = abs((uavg)).*rholog*(gamma-1)/gamma;
+%         D33 = abs((uavg)).*pavg;
+%         D44 = abs((uavg + a)).*rholog/(2*gamma);
 
     r1 = D11.*(R11.*du1 + R21.*du2 + R31.*du3 + R41.*du4);
     r2 = D22.*(R12.*du1 + R22.*du2 + R32.*du3 + R42.*du4);
@@ -550,15 +563,17 @@ fSf2 = nxJ.*fxS2(rhoM,uM,vM,EM,rhoP,uP,vP,EP) + nyJ.*fyS2(rhoM,uM,vM,EM,rhoP,uP,
 fSf3 = nxJ.*fxS3(rhoM,uM,vM,EM,rhoP,uP,vP,EP) + nyJ.*fyS3(rhoM,uM,vM,EM,rhoP,uP,vP,EP);
 fSf4 = nxJ.*fxS4(rhoM,uM,vM,EM,rhoP,uP,vP,EP) + nyJ.*fyS4(rhoM,uM,vM,EM,rhoP,uP,vP,EP);
 
-fSf1 = fSf1  - .25*Lf1;
-fSf2 = fSf2  - .25*Lf2;
-fSf3 = fSf3  - .25*Lf3;
-fSf4 = fSf4  - .25*Lf4;
+fSf1 = fSf1  - .5*Lf1;
+fSf2 = fSf2  - .5*Lf2;
+fSf3 = fSf3  - .5*Lf3;
+fSf4 = fSf4  - .5*Lf4;
 
 rho = [rhoq; rhoM];
 u = [uq; uM];
 v = [vq; vM];
 % E = [Eq; EM];
+betaN = [betaq;betafq];
+
 divF1 = zeros(size(DNr,1),K);
 divF2 = zeros(size(DNr,1),K);
 divF3 = zeros(size(DNr,1),K);
@@ -586,12 +601,16 @@ for e = 1:K
     FxS4 = f4aux.*uavg;
     FyS4 = f4aux.*vavg;
     
-    [rxJ1, rxJ2] = meshgrid([rxJ(:,e);rxJf(:,e)]);
-    [sxJ1, sxJ2] = meshgrid([sxJ(:,e);sxJf(:,e)]);
-    [ryJ1, ryJ2] = meshgrid([ryJ(:,e);ryJf(:,e)]);
-    [syJ1, syJ2] = meshgrid([syJ(:,e);syJf(:,e)]);
-    rxJK = avg(rxJ1,rxJ2);  sxJK = avg(sxJ1,sxJ2);
-    ryJK = avg(ryJ1,ryJ2);  syJK = avg(syJ1,syJ2);
+%     [rxJ1, rxJ2] = meshgrid([rxJ(:,e);rxJf(:,e)]);
+%     [sxJ1, sxJ2] = meshgrid([sxJ(:,e);sxJf(:,e)]);
+%     [ryJ1, ryJ2] = meshgrid([ryJ(:,e);ryJf(:,e)]);
+%     [syJ1, syJ2] = meshgrid([syJ(:,e);syJf(:,e)]);
+%     rxJK = avg(rxJ1,rxJ2);  sxJK = avg(sxJ1,sxJ2);
+%     ryJK = avg(ryJ1,ryJ2);  syJK = avg(syJ1,syJ2);
+rxJK = rxJ(1,e);
+sxJK = sxJ(1,e);
+ryJK = ryJ(1,e);
+syJK = syJ(1,e);
     
     Dx = DNr.*rxJK + DNs.*sxJK;
     Dy = DNr.*ryJK + DNs.*syJK;

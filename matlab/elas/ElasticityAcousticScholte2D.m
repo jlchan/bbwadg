@@ -5,20 +5,21 @@ clear -global *
 
 Globals2D
 
-K1D = 4;
+K1D = 8;
 N = 3;
 c_flag = 0;
-FinalTime = .4
+FinalTime = 1;
+computeEigs = 0;
 
 [Nv, VX, VY, K, EToV] = unif_tri_mesh(K1D);
 
 StartUp2D;
 
-[rp sp] = EquiNodes2D(50); [rp sp] = xytors(rp,sp);
+[rp sp] = EquiNodes2D(25); [rp sp] = xytors(rp,sp);
 Vp = Vandermonde2D(N,rp,sp)/V;
 xp = Vp*x; yp = Vp*y;
 
-Nq = 2*N+1;
+Nq = 2*N;
 [rq sq wq] = Cubature2D(Nq); % integrate u*v*c
 Vq = Vandermonde2D(N,rq,sq)/V;
 Pq = V*V'*Vq'*diag(wq); % J's cancel out
@@ -30,7 +31,8 @@ Jq = Vq*J;
 global Ka Ke
 % Ke = 1:K; Ka = []; 
 % Ka = 1:K; Ke = [];
-Ka = find(mean(y) > 0); Ke = find(mean(y) < 0);
+Ka = find(mean(y) > 0); 
+Ke = find(mean(y) < 0);
 
 %% find dividing boundary
 
@@ -86,7 +88,7 @@ lambda = 1;
 
 % mu(:,Ka) = 0;
 
-tau = 0;
+tau = 1;
 
 %% params setup
 
@@ -107,7 +109,7 @@ U{5} = u;
 
 %% exact sol scholte
 
-if 0
+if 1
     mu1 = 0; % acoustic
     mu2 = mu; % elastic
     
@@ -126,10 +128,23 @@ if 0
     b2s = sqrt(1-c^2/c2s^2);
     
     global v1a v2a v1b v2b 
+    
+%     v1a = B1*k*w*exp(-b1p*k*y)*exp(k*x*1i - t*w*1i)
+%     v2a = B1*b1p*k*w*exp(-b1p*k*y)*exp(k*x*1i - t*w*1i)*1i
+%     v1b = -k*w*exp(k*x*1i - t*w*1i)*(B2*exp(b2p*k*y)*1i - B3*b2s*exp(b2s*k*y))*1i
+%     v2b =-k*w*exp(k*x*1i - t*w*1i)*(B2*b2p*exp(b2p*k*y) + B3*exp(b2s*k*y)*1i)*1i
+%     u1ax =-B1*k^2*exp(-b1p*k*y)*exp(k*x*1i - t*w*1i)
+%     u2ay = B1*b1p^2*k^2*exp(-b1p*k*y)*exp(k*x*1i - t*w*1i)
+%     u12axy = -B1*b1p*k^2*exp(-b1p*k*y)*exp(k*x*1i - t*w*1i)*2i
+%     u1bx = k^2*exp(k*x*1i - t*w*1i)*(B2*exp(b2p*k*y)*1i - B3*b2s*exp(b2s*k*y))*1i
+%     u2by = k^2*exp(k*x*1i - t*w*1i)*(B2*b2p^2*exp(b2p*k*y) + B3*b2s*exp(b2s*k*y)*1i)
+%     u12bxy = - exp(k*x*1i - t*w*1i)*(B3*b2s^2*k^2*exp(b2s*k*y) - B2*b2p*k^2*exp(b2p*k*y)*1i) + k*exp(k*x*1i - t*w*1i)*(B2*b2p*k*exp(b2p*k*y) + B3*k*exp(b2s*k*y)*1i)*1i
+
     v1a = @(x,y,t) real(B1.*k.*w.*exp(-b1p.*k.*y).*exp(k.*x.*1i - t.*w.*1i));
     v2a = @(x,y,t) real(B1.*b1p.*k.*w.*exp(-b1p.*k.*y).*exp(k.*x.*1i - t.*w.*1i).*1i);
     v1b = @(x,y,t) real(-k.*w.*exp(k.*x.*1i - t.*w.*1i).*(B2.*exp(b2p.*k.*y).*1i - B3.*b2s.*exp(b2s.*k.*y)).*1i);
     v2b = @(x,y,t) real(-k.*w.*exp(k.*x.*1i - t.*w.*1i).*(B2.*b2p.*exp(b2p.*k.*y) + B3.*exp(b2s.*k.*y).*1i).*1i);
+    
     u1ax = @(x,y,t) real(-B1.*k^2.*exp(-b1p.*k.*y).*exp(k.*x.*1i - t.*w.*1i));
     u2ay = @(x,y,t) real(B1.*b1p^2.*k^2.*exp(-b1p.*k.*y).*exp(k.*x.*1i - t.*w.*1i));
     u12axy = @(x,y,t) real(-B1.*b1p.*k^2.*exp(-b1p.*k.*y).*exp(k.*x.*1i - t.*w.*1i).*2i);
@@ -139,45 +154,44 @@ if 0
     
     v1 = @(x,y,t) v1a(x,y,t).*(y > 0) + v1b(x,y,t).*(y < 0);
     v2 = @(x,y,t) v2a(x,y,t).*(y > 0) + v2b(x,y,t).*(y < 0);
-    U{1} = Pq*v1(xq,yq,0);
-    U{2} = Pq*v2(xq,yq,0);
+    U{1} = Pq*v1(xq,yq,0); % velocity is the same in both cases
+    U{2} = Pq*v2(xq,yq,0);               
+    U{3}(:,Ka) = Pq*((2*mu1+lambda) .* u1ax(xq(:,Ka),yq(:,Ka),0) + lambda.*u2ay(xq(:,Ka),yq(:,Ka),0))/2; % p = sxx = syy?    
     
-    ids1 = mean(y) > 0;
-    U{3}(:,ids1) = Pq*(u1ax(xq,yq,0) + u2ay(xq,yq,0))/2; % p = sxx = syy?    
-    ids2 = mean(y) < 0; 
-    U{3}(:,ids2) = Pq*((2*mu2+lambda) .* u1bx(xq,yq,0) + lambda.*u2by(xq,yq,0));
-    U{4}(:,ids2) = Pq*(lambda.*u1bx(xq,yq,0) + (2*mu2+lambda) .* u2by(xq,yq,0));
-    U{5}(:,ids2) = Pq*(mu2 .* u12bxy(xq,yq,0));
+    U{3}(:,Ke) = Pq*((2*mu2+lambda) .* u1bx(xq(:,Ke),yq(:,Ke),0) + lambda.*u2by(xq(:,Ke),yq(:,Ke),0));
+    U{4}(:,Ke) = Pq*(lambda.*u1bx(xq(:,Ke),yq(:,Ke),0) + (2*mu2+lambda) .* u2by(xq(:,Ke),yq(:,Ke),0));
+    U{5}(:,Ke) = Pq*(mu2 .* u12bxy(xq(:,Ke),yq(:,Ke),0));
     
     if 0
+        
         figure
-        pp(:,1:Ka) = Ua{1};
-        pp(:,(1:Ke)+Ka) = Ue{3};
+        pp(:,Ka) = U{1}(:,Ka);
+        pp(:,Ke) = U{3}(:,Ke);
         vv = Vp*pp;
         color_line3(xp,yp,vv,vv,'.');
         colorbar
-        %             return
+        return
         
-        % check flux condition
-        t = 0;
-        nxx = 0; nyy = 1;
-        xx = -1:.1:1;
-        Sxx = (2*mu2+lambda) .* u1bx(xx,0,t) + lambda.*u2by(xx,0,t);
-        Syy = lambda.*u1bx(xx,0,t) + (2*mu2+lambda) .* u2by(xx,0,t);
-        Sxy = mu2 * u12bxy(xx,0,t);
-        Snx = nxx*Sxx + nyy*Sxy;
-        Sny = nxx*Sxy + nyy*Syy;
-        v1 = v1b(xx,0,t);
-        v2 = v2b(xx,0,t);
-        p = u1ax(xx,0,t) + u2ay(xx,0,t);
-        u = v1a(xx,0,t);
-        v = v2a(xx,0,t);
-        norm(Snx - p*nxx)
-        norm(Sny - p*nyy)
-        norm((v1 - u)*nxx)
-        norm((v2 - v)*nyy)
-        
-        keyboard
+%         % check flux condition
+%         t = 0;
+%         nxx = 0; nyy = 1;
+%         xx = -1:.1:1;
+%         Sxx = (2*mu2+lambda) .* u1bx(xx,0,t) + lambda.*u2by(xx,0,t);
+%         Syy = lambda.*u1bx(xx,0,t) + (2*mu2+lambda) .* u2by(xx,0,t);
+%         Sxy = mu2 * u12bxy(xx,0,t);
+%         Snx = nxx*Sxx + nyy*Sxy;
+%         Sny = nxx*Sxy + nyy*Syy;
+%         v1 = v1b(xx,0,t);
+%         v2 = v2b(xx,0,t);
+%         p = u1ax(xx,0,t) + u2ay(xx,0,t);
+%         u = v1a(xx,0,t);
+%         v = v2a(xx,0,t);
+%         norm(Snx - p*nxx)
+%         norm(Sny - p*nyy)
+%         norm((v1 - u)*nxx)
+%         norm((v2 - v)*nyy)
+%         
+%         keyboard
         
         
         for t = 0:.1:.25
@@ -193,7 +207,7 @@ if 0
 end
 
 %%
-if Nfld*Np*K < 2500
+if computeEigs
         
     u = zeros(Nfld*Np*K,1);
     rhs = zeros(Nfld*Np*K,1);

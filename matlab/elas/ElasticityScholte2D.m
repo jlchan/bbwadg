@@ -8,11 +8,11 @@ Globals2D
 K1D = 8;
 N = 5;
 c_flag = 0;
-FinalTime = .4;
+FinalTime = 2.5;
 
 % filename = 'Grid/Other/block2.neu';
 % [Nv, VX, VY, K, EToV] = MeshReaderGambit2D(filename);
-[Nv, VX, VY, K, EToV] = unif_tri_mesh(K1D);
+[Nv, VX, VY, K, EToV] = unif_tri_mesh(K1D,K1D);
 % VX = (VX+1)/2;
 % VY = (VY+1)/2;
 % VX = 2*VX;
@@ -48,11 +48,7 @@ xq = Vq*x; yq = Vq*y;
 Jq = Vq*J;
 
 %%
-global mapBL vmapBL t0
-
-t0 = .0;
-% t0 = .075;
-t0 = .1;
+global mapBL vmapBL
 
 % find x = 0 faces
 fbids = reshape(find(vmapP==vmapM),Nfp,nnz(vmapP==vmapM)/Nfp);
@@ -72,9 +68,6 @@ Nfld = 5; %(u1,u2,sxx,syy,sxy)
 mu = ones(size(x));
 lambda = ones(size(x));
 
-mu0 = mu(1);
-lambda0 = lambda(1);
-
 % C = [2*mu0+lambda0       lambda0       0
 %      lambda0       2*mu0+lambda0       0
 %           0       0                mu0];
@@ -83,8 +76,8 @@ lambda0 = lambda(1);
 % lambda = 1 + .5*sin(2*pi*x).*sin(2*pi*y);
 
 % ids =  mean(y) > .375 & mean(y) < .625 & mean(x) > .5 & mean(x) < .75;
-ids = mean(y) > 0;
-mu(:,ids) = 0*mu(:,ids);
+ids = mean(y) > 0; % acoustic region
+mu(:,ids) = 0*mu(:,ids); 
 % lambda(:,ids) = lambda(:,ids);
 
 
@@ -184,7 +177,7 @@ if 1
     U{5} = mu2 .* (Pq*u12xy(xq,yq,0));
     
     vv = Vp*(U{3});
-    color_line3(xp,yp,vv,vv,'.');    return
+%     color_line3(xp,yp,vv,vv,'.');    return
 end
 
 %%
@@ -306,11 +299,11 @@ while (time<FinalTime)
     end
 end
 
-hold on
-plot(tvec,unorm2,'k--','linewidth',2)
+% hold on
+% plot(tvec,unorm2,'k--','linewidth',2)
 % axis([0, time, 0, 1e-1])
 
-keyboard
+% keyboard
 
 
 
@@ -347,8 +340,6 @@ du12dxy = Ux{2} + Uy{1}; % du2dx + du1dy
 % velocity fluxes
 nSx = nx.*dU{3} + ny.*dU{5};
 nSy = nx.*dU{5} + ny.*dU{4};
-
-
 
 opt=3;
 if opt==1 % traction BCs

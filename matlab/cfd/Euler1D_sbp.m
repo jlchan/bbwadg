@@ -4,17 +4,17 @@ Globals1D;
 
 projectV = 1;
 CFL = .125;
-% CFL = .125/2.5;
+CFL = .125/2.5;
 % CFL = .125/10;
 N = 4;
-K1D = 16;
+K1D = 40;
 
 useSBP = 0;
 
 FinalTime = 1.8;
-FinalTime = .2;
+% FinalTime = .2;
 % FinalTime = .01;
-opt = 2;
+opt = 3;
 
 global tau
 tau = 1;
@@ -24,7 +24,7 @@ r = JacobiGL(0,0,N);
 
 [rq wq] = JacobiGL(0,0,N); rq = rq*(1-1e-11);
 % [rq wq] = JacobiGL(0,0,N+4); rq = rq*(1-1e-11);
-[rq wq] = JacobiGQ(0,0,N);
+[rq wq] = JacobiGQ(0,0,N+1);
 
 Nq = length(rq);
 
@@ -141,6 +141,13 @@ f2 = @(rhoL,rhoR,uL,uR,EL,ER) pavg(rhoL,rhoR,uL,uR,EL,ER) + avg(uL,uR).*f1(rhoL,
 f3 = @(rhoL,rhoR,uL,uR,EL,ER) f1(rhoL,rhoR,uL,uR,EL,ER)...
     .*(1./(2*(gamma-1).*logmean(beta(rhoL,uL,EL),beta(rhoR,uR,ER))) - .5*avg(uL.^2,uR.^2)) ...
     + avg(uL,uR).*f2(rhoL,rhoR,uL,uR,EL,ER);
+
+% % ranocha EC correction
+% f1 = @(rhoL,rhoR,uL,uR,EL,ER) logmean(rhoL,rhoR).*avg(uL,uR);
+% f2 = @(rhoL,rhoR,uL,uR,EL,ER) avg(pfun(rhoL,uL,EL),pfun(rhoR,uR,ER)) + avg(uL,uR).*f1(rhoL,rhoR,uL,uR,EL,ER);
+% f3 = @(rhoL,rhoR,uL,uR,EL,ER) f1(rhoL,rhoR,uL,uR,EL,ER)...
+%     .*(1./(2*(gamma-1).*logmean(beta(rhoL,uL,EL),beta(rhoR,uR,ER))) - .5*avg(uL.^2,uR.^2)) ...
+%     + avg(uL,uR).*f2(rhoL,rhoR,uL,uR,EL,ER) + avg(pfun(rhoL,uL,EL),pfun(rhoR,uR,ER)).*avg(uL,uR) - (pfun(rhoL,uL,EL)-pfun(rhoR,uR,ER)).*(uL-uR)/4;
 
 %%
 res1 = 0;
