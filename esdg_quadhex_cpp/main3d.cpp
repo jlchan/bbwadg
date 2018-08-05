@@ -221,14 +221,17 @@ int main(int argc, char **argv){
     E;
   setOccaArray(app, Q, app->o_Q); 
 
-  MatrixXd wJq = mesh->wq.asDiagonal() * (mesh->Vq*mesh->J);
   // for KE computation
   int log2Nq = (int)ceil(log2(Np));
   int ceilNq2 = (int) pow(2,log2Nq);
   app->props["defines/p_ceilNq2"] = ceilNq2;
-  occa::memory o_wJq, o_KE;
+
+  MatrixXd wJq = mesh->wq.asDiagonal() * (mesh->Vq*mesh->J);
+  MatrixXd V1D = MatrixXd::Identity(N+1,N+1);  
+  MatrixXd KE = MatrixXd::Zero(K,1);  
+  occa::memory o_V1D, o_wJq, o_KE;
+  setOccaArray(app, V1D, o_V1D);
   setOccaArray(app, wJq, o_wJq);
-  MatrixXd KE = MatrixXd::Zero(K,1);
   setOccaArray(app, KE, o_KE);
 
   // build occa kernels
@@ -311,7 +314,7 @@ int main(int argc, char **argv){
     }
 
 #if TAYLOR_GREEN    
-    compute_aux(K, o_wJq, app->o_Q, o_KE);
+    compute_aux(K, o_V1D, o_wJq, app->o_Q, o_KE);
     getOccaArray(app,o_KE,KE);
     KE_time(i) = KE.sum();
     if (i % interval == 0){

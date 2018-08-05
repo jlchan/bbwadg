@@ -711,6 +711,7 @@ void euler3d_flux(dfloat rho_i, dfloat rho_j, dfloat u_i, dfloat u_j,
 
 // compute auxiliary quantities
 @kernel void compute_aux(const int K,
+			 const dfloat * V1D,			 
 			 const dfloat * wJq,
 			 const dfloat * Q,
 			 dfloat *aux)
@@ -718,21 +719,56 @@ void euler3d_flux(dfloat rho_i, dfloat rho_j, dfloat u_i, dfloat u_j,
   for (int e = 0; e < K; ++e; @outer(0)){
     
     @shared dfloat sKE[p_ceilNq2];
+    @shared dfloat s_V[p_Nq1][p_Nq1]; // convert to Gauss pts
+    @shared dfloat s_Q[p_Nfields][p_Nq1][p_Nq1][p_Nq1]; 
     
     for (int i = 0; i < p_ceilNq2; ++i; @inner(0)){
 
       sKE[i] = 0.f;
-      
-      if (i < p_Nq3){
-	const int id = i + e*p_Nq3*p_Nfields;
-	const dfloat rho = Q[id + 0 * p_Nq3];
-	const dfloat rhou = Q[id + 1 * p_Nq3];
-	const dfloat rhov = Q[id + 2 * p_Nq3];
-	const dfloat rhow = Q[id + 3 * p_Nq3];
-	const dfloat E = Q[id + 4 * p_Nq3];
-	const dfloat wJqi = wJq[i + e*p_Nq3];
-	sKE[i] = .5f*(rhou*rhou + rhov*rhov + rhow*rhow)/rho * wJqi;
+
+      if (i < p_Nq2){
+	const int id1 = i % p_Nq1;
+	const int id2 = i / p_Nq1;
+	s_V[id1][id2] = V1D[i]; // i < (N+1)^2 = size of D1D
       }
+      if (i < p_Nq3){
+
+	const int kk = i / p_Nq2; // z-id
+	const int ii = (i - kk*p_Nq2) / p_Nq1; // y-id
+	const int jj = i % p_Nq1; // x-id
+	
+	// load vol values
+	int id = i + p_Nq3 * p_Nfields * e;
+	for (int fld = 0; fld < p_Nfields; ++fld){
+	  s_Q[fld][ii][jj][kk] = Q[id];
+	  id += p_Nq3;
+	}
+      }
+    }
+    @barrier("localMemFence");    
+
+    for (int i = 0; i < p_ceilNq2; ++i; @inner(0)){            
+
+      const int kk = i / p_Nq2; // z-id
+      const int ii = (i - kk*p_Nq2) / p_Nq1; // y-id
+      const int jj = i % p_Nq1; // x-id
+
+      /*
+      // interpolate to Gauss points
+      for (int fld = 0; fld < p_Nfields; ++fld){
+	for (int j = 0; j < p_Nq1; ++j){
+	  s_Q[fld][ii][jj][kk];
+	}
+      }
+      */      
+      const dfloat rho  = s_Q[0][ii][jj][kk];
+      const dfloat rhou = s_Q[1][ii][jj][kk];
+      const dfloat rhov = s_Q[2][ii][jj][kk];
+      const dfloat rhow = s_Q[3][ii][jj][kk];
+      const dfloat E    = s_Q[4][ii][jj][kk];      
+
+      const dfloat wJqi = wJq[i + e*p_Nq3];      
+      sKE[i] = .5f*(rhou*rhou + rhov*rhov + rhow*rhow)/rho * wJqi;
     }
     @barrier("localMemFence");
     
