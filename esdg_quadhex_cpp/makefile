@@ -5,16 +5,15 @@ else
   include ${OCCA_DIR}/scripts/Makefile
 endif
 
-
 paths += -I./include 
-flags += -DOCCA_GL_ENABLED=1 -Dp_N=$(N) -g 
+flags += -DOCCA_GL_ENABLED=1 -g 
 
 ifeq ($(OS),OSX)
-	links += -framework OpenGL -framework GLUT
+	linkerFlags += -framework OpenGL -framework GLUT
 endif
 
 ifeq ($(OS),LINUX)
-	links +=
+	linkerFlags +=
 # -lGLU -lglut
 endif
 
@@ -30,10 +29,10 @@ objects  = $(subst $(srcPath)/,$(objPath)/,$(sources:.cpp=.o))
 all: main2d main3d
 
 main2d: $(objects) $(headers) main2d.cpp
-	$(compiler) $(compilerFlags) -o main2d $(flags) $(objects) main2d.cpp -L${OCCA_DIR}/lib $(paths) $(links)
+	$(compiler) $(compilerFlags) -o main2d $(flags) $(objects) main2d.cpp -L${OCCA_DIR}/lib $(paths) $(linkerFlags)
 
 main3d: $(objects) $(headers) main3d.cpp
-	$(compiler) $(compilerFlags) -o main3d $(flags) $(objects) main3d.cpp -L${OCCA_DIR}/lib $(paths) $(links)
+	$(compiler) $(compilerFlags) -o main3d $(flags) $(objects) main3d.cpp -L${OCCA_DIR}/lib $(paths) $(linkerFlags)
 
 $(objPath)/%.o:$(srcPath)/%.cpp $(wildcard $(subst $(srcPath)/,$(incPath)/,$(<:.cpp=.hpp))) $(wildcard $(subst $(srcPath)/,$(incPath)/,$(<:.cpp=.tpp)))
 	$(compiler) $(compilerFlags) -o $@ $(flags) -c $(paths) $<

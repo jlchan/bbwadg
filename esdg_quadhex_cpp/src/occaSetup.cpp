@@ -7,7 +7,7 @@
 // sets up mesh-based occa parameters
 void setupOccaMesh2d(Mesh *mesh, App *app){
 
-  app->props = occa::getKernelProperties(); //props;
+  //app->props = occa::getKernelProperties(); //props;
 
   app->props["defines/p_Np"] = mesh->Np; // number of dims
   app->props["defines/p_Np1"] = mesh->N + 1;  // (N+1)
@@ -116,7 +116,7 @@ void setupOccaMesh2d(Mesh *mesh, App *app){
 // sets up mesh-based occa parameters
 void setupOccaMesh3d(Mesh *mesh, App *app){
 
-  app->props = occa::getKernelProperties();
+  //app->props = occa::getKernelProperties();
 
   app->props["defines/p_Np"] = mesh->Np; // number of dims
 
