@@ -718,11 +718,12 @@ void euler3d_flux(dfloat rho_i, dfloat rho_j, dfloat u_i, dfloat u_j,
 {
   for (int e = 0; e < K; ++e; @outer(0)){
     
-    @shared dfloat sKE[p_ceilNq2];
+    @shared dfloat sKE[p_ceil2Nq];
     @shared dfloat s_V[p_Nq1][p_Nq1]; // convert to Gauss pts
     @shared dfloat s_Q[p_Nfields][p_Nq1][p_Nq1][p_Nq1]; 
+    @shared dfloat s_Q2[p_Nfields][p_Nq1][p_Nq1][p_Nq1]; // extra smem 
     
-    for (int i = 0; i < p_ceilNq2; ++i; @inner(0)){
+    for (int i = 0; i < p_ceil2Nq; ++i; @inner(0)){
 
       sKE[i] = 0.f;
 
@@ -747,34 +748,76 @@ void euler3d_flux(dfloat rho_i, dfloat rho_j, dfloat u_i, dfloat u_j,
     }
     @barrier("localMemFence");    
 
-    for (int i = 0; i < p_ceilNq2; ++i; @inner(0)){            
-
-      const int kk = i / p_Nq2; // z-id
-      const int ii = (i - kk*p_Nq2) / p_Nq1; // y-id
-      const int jj = i % p_Nq1; // x-id
-
-      /*
-      // interpolate to Gauss points
-      for (int fld = 0; fld < p_Nfields; ++fld){
-	for (int j = 0; j < p_Nq1; ++j){
-	  s_Q[fld][ii][jj][kk];
+    // interp in x
+    for (int i = 0; i < p_ceil2Nq; ++i; @inner(0)){            
+      if (i < p_Nq3){
+	const int kk = i / p_Nq2; // z-id
+	const int ii = (i - kk*p_Nq2) / p_Nq1; // y-id
+	const int jj = i % p_Nq1; // x-id
+	
+	// interpolate to Gauss points
+	dfloat val[p_Nfields];
+	for (int fld = 0; fld < p_Nfields; ++fld){
+	  val[fld] = 0.f;
+	  for (int j = 0; j < p_Nq1; ++j){
+	  val[fld] += s_V[ii][j]*s_Q[fld][j][jj][kk];
+	  }
+	  s_Q2[fld][ii][jj][kk] = val[fld];
 	}
       }
-      */      
-      const dfloat rho  = s_Q[0][ii][jj][kk];
-      const dfloat rhou = s_Q[1][ii][jj][kk];
-      const dfloat rhov = s_Q[2][ii][jj][kk];
-      const dfloat rhow = s_Q[3][ii][jj][kk];
-      const dfloat E    = s_Q[4][ii][jj][kk];      
+    }
+    @barrier("localMemFence");
 
-      const dfloat wJqi = wJq[i + e*p_Nq3];      
-      sKE[i] = .5f*(rhou*rhou + rhov*rhov + rhow*rhow)/rho * wJqi;
+    // interp in y
+    for (int i = 0; i < p_ceil2Nq; ++i; @inner(0)){            
+      if (i < p_Nq3){
+	const int kk = i / p_Nq2; // z-id
+	const int ii = (i - kk*p_Nq2) / p_Nq1; // y-id
+	const int jj = i % p_Nq1; // x-id
+	
+	// interpolate to Gauss points
+	dfloat val[p_Nfields];
+	for (int fld = 0; fld < p_Nfields; ++fld){
+	  val[fld] = 0.f;
+	  for (int j = 0; j < p_Nq1; ++j){
+	    val[fld] += s_V[jj][j]*s_Q2[fld][ii][j][kk];
+	  }
+	  s_Q[fld][ii][jj][kk] = val[fld];
+	}
+      }
+    }
+    @barrier("localMemFence");
+
+    // interp in z
+    for (int i = 0; i < p_ceil2Nq; ++i; @inner(0)){            
+      if (i < p_Nq3){
+	const int kk = i / p_Nq2; // z-id
+	const int ii = (i - kk*p_Nq2) / p_Nq1; // y-id
+	const int jj = i % p_Nq1; // x-id
+	
+	// interpolate to Gauss points
+	dfloat val[p_Nfields];
+	for (int fld = 0; fld < p_Nfields; ++fld){
+	  val[fld] = 0.f;
+	  for (int j = 0; j < p_Nq1; ++j){
+	    val[fld] += s_V[kk][j]*s_Q[fld][ii][jj][j];
+	  }
+	}
+	const dfloat rho = val[0];
+	const dfloat rhou = val[1];
+	const dfloat rhov = val[2];
+	const dfloat rhow = val[3];
+	const dfloat E = val[4];
+	
+	const dfloat wJqi = wJq[i + e*p_Nq3];      
+	sKE[i] = .5f*(rhou*rhou + rhov*rhov + rhow*rhow)/rho * wJqi;
+      }
     }
     @barrier("localMemFence");
     
     // slowish parallel reduction
-    for (int sk = p_ceilNq2/2; sk > 0; sk/=2){
-      for (int i = 0; i < p_ceilNq2; ++i; @inner(0)){
+    for (int sk = p_ceil2Nq/2; sk > 0; sk/=2){
+      for (int i = 0; i < p_ceil2Nq; ++i; @inner(0)){
 	if (i < sk){
 	  sKE[i] +=  sKE[i + sk];
 	}
@@ -782,7 +825,7 @@ void euler3d_flux(dfloat rho_i, dfloat rho_j, dfloat u_i, dfloat u_j,
       @barrier("localMemFence");
     }
     
-    for (int i = 0; i < p_ceilNq2; ++i; @inner(0)){
+    for (int i = 0; i < p_ceil2Nq; ++i; @inner(0)){
       if (i==0){
 	aux[e] = sKE[0];
       }

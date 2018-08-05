@@ -99,7 +99,9 @@ void InitRefData2d(Mesh *mesh, int N){
   //  cout << "sq = " << sq << endl;  
   //cout << "rf = " << rf << endl;
   //cout << "sf = " << sf << endl;  
- 
+
+  //mesh->V1D = V1D;
+
   // GQ nodes
   MatrixXd Q1D = wq1D.asDiagonal()*Dq1D;
   VectorXd invwq1D = wq1D.array().inverse();
@@ -113,6 +115,7 @@ void InitRefData2d(Mesh *mesh, int N){
   //  cout << "D1D = " << mesh->D1D << endl;
   //  cout << "Vf1D = " << mesh->Vf1D << endl;
   //cout << "Lf1D = " << mesh->Lf1D << endl;   
+  mesh->rq1D = rq1D;
   mesh->wq1D = wq1D;
 
   // LSRK-45 coefficients
@@ -449,8 +452,8 @@ void InitRefData3d(Mesh *mesh, int N){
 
   // quad points 
   VectorXd rq1D, wq1D;
-  JacobiGQ(N, 0, 0, rq1D, wq1D); printf("using GQ nodes\n");
-  //JacobiGL(N, 0, 0, rq1D, wq1D); printf("using GLL nodes\n");
+  //JacobiGQ(N, 0, 0, rq1D, wq1D); printf("using GQ nodes\n");
+  JacobiGL(N, 0, 0, rq1D, wq1D); printf("using GLL nodes\n");
   
   int Np2 = Np1*Np1;
   int Np3 = Np1*Np2;
@@ -579,6 +582,9 @@ void InitRefData3d(Mesh *mesh, int N){
   //  cout << "sq = " << sq << endl;  
   //cout << "rf = " << rf << endl;
   //cout << "sf = " << sf << endl;  
+
+  mesh->rq1D = rq1D;
+  mesh->wq1D = wq1D;
  
   // GQ nodes
   MatrixXd Q1D = wq1D.asDiagonal()*Dq1D;
