@@ -317,8 +317,8 @@ legend style={font=\small}
 \makeatother
 
 \date{}
-\author{Jesse Chan}
-\title{Skew-symmetric entropy stable discontinuous Galerkin formulations with application to hybrid meshes }
+\author{Jesse Chan}%, David C.\ Del Rey Fernandez}
+\title{Skew-symmetric entropy stable discontinuous Galerkin formulations with applications to hybrid and non-conforming meshes}
 
 \graphicspath{{./figs/}}
 
@@ -362,10 +362,10 @@ where $\bm{u}$ are the conservative variables and $\bm{f}(\bm{u})$ is a vector-v
 \end{align}
 Several widely used equations in fluid modeling (Burgers, shallow water, compressible Euler and Navier-Stokes equations) yield convex entropy functions $U(\bm{u})$ \cite{hughes1986new, chen2017entropy}.  Let $\partial \Omega$ be the boundary of $\Omega$ with outward unit normal $\bm{n}$.  By multiplying the equation (\ref{eq:nonlineqs}) with $\bm{v}(\bm{u})^T$, the solutions $\bm{u}$ of (\ref{eq:nonlineqs}) can be shown to satisfy an entropy inequality
 \begin{equation}
-\int_{\Omega}\pd{U(\bm{u})}{t}\diff{x} + \int_{\partial \Omega} \sum_{j=1}^d \LRp{\bm{v}(\bm{u})^T\bm{f}_j(\bm{u}) - \psi_j\LRp{\bm{v}(\bm{u})}}n_j \diff{x} \leq 0, \qquad \bm{n} = \LRp{n_1,\ldots,n_d}, 
+\int_{\Omega}\pd{U(\bm{u})}{t}\diff{x} + \int_{\partial \Omega} \sum_{j=1}^d \LRp{\bm{v}(\bm{u})^T\bm{f}_j(\bm{u}) - \psi_j\LRp{\bm{v}(\bm{u})}}n_j \diff{x} \leq 0, 
 \label{eq:entropyineq}
 \end{equation}
-where $\psi_j(\bm{u})$ is a function referred to as the entropy potential.  
+where $\bm{n} = \LRp{n_1,\ldots,n_d}$ denotes the outward unit normal, and $\psi_j(\bm{u})$ is some function referred to as the entropy potential.  
 
 The proof of (\ref{eq:entropyineq}) requires the use of the chain rule \cite{mock1980systems, harten1983symmetric, dafermos2005compensated}.  The instability-in-practice of high order schemes for (\ref{eq:nonlineqs}) can be attributed in part to the fact that the discrete form of the equations do not satisfy the chain rule, and thus do not satisfy (\ref{eq:entropyineq}).  As a result, discretizations of (\ref{eq:nonlineqs}) do not typically possess an underlying statement of stability.  For low order schemes, this can be offset in practice by the inherent numerical dissipation.  However, because high order discretizations possess low numerical dissipation, the lack of an underlying discrete stability has been conflated with the idea that high order methods are inherently less stable than low order methods.
 
@@ -400,7 +400,7 @@ V^N \LRp{\partial \hat{D}} = \LRc{ \left.u\right|_{\partial \hat{D}}, \quad u \i
 
 The schemes in \cite{chan2017discretely} begin on the reference element $\hat{D}$ by approximating the solution in a degree $N$ polynomial basis $\LRc{\phi_j({\bm{x}})}_{i=1}^{N_p}$.  It is assumed that volume and surface quadrature rules $({\bm{x}}_i, w_i)$, $\LRp{{\bm{x}}^f_i,w^f_i}$ are provided for $\hat{D}$ and the surface $\partial \hat{D}$ of $\hat{D}$, respectively.  We make the following assumption on the volume quadrature rule:
 \begin{assumption}
-The volume quadrature rule integrates exactly all polynomials up to degree $(2N-1)$.
+The volume quadrature rule integrates exactly all polynomials of degree $(2N-1)$.
 \label{ass:quad}
 \end{assumption}
 In addition to being related to the positive definiteness of the mass matrix, Assumption~\ref{ass:quad} ensures that, for any $u,v \in V^N$, the following integral is exactly approximated using quadrature
@@ -679,7 +679,7 @@ The formulation (\ref{eq:esdgSkew}) is locally conservative such that
 \end{align}
 \end{theorem}
 \begin{proof}
-To show local conservation, we test (\ref{eq:esdgSkewWeak}) with $1$.  Let $\bm{e}$ be the coefficients of $1$ under the basis $\phi_j(\bm{x})$.
+To show local conservation, we test (\ref{eq:esdgSkewWeak}) with $1$  %Let $\bm{e}$ be the coefficients of $1$ under the basis $\phi_j(\bm{x})$.
 \begin{align}
 \bm{1}^T\bm{W}\bm{V}_q\pd{\bm{u}}{t} + \sum_{i=1}^d
 \bm{1}^T
@@ -855,14 +855,14 @@ Lemma~\ref{lemma:vdsbpcurved} implies that the polynomial degree $R$ of the surf
 %Thus, if geometric terms are approximated using degree $N$ polynomials as in \cite{kopriva2006metric}, then the skew-symmetric formulation with composite GLL quadrature can be used. 
 
 
-\subsection{Simplicial vs tensor product elements}
-
-It was shown in \cite{chan2018discretely} that the approximation error is $O\LRp{h^{R+1}}$, and that taking $R = (N+1)$ approximates the geometric terms with an error of $O(h^{N+2})$.
-
-\note{Need to note image of curl is in different spaces for simplicial vs tensor product elements.  Influences proofs that geometric terms satisfy appropriate assumptions in those cases.}
-%\subsection{On implementation and computational cost}
-
-\note{Kopriva trick to enforcing GCL still results in $Q^N$ normals 3D.  May not satisfy requirement that $\bm{1}^T\bm{Q}^i_N \psi_i(\tilde{\bm{u}}) = \bm{1}^T\bm{B}^i_N \psi_i(\tilde{\bm{u}})$ because of quadrature inaccuracy.  Note - this still works for conforming hexes because of the full matrix SBP property.}  
+%\subsection{Simplicial vs tensor product elements}
+%
+%It was shown in \cite{chan2018discretely} that the approximation error is $O\LRp{h^{R+1}}$, and that taking $R = (N+1)$ approximates the geometric terms with an error of $O(h^{N+2})$.
+%
+%\note{Need to note image of curl is in different spaces for simplicial vs tensor product elements.  Influences proofs that geometric terms satisfy appropriate assumptions in those cases.}
+%%\subsection{On implementation and computational cost}
+%
+\note{Kopriva trick to enforcing GCL still results in $Q^N$ normals 3D.  May not satisfy requirement that $\bm{1}^T\bm{Q}^i_N \psi_i(\tilde{\bm{u}}) = \bm{1}^T\bm{B}^i_N \psi_i(\tilde{\bm{u}})$ because of quadrature inaccuracy.  Note - this still works regardless for conforming hexes because of the full matrix SBP property.}  
 
 \section{Numerical experiments}
 
