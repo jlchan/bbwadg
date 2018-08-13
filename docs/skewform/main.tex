@@ -1,23 +1,9 @@
 \pdfoutput=1
 
-%\documentclass[preprint,10pt]{elsarticle}
-%\documentclass[preprint,10pt]{article}
 \documentclass[review]{siamart0216}
-%\documentclass{siamart0216}
 
-%\usepackage{fullpage}
-%\usepackage[colorlinks=true]{hyperref}
 
 \usepackage{amsmath,amssymb,amsfonts}
-%\usepackage{amsthm}
-%\theoremstyle{definition}
-%\newtheorem{definition}{Definition}
-%\theoremstyle{lemma}
-%\newtheorem{lemma}{Lemma}
-%\theoremstyle{corollary}
-%\newtheorem{corollary}{Corollary}
-%\theoremstyle{theorem}
-%\newtheorem{theorem}{Theorem}
 \newtheorem*{remark}{Remark}
 \theoremstyle{assumption}
 \newtheorem{assumption}{Assumption}
@@ -238,7 +224,7 @@ legend style={font=\small}
 
 \usepackage{stmaryrd}
 
-\renewcommand{\hat}[1]{\widehat{#1}}
+\renewcommand{\hat}[1]{\hat{#1}}
 \renewcommand{\topfraction}{0.85}
 \renewcommand{\textfraction}{0.1}
 \renewcommand{\floatpagefraction}{0.75}
@@ -284,8 +270,10 @@ legend style={font=\small}
 \renewcommand{\L}{L^2\LRp{\Omega}}
 \newcommand{\LK}{L^2\LRp{D^k}}
 \newcommand{\LdK}{L^2\LRp{\partial D^k}}
-\newcommand{\Dhat}{\widehat{D}}
+\newcommand{\Dhat}{\hat{D}}
 \newcommand{\Lhat}{L^2\LRp{\Dhat}}
+
+\renewcommand{\hat}{\widehat}
 
 \newcommand{\eval}[2][\right]{\relax
   \ifx#1\right\relax \left.\fi#2#1\rvert}
@@ -326,19 +314,10 @@ legend style={font=\small}
 
 \maketitle
 
-%\begin{frontmatter}
-%\title{Entropy stable skew-symmetric discontinuous Galerkin formulations with applications to hybrid and non-conforming meshes. }
-%
-%\author[rice]{Jesse Chan\corref{cor1}}
-%\ead{Jesse.Chan@caam.rice.edu}
-%\address[rice]{Department of Computational and Applied Mathematics, Rice University, 6100 Main St, Houston, TX, 77005}
-%
-%\begin{abstract}
-%Entropy stable high order methods for nonlinear conservation laws satisfy an inherent discrete entropy inequality.  
-%\end{abstract}
-%\end{frontmatter}
 
-%\tableofcontents
+\begin{abstract}
+Entropy stable high order methods for nonlinear conservation laws satisfy an inherent discrete entropy inequality.  The construction of such schemes has relied on the use of carefully chosen collocation points \cite{gassner2013skew, fisher2013high, carpenter2014entropy, chan2018efficient} or volume and surface quadrature rules \cite{chan2017discretely, chan2018discretely} to produce operators which satisfy a summation-by-parts (SBP) property.  In this work, we show how to generalize the construction of semi-discretely entropy stable schemes to accommodate more general pairs of volume and surface quadratures under which an SBP property does not hold.  We conclude by discussing the applicability of these new operators for entropy stable schemes on hybrid and non-conforming meshes.  
+\end{abstract}
 
 \section{Introduction}
 
@@ -346,7 +325,9 @@ High order methods for the simulation of time-dependent compressible flow have t
 
 When applied to nonlinear conservation laws, high order methods can experience artificial growth and blow-up near under-resolved features such as shocks, turbulence, or boundary layers.  In practice, the application of high order methods to practical problems requires shock capturing and stabilization techniques (such as artificial viscosity) or solution regularization (such as filtering or limiting) to prevent solution blow-up.  The resulting schemes for nonlinear conservation laws walk a fine line between stability, robustness, and accuracy.  Aggressive stabilization or regularization can result in the loss of high order accuracy, while too little can result in instability \cite{wang2013high}.  Moreover, it can be difficult to determine robust expressions for stabilization paramaters, as parameters which work for one simulation can fail when applied to a different physical regime or discretization setting.  
 
-These issues have motivated the introduction of high order \textit{entropy stable} discretizations, which satisfy a semi-discrete entropy inequality while maintaining high order accuracy in smooth regions.  Proofs of continuous entropy inequalities rely on the chain rule.  In contrast, these discrete entropy inequalities account for the loss of the chain rule due to effects such as quadrature errors, which are incurred when applying polynomially exact quadrature rules to nonlinear and rational integrands within the DG formulation.  These schemes were first introduced as high order collocation methods on tensor product elements in \cite{fisher2013high, carpenter2014entropy, gassner2016split, gassner2017br1}, and were extended to simplicial elements in \cite{crean2017high, chen2017entropy, crean2018entropy, chan2017discretely}.  These methods have also been extended to staggered grid methods \cite{parsani2016entropy} and non-conforming meshes \cite{friedrich2017entropy}.  Entropy stable boundary conditions have also been determined for the compressible Euler and Navier-Stokes equations \cite{parsani2015entropy, svard2018entropy}.  
+These issues have motivated the introduction of high order \textit{entropy stable} discretizations, which satisfy a semi-discrete entropy inequality while maintaining high order accuracy in smooth regions.  Proofs of continuous entropy inequalities rely on the chain rule.  In contrast, these discrete entropy inequalities account for the loss of the chain rule due to effects such as quadrature errors, which are incurred when applying polynomially exact quadrature rules to nonlinear and rational integrands within the DG formulation.  These schemes were first introduced as high order collocation methods on tensor product elements in \cite{fisher2013high, carpenter2014entropy, gassner2016split, gassner2017br1}, and were extended to simplicial elements in \cite{crean2017high, chen2017entropy, crean2018entropy, chan2017discretely, chan2018discretely}.  These methods have also been extended to staggered grid \cite{parsani2016entropy}, generalized SBP and Gauss nodes \cite{chan2018efficient} and non-conforming meshes \cite{friedrich2017entropy}.  Entropy stable boundary conditions have also been determined for the compressible Euler and Navier-Stokes equations \cite{parsani2015entropy, svard2018entropy}.  
+
+\note{Finish: add Section description.  Talk about situations where the SBP or decoupled SBP property doesn't hold: triangles with reduced surface quadrature, GLL quads with GQ face quadratures, and hybrid couplings.}
 
 \section{Entropy stability for systems of nonlinear conservation laws}
 
@@ -369,47 +350,40 @@ where $\bm{n} = \LRp{n_1,\ldots,n_d}$ denotes the outward unit normal, and $\psi
 
 The proof of (\ref{eq:entropyineq}) requires the use of the chain rule \cite{mock1980systems, harten1983symmetric, dafermos2005compensated}.  The instability-in-practice of high order schemes for (\ref{eq:nonlineqs}) can be attributed in part to the fact that the discrete form of the equations do not satisfy the chain rule, and thus do not satisfy (\ref{eq:entropyineq}).  As a result, discretizations of (\ref{eq:nonlineqs}) do not typically possess an underlying statement of stability.  For low order schemes, this can be offset in practice by the inherent numerical dissipation.  However, because high order discretizations possess low numerical dissipation, the lack of an underlying discrete stability has been conflated with the idea that high order methods are inherently less stable than low order methods.
 
-\section{Approximation spaces}
+\section{Polynomial approximation spaces}
 
-We define an approximation space using degree $N$ polynomials on the reference element.  In this work, we consider either simplicial reference elements (triangles and tetrahedra) or tensor product reference elements (quadrilaterals and hexahedra).  The natural polynomial approximation space differs depending on the element type \cite{chan2015gpu}.  
+In this work, we consider either simplicial reference elements (triangles and tetrahedra) or tensor product reference elements (quadrilaterals and hexahedra).  We define an approximation space using degree $N$ polynomials on the reference element; however, the natural polynomial approximation space differs depending on the element type \cite{chan2015gpu}.  
 
 On a $d$-dimensional reference simplex, the natural polynomial space are total degree $N$ polynomials 
 \[
-P^N\LRp{\widehat{D}} = \LRc{\hat{x}_1^{i_1}\ldots\hat{x}_d^{i_d}, \quad \hat{\bm{x}} \in \widehat{D}, \quad 0\leq \sum_{k=1}^d i_k \leq N}.
+P^N\LRp{\hat{D}} = \LRc{\hat{x}_1^{i_1}\ldots\hat{x}_d^{i_d}, \quad \hat{\bm{x}} \in \hat{D}, \quad 0\leq \sum_{k=1}^d i_k \leq N}.
 \]
-In contrast, the natural polynomial space on a $d$-dimensional tensor product element is 
+In contrast, the natural polynomial space on a $d$-dimensional tensor product element is the space of maximum degree $N$ polynomials
 \[
-Q^N\LRp{\widehat{D}} = \LRc{\hat{x}_1^{i_1}\ldots\hat{x}_d^{i_d}, \quad \hat{\bm{x}} \in \widehat{D}, \quad 0\leq i_k \leq N, \quad k = 1,\ldots, d}.
+Q^N\LRp{\hat{D}} = \LRc{\hat{x}_1^{i_1}\ldots\hat{x}_d^{i_d}, \quad \hat{\bm{x}} \in \hat{D}, \quad 0\leq i_k \leq N, \quad k = 1,\ldots, d}.
 \]
-We take $V^N$ to denote the natural approximation space on a given element.  Furthermore, we denote the dimension of $V^N$  as $N_p = {\rm dim}\LRp{V^N\LRp{\widehat{D}}}$.  
+We denote the natural approximation space on a given reference element $\hat{D}$ by $V^N$.  Furthermore, we denote the dimension of $V^N$ as $N_p = {\rm dim}\LRp{V^N\LRp{\hat{D}}}$.  
 
-We also define trace spaces for each reference element.  Let $\hat{f}$ be a face of the reference element $\hat{D}$.  The trace space $V^N \LRp{\hat{f}}$ is defined as the restrictions of functions in $V^N\LRp{\hat{D}}$ to $\hat{f}$
+We also define trace spaces for each reference element.  Let $\hat{f}$ be a face of the reference element $\hat{D}$.  The trace space $V^N \LRp{\hat{f}}$ is defined as the restrictions of functions in $V^N\LRp{\hat{D}}$ to $\hat{f}$, and denote the dimension of the trace space as ${\rm dim}\LRp{V^N\LRp{{\hat{f}}}} = N^f_p$.  
 \[
 V^N \LRp{\hat{f}} = \LRc{ \left.u\right|_{\hat{f}}, \quad u \in V^N\LRp{\hat{D}}}, \qquad \hat{f}\in \partial\hat{D}.
 \]
-For example, the trace space for degree $N$ polynomials on a quadrilateral face $\hat{f}$ of the bi-unit hexahedral element $[-1,1]^3$ is $Q^N\LRp{\hat{f}}$, while the trace space for degree $N$ polynomials on a triangular face $f$ of the tetrahedron is $P^N\LRp{\hat{f}}$.  We denote the dimension of the trace space as ${\rm dim}\LRp{V^N\LRp{{\hat{f}}}} = N^f_p$.  
+For example, on a $d$-dimensional simplex, $V^N \LRp{\partial \hat{D}}$ consists of total degree $N$ polynomials on simplices of dimension $(d-1)$.  On a $d$-dimensional tensor product element, $V^N \LRp{\partial \hat{D}}$ consists of maximum degree $N$ polynomials on a tensor product element of dimension $(d-1)$.  
 
-We similarly define the trace space for the surface $\partial \hat{D}$ of $\hat{D}$
-\[
-V^N \LRp{\partial \hat{D}} = \LRc{ \left.u\right|_{\partial \hat{D}}, \quad u \in V^N\LRp{\hat{D}}}.
-\]
+%For example, the trace space for degree $N$ polynomials on a quadrilateral face $\hat{f}$ of the bi-unit hexahedral element $[-1,1]^3$ is $Q^N\LRp{\hat{f}}$, while the trace space for degree $N$ polynomials on a triangular face $f$ of the tetrahedron is $P^N\LRp{\hat{f}}$.  
 
 
+%We similarly define the trace space for the surface $\partial \hat{D}$ of $\hat{D}$
+%\[
+%V^N \LRp{\partial \hat{D}} = \LRc{ \left.u\right|_{\partial \hat{D}}, \quad u \in V^N\LRp{\hat{D}}}.
+%\]
+%For example, on a $d$-dimensional simplex, $V^N \LRp{\partial \hat{D}}$ consists of total degree $N$ polynomials on simplices of dimension $(d-1)$.  On a $d$-dimensional tensor product element, $V^N \LRp{\partial \hat{D}}$ consists of maximum degree $N$ polynomials on a tensor product element of dimension $(d-1)$.  
 
-\section{$L^2$ projection and lifting matrices and a decoupled SBP operator}
-
-The schemes in \cite{chan2017discretely} begin on the reference element $\hat{D}$ by approximating the solution in a degree $N$ polynomial basis $\LRc{\phi_j({\bm{x}})}_{i=1}^{N_p}$.  It is assumed that volume and surface quadrature rules $({\bm{x}}_i, w_i)$, $\LRp{{\bm{x}}^f_i,w^f_i}$ are provided for $\hat{D}$ and the surface $\partial \hat{D}$ of $\hat{D}$, respectively.  We make the following assumption on the volume quadrature rule:
-\begin{assumption}
-The volume quadrature rule integrates exactly all polynomials of degree $(2N-1)$.
-\label{ass:quad}
-\end{assumption}
-In addition to being related to the positive definiteness of the mass matrix, Assumption~\ref{ass:quad} ensures that, for any $u,v \in V^N$, the following integral is exactly approximated using quadrature
-\[
-\int_{\hat{D}} \pd{u(\hat{\bm{x}})}{\hat{x}_i} v(\hat{\bm{x}})\diff{\hat{\bm{x}}} = \sum_{k=1}^{N_q} w_k \pd{u(\hat{\bm{x}}_k)}{\hat{x}_i} v(\hat{\bm{x}}_k).  
-\]
-In other words, evaluating the integral of the derivative of $u$ and $v$ using quadrature is exact because the integrand is a polynomial of degree $(2N-1)$.  
+\section{Quadrature-based matrices and decoupled SBP operators}
 
 \note{TODO: Standardize hat notation for operators/normals: can refer to operators on reference element and do $k$ superscript for physical elements, or do hats on reference element.}
+Let $\hat{D} \subset\mathbb{R}^d$ denote a reference element with surface $\partial \hat{D}$.  
+The high order schemes in \cite{chan2017discretely, chan2018discretely} begin by approximating the solution in a degree $N$ polynomial basis $\LRc{\phi_j({\bm{x}})}_{i=1}^{N_p}$ on $\hat{D}$.  These schemes also assume volume and surface quadrature rules $({\bm{x}}_i, w_i)$, $\LRp{{\bm{x}}^f_i,w^f_i}$ on $\hat{D}$.  We will specify the accuracy of each quadrature rule later, and discuss how quadrature accuracy implies specific summation-by-parts properties.  
 
 Let $\bm{V}_q,\bm{V}_f$ denote interpolation matrices, and let $\bm{D}^i$ be the differentiation matrix with respect to the $i$th coordinate such that
 \begin{gather}
@@ -421,17 +395,17 @@ The interpolation matrices $\bm{V}_q,\bm{V}_f$ map basis coefficients to evaluat
 \end{gather}
 where $\bm{W}, \bm{W}_f$ are diagonal matrices of volume and surface quadrature weights, respectively.  The matrix $\bm{P}_q$ is a quadrature-based discretization of the $L^2$ projection operator $\Pi_N$ onto degree $N$ polynomials.
 
-Interpolation, differentiation, and $L^2$ projection matrices can be combined to construct finite difference operators.  For example, the matrix $\bm{D}_q = \bm{V}_q\bm{D}^i\bm{P}_q$ maps function values at quadrature points to approximate values of the derivative at quadrature points.  By choosing specific quadrature rules, $\bm{D}_q$ recovers high order summation-by-parts finite difference operators in \cite{gassner2013skew, fernandez2014generalized, ranocha2018generalised} and certain operators in \cite{hicken2016multidimensional}.  However, to address difficulties in designing efficient entropy stable interface terms for nonlinear conservation laws, the PI introduced in \cite{chan2017discretely} a new ``decoupled'' summation by parts matrix which builds interface terms directly into the approximation of the derivative.  
+Interpolation, differentiation, and $L^2$ projection matrices can be combined to construct finite difference operators.  For example, the matrix $\bm{D}^i_q = \bm{V}_q\bm{D}^i\bm{P}_q$ maps function values at quadrature points to approximate values of the derivative at quadrature points.  By choosing specific quadrature rules, $\bm{D}^i_q$ recovers high order summation-by-parts finite difference operators in \cite{gassner2013skew, fernandez2014generalized, ranocha2018generalised} and certain operators in \cite{hicken2016multidimensional}.  However, to address difficulties in designing efficient entropy stable interface terms for nonlinear conservation laws, the PI introduced in \cite{chan2017discretely} a new ``decoupled'' summation by parts matrix which builds interface terms directly into the approximation of the derivative.  
 
-Let $\bm{n}$ denote the outward unit normal $\bm{n}$ on $\hat{D}$, and let $\bm{n}_i$ denote the vector containing values of the $i$th component at all surface quadrature points.  The ``decoupled'' summation by parts operator $\bm{D}^i_N$ is defined as the block matrix involving both volume and surface quadratures
-\begin{align}
-\bm{D}^i_N  &= \LRs{
+Let $\hat{\bm{n}}$ denote the scaled outward normal vector $\hat{\bm{n}} = \LRc{\hat{n}_1\hat{J}_f,\ldots,\hat{n}_d\hat{J}_f}$, where $\hat{J}_f$ is the determinant of the Jacobian of the mapping of a face of $\partial \hat{D}$ to a reference face.  Let $\hat{\bm{n}}_i$ denote the vector containing values of the $i$th component $\hat{n}_i\hat{J}f$ at all surface quadrature points, and let $\bm{Q}^i = \bm{W}\bm{D}^i_q$.  The ``decoupled'' summation by parts operator $\bm{D}^i_N$ is defined as the block matrix involving both volume and surface quadratures
+\begin{gather}
+\bm{D}^i_N = \bm{W}_N^{-1} \bm{Q}^i_N, \qquad \bm{W}_N = \LRp{\begin{array}{cc}\bm{W}&\\ & \bm{W}_f\end{array}},\label{eq:QN}\\
+\bm{Q}^i_N  = \LRs{
 \begin{array}{cc}
-\bm{D}^i_q - \frac{1}{2}\bm{V}_q \bm{L}_f {\rm diag}({\bm{n}}_i) \bm{V}_f\bm{P}_q &  \frac{1}{2}\bm{V}_q\bm{L}_f{\rm diag}({\bm{n}}_i)\\
--\frac{1}{2}{\rm diag}({\bm{n}}_i)\bm{V}_f\bm{P}_q & \frac{1}{2}{\rm diag}({\bm{n}}_i)
-\end{array}}.  
-\label{eq:DN}
-\end{align}
+\bm{Q}^i - \frac{1}{2}\LRp{\bm{V}_f \bm{P}_q}^T \bm{W}_f {\rm diag}(\hat{\bm{n}}_i) \bm{V}_f\bm{P}_q &  \frac{1}{2}\LRp{\bm{V}_f \bm{P}_q}^T \bm{W}_f {\rm diag}(\hat{\bm{n}}_i)\\
+-\frac{1}{2}\bm{W}_f{\rm diag}(\hat{\bm{n}}_i) \bm{V}_f\bm{P}_q & \frac{1}{2} \bm{W}_f{\rm diag}(\hat{\bm{n}}_i)
+\end{array}}.  \nonumber
+\end{gather}
 When combined with projection and lifting matrices, $\bm{D}^i_N$ produces a high order polynomial approximation of $f\pd{g}{x_i}$. 
 Let $f, g$ be differentiable functions, and let $\bm{f}_i = f(\bm{x}_i)$, $\bm{g}_i = g(\bm{x}_i)$ denote values of $f,g$ at volume and surface quadrature points.  Then,
 \begin{gather}
@@ -439,40 +413,56 @@ f\pd{g}{x_i} \approx \LRs{\begin{array}{cc}
 \bm{P}_q & \bm{L}_f\end{array}} {\rm diag}\LRp{\bm{f}}\bm{D}^i_N \bm{g}.  
 \label{eq:dnapprox}
 \end{gather}
-The approximation can also be interpreted as solving a variational problem.  Let $n_i$ be the $i$th component of the unit normal on $\hat{D}$.  Then (\ref{eq:dnapprox}) is equivalent to finding $u(\bm{x}) \approx f\pd{g}{x_i}$ such that 
+The approximation can also be interpreted as solving a variational problem.  Let $n_i$ be the $i$th component of the unit normal on $\hat{D}$.  Then (\ref{eq:dnapprox}) is equivalent to finding $u(\bm{x}) \approx f\pd{g}{x_i}$ such that, for all $v\in V^N\LRp{\hat{D}}$, 
+\begin{align*}
+\int_{\hat{D}} u(\bm{x})v(\bm{x}) = \int_{\hat{D}}{g\pd{\Pi_Nf}{x_i}v} + \int_{\partial \hat{D}}{(f-\Pi_Nf)\frac{\LRp{gv + \Pi_N(gv)}}{2}}\hat{n}_i\hat{J}_f.
+\end{align*}
+
+The matrix $\bm{Q}^i_N$ also satisfies a decoupled summation-by-parts (SBP) property, which is used to prove semi-discrete entropy stability for nonlinear conservation laws.  
+\begin{lemma}
+Assume that the volume and surface quadrature rules are sufficiently accurate such that the quantities
 \[
-\int_{\hat{D}} u(\bm{x})v(\bm{x})  = \int_{\hat{D}}{g\pd{\Pi_Nf}{x_i}v} + \int_{\partial \hat{D}}{(f-\Pi_Nf)\frac{\LRp{gv + \Pi_N(gv)}}{2}}n_i, \qquad \forall v\in V^N\LRp{\hat{D}}.
+\int_{\hat{D}} \pd{u}{x_i} v, \qquad \int_{\partial \hat{D}} u v n_i
 \]
-If the surface quadrature rule is exact for polynomials of degree $2N$, then the decoupled SBP operator $\bm{D}^i_N$ also satisfies a summation by parts property.  
+are integrated exactly for all $u,v \in V^N\LRp{\hat{D}}$ and $i = 1,\ldots, d$.  Then, the decoupled SBP operator $\bm{D}^i_N$ satisfies a summation by parts property:
 \begin{gather}
-\bm{Q}^i_N = \bm{W}_N \bm{D}^i_N, \qquad \bm{W}_N = \LRp{\begin{array}{cc}\bm{W}&\\ & \bm{W}_f\end{array}},\label{eq:dsbp}\\ \bm{Q}^i_N+\LRp{\bm{Q}^i_N}^T = \LRp{\begin{array}{cc}\bm{0}&\\ & \bm{W}_f {\rm diag}(\bm{n}_i)\end{array}} = \bm{B}_N\nonumber
+\bm{Q}^i_N+\LRp{\bm{Q}^i_N}^T = \LRp{\begin{array}{cc}\bm{0}&\\ & \bm{W}_f {\rm diag}(\bm{n}_i)\end{array}} = \bm{B}_N\label{eq:dsbp}
 \end{gather}
-By noting that $\bm{W}\bm{V}_q \bm{L}_q = \bm{P}_q^T\bm{V}_f^T\bm{W}_f$, the entries of $\bm{Q}^i_N$ can be re-written as
-\begin{align}
-\bm{Q}_i &= \bm{W}\bm{V}_q\bm{D}^i\bm{P}_q,\\
-\bm{Q}^i_N  &= \LRs{
-\begin{array}{cc}
-\bm{Q}_i - \frac{1}{2}\LRp{\bm{V}_f \bm{P}_q}^T  \bm{W}_f{\rm diag}({\bm{n}}_i) \bm{V}_f\bm{P}_q &  \frac{1}{2}\LRp{\bm{W}_f{\rm diag}({\bm{n}}_i)\bm{V}_f\bm{P}_q}^T\\
--\frac{1}{2}\bm{W}_f{\rm diag}({\bm{n}}_i)\bm{V}_f\bm{P}_q & \frac{1}{2}\bm{W}_f{\rm diag}({\bm{n}}_i)
-\end{array}}.
-\label{eq:QN}
-\end{align}
-from which the SBP property (\ref{eq:dsbp}) is more apparent.  
+%\begin{enumerate}
+%\item The mass matrix is positive definite, 
+%\item The quadrature integrates exactly $\int_{\hat{D}} \pd{u}{x_i} v$ for all $u,v \in V^N\LRp{\hat{D}}$ and $i = 1,\ldots, d$.
+%\end{enumerate}
+\label{lemma:dsbp}
+\end{lemma}
+\begin{proof}
+The proof is a straightforward extension of Theorem 1 in \cite{chan2017discretely} to polynomial approximation spaces on non-simplicial elements.  
+\end{proof}
 
-%\begin{lemma}[Lemma 1 in \cite{chan2017discretely}]
-%Let $\bm{D}^i_q = \bm{V}_q\bm{D}^i\bm{P}_q$.  Then, for volume quadratures which are exact for degree $2N-1$ polynomials, $\bm{D}^i_q$ satisfies the SBP property with respect to $\bm{W}$ 
-%\[
-%\bm{W}\bm{D}^i_q = \LRp{\bm{V}_f\bm{P}_q}^T \bm{W}_f\diag{\hat{\bm{n}}} \bm{V}_f\bm{P}_q - \LRp{\bm{W}\bm{D}^i_q}^T.  
-%\]
-%\label{lemma:gsbp}
-%\end{lemma}
+The assumptions of Lemma~\ref{lemma:dsbp} are satisfied for sufficiently accurate volume and surface quadratures.  For example, on simplicial elements, (\ref{eq:dsbp}) holds if the volume quadrature is exact for polynomial integrands of total degree $(2N-1)$, and the surface integral is exact for degree $2N$ polynomials on each face.  Tensor product elements require stricter conditions: (\ref{eq:dsbp}) holds if the volume quadrature is exact for polynomial integrands of degree $2N$ in each coordinate, due to the fact that derivatives of $u\in Q^N$ are degree $(N-1)$ with respect to one coordinate and degree $N$ with respect to others.  
 
+\begin{remark}
+It is worth noting that the assumptions of Lemma~\ref{lemma:dsbp} are sufficient but not necessary conditions.  For example, suppose $\hat{D}$ is a quadrilateral element, and that the volume quadrature is a tensor product of $(N+1)$ point one-dimensional Gauss-Legendre-Lobatto (GLL) rule.  If the surface quadrature also taken to be an $(N+1)$-point GLL rule over each face, then $\bm{Q}^i$ satisfies a traditional SBP property, which can be used to prove the decoupled SBP property for $\bm{Q}^i_N$.  
+\end{remark}
 
 \section{Skew-symmetric entropy conservative formulations}
 
-\subsection{Loss of the SBP property for hybrid and non-conforming meshes}
+While the SBP property has been used to derive entropy stable schemes, the SBP property is difficult or impossible to enforce in certain discretization settings, such as hybrid and non-conforming meshes arises.  This difficulty is a result of the choices of volume and surface quadrature which naturally arise in these settings.  We first illustrate how specific pairings of volume and surface quadratures can result in the loss of the SBP property (\ref{eq:dsbp}).  We then propose a skew-symmetric formulation which is entropy conservative without explicitly requiring operators which satisfy the SBP property.  
 
-While the SBP property has been used to derive entropy stable schemes, the SBP property is difficult or impossible to enforce in certain discretization settings, such as hybrid and non-conforming meshes arises.  This difficulty is a result of the choices of surface quadrature which naturally arise for these settings.  
+\subsection{Loss of the SBP property}
+
+In this section, we give examples of specific pairings of volume and surface quadratures under which the decoupled SBP property does not hold (see Figure~\ref{fig:sbploss}).  We consider two dimensional reference elements $\hat{D}$ with spatial coordinates $x,y$.
+\begin{figure}
+\centering
+\subfloat[GLL volume quadrature, Gauss surface quadrature]{\includegraphics[width=.4\textwidth]{figs/gllgauss.png}\label{subfig:gllgq}}
+\hspace{2em}
+\subfloat[Degree $2N$ volume quadrature, GLL surface quadrature]{\includegraphics[width=.4\textwidth]{figs/trigll.png}\label{subfig:trigll}}
+\caption{Volume and surface quadrature pairs which do not satisfy the assumptions of Lemma~\ref{lemma:dsbp}, and thus do not possess the decoupled SBP property (\ref{eq:dsbp}). }
+\label{fig:sbploss}
+\end{figure}
+
+\paragraph{Quadrilateral elements (Figure~\ref{subfig:gllgq})} We first consider a quadrilateral element $\hat{D}$ with an $(N+1)$ point tensor product GLL volume quadrature and $(N+1)$ point Gauss quadrature on each face.  Let $u,v \in Q^N$ denote two arbitrary degree $N$ polynomials.  The assumptions of Lemma~\ref{lemma:dsbp} are that the volume quadrature exactly integrates $\int_{\hat{D}} \pd{u}{x} v$ and that the surface quadrature exactly integrates $\int_{\partial \hat{D}} u v n_i$ on $\hat{D}$.  Because the $(N+1)$-point Gauss rule is exact for polynomials of degree $2N+1$ and the product $uv \in P^{2N}$ on each face, the surface quadrature satisfies the assumptions of Lemma~\ref{lemma:dsbp}.  However, the 1D GLL rule is only exact for polynomials of degree $(2N-1)$.  The derivative $\pd{u}{x}$ is a polynomial of degree $(N-1)$ in $x$, but is degree $N$ in $y$.  Thus, $\pd{u}{x}v$ is a polynomial of degree $(2N-1)$ in $x$ but degree $2N$ in $y$, and is not integrated exactly by the volume quadrature.  
+
+\paragraph{Triangular elements (Figure~\ref{subfig:trigll})} We next consider a triangular element $\hat{D}$, where the volume quadrature is exact for degree $2N$ polynomials \cite{xiao2010quadrature} and an $(N+1)$-point GLL quadrature on each face.  Let $u,v \in P^N$ denote two arbitrary degree $N$ polynomials.  The derivative $\pd{u}{x} \in P^{(N-1})$, and $\pd{u}{x}v \in P^{(2N-1)}$, so the volume quadrature satisfies the assumptions of Lemma~\ref{lemma:dsbp}.  However, because the surface quadrature is exact only degree $(2N-1)$ polynomials and the trace of $uv\in P^{2N}$, the surface quadrature does not satisfy the assumptions of Lemma~\ref{lemma:dsbp}.
 
 \begin{figure}
 \centering
@@ -482,43 +472,50 @@ While the SBP property has been used to derive entropy stable schemes, the SBP p
 \endgroup
 \hspace{2em}
 \subfloat[Incompatible surface quadrature on the quadrilateral element.]{\includegraphics[width=.425\textwidth]{figs/hybrid2D_GQ.png}\label{subfig:hybrid2}}
-\caption{Examples of interface couplings which do not result in an SBP property and are not entropy stable.  On the left, the surface quadrature is a $(N+1)$ point GLL rule, and results in a loss of the SBP property on the triangle.  On the right, the surface quadrature is a $(N+1)$ point Gauss-Legendre rule, and results in a loss of the SBP property on the quadrilateral.  }
+\caption{Examples of interface couplings which do not result in a decoupled SBP property (\ref{eq:dsbp}).  }
 \label{fig:hybrid}
 \end{figure}
 
-\begin{figure}
-\centering
-\subfloat[Hex-pyramid coupling]{\includegraphics[width=.35\textwidth]{figs/hybrid3D.png}}
-\hspace{2em}
-\subfloat[Hex-prism coupling]{\includegraphics[width=.375\textwidth]{figs/hybrid3D_wedge.png}}
-\caption{Illustration of a 3D coupling between a GLL hexahedral element and a pyramid.  The SBP property does not hold on the pyramid due to the use of GLL quadrature on the quadrilateral face. }
-\label{fig:hybrid3d}
-\end{figure}
+These specific pairings of volume and surface quadratures appear naturally for hybrid meshes consisting of DG-SEM quadrilateral elements (using GLL volume quadrature) and triangular elements, as shown in Figure~\ref{fig:hybrid}.  In Figure~\ref{subfig:hybrid1}, the surface quadrature is a $(N+1)$ point GLL rule, and results in a loss of the SBP property on the triangle.  In Figure~\ref{subfig:hybrid2}, the surface quadrature is a $(N+1)$ point Gauss-Legendre rule, and results in a loss of the SBP property on the quadrilateral element.  
 
-\begin{figure}[!h]
-\centering
-\begingroup
-\captionsetup[subfigure]{width=.45\textwidth}
-\subfloat[Entropy stable inter-element coupling in \cite{friedrich2017entropy} for a non-conforming interface.]{\raisebox{0em}{\includegraphics[width=.45\textwidth]{figs/nonconSBP.png}}\label{subfig:noncon2}}
-\hspace{2em}
-\subfloat[Entropy stable inter-element coupling in this work for a non-conforming interface.  The dotted black lines denote communication between neighboring elements.]{\raisebox{-0em}{\includegraphics[width=.45\textwidth]{figs/nonconQuad.png}}\label{subfig:noncon1}}
-\endgroup
-%\subfloat[3D hexahedra-pyramid coupling]{\includegraphics[width=.31\textwidth]{figs/hybrid3D.png}}
-\caption{Illustration of two different entropy stable inter-element couplings for $h$ non-conforming meshes.  Each dashed red line indicates a dyadic flux computation required between two nodes. } %The coupling terms in \cite{friedrich2017entropy} requires computing dyadic fluxes between \emph{each} pair of nodes on adjacent interfaces.  The new approach results in a simpler communication pattern between elements. }
-\label{fig:noncon}
-\end{figure}
+The goal of this work is to construct high order accurate discretizations which preserve entropy conservation for these situations in which the decoupled SBP property (\ref{eq:dsbp}) does not hold.  
+
+%\begin{figure}
+%\centering
+%\subfloat[Hex-pyramid coupling]{\includegraphics[width=.35\textwidth]{figs/hybrid3D.png}}
+%\hspace{2em}
+%\subfloat[Hex-prism coupling]{\includegraphics[width=.375\textwidth]{figs/hybrid3D_wedge.png}}
+%\caption{Illustration of a 3D coupling between a GLL hexahedral element and a pyramid.  The SBP property does not hold on the pyramid due to the use of GLL quadrature on the quadrilateral face. }
+%\label{fig:hybrid3d}
+%\end{figure}
+%
+%\begin{figure}[!h]
+%\centering
+%\begingroup
+%\captionsetup[subfigure]{width=.45\textwidth}
+%\subfloat[Entropy stable inter-element coupling in \cite{friedrich2017entropy} for a non-conforming interface.]{\raisebox{0em}{\includegraphics[width=.45\textwidth]{figs/nonconSBP.png}}\label{subfig:noncon2}}
+%\hspace{2em}
+%\subfloat[Entropy stable inter-element coupling in this work for a non-conforming interface.  The dotted black lines denote communication between neighboring elements.]{\raisebox{-0em}{\includegraphics[width=.45\textwidth]{figs/nonconQuad.png}}\label{subfig:noncon1}}
+%\endgroup
+%%\subfloat[3D hexahedra-pyramid coupling]{\includegraphics[width=.31\textwidth]{figs/hybrid3D.png}}
+%\caption{Illustration of two different entropy stable inter-element couplings for $h$ non-conforming meshes.  Each dashed red line indicates a dyadic flux computation required between two nodes. } %The coupling terms in \cite{friedrich2017entropy} requires computing dyadic fluxes between \emph{each} pair of nodes on adjacent interfaces.  The new approach results in a simpler communication pattern between elements. }
+%\label{fig:noncon}
+%\end{figure}
 
 
 \subsection{A variational SBP property}
 
-It can be shown that the SBP property holds for $\bm{D}^i_N$ if the surface quadrature is exact for polynomials of degree $2N$ \cite{chan2017discretely}.  The SBP property is lost if the surface quadrature is only exact for polynomial integrands of degree less than $2N$.  However, one can still show that a variational version of the SBP property is satisfied.  
+%The main restriction we wish to overcome 
+
+The property (\ref{eq:dsbp}) (which we will refer to as the ``strong'' SBP property) relates the polynomial exactness of specific quadrature rules to algebraic properties of quadrature-based matrices.  We will relax accuracy conditions on these quadrature rules by utilizing not the strong SBP property, but a weaker ``variational'' version of the SBP property.  
 
 \begin{lemma}
-Let $v\in V^N$, and let the surface trace $\LRl{v}_{\partial \hat{D}} \in V^M\LRp{\partial \hat{D}}$ for some $M \leq N$. If the surface quadrature is exact for polynomials of degree $N+M$,  then for an arbitrary vector $\bm{u}_q$, 
+Assume that $v \in V^M$.  %, and let the surface trace $\LRl{v}_{\partial \hat{D}} \in V^M\LRp{\partial \hat{D}}$ for some $M \leq N$. 
+If the volume quadrature is exact for polynomials of degree $N+M-1$ and the surface quadrature is exact for polynomials of degree $N+M$, then for an arbitrary vector $\bm{u}_q$, 
 \[
 \bm{v}_q^T\bm{Q}_i \bm{u}_q = \bm{v}_q^T\LRp{ \LRp{\bm{V}_f\bm{P}_q}^T \bm{W}_f \diag{{\bm{n}}_i}\bm{V}_f\bm{P}_q - \bm{Q}_i^T}\bm{u}_q
 \]
-where $\bm{v}$ denotes the vector of values of $v$ of at both volume and surface quadrature points. 
+where $\bm{v}$ denotes the vector of values of $v(\bm{x})$ of at both volume and surface quadrature points. 
 \label{lemma:vsbp}
 \end{lemma}
 \begin{proof}
@@ -554,25 +551,25 @@ For convenience, let $\bm{u}_q, \bm{u}_f$ denote evaluations of $u$ at volume an
 \]
 The proof of the variational summation by parts property uses the definition of $\bm{Q}^i_N$ (\ref{eq:QN}), 
 \begin{align*}
-\bm{v}^T\bm{Q}^i_N\bm{u} &= \bm{v}_q^T\bm{Q}_i \bm{u}_q - \frac{1}{2}\LRp{\bm{V}_f\bm{P}_q\bm{v}_q}^T\bm{W}_f\hat{\bm{n}} \LRp{\bm{V}_f\bm{P}_q\bm{u}_q} + \frac{1}{2}\LRp{\bm{V}_f\bm{P}_q\bm{v}_q}^T\bm{W}_f\hat{\bm{n}} \bm{u}_f\\
-& - \frac{1}{2}\bm{v}_f^T\bm{W}_f\hat{\bm{n}} \LRp{\bm{V}_f\bm{P}_q\bm{u}_q} + \frac{1}{2}\bm{v}_f^T\bm{W}_f\hat{\bm{n}} \bm{u}_f.
+\bm{v}^T\bm{Q}^i_N\bm{u} &= \bm{v}_q^T\bm{Q}_i \bm{u}_q - \frac{1}{2}\LRp{\bm{V}_f\bm{P}_q\bm{v}_q}^T\bm{W}_f\hat{\bm{n}}_i \LRp{\bm{V}_f\bm{P}_q\bm{u}_q} + \frac{1}{2}\LRp{\bm{V}_f\bm{P}_q\bm{v}_q}^T\bm{W}_f\hat{\bm{n}}_i \bm{u}_f\\
+& - \frac{1}{2}\bm{v}_f^T\bm{W}_f\hat{\bm{n}}_i \LRp{\bm{V}_f\bm{P}_q\bm{u}_q} + \frac{1}{2}\bm{v}_f^T\bm{W}_f\hat{\bm{n}}_i \bm{u}_f.
 \end{align*}
 Applying Lemma~\ref{lemma:vsbp} then yields
 \begin{align*}
-\bm{v}^T\bm{Q}^i_N\bm{u} =& -\bm{v}_q^T\bm{Q}^T_i \bm{u}_q + \frac{1}{2}\LRp{\bm{V}_f\bm{P}_q\bm{v}_q}^T\bm{W}_f\hat{\bm{n}} \LRp{\bm{V}_f\bm{P}_q\bm{u}_q} + \frac{1}{2}\LRp{\bm{V}_f\bm{P}_q\bm{v}_q}^T\bm{W}_f\hat{\bm{n}} \bm{u}_f\\
-&\qquad - \frac{1}{2}\bm{v}_f^T\bm{W}_f\hat{\bm{n}} \LRp{\bm{V}_f\bm{P}_q\bm{u}_q} - \frac{1}{2}\bm{v}_f^T\bm{W}_f\hat{\bm{n}} \bm{u}_f + \bm{v}_f^T\bm{W}_f\hat{\bm{n}} \bm{u}_f\\
+\bm{v}^T\bm{Q}^i_N\bm{u} =& -\bm{v}_q^T\bm{Q}^T_i \bm{u}_q + \frac{1}{2}\LRp{\bm{V}_f\bm{P}_q\bm{v}_q}^T\bm{W}_f\hat{\bm{n}}_i \LRp{\bm{V}_f\bm{P}_q\bm{u}_q} + \frac{1}{2}\LRp{\bm{V}_f\bm{P}_q\bm{v}_q}^T\bm{W}_f\hat{\bm{n}}_i \bm{u}_f\\
+&\qquad - \frac{1}{2}\bm{v}_f^T\bm{W}_f\hat{\bm{n}}_i \LRp{\bm{V}_f\bm{P}_q\bm{u}_q} - \frac{1}{2}\bm{v}_f^T\bm{W}_f\hat{\bm{n}}_i \bm{u}_f + \bm{v}_f^T\bm{W}_f\hat{\bm{n}}_i \bm{u}_f\\
 =& \begin{pmatrix} \bm{v}_q\\ \bm{v}_f\end{pmatrix}^T 
 \left(\begin{pmatrix}
 \bm{0}& \\
-& \bm{W}_f\diag{\hat{\bm{n}}}
+& \bm{W}_f\diag{\hat{\bm{n}}_i}
 \end{pmatrix}\right.\\
 &+
 \left.\begin{pmatrix}
--\bm{Q}_i^T + \frac{1}{2}\LRp{\bm{V}_f\bm{P}_q}^T\bm{W}_f\hat{\bm{n}} \bm{V}_f\bm{P}_q & -\frac{1}{2} \LRp{\bm{W}_f\hat{\bm{n}} \bm{V}_f\bm{P}_q}^T\\
-\frac{1}{2}\bm{W}_f\hat{\bm{n}} \bm{V}_f\bm{P}_q & -\frac{1}{2}\bm{W}_f\hat{\bm{n}}
+-\bm{Q}_i^T + \frac{1}{2}\LRp{\bm{V}_f\bm{P}_q}^T\bm{W}_f\hat{\bm{n}}_i \bm{V}_f\bm{P}_q & -\frac{1}{2} \LRp{\bm{W}_f\hat{\bm{n}}_i \bm{V}_f\bm{P}_q}^T\\
+\frac{1}{2}\bm{W}_f\hat{\bm{n}}_i \bm{V}_f\bm{P}_q & -\frac{1}{2}\bm{W}_f\hat{\bm{n}}_i
 \end{pmatrix}  \right)
 \begin{pmatrix} \bm{u}_q\\ \bm{u}_f\end{pmatrix}\\
-=& \bm{v}^T\LRp{\bm{B}_N - \LRp{\bm{Q}^i_N}^T}\bm{u}.
+=& \bm{v}^T\LRp{\bm{B}^i_N - \LRp{\bm{Q}^i_N}^T}\bm{u}.
 \end{align*}
 \end{proof}
 Using Lemma~\ref{lemma:vdsbp}, we will determine the accuracy of the surface quadrature necessary to ensure the proof of semi-discrete entropy stability is valid.  This minimal degree of surface quadrature accuracy will depend on the nature of the reference-to-physical mapping (e.g.\ affine vs curved elements).
@@ -581,19 +578,20 @@ Using Lemma~\ref{lemma:vdsbp}, we will determine the accuracy of the surface qua
 \label{lemma:sbpcor}
 Let the surface quadrature be exact for polynomials of degree $N$.  Then, 
 \[
-\bm{1}^T\bm{Q}^i_N\bm{u} = \bm{1}^T\bm{B}_N\bm{u}, \qquad \bm{Q}^i_N\bm{1} = \bm{0},
+\bm{1}^T\bm{Q}^i_N\bm{u} = \bm{1}^T\bm{B}^i_N\bm{u}, \qquad \bm{Q}^i_N\bm{1} = \bm{0},
 \]
 where $\bm{u}$ is a vector of values of some function at volume and surface quadrature points. %is an arbitrary vector of appropriate size.  
 \end{corollary}
 \begin{proof}
 The proof that $\bm{Q}^i_N \bm{1} = \bm{0}$ follows from the property that polynomials are equal to their $L^2$ projection, and is identical to that of \cite{chan2017discretely,chan2018discretely}.     The proof of the first equality follows from $\bm{Q}^i_N \bm{1} = \bm{0}$ and Lemma~\ref{lemma:vdsbp} with $M=0$
 \[
-\bm{1}^T\LRp{\bm{Q}^i_N}\bm{u} = \bm{1}^T\LRp{\bm{B}_N - \LRp{\bm{Q}^i_N}^T}\bm{u} = \bm{1}^T{\bm{B}_N}\bm{u}.
+\bm{1}^T\LRp{\bm{Q}^i_N}\bm{u} = \bm{1}^T\LRp{\bm{B}^i_N - \LRp{\bm{Q}^i_N}^T}\bm{u} = \bm{1}^T{\bm{B}^i_N}\bm{u}.
 \]
 \end{proof}
+
 \subsection{Entropy stability on affine meshes}
 
-The high order methods in this work ensure that (\ref{eq:entropyineq}) is satisfied discretely by avoiding the use of the chain rule in the proof of entropy dissipation.  These ``entropy stable'' schemes rely on two main ingredients: an entropy stable numerical flux as defined by Tadmor \cite{tadmor1987numerical} and a concept referred to as ``flux differencing''.  % entropy stable schemes in one-dimension.  
+The high order methods in this work ensure that the entropy inequality (\ref{eq:entropyineq}) is satisfied discretely by avoiding the use of the chain rule in the proof of entropy dissipation.  These ``entropy stable'' schemes rely on two main ingredients: an entropy stable numerical flux as defined by Tadmor \cite{tadmor1987numerical} and a concept referred to as ``flux differencing''.  % entropy stable schemes in one-dimension.  
 Let $\bm{f}_S\LRp{\bm{u}_L,\bm{u}_R}$ be a numerical flux function which is a function of ``left'' and ``right'' states $\bm{u}_L,\bm{u}_R$.  
 The numerical flux $\bm{f}_S$ is \textit{entropy conservative} if it satisfies the following three conditions:  
 %The numerical flux $\bm{f}_S$ is an \textit{entropy stable} flux function if it satisfies the following three conditions:  
@@ -608,47 +606,50 @@ The numerical flux $\bm{f}_S$ is \textit{entropy conservative} if it satisfies t
 %\[
 %\LRp{\bm{v}_L-\bm{v}_R}^T\bm{f}_S(\bm{u}_L,\bm{u}_R) \leq \psi(\bm{u}_L) - \psi(\bm{u}_R)$, the flux $\bm{f}_S$ is referred to as \textit{entropy stable}.  
 
-We begin by deriving a skew-symmetric formulation on the reference element $\hat{D}$, and showing it is entropy conservative.  This formulation is then made entropy stable by adding interface dissipation, and can extended in a straightforward manner to affine elements.  The skew-symmetric formulation for (\ref{eq:nonlineqs}) on $\hat{D}$ is 
+We begin by deriving a skew-symmetric formulation on the reference element $\hat{D}$, and showing it is entropy conservative.  This formulation is then made entropy stable by adding interface dissipation, and can extended in a straightforward manner to affine elements.  
+
+Let $\bm{u}_q$ denote the values of the solution at volume quadrature points.  We define the auxiliary conservative variables $\tilde{\bm{u}}$ in terms of the $L^2$ projections of the entropy variables 
 \begin{gather}
-\pd{\bm{u}}{t} + \sum_{i=1}^d \LRs{\begin{array}{cc}
-\bm{P}_q & \bm{L}_f\end{array}} \LRp{\LRp{\bm{D}^i_N - \bm{W}_N^{-1}\LRp{\bm{Q}^i_N}^T} \circ \bm{F}_S}\bm{1} + \bm{L}_f \diag{\hat{\bm{n}}}\bm{f}_i^* = 0,\\
-\LRp{\bm{F}_S}_{ij} = \bm{f}_S\LRp{\tilde{\bm{u}}_i,\tilde{\bm{u}}_j}, \qquad 1\leq i,j\leq N_q + N^f_q,
-\label{eq:esdgSkew}
+\bm{v}_q = \bm{v}\LRp{\bm{u}_q}, \qquad \tilde{\bm{v}} = \begin{bmatrix}
+\bm{V}_q\\
+\bm{V}_f
+\end{bmatrix}\bm{P}_q\bm{v}_q, \qquad \tilde{\bm{u}} = \bm{u}\LRp{\tilde{\bm{v}}}.
 \end{gather}
-where $\bm{f}^*$ is some numerical flux.  Multiplying the formulation (\ref{eq:esdgSkew}) by $\bm{M}$ on both sides yields a weak form 
+The skew-symmetric formulation for (\ref{eq:nonlineqs}) on $\hat{D}$ is given in terms of $\tilde{\bm{u}}$
 \begin{gather}
-%\bm{M}\pd{\bm{u}}{t} + \sum_{i=1}^d \LRs{\begin{array}{c}
-%\bm{V}_q \\ \bm{V}_f\end{array}}^T \begin{pmatrix}
-%\bm{W}&\\
-%&\bm{W}_f
-%\end{pmatrix}
-%\LRp{\LRp{\bm{D}^i_N - \bm{W}_N^{-1}\LRp{\bm{Q}^i_N}^T} \circ \bm{F}_S}\bm{1} +  \bm{V}_f^T\bm{W}_f\diag{\hat{\bm{n}}}\bm{f}_i^*\label{eq:esdgSkewWeak}\\
-%= 
 \bm{M}\pd{\bm{u}}{t} + \sum_{i=1}^d\LRs{\begin{array}{c}
 \bm{V}_q \\ \bm{V}_f\end{array}}^T 
-\LRp{\LRp{\bm{Q}^i_N - \LRp{\bm{Q}^i_N}^T} \circ \bm{F}_S}\bm{1} + \bm{V}_f^T\bm{W}_f \diag{\hat{\bm{n}}}\bm{f}_i^* = 0.  \label{eq:esdgSkewWeak}
+\LRp{\LRp{\bm{Q}^i_N - \LRp{\bm{Q}^i_N}^T} \circ \bm{F}_S}\bm{1} + \bm{V}_f^T\bm{W}_f \diag{\hat{\bm{n}}_i}\bm{f}_i^* = 0,  \label{eq:esdgSkew}\\
+\LRp{\bm{F}_S}_{ij} = \bm{f}_S\LRp{\tilde{\bm{u}}_i,\tilde{\bm{u}}_j}, \qquad 1\leq i,j\leq N_q + N^f_q,\nonumber
 \end{gather}
-where the matrix $\LRp{\bm{Q}^i_N - \LRp{\bm{Q}^i_N}^T}$ possesses the following structure
+where $\bm{f}^*$ is some numerical flux, and the matrix $\LRp{\bm{Q}^i_N - \LRp{\bm{Q}^i_N}^T}$ possesses the following block structure:
 \[
 \LRp{\bm{Q}^i_N - \LRp{\bm{Q}^i_N}^T} = \begin{pmatrix}
 \bm{Q}_i-\bm{Q}_i^T & \LRp{\bm{V}_f \bm{P}_q}^T\bm{W}_f\diag{\bm{n}_i}\\
-\bm{W}_f\diag{\bm{n}_i}{\bm{V}_f \bm{P}_q} & \bm{0}
+-\bm{W}_f\diag{\bm{n}_i}{\bm{V}_f \bm{P}_q} & \bm{0}
 \end{pmatrix}.
 \]
-
+Multiplying the formulation (\ref{eq:esdgSkew}) by $\bm{M}^{-1}$ on both sides yields a strong form 
+\begin{gather*}
+\pd{\bm{u}}{t} + \sum_{i=1}^d \LRs{\begin{array}{cc}
+\bm{P}_q & \bm{L}_f\end{array}} \LRp{\LRp{\bm{D}^i_N - \bm{W}_N^{-1}\LRp{\bm{Q}^i_N}^T} \circ \bm{F}_S}\bm{1} + \bm{L}_f \diag{\hat{\bm{n}}_i}\bm{f}_i^* = 0,
+%\\
+%\LRp{\bm{F}_S}_{ij} = \bm{f}_S\LRp{\tilde{\bm{u}}_i,\tilde{\bm{u}}_j}, \qquad 1\leq i,j\leq N_q + N^f_q.
+%\label{eq:esdgSkewStrong}
+\end{gather*}
 We can now show that the skew-symmetric formulation is semi-discretely entropy conservative.  
 \begin{theorem}
 Let the surface quadrature be exact for polynomials of degree $N$.  Then, the formulation (\ref{eq:esdgSkew}) is entropy conservative such that
 \[
-\bm{1}^T\bm{W}\pd{U(\bm{u}_q)}{t} + \sum_{i=1}^d\bm{1}^T\bm{W}_f \diag{\hat{\bm{n}}} \LRp{\psi_i(\tilde{\bm{u}}_f) - \tilde{\bm{v}}_f^T\bm{f}_i^*} = 0, \qquad \bm{u}_q = \bm{V}_q\bm{u}.
+\bm{1}^T\bm{W}\pd{U(\bm{u}_q)}{t} + \sum_{i=1}^d\bm{1}^T\bm{W}_f \diag{\hat{\bm{n}}_i} \LRp{\psi_i(\tilde{\bm{u}}_f) - \tilde{\bm{v}}_f^T\bm{f}_i^*} = 0, \qquad \bm{u}_q = \bm{V}_q\bm{u}.
 \]
 \label{thm:esdg}
 \end{theorem}
 \begin{proof}
-Testing (\ref{eq:esdgSkewWeak}) by $\bm{v}_h = \bm{P}_q\bm{v}_q$ yields 
+Testing (\ref{eq:esdgSkew}) by $\bm{v}_h = \bm{P}_q\bm{v}_q$ yields 
 \begin{align}
 \bm{v}_q^T\bm{W}\pd{\LRp{\bm{V}_q\bm{u}}}{t} + \sum_{i=1}^d
-\tilde{\bm{v}}^T \LRp{\LRp{\bm{Q}^i_N - \LRp{\bm{Q}^i_N}^T} \circ \bm{F}_S}\bm{1} + \tilde{\bm{v}}_f^T \bm{W}_f \diag{\hat{\bm{n}}}\bm{f}_i^* = 0.
+\tilde{\bm{v}}^T \LRp{\LRp{\bm{Q}^i_N - \LRp{\bm{Q}^i_N}^T} \circ \bm{F}_S}\bm{1} + \tilde{\bm{v}}_f^T \bm{W}_f \diag{\hat{\bm{n}}_i}\bm{f}_i^* = 0.
 \end{align}
 One can show that \cite{chan2017discretely}
 \begin{align*}
@@ -661,7 +662,7 @@ Where we have used that $\bm{F}_S$ is symmetric and that the Hadamard product co
 &= \sum_{ij} \LRp{\bm{Q}^i_N}_{jk} \LRp{\psi_i(\tilde{\bm{u}}_j) - \psi_i(\tilde{\bm{u}}_k)}\\
 &= \bm{1}^T\LRp{\bm{Q}^i_N}\psi_i(\tilde{\bm{u}}) - \psi_i(\tilde{\bm{u}})^T\LRp{\bm{Q}^i_N}\bm{1} \\
 &= \bm{1}^T\LRp{\bm{Q}^i_N}\psi_i(\tilde{\bm{u}}) = \bm{1}^T\bm{B}^i_N\psi_i(\tilde{\bm{u}}) \\
-&= \bm{1}^T\bm{W}_f \diag{\hat{\bm{n}}} \psi_i(\tilde{\bm{u}}_f)
+&= \bm{1}^T\bm{W}_f \diag{\hat{\bm{n}}_i} \psi_i(\tilde{\bm{u}}_f)
 \end{align*}
 where we have used Corollary~\ref{lemma:sbpcor} in the second to last equality.
 %The final step of the proof is  where we have used Lemma~\ref{lemma:vdsbp} to integrate by parts and conclude that $\bm{1}^T\LRp{\bm{Q}^i_N}^T = 0$.
@@ -679,7 +680,7 @@ The formulation (\ref{eq:esdgSkew}) is locally conservative such that
 \end{align}
 \end{theorem}
 \begin{proof}
-To show local conservation, we test (\ref{eq:esdgSkewWeak}) with $1$  %Let $\bm{e}$ be the coefficients of $1$ under the basis $\phi_j(\bm{x})$.
+To show local conservation, we test (\ref{eq:esdgSkew}) with $1$
 \begin{align}
 \bm{1}^T\bm{W}\bm{V}_q\pd{\bm{u}}{t} + \sum_{i=1}^d
 \bm{1}^T
@@ -689,7 +690,7 @@ Because $\bm{F}_S$ is symmetric and $\LRp{\bm{Q}^i_N - \LRp{\bm{Q}^i_N}^T}$ is s
 \[
 \LRp{\LRp{\bm{Q}^i_N - \LRp{\bm{Q}^i_N}^T} \circ \bm{F}_S}
 \]
-is a skew-symmetric matrix.  Using that $\bm{A}$, $\bm{x}^T\bm{A}\bm{x} = 0$ for any skew symmetric matrix $\bm{A}$, the volume term vanishes
+is a skew-symmetric matrix.  Using that $\bm{x}^T\bm{A}\bm{x} = 0$ for any skew symmetric matrix $\bm{A}$, the volume term vanishes
 \[
 \bm{1}^T\LRp{\LRp{\bm{Q}^i_N - \LRp{\bm{Q}^i_N}^T} \circ \bm{F}_S}\bm{1} = 0.
 \]
@@ -704,48 +705,50 @@ is a skew-symmetric matrix.  Using that $\bm{A}$, $\bm{x}^T\bm{A}\bm{x} = 0$ for
 %\end{align}
 \end{proof}
 
-Next, we extend this formulation to affinely mapped elements.  Derivatives with respect to physical coordinates on $D^k$ are computed in terms of a change of variables formula and derivatives with respect to reference coordinates 
-\[
-\pd{u}{x_i} = \sum_{ij} \bm{G}^k_{ij}\pd{u}{\hat{x}_j}, \qquad \bm{G}^k_{ij} = J^k\pd{\hat{x}_j}{{x}_i}, 
-\]
-where $J^k$ is the determinant of the Jacobian of the geometric mapping on the element $D^k$.
-For affine meshes, the scaled geometric terms $\bm{G}^k_{ij}$ are constant over each element.  It was shown in \cite{chan2017discretely} that one can define a physical differentiation matrix as a linear combination of reference differentiation matrices.  Let $\hat{\bm{D}}^i_N$ denote the decoupled SBP operator on the reference element $\hat{D}$, and let the decoupled SBP operators with respect to the physical coordinates on $D^k$ be defined as
+Next, we extend this formulation to affinely mapped elements.  Let the domain be decomposed into non-overlapping elements $D^k$, such that $D^k$ is the image of the reference element $\hat{D}$ under an affine mapping $\bm{\Phi}^k$.  We define geometric terms ${G}^k_{ij}$ as scaled derivatives of reference coordinates $\hat{\bm{x}}$ w.r.t.\ physical coordinates $\bm{x}$
+\begin{gather}
+\pd{u}{x_i} = \sum_{ij} {G}^k_{ij}\pd{u}{\hat{x}_j}, \qquad {G}^k_{ij} = J^k\pd{\hat{x}_j}{{x}_i}, 
+\label{eq:geofacs}
+\end{gather}
+where $J^k$ is the determinant of the Jacobian of the geometric mapping on the element $D^k$.  We also introduce the scaled outward normal components $n_iJ^k_f$, which can be computed in terms of (\ref{eq:geofacs}) and the reference normals $\hat{\bm{n}}$ on $\hat{D}$
+\begin{gather}
+n^k_i J^k_f = \sum_{j=1}^d G^k_{ij} \hat{{n}}_j.  
+\label{eq:normals}
+\end{gather}
+ 
+Derivatives with respect to physical coordinates on $D^k$ are computed in terms of a change of variables formula and geometric terms (\ref{eq:geofacs}).  For affine meshes, the scaled geometric terms ${G}^k_{ij}$ are constant over each element.  It was shown in \cite{chan2017discretely} that one can define a physical differentiation matrix as a linear combination of reference differentiation matrices.  Let ${\bm{D}}^i_N$ denote the decoupled SBP operator on the reference element $\hat{D}$.  Define the decoupled SBP operators $\bm{D}^i_k$ with respect to the physical coordinates on $D^k$ be defined as
 \begin{align}
-{\bm{D}}^i_N = \sum_{j=1}^d \bm{G}_{ij}\hat{\bm{D}}^j_N.
+{\bm{D}}^i_k = \sum_{j=1}^d {G}^k_{ij}{\bm{D}}^j_N.
 \end{align}
-%Then, $\bm{Q}^i_N = \bm{W} \bm{D}^i_N$ satisfies the SBP property on each element $D^k$
-%\begin{equation}
-%\bm{Q}^i_N + \LRp{\bm{Q}^i_N}^T = \bm{B}^i_N, \qquad \bm{B}^i_N = \begin{pmatrix}
-%\bm{0}&\\
-%& {J^k_f}\bm{W}_f \diag{{\bm{n}_i}}
-%\end{pmatrix}
-%\label{eq:physsbp}
-%\end{equation}
-%where $J^k_f$ are the Jacobian factors which result from mapping the faces of $D^k$ to reference faces.
-%\end{lemma}
+Let $\bm{n}^k_i$ be a vector containing concatenated values of the scaled outward normals $n^k_iJ^k_f$ at surface quadrature nodes.  
 Then, an entropy conservative formulation can be given on $D^k$ as follows:
 \begin{gather}
-\pd{\bm{u}}{t} + \sum_{i=1}^d \LRs{\begin{array}{cc}
-\bm{P}_q & \bm{L}_f\end{array}} \LRp{\LRp{\bm{D}^i_N - \bm{W}_N^{-1}\LRp{\bm{Q}^i_N}^T} \circ \bm{F}_S}\bm{1} + \bm{L}_f \diag{{\bm{n}_i}}\bm{f}_i^* = 0, \label{eq:skewform}\\
+J^k\bm{M}\pd{\bm{u}}{t} + 
+\sum_{i=1}^d \LRs{\begin{array}{cc}
+\bm{V}_q \\
+\bm{V}_f\end{array}}^T \LRp{\LRp{\bm{Q}^i_k - \LRp{\bm{Q}^i_k}^T} \circ \bm{F}_S}\bm{1} + \bm{V}_f^T\bm{W}_f \diag{{\bm{n}^k_i}}\bm{f}_i^* = 0, \label{eq:skewform}\\
+%\sum_{i=1}^d \LRs{\begin{array}{cc}
+%\bm{P}_q & \bm{L}_f\end{array}} \LRp{\LRp{\bm{D}^i_N - \bm{W}_N^{-1}\LRp{\bm{Q}^i_N}^T} \circ \bm{F}_S}\bm{1} + \bm{L}_f \diag{{\bm{n}_i}}\bm{f}_i^* = 0, \label{eq:skewform}\\
 \LRp{\bm{F}_S}_{ij} = \bm{f}_S\LRp{\tilde{\bm{u}}_i,\tilde{\bm{u}}_j}, \qquad 1\leq i,j\leq N_q + N^f_q, \nonumber\\
 \bm{f}^* = \bm{f}_S(\tilde{\bm{u}}_f^+,\tilde{\bm{u}}_f), \qquad \text{ on interior interfaces,} \nonumber
 \end{gather}
-where $\tilde{\bm{u}}_f^+$ denotes the face value of the entropy-projected conservative variables $\tilde{\bm{u}}_f$ on the neighboring element.  The formulation can be made entropy stable by adding an appropriate penalization term, such as a Lax-Friedrichs or matrix-based dissipation \cite{winters2017uniquely, chen2017entropy, chan2017discretely}.  
+where $\tilde{\bm{u}}_f^+$ denotes the face value of the entropy-projected conservative variables $\tilde{\bm{u}}_f$ on the neighboring element.  The entropy conservative formulation can be made entropy stable by adding appropriate interface dissipation, such as Lax-Friedrichs or matrix-based penalization terms \cite{winters2017uniquely, chen2017entropy, chan2017discretely}.  
 
 \subsection{Curvilinear meshes}
 
-On affine meshes, it is possible to show entropy stability of the skew-symmetric formulation (\ref{eq:esdgSkew}) under a surface quadrature which is only exact for degree $N$ polynomials.  However, on curved meshes, a stronger surface quadrature rule is required to demonstrate entropy stability, where the strength of the surface rule depends on the order and approximation of geometric terms.  
+On affine meshes, it is possible to show entropy stability of the skew-symmetric formulation (\ref{eq:esdgSkew}) under a surface quadrature which is only exact for degree $N$ polynomials.  However, on curved meshes, a stronger surface quadrature rule is required to guarantee entropy stability, where the strength of the surface rule depends on the degree of approximation of the geometric terms, which now vary spatially over each element.  
 
+
+
+\subsection{Discrete geometric conservation law and surface quadrature accuracy}
+
+\note{Add description of how normals factor into this and note that they're computed based on $\bm{G}_{ij}$.}
 Let $\bm{J}^k\bm{G}^k_{ij}$ denote the vector of scaled geometric terms ${J}^k\bm{G}^k_{ij}$ evaluated at volume and surface quadrature points.  Decoupled SBP operators on a curved element $D^k$  can be defined as in \cite{chan2018discretely} by
 \begin{equation}
 \bm{D}^i_N = \sum_{j=1}^d \diag{\bm{G}^k_{ij}}\hat{\bm{D}}^j_N + \hat{\bm{D}}^j_N\diag{\bm{G}^k_{ij}}.
 \label{eq:dncurved}
 \end{equation}
 The skew-symmetric formulation (\ref{eq:skewform}) can be extended to curvilinear meshes using the definition of $\bm{D}^i_N$ in (\ref{eq:dncurved}).  However, additional assumptions must be satisfied in order to prove that the resulting formulation is entropy stable.  
-
-\subsection{Discrete geometric conservation law and surface quadrature accuracy}
-
-\note{Add description of how normals factor into this and note that they're computed based on $\bm{G}_{ij}$.}
 
 The first assumption which must be satisfied is the discrete geometric conservation law (GCL) \cite{thomas1979geometric, kopriva2006metric}.  For curved elements, Lemma~\ref{lemma:vdsbp} and Corollary~\ref{lemma:sbpcor} do not necessarily hold at the discrete level.  For example, expanding out the condition $\bm{Q}^i_N\bm{1} = \bm{0}$ in terms of (\ref{eq:dncurved}) yields
 \begin{align}
@@ -851,31 +854,23 @@ where we have used in the final step that $\sum_{j=1}^d\bm{G}_{ij}\hat{n}_j = \b
 
 Lemma~\ref{lemma:vdsbpcurved} implies that the polynomial degree $R$ of the surface geometric terms must be compatible with the accuracy of the surface quadrature.  This, in turn, will depend on the way in which geometric terms are approximated.  \note{Finish.}
 
-%\end{proof}
-%Thus, if geometric terms are approximated using degree $N$ polynomials as in \cite{kopriva2006metric}, then the skew-symmetric formulation with composite GLL quadrature can be used. 
-
-
-%\subsection{Simplicial vs tensor product elements}
-%
-%It was shown in \cite{chan2018discretely} that the approximation error is $O\LRp{h^{R+1}}$, and that taking $R = (N+1)$ approximates the geometric terms with an error of $O(h^{N+2})$.
-%
-%\note{Need to note image of curl is in different spaces for simplicial vs tensor product elements.  Influences proofs that geometric terms satisfy appropriate assumptions in those cases.}
-%%\subsection{On implementation and computational cost}
-%
 \note{Kopriva trick to enforcing GCL still results in $Q^N$ normals 3D.  May not satisfy requirement that $\bm{1}^T\bm{Q}^i_N \psi_i(\tilde{\bm{u}}) = \bm{1}^T\bm{B}^i_N \psi_i(\tilde{\bm{u}})$ because of quadrature inaccuracy.  Note - this still works regardless for conforming hexes because of the full matrix SBP property.}  
 
 \section{Numerical experiments}
 
-In this section, we present two-dimensional experiments on hybrid meshes consisting of quadrilaterals and triangles, as well as on non-conforming meshes of quadrilateral elements.  
+In this section, we present two-dimensional experiments which verify the theoretical results presented.  %on hybrid meshes consisting of quadrilaterals and triangles, as well as on non-conforming meshes of quadrilateral elements.  
 
-\subsection{Reduced surface quadrature}
+\subsection{Entropy stability under reduced surface quadrature}
 
 \note{Affine and curved triangles with GLL surface quadrature (under-integrated).}
 
-\subsection{Hybrid meshes}
+\subsection{GLL quadrilaterals with Gauss surface quadrature}
 
-\subsection{Non-conforming meshes}
+\note{Explain that for GLL quadratures, the decoupled SBP property doesn't hold when Gauss points are used.  }
 
+\subsection{Hybrid quadrilateral-triangular meshes}
+
+%\subsection{Non-conforming meshes}
 
 %\appendix
 %

@@ -361,7 +361,7 @@ xq = Vq*x; yq = Vq*y;
 xp = Vp*x; yp = Vp*y;
 xf = Vfq*x;    yf = Vfq*y;
 
-if 1
+if 0
     rp1D = linspace(-1,1,100)';
     Vp1D = Vandermonde1D(N,rp1D)/Vandermonde1D(N,JacobiGL(0,0,N));
     Vfp = kron(eye(Nfaces),Vp1D);
@@ -374,13 +374,13 @@ if 1
     return
 end
 
-[rxk,sxk,ryk,syk,J] = GeometricFactorsQuad2D(x,y,Vq*Dr,Vq*Ds);
+[rxk,sxk,ryk,syk,J] = GeometricFactors2D(x,y,Vq*Dr,Vq*Ds);
 rxJ = rxk.*J;
 ryJ = ryk.*J;
 sxJ = sxk.*J;
 syJ = syk.*J;
 
-[rxk,sxk,ryk,syk,Jk] = GeometricFactorsQuad2D(x,y,Vfq*Dr,Vfq*Ds);
+[rxk,sxk,ryk,syk,Jk] = GeometricFactors2D(x,y,Vfq*Dr,Vfq*Ds);
 rxJf = rxk.*Jk;    sxJf = sxk.*Jk;
 ryJf = ryk.*Jk;    syJf = syk.*Jk;
 Jf = Jk;
@@ -773,12 +773,12 @@ rhs2 = 2*PN*divF2 + VqLq*(fSf2);
 rhs3 = 2*PN*divF3 + VqLq*(fSf3);
 rhs4 = 2*PN*divF4 + VqLq*(fSf4);
 
-2*VqPq*divF1(1:Np,:) 
+% 2*VqPq*divF1(1:Np,:) 
 % VqLq*(fSf1 + 2*divF1(Np+1:end,:))
-r1 = 2*divF1(Np+1:end,:);
-[fSf1(:), r1(:)]
+% r1 = 2*divF1(Np+1:end,:);
+% [fSf1(:), r1(:)]
 
-keyboard
+% keyboard
 
 % PN = [VqPq VqLq]; 
 % rhs1 = 2*PN*divF1 + VqLq*(fSf1);

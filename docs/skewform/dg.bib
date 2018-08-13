@@ -1,3 +1,15 @@
+@article{chan2018efficient,
+  title={Efficient entropy stable Gauss collocation schemes},
+  author={Chan, Jesse and Fernandez, David C Del Rey and Carpenter, Mark},
+  journal={},
+  volume={},
+  number={},
+  pages={},
+  year={2018},
+  note={In preparation.}
+}
+
+
 @article{visbal1999high,
   title={High-order-accurate methods for complex unsteady subsonic flows},
   author={Visbal, Miguel R and Gaitonde, Datta V},
@@ -18,6 +30,101 @@
   year={2018},
   publisher={SIAM}
 }
+
+@article{kopriva2016geometry,
+  title={{Geometry effects in nodal discontinuous Galerkin methods on curved elements that are provably stable}},
+  author={Kopriva, David A and Gassner, Gregor J},
+  journal={Applied Mathematics and Computation},
+  volume={272},
+  pages={274--290},
+  year={2016},
+  publisher={Elsevier}
+}
+
+@article{harten1983upstream,
+  title={{On upstream differencing and Godunov-type schemes for hyperbolic conservation laws}},
+  author={Harten, Amiram and Lax, Peter D and Leer, Bram van},
+  journal={SIAM review},
+  volume={25},
+  number={1},
+  pages={35--61},
+  year={1983},
+  publisher={SIAM}
+}
+
+@article{nordstrom2006conservative,
+  title={Conservative finite difference formulations, variable coefficients, energy estimates and artificial dissipation},
+  author={Nordstr{\"o}m, Jan},
+  journal={Journal of Scientific Computing},
+  volume={29},
+  number={3},
+  pages={375--404},
+  year={2006},
+  publisher={Springer}
+}
+
+@article{lenoir1986optimal,
+  title={Optimal isoparametric finite elements and error estimates for domains involving curved boundaries},
+  author={Lenoir, Mo},
+  journal={SIAM Journal on Numerical Analysis},
+  volume={23},
+  number={3},
+  pages={562--580},
+  year={1986},
+  publisher={SIAM}
+}
+@article{bernardi1989optimal,
+  title={Optimal finite-element interpolation on curved domains},
+  author={Bernardi, Christine},
+  journal={SIAM Journal on Numerical Analysis},
+  volume={26},
+  number={5},
+  pages={1212--1240},
+  year={1989},
+  publisher={SIAM}
+}
+@inproceedings{zwanenburg2017necessity,
+  title={{On the Necessity of Superparametric Geometry Representation for Discontinuous Galerkin Methods on Domains with Curved Boundaries}},
+  author={Zwanenburg, Philip and Nadarajah, Sivakumaran},
+  booktitle={23rd AIAA Computational Fluid Dynamics Conference},
+  pages={3946},
+  year={2017}
+}
+
+@inproceedings{debonis2013solutions,
+	doi = {10.2514/6.2013-382},
+	year = 2013,
+	month = jan,
+	publisher = {American Institute of Aeronautics and Astronautics},
+	author = {James DeBonis},
+	title = {Solutions of the {Taylor}-{Green} Vortex Problem Using High-Resolution Explicit Finite Difference Methods},
+	booktitle = {51st {AIAA} Aerospace Sciences Meeting including the New Horizons Forum and Aerospace Exposition}
+}
+
+@article{ae1937mechanism,
+	doi = {10.1098/rspa.1937.0036},
+	year = 1937,
+	month = feb,
+	publisher = {The Royal Society},
+	volume = {158},
+	number = {895},
+	pages = {499--521},
+	author = {Geoffrey I Taylor and Albert E Green},
+	title = {Mechanism of the Production of Small Eddies from Large Ones},
+	journal = {Proceedings of the Royal Society A: Mathematical, Physical and Engineering Sciences}
+}
+
+@inproceedings{williams2013nodal,
+	doi = {10.2514/6.2013-2830},
+	year = 2013,
+	month = jun,
+	publisher = {American Institute of Aeronautics and Astronautics},
+	author = {David M Williams and Antony Jameson},
+	title = {Nodal Points and the Nonlinear Stability of High-Order Methods for Unsteady Flow Problems on Tetrahedral Meshes},
+	booktitle = {21st {AIAA} Computational Fluid Dynamics Conference}
+}
+
+
 
 @article{thomas1979geometric,
   title={Geometric conservation law and its application to flow computations on moving grids},
@@ -80,12 +187,13 @@ url = "http://www.sciencedirect.com/science/article/pii/S0021999118301037",
 author = "Hendrik Ranocha",
 keywords = "Hyperbolic conservation laws, Summation-by-parts, Stability, Conservation, Skew-symmetric form"
 }
-@article{chan2018discretely,
-  title={{On discretely entropy conservative and entropy stable discontinuous Galerkin methods: curvilinear meshes}},
-  author={Chan, Jesse and Wilcox, Lucas},
-  note={In preparation}
-}
 
+@article{chan2018discretely,
+  title={{Discretely entropy stable weight-adjusted discontinuous Galerkin methods on curvilinear meshes}},
+  author={Chan, Jesse and Wilcox, Lucas C},
+  journal={arXiv preprint arXiv:1805.10934},
+  year={2018}
+}
 
 @article{chan2017discretely,
 title = {{On discretely entropy conservative and entropy stable discontinuous Galerkin methods}},
@@ -296,13 +404,16 @@ author = "Cengke Shi and Chi-Wang Shu",
   publisher={Elsevier}
 }
 
-@article{fernandez2016simultaneous,
+@article{fernandez2018simultaneous,
   title={Simultaneous approximation terms for multi-dimensional summation-by-parts operators},
-  author={Fern{\'a}ndez, David C and Hicken, Jason E and Zingg, David W},
-  journal={arXiv preprint arXiv:1605.03214},
-  year={2016}
+  author={Fern{\'a}ndez, David C Del Rey and Hicken, Jason E and Zingg, David W},
+  journal={Journal of Scientific Computing},
+  volume={75},
+  number={1},
+  pages={83--110},
+  year={2018},
+  publisher={Springer}
 }
-
 @article{ismail2009affordable,
   title={{Affordable, entropy-consistent Euler flux functions II: Entropy production at shocks}},
   author={Ismail, Farzad and Roe, Philip L},
@@ -402,10 +513,12 @@ author = "Cengke Shi and Chi-Wang Shu",
 }
 
 @article{gassner2017br1,
-  title={{The BR1 Scheme is Stable for the Compressible Navier-Stokes Equations}},
+  title={{The BR1 scheme is stable for the compressible Navier--Stokes equations}},
   author={Gassner, Gregor J and Winters, Andrew R and Hindenlang, Florian J and Kopriva, David A},
-  journal={arXiv preprint arXiv:1704.03646},
-  year={2017}
+  journal={Journal of Scientific Computing},
+  pages={1--47},
+  year={2017},
+  publisher={Springer}
 }
 
 @article{helenbrook2009existence,
@@ -470,6 +583,12 @@ author = "Cengke Shi and Chi-Wang Shu",
   year={1987}
 }
 
+@article{wintermeyer2018entropy,
+  title={{An entropy stable discontinuous Galerkin method for the shallow water equations on curvilinear meshes with wet/dry fronts accelerated by GPUs}},
+  author={Wintermeyer, Niklas and Winters, Andrew R and Gassner, Gregor J and Warburton, Timothy},
+  journal={arXiv preprint arXiv:1804.02221},
+  year={2018}
+}
 @article{wintermeyer2017entropy,
   title={{An entropy stable nodal discontinuous Galerkin method for the two dimensional shallow water equations on unstructured curvilinear meshes with discontinuous bathymetry}},
   author={Wintermeyer, Niklas and Winters, Andrew R and Gassner, Gregor J and Kopriva, David A},
@@ -619,7 +738,7 @@ author = "Cengke Shi and Chi-Wang Shu",
   title={{Development of the discontinuous Galerkin method for high-resolution, large scale CFD and acoustics in industrial geometries}},
   author={Hillewaert, Koen},
   year={2013},
-  school={UniversitÈ catholique de Louvain},
+  school={Universit√© catholique de Louvain},
 }
 
 @article{patera1984spectral,
@@ -1302,7 +1421,7 @@ publisher={Elsevier}
 }
 
 @article{chan2017bbdg,
-  title={{GPU-Accelerated Bernstein--BÈzier Discontinuous Galerkin Methods for Wave Problems}},
+  title={{GPU-Accelerated Bernstein--B√©zier Discontinuous Galerkin Methods for Wave Problems}},
   author={Chan, Jesse and Warburton, T},
   journal={SIAM Journal on Scientific Computing},
   volume={39},
@@ -1319,6 +1438,13 @@ publisher={Elsevier}
   pages={142--168},
   year={2016},
   publisher={Academic Press}
+}
+
+@book{quarteroni1994introduction,
+  title={{Numerical Approximation of Partial Differential Equations}},
+  author={Quarteroni, Alfio and Valli, Alberto},
+  year={1994},
+  publisher={Springer}
 }
 
 @book{ipsen2009numerical,
@@ -1763,7 +1889,7 @@ pages={663-676}
 
 @article{hicken2016multidimensional,
   title={Multidimensional summation-by-parts operators: General theory and application to simplex elements},
-  author={Hicken, Jason E and Del Rey Fern·ndez, David C and Zingg, David W},
+  author={Hicken, Jason E and Del Rey Fern√°ndez, David C and Zingg, David W},
   journal={SIAM Journal on Scientific Computing},
   volume={38},
   number={4},
@@ -2161,6 +2287,13 @@ author = {Warburton, T and Embree, Mark},
   pages={89--94},
   year={1996},
   publisher={Elsevier}
+}
+
+@article{swirydowicz2017acceleration,
+  title={Acceleration of tensor-product operations for high-order finite element methods},
+  author={{\'S}wirydowicz, Kasia and Chalmers, Noel and Karakus, Ali and Warburton, Timothy},
+  journal={arXiv preprint arXiv:1711.00903},
+  year={2017}
 }
 
 @article{warburton2006explicit,

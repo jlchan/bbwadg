@@ -1,6 +1,6 @@
 Globals2D;
 
-N = 4;
+N = 3;
 
 Nq = 2*N+1;
 
@@ -35,7 +35,7 @@ x1 = x; y1 = y;
 xe1 = Ve*x; ye1 = Ve*y;
 
 opt = 1;
-displacement = .3*sin(pi*x(Fmask(:,1),:));
+displacement = .25*cos(pi/2*x(Fmask(:,1),:));
 
 
 % xeC = xe1; yeC = ye1; yeC(3) = yeC(3) + .6;
@@ -78,11 +78,11 @@ if opt==1
     for e = 1:size(tri,1)
         A(tri(e,:),tri(e,:)) = 1; % adjacency matrix
     end
-    %     A = DBr*DBr' + DBs*DBs';
+    %     A = DBr*DBr' + DBs*DBs';    
     A = E'*E;
-    %     A = abs(A)>1e-8;
+%         A = double(abs(A)>.1);
     
-    %     keyboard
+% keyboard
     nbrs = {};
     weights = {};
     for i = 1:Np

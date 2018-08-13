@@ -42,7 +42,8 @@ Fx = x(Fmask(:), :); Fy = y(Fmask(:), :);
 LIFT = LiftQuad2D();
 
 % calculate geometric factors
-[rx,sx,ry,sy,J] = GeometricFactorsQuad2D(x,y,Dr,Ds);
+%[rx,sx,ry,sy,J] = GeometricFactorsQuad2D(x,y,Dr,Ds);
+[rx,sx,ry,sy,J] = GeometricFactors2D(x,y,Dr,Ds);
 
 % calculate geometric factors
 [nx, ny, sJ] = NormalsQuad2D();
