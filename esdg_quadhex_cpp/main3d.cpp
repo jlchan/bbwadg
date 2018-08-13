@@ -1,6 +1,6 @@
 #include "fem.h"
 
-#define GAMMA 1.4f
+#define GAMMA 1.4
 
 // 3D vortex on [0,10] x [0,20] x [0,10]
 static void VortexSolution3d(MatrixXd x, MatrixXd y, MatrixXd z, double t,
@@ -191,11 +191,18 @@ int main(int argc, char **argv){
   App *app = new App;
   //app->device.setup("mode: 'Serial'");
   app->device.setup("mode: 'CUDA', device_id: 0");
+  //app->device.setup("mode      : 'CUDA', "
+  //		    "device_id : 0");
+  
   //app->device.setup("mode: 'OpenCL', platformID : 0, deviceID: 0");
 
   setupOccaMesh3d(mesh,app); // build mesh geofacs
  
-  app->props["defines/p_gamma"] = GAMMA;
+  if (sizeof(dfloat)==4){
+    app->props["defines/p_gamma"] = 1.4f;
+  }else{
+    app->props["defines/p_gamma"] = 1.4;
+  }
   app->props["defines/p_Nfields"] = Nfields;
   app->props["defines/p_tau"] = 1.0;
 
@@ -265,16 +272,16 @@ int main(int argc, char **argv){
   setOccaArray(app, KE, o_KE);
 
 #endif
-
-
+ 
+  //app->eval_surface = app->device.buildKernel("okl/test3D.okl","eval_surface",app->props);return 0;
+  
   // build occa kernels
   string path = "okl/Euler3D.okl";
   app->volume = app->device.buildKernel(path.c_str(),"volume",app->props);
-  app->surface = app->device.buildKernel(path.c_str(),"surface",app->props);
+  app->surface = app->device.buildKernel(path.c_str(),"surface",app->props); 
   app->update = app->device.buildKernel(path.c_str(),"update",app->props);
-  app->eval_surface = app->device.buildKernel(path.c_str(),"eval_surface",app->props);  
+  app->eval_surface = app->device.buildKernel(path.c_str(),"eval_surface",app->props);
   occa::kernel compute_aux = app->device.buildKernel(path.c_str(),"compute_aux",app->props);
- 
 
 #if 0
   app->eval_surface(K, app->o_Vf1D,app->o_Q, app->o_Qf);

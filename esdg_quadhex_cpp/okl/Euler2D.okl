@@ -611,7 +611,7 @@ void euler2d_flux(dfloat rho_i, dfloat rho_j, dfloat u_i, dfloat u_j,
 
 	idM = i + e*p_NfpNfaces*p_Nfields;
 
-#if 0
+#if 1
 	// use LF
 	const dfloat unormM = (uM*uM+vM*vM);
 	const dfloat unormP = (uP*uP+vP*vP);	
