@@ -127,8 +127,8 @@ int main(int argc, char **argv){
     printf("setting CFL = %f, T = %f, curved warping a =%f\n",CFL,FinalTime,a);
   }
 
-#define VORTEX 0
-#define SHOCK_VORTEX 1
+#define VORTEX 1
+#define SHOCK_VORTEX 0
   
 #if VORTEX
   Mesh *mesh = new Mesh;
