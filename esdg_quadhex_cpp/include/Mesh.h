@@ -58,7 +58,7 @@ typedef struct foo {
 
   // 1D operators (for tensor product)
   MatrixXd D1D, Vf1D, Lf1D;
-  VectorXd wq1D;
+  VectorXd rq1D,wq1D;
   
   // nodal points (GLL for quads/hexes)
   VectorXd r,s,t;

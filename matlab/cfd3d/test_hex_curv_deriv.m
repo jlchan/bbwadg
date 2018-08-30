@@ -1,5 +1,5 @@
 % clear
-N = 2;
+N = 4;
 [r1D w1D] = JacobiGL(0,0,N);
 [r s t] = meshgrid(r1D);
 r = r(:); s = s(:); t = t(:);
@@ -22,7 +22,7 @@ x = r;
 y = s;
 z = t;
 
-a = .1;
+a = .125;
 d = exp((x+y+z)/8);
 x = x + a*d;
 y = y + a*d;

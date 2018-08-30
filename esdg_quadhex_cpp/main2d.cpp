@@ -45,7 +45,11 @@ static void ShockVortex2d(MatrixXd x,MatrixXd y,
   double y0 = .5;
 
   double Ms = 1.1;
+  double epsilon = .3;
+  double alpha = .204;
+  double rc = .05;
 
+  // upstream states
   double rho_up = 1.0;
   double u_up = sqrt(GAMMA);
   double v_up = 0.0;
@@ -80,9 +84,6 @@ static void ShockVortex2d(MatrixXd x,MatrixXd y,
   }
 
   MatrixXd r = ((x.array()-x0).square() + (y.array()-y0).square()).sqrt();
-  double epsilon = .3;
-  double alpha = .204;
-  double rc = .075;
   MatrixXd tau = r.array() / rc;
   MatrixXd vtheta = epsilon * tau.array() * (alpha*(1-tau.array().square())).exp();
 
@@ -126,8 +127,8 @@ int main(int argc, char **argv){
     printf("setting CFL = %f, T = %f, curved warping a =%f\n",CFL,FinalTime,a);
   }
 
-#define VORTEX 0
-#define SHOCK_VORTEX 1
+#define VORTEX 1
+#define SHOCK_VORTEX 0
   
 #if VORTEX
   Mesh *mesh = new Mesh;
@@ -198,13 +199,14 @@ int main(int argc, char **argv){
   //app->device.setup("mode: 'Serial'");
   app->device.setup("mode: 'CUDA', device_id: 0");  
   setupOccaMesh2d(mesh,app); // build mesh geofacs
-
+  
   app->props["defines/p_gamma"] = GAMMA;
   app->props["defines/p_Nfields"] = Nfields;
   if (sizeof(dfloat)==4){
     app->props["defines/p_tau"] = 1.f;
   }else{
-    app->props["defines/p_tau"] = 1.0;
+    app->props["defines/p_tau"] = 0.0;
+    printf("setting p_tau = 0.0\n");
   }
 
   MatrixXi bcFlag(xf.rows(),xf.cols());
@@ -407,7 +409,7 @@ int main(int argc, char **argv){
   // interpolate to N=1 for plotting
   //VectorXd rp1D(2);
   //rp1D << -1.0/3.0, 1.0/3.0;
-  int Nplot = N; 
+  int Nplot = 3; // about 11mb for K1D = 100
   VectorXd rp1D = VectorXd::LinSpaced(Nplot+1,-1,1); 
 
   int Np1 = rp1D.size();

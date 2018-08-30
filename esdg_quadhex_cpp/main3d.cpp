@@ -1,6 +1,6 @@
 #include "fem.h"
 
-#define GAMMA 1.4f
+#define GAMMA 1.4
 
 // 3D vortex on [0,10] x [0,20] x [0,10]
 static void VortexSolution3d(MatrixXd x, MatrixXd y, MatrixXd z, double t,
@@ -191,11 +191,18 @@ int main(int argc, char **argv){
   App *app = new App;
   //app->device.setup("mode: 'Serial'");
   app->device.setup("mode: 'CUDA', device_id: 0");
+  //app->device.setup("mode      : 'CUDA', "
+  //		    "device_id : 0");
+  
   //app->device.setup("mode: 'OpenCL', platformID : 0, deviceID: 0");
 
   setupOccaMesh3d(mesh,app); // build mesh geofacs
  
-  app->props["defines/p_gamma"] = GAMMA;
+  if (sizeof(dfloat)==4){
+    app->props["defines/p_gamma"] = 1.4f;
+  }else{
+    app->props["defines/p_gamma"] = 1.4;
+  }
   app->props["defines/p_Nfields"] = Nfields;
   app->props["defines/p_tau"] = 1.0;
 
@@ -221,27 +228,60 @@ int main(int argc, char **argv){
     E;
   setOccaArray(app, Q, app->o_Q); 
 
+#if TAYLOR_GREEN
   // for KE computation
   int log2Nq = (int)ceil(log2(Np));
-  int ceilNq2 = (int) pow(2,log2Nq);
-  app->props["defines/p_ceilNq2"] = ceilNq2;
+  int ceil2Nq = (int) pow(2,log2Nq);
+  app->props["defines/p_ceil2Nq"] = ceil2Nq;
 
-  MatrixXd wJq = mesh->wq.asDiagonal() * (mesh->Vq*mesh->J);
-  MatrixXd V1D = MatrixXd::Identity(N+1,N+1);  
+  // interp to gauss points: may be diff from mesh->rq,sq,tq points
+  VectorXd rq1D, wq1D;
+  JacobiGQ(N, 0, 0, rq1D, wq1D); 
+  int Np1 = (N+1);
+  int Np3 = Np1*Np1*Np1;
+  VectorXd rq(Np3),sq(Np3),tq(Np3),wq(Np3);  
+  int sk = 0;
+  for (int k = 0; k < Np1; ++k){
+    for (int i = 0; i < Np1; ++i){
+      for (int j = 0; j < Np1; ++j){
+	rq(sk) = rq1D(i);
+	sq(sk) = rq1D(j);
+	tq(sk) = rq1D(k);
+
+	wq(sk) = wq1D(i)*wq1D(j)*wq1D(k);	
+	++sk;
+      }
+    }
+  }
+  MatrixXd Vqtmp = Vandermonde3DHex(N, mesh->rq, mesh->sq, mesh->tq);
+  MatrixXd VqGauss = mrdivide(Vqtmp,mesh->V); // V = GLL VDM
+  MatrixXd wJq = wq.asDiagonal() * (VqGauss * mesh->J);
+
+  // 1D interp matrix
+  MatrixXd Vq1D_new = Vandermonde1D(N,rq1D);
+  MatrixXd Vq1D_old = Vandermonde1D(N,mesh->rq1D);
+  MatrixXd V1D = mrdivide(Vq1D_new,Vq1D_old);
+
+  //  MatrixXd V1D = MatrixXd::Identity(N+1,N+1);  
+  //cout << "V1D = " << V1D << endl;
+
   MatrixXd KE = MatrixXd::Zero(K,1);  
   occa::memory o_V1D, o_wJq, o_KE;
   setOccaArray(app, V1D, o_V1D);
   setOccaArray(app, wJq, o_wJq);
   setOccaArray(app, KE, o_KE);
 
+#endif
+ 
+  //app->eval_surface = app->device.buildKernel("okl/test3D.okl","eval_surface",app->props);return 0;
+  
   // build occa kernels
   string path = "okl/Euler3D.okl";
   app->volume = app->device.buildKernel(path.c_str(),"volume",app->props);
-  app->surface = app->device.buildKernel(path.c_str(),"surface",app->props);
+  app->surface = app->device.buildKernel(path.c_str(),"surface",app->props); 
   app->update = app->device.buildKernel(path.c_str(),"update",app->props);
-  app->eval_surface = app->device.buildKernel(path.c_str(),"eval_surface",app->props);  
+  app->eval_surface = app->device.buildKernel(path.c_str(),"eval_surface",app->props);
   occa::kernel compute_aux = app->device.buildKernel(path.c_str(),"compute_aux",app->props);
-  
 
 #if 0
   app->eval_surface(K, app->o_Vf1D,app->o_Q, app->o_Qf);

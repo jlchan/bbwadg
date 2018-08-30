@@ -38,8 +38,6 @@ void InitRefData2d(Mesh *mesh, int N){
   int NfqNfaces = Nfaces * rq1D.size();  
   VectorXd rf(NfqNfaces); rf << rq1D, e, rq1D, -e;
   VectorXd sf(NfqNfaces); sf << -e, rq1D, e, rq1D;
-  //VectorXd rf(NfqNfaces); rf << -e, e, rq1D, rq1D;
-  //VectorXd sf(NfqNfaces); sf << rq1D, rq1D, -e, e;
   VectorXd wf(NfqNfaces); wf << wq1D, wq1D, wq1D, wq1D;
   
   // nodal operators
@@ -51,8 +49,6 @@ void InitRefData2d(Mesh *mesh, int N){
   MatrixXd V = Vandermonde2DQuad(N,r,s);
   MatrixXd Dr = kron(I1D,D1D);
   MatrixXd Ds = kron(D1D,I1D);
-  //cout << "Dr = " << endl << Dr << endl;
-  //cout << "Ds = " << endl << Ds << endl;  
 
   // interp to quadrature
   MatrixXd Vqtmp = Vandermonde2DQuad(N,rq,sq);
@@ -67,9 +63,6 @@ void InitRefData2d(Mesh *mesh, int N){
   VectorXd rf1D(2); rf1D << -1.0,1.0;
   MatrixXd Vf1Dtmp = Vandermonde1D(N,rf1D);
   MatrixXd Vf1D = mrdivide(Vf1Dtmp,Vq1D);
-
-  //  cout << "Dq1D = " << endl << Dq1D << endl;
-  //  cout << "Vf1D = " << endl << Vf1D << endl;  
 
   mesh->N = N;
   mesh->Np = Np1*Np1;
@@ -95,11 +88,6 @@ void InitRefData2d(Mesh *mesh, int N){
   mesh->wf = wf;    
   mesh->Vf = Vf;
 
-  //  cout << "rq = " << rq << endl;
-  //  cout << "sq = " << sq << endl;  
-  //cout << "rf = " << rf << endl;
-  //cout << "sf = " << sf << endl;  
- 
   // GQ nodes
   MatrixXd Q1D = wq1D.asDiagonal()*Dq1D;
   VectorXd invwq1D = wq1D.array().inverse();
@@ -110,9 +98,7 @@ void InitRefData2d(Mesh *mesh, int N){
   VectorXd wqInv = wq1D.array().inverse();
   mesh->Lf1D = wqInv.asDiagonal()*Vf1D.transpose(); // 1D lift - may not need
 
-  //  cout << "D1D = " << mesh->D1D << endl;
-  //  cout << "Vf1D = " << mesh->Vf1D << endl;
-  //cout << "Lf1D = " << mesh->Lf1D << endl;   
+  mesh->rq1D = rq1D;
   mesh->wq1D = wq1D;
 
   // LSRK-45 coefficients
@@ -579,6 +565,9 @@ void InitRefData3d(Mesh *mesh, int N){
   //  cout << "sq = " << sq << endl;  
   //cout << "rf = " << rf << endl;
   //cout << "sf = " << sf << endl;  
+
+  mesh->rq1D = rq1D;
+  mesh->wq1D = wq1D;
  
   // GQ nodes
   MatrixXd Q1D = wq1D.asDiagonal()*Dq1D;
