@@ -1,13 +1,19 @@
+clear
+
 N = 3;
-K = 16;
+K = 8;
 
 % plotting points
-Npts = 250;
+Npts = 1000;
 a = -K/2;
 b = -a;
 rp = linspace(a,b,Npts)';
 
 [Vp VX] = GDVDM(N,K,rp);
+VX = VX';
+plot(VX,VX*0,'o')
+hold on
+plot(rp,Vp);return
 
 %%
 
@@ -15,41 +21,54 @@ h = @(r) repmat(diff(VX),length(r),1);
 map = @(r) reshape(h(r).*(repmat(r,1,K)+1)/2 + repmat(VX(1:end-1),length(r),1),length(r)*K,1);
 L = (max(VX)-min(VX))/2;
 
-% quadrature
-[rqe wqe] = JacobiGQ(0,0,N);
-rq = [];% zeros(length(rqe),K);
-wq = rq;
-for e = 1:K
-    if e==1 || e==K
-        [rqe wqe] = JacobiGQ(0,0,N+10);
-    else
-        [rqe wqe] = JacobiGQ(0,0,N);
+if 1
+    % quadrature
+    [rqe wqe] = JacobiGQ(0,0,N);
+    rq = [];% zeros(length(rqe),K);
+    wq = rq;
+    for e = 1:K
+        if e==1 || e==K
+            [rqe wqe] = JacobiGL(0,0,N);
+        else
+            [rqe wqe] = JacobiGL(0,0,N);
+        end
+        h = (max(VX)-min(VX))/K;
+        rq = [rq; h*(rqe+1)/2 + VX(e)];
+        wq = [wq; h/2*wqe];
+        D1D{e} = GradVandermonde1D(N,rqe)/Vandermonde1D(N,rqe);
     end
-    h = (max(VX)-min(VX))/K;
-    rq = [rq; h*(rqe+1)/2 + VX(e)];
-    wq = [wq; h/2*wqe];
+    % rq = rq(:); wq = wq(:);
+    % rq = map(rqe); rq = rq(:);
+    % wq = repmat(wqe,1,K).*h(rqe)/2; wq = wq(:);
 end
-% rq = rq(:); wq = wq(:);
-% rq = map(rqe); rq = rq(:);
-% wq = repmat(wqe,1,K).*h(rqe)/2; wq = wq(:);
 
-plot(rq,rq*0,'o');return
-
+[H2 Q2 X2] = CSBPp2(K+1);
+[H3 Q3 X3] = CSBPp3(K+1);
+[H4 Q4 X4] = CSBPp4(K+1);
+% wq = diag(H);
+% rq = X*L;
+% plot(rq,rq*0,'o');return
 
 Vq = GDVDM(N,K,rq);
 M = (Vq'*diag(wq)*Vq);
 Pq = M\(Vq'*diag(wq));
 
 VN = GDVDM(N,K,rq);
-DN = kron(eye(K),GradVandermonde1D(N,rqe)/Vandermonde1D(N,rqe)); % block diff
+DN = blkdiag(D1D{:});%kron(eye(K),GradVandermonde1D(N,rqe)/Vandermonde1D(N,rqe)); % block diff
 rx = 2;
 Q = VN'*diag(wq)*(rx*DN*VN); % Galerkin first deriv mat
+Q(abs(Q)<1e-8) = 0;
 
 f = @(x) exp(sin(pi*x/L));
 df = @(x) (pi*cos((pi*x)/L).*exp(sin((pi*x)/L)))/L;
 
+f = @(x) x;
+df = @(x) 1+0*x;
+
 % plot(rq,(rx*DN*VN)*Pq*f(rq),'.')
-plot(rq,Vq*(M\Q)*Pq*f(rq),'.')
+%plot(rq,Vq*(M\Q)*Pq*f(rq),'.')
+plot(VX,(M\Q)*Pq*f(rq),'.')
+hold on;plot(VX,(diag(1./sum(M,2))*Q)*f(X2),'o')
 % plot(rp,Vp*((1./diag(M)).*(Q*f(VX(:)))),'.')
 hold on
 plot(rp,df(rp),'-')

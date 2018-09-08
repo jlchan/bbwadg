@@ -1,24 +1,27 @@
-function ElasticAcoustic2D_unified
+% function ElasticAcoustic2D_unified
 
 % clear all, clear
 clear -global *
 
 Globals2D
+global tau
 
-K1D = 16
-N = 5;
+K1D = 8;
+N = 3;
 c_flag = 0;
-FinalTime = .5;
+FinalTime = 1.0;
+tau = 1;
 
 [Nv, VX, VY, K, EToV] = unif_tri_mesh(K1D);
 
 StartUp2D;
+% BuildPeriodicMaps2D(2,2);
 
 [rp sp] = EquiNodes2D(15); [rp sp] = xytors(rp,sp);
 Vp = Vandermonde2D(N,rp,sp)/V;
 xp = Vp*x; yp = Vp*y;
 
-Nq = 2*N+1;
+Nq = 2*N;
 [rq sq wq] = Cubature2D(Nq); % integrate u*v*c
 Vq = Vandermonde2D(N,rq,sq)/V;
 Pq = V*V'*Vq'*diag(wq); % J's cancel out
@@ -78,26 +81,25 @@ if ~isempty(Ke) && ~isempty(Ka)
 end
 
 %%
-global Nfld mu lambda Vq Pq tau c2
+global Nfld mu lambda Vq Pq c2
 Nfld = 5; %(u1,u2,sxx,syy,sxy)
 
 mu = ones(size(xq));
 lambda = ones(size(xq));
 c2 = ones(size(xq));
 
-k = 3;
-mu = 1 + .5*cos(k*pi*xq).*cos(k*pi*yq);
-c2 = 1 + .5*cos(k*pi*xq).*cos(k*pi*yq);
+% k = 1;
+% mu = 1 + .5*cos(k*pi*xq).*cos(k*pi*yq);
+% c2 = 1 + .5*cos(k*pi*xq).*cos(k*pi*yq);
 
-mu = V\(Pq*mu); 
-c2 = V\(Pq*c2);
-mu = repmat(mu(1,:),length(wq),1)/sqrt(2);
-c2 = repmat(c2(1,:),length(wq),1)/sqrt(2);
+% mu = V\(Pq*mu); 
+% c2 = V\(Pq*c2);
+% mu = repmat(mu(1,:),length(wq),1)/sqrt(2);
+% c2 = repmat(c2(1,:),length(wq),1)/sqrt(2);
 
 % vv = Vp*Pq*c2; color_line3(xp,yp,vv,vv,'.');return
 % keyboard
 
-tau = 1;
 
 %% params setup
 
@@ -109,15 +111,16 @@ f0 = 10;
 t0 = 1/f0;
 
 global fsrc
-fsrc = @(t) (t < t0).*(1-2*(pi*f0*(t-t0))^2)*exp(-(pi*f0*(t-t0)^2)).* (Pq * exp(-100^2*((xq-x0).^2 + (yq-y0).^2)));
-% y0 = -.25;
-% p = p + exp(-10^2*((x-x0).^2 + (y-y0).^2));
+% fsrc = @(t) (t < t0).*(1-2*(pi*f0*(t-t0))^2)*exp(-(pi*f0*(t-t0)^2)).* (Pq * exp(-100^2*((xq-x0).^2 + (yq-y0).^2)));
+fsrc = @(t) 0;
 
+y0 = .25;
+p = exp(-10^2*((x-x0).^2 + (y-y0).^2));
 u = zeros(Np, K);
 
 U{1} = u;
 U{2} = u;
-U{3} = u;
+U{3} = p;
 U{4} = u;
 U{5} = u;
 
@@ -160,6 +163,9 @@ if Nfld*Np*K < 2500
     %         drawnow
     max(abs(lam))
     
+    M = kron(eye(5),kron(diag(J(1,:)),inv(V*V')));
+    K = M*A;
+    Ss = .5*(K+K');
     keyboard
 end
 %%
@@ -300,11 +306,6 @@ p = U{3}(vmapEP);
 
 Snx = U{3}(vmapEM).*nxf + U{5}(vmapEM).*nyf;
 Sny = U{5}(vmapEM).*nxf + U{4}(vmapEM).*nyf;
-% dU1 = (u-U{1}(vmapEM));
-% dU2 = (v-U{2}(vmapEM));
-% dUn = dU1.*nxf + dU2.*nyf;
-% dU1 = dUn;
-% dU2 = dUn;
 Un = u.*nxf + v.*nyf;
 dU1 = (Un.*nxf-U{1}(vmapEM));
 dU2 = (Un.*nyf-U{2}(vmapEM));
@@ -314,12 +315,6 @@ nSy(mapEM) = (p.*nyf - Sny);
 nUx(mapEM) = dU1.*nxf;
 nUy(mapEM) = dU2.*nyf;
 nUxy(mapEM) = dU1.*nyf + dU2.*nxf;
-
-% nSx(mapEM) = -2*Snx;
-% nSy(mapEM) = -2*Sny;
-% nUx(mapEM) = 0;
-% nUy(mapEM) = 0;
-% nUxy(mapEM) = 0;
 
 % evaluate central fluxes
 fc{1} = nSx;
@@ -368,7 +363,7 @@ end
 %     rhs{fld}(:,Ka) = 0;
 % end
 
-return;
+end
 
 
 function [rhs] = AcousRHS2D(U,time)
@@ -433,3 +428,4 @@ rhs{3} = rhs{3} + fsrc(time);
 
 rhs{3} = Pq*(c2.*(Vq*rhs{3}));
 
+end

@@ -10,7 +10,6 @@ global BCType mapI mapO mapW mapF mapC mapS mapM mapP mapD mapN
 global rx ry sx sy J sJ
 global Nfaces EToE EToF EToV
 
-global rk4a rk4b rk4c
 global V invV
 global x y NODETOL VX VY
 
@@ -20,6 +19,7 @@ global x y NODETOL VX VY
 In = 1; Out = 2; Wall = 3; Far = 4; Cyl = 5; Dirichlet = 6; Neuman = 7; Slip = 8;
 
 % Low storage Runge-Kutta coefficients
+global rk4a rk4b rk4c
 rk4a = [            0.0 ...
         -567301805773.0/1357537059087.0 ...
         -2404267990393.0/2016746695238.0 ...

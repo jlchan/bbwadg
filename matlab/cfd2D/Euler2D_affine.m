@@ -1,8 +1,8 @@
 % clear
 Globals2D
 
-N = 3;
-K1D = 16;
+N = 1;
+K1D = 2;
 FinalTime = 1;
 CFL = .5;
 global tau
@@ -182,10 +182,12 @@ sJ = sJ.*Jf;
 
 xf = Vfq*x;
 yf = Vfq*y;
-% plot(xf,yf,'o')
-% hold on
-% quiver(xf,yf,nxJ,nyJ)
-% return
+
+plot(xf,yf,'o')
+hold on
+quiver(xf,yf,nxJ,nyJ)
+return
+
 %% fluxes
 global gamma
 gamma = 1.4;

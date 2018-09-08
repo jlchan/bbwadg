@@ -12,7 +12,7 @@ FinalTime = 1;
 wadgProjEntropyVars = abs(a)>1e-8;
 CFL = .25;
 global tau
-tau = 0;
+tau = 1;
 
 % Lx = 7.5; Ly = 5; ratiox = 3/4; ratioy = .5;
 Lx = 10; Ly = 5; ratiox = 1; ratioy = Ly/Lx;
@@ -33,7 +33,7 @@ BuildPeriodicMaps2D(max(VX)-min(VX),max(VY)-min(VY));
 % PlotMesh2D;axis on;return
 
 % plotting nodes
-[rp sp] = EquiNodes2D(10); [rp sp] = xytors(rp,sp);
+[rp sp] = EquiNodes2D(15); [rp sp] = xytors(rp,sp);
 Vp = Vandermonde2D(N,rp,sp)/V;
 xp = Vp*x; yp = Vp*y;
 % PlotMesh2D; axis on;return
@@ -600,6 +600,7 @@ rhs2 = VqPqLq*divF2 + VqLq*(fSf2);
 rhs3 = VqPqLq*divF3 + VqLq*(fSf3);
 rhs4 = VqPqLq*divF4 + VqLq*(fSf4);
 
+VqLqLq = [VqLqmid VqLq];
 for e = 1:K
     [rhox rhoy] = meshgrid([rhof(:,e);rhoM(:,e)]);
     [ux uy] = meshgrid([uf(:,e);uM(:,e)]);
@@ -614,8 +615,7 @@ for e = 1:K
     FnS1 = FxS1.*nx + FyS1.*ny;
     FnS2 = FxS2.*nx + FyS2.*ny;
     FnS3 = FxS3.*nx + FyS3.*ny;
-    FnS4 = FxS4.*nx + FyS4.*ny;
-    VqLqLq = [VqLqmid VqLq];
+    FnS4 = FxS4.*nx + FyS4.*ny;    
 
     rhs1(:,e) = rhs1(:,e) + VqLqLq*sum(Cf.*FnS1,2);
     rhs2(:,e) = rhs2(:,e) + VqLqLq*sum(Cf.*FnS2,2);
@@ -651,7 +651,7 @@ p = rho.^gamma;
 % v = zeros(size(x));
 % p = ones(size(x));
 
-if 1
+if 0
     % pulse condition
     x0 = 5;
     rho = 2 + (abs(x-x0) < 5);

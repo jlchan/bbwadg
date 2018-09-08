@@ -22,8 +22,8 @@ N = Nin;
 % [Nv, VX, VY, K, EToV] = MeshReaderGambit2D(filename);
 [Nv, VX, VY, K, EToV] = unif_tri_mesh(K1D);
 StartUp2D;
-
 BuildPeriodicMaps2D(2,2);
+
 % PlotMesh2D; return
 
 [rp sp] = EquiNodes2D(25); [rp sp] = xytors(rp,sp);
@@ -116,6 +116,9 @@ if 1 && nargin==0
     plot(lam,'o')
     title(sprintf('Largest real part = %e',max(real(lam))))
     M = Vq'*diag(wq)*Vq; Mh = kron(spdiag(J(1,:)),M);
+    
+    K = kron(eye(3),Mh)*A;
+    Ss = .5*(K+K');
     keyboard
     VB = bern_basis_tri(N,r,s);    
 end

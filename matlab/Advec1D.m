@@ -6,10 +6,12 @@
 Globals1D;
 
 % Order of polymomials used for approximation
-N = 3;
-K1D = 32;
+N = 1;
+K1D = 128;
 CFL = .5;
-FinalTime = 10;
+FinalTime = 20;
+global tau
+tau = 1;
 
 [Nv, VX, K, EToV] = MeshGen1D(-1,1,K1D);
 StartUp1D;
@@ -19,25 +21,28 @@ vmapP(end) = vmapM(1); % hack for periodic
 
 global a
 a = 1;
-global tau
-tau = 1;
 
 rp = linspace(-1,1,100);
 Vp = Vandermonde1D(N,rp)/V;
 xp = Vp*x;
 
 % Set initial conditions
-uex = @(x) exp(-100*x.^2);
+uex = @(x) exp(-(10)^2*x.^2);
 % uex = @(x) sin(4*pi*x);
-% uex = @(x) (abs(x) < 1/2);
+% uex = @(x) (abs(x) < 1/3);
 [rq wq] = JacobiGQ(0,0,N+1);
 Vq = Vandermonde1D(N,rq)/V;
+M = Vq'*diag(wq)*Vq;
 Pq = (Vq'*diag(wq)*Vq)\(Vq'*diag(wq));
 xq = Vq*x;
 wJq = diag(wq)*(Vq*J);
 
 u = Pq*uex(xq);
 
+[~,wGLL] = JacobiGL(0,0,N);
+% LIFT = diag(1./wGLL)*M*LIFT;
+F = V*diag([1; zeros(N,1)])/V;
+u = F*u;
 
 % Solve Problem
 time = 0;
@@ -58,6 +63,7 @@ for tstep=1:Nsteps
     for INTRK = 1:5
         timelocal = time + rk4c(INTRK)*dt;
         [rhsu] = AdvecRHS1D(u,timelocal);
+        rhsu = F*rhsu;
         resu = rk4a(INTRK)*resu + dt*rhsu;
         u = u + rk4b(INTRK)*resu;        
     end;

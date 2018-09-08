@@ -1,3 +1,4 @@
+%shockVortexTp7;
 shockVortexTp3_EC;
 
 Nplot = round(sqrt(size(x,1)));
@@ -18,10 +19,10 @@ shading interp
 axis off
 axis equal
 axis tight
-colormap(gray)
+% colormap(gray)
 colorbar
 set(gca,'fontsize',15)
-caxis([.8640 1.6033]) % t = .3
+% caxis([.8640 1.6033]) % t = .3
 % caxis([.8680 1.3571]) % t = .7
 % print(gcf,'-dpng','shockVortexTp3_EC.png')
 % print(gcf,'-dpng','shockVortexTp7_EC.png')
