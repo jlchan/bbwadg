@@ -3,17 +3,17 @@ useQuads = 0; mypath;
 % clear -globals
 % Globals2D
 
-N = 3;
-K1D = 8;
+N = 1;
+K1D = 6; % K1D = multiples of 3
 
 a = 0*.125/K1D; % warping
 
-FinalTime = 1.0;
+FinalTime = .50;
 
 wadgProjEntropyVars = abs(a)>1e-8;
-CFL = .025;
+CFL = .125;
 global tau
-tau = 1;
+tau = 0;
 
 global QUAD TRI
 QUAD = 1;
@@ -52,12 +52,13 @@ nrJ = {}; nsJ_type = {};
 
 %% setup quad mesh and tri mesh
 
-[Nv, VX, VY, K, EToV] = QuadMesh2D(K1D,K1D);
+[Nv, VX, VY, K, EToV] = QuadMesh2D(K1D,round(4/3*K1D));
 iids = find(abs(abs(VX)-1)>1e-8 & abs(abs(VY)-1)>1e-8);
 VX(iids) = VX(iids) + a*randn(size(VX(iids)));
 VY(iids) = VY(iids) + a*randn(size(VX(iids)));
 
-VX = (VX+1)*5;
+L = 7.5;
+VX = (VX+1)/2 * L;
 VY = VY*5;
 
 % map nodes
@@ -94,8 +95,11 @@ Vp{QUAD} = kron(Vp1D,Vp1D);
 xp{QUAD} = Vp{QUAD}*x{QUAD};
 yp{QUAD} = Vp{QUAD}*y{QUAD};
 
-% face operators
+% face nodes
 [rq1D wq1D] = JacobiGQ(0,0,N); % 2N-1
+rq1D_quad = rq1D;
+wq1D_quad = wq1D;
+
 e = ones(size(rq1D));
 rfq = [rq1D; e; rq1D; -e];
 sfq = [-e; rq1D; e; rq1D];
@@ -155,12 +159,12 @@ mapP{QUAD} = mapPq;
 
 %% build tri stuff
 
-[Nv, VX, VY, K, EToV] = unif_tri_mesh(K1D,K1D);
+[Nv, VX, VY, K, EToV] = unif_tri_mesh(K1D,round(4/3*K1D));
 iids = find(abs(abs(VX)-1)>1e-8 & abs(abs(VY)-1)>1e-8);
 VX(iids) = VX(iids) + a*randn(size(VX(iids)));
 VY(iids) = VY(iids) + a*randn(size(VX(iids)));
 
-VX = (VX+1)*5+10;
+VX = (VX+1)/2*L + L;
 VY = VY*5;
 
 % hold on
@@ -197,6 +201,9 @@ yp{TRI} = Vp{TRI}*y{TRI};
 
 % face nodes
 [rq1D wq1D] = JacobiGQ(0,0,N);
+rq1D_tri = rq1D;
+wq1D_tri = wq1D;
+
 rfq = [rq1D; -rq1D; -ones(size(rq1D))];
 sfq = [-ones(size(rq1D)); rq1D; -rq1D];
 wfq = [wq1D;wq1D;wq1D];
@@ -265,9 +272,9 @@ for TYPE = 1:2
     
     wJq_type{TYPE} = diag(wq{TYPE})*(Vq{TYPE}*Jt);
     
-    quiver(xf{TYPE},yf{TYPE},nxJ_type{TYPE},nyJ_type{TYPE})
-    hold on
-    axis equal
+%     quiver(xf{TYPE},yf{TYPE},nxJ_type{TYPE},nyJ_type{TYPE})
+%     hold on
+%     axis equal
     
 end
 
@@ -296,15 +303,16 @@ yTmin = min(y{TRI}(:)); yTmax = max(y{TRI}(:));
 global mapMT mapPT mapMQ mapPQ
 Nfaces = 4;
 K = size(xf{QUAD},2);
-xfQ = reshape(xf{QUAD},(N+1),Nfaces*K);
-yfQ = reshape(yf{QUAD},(N+1),Nfaces*K);
-mapMQ = reshape(1:(N+1)*Nfaces*K,N+1,Nfaces*K);
+Nfp = size(xf{QUAD},1)/Nfaces;
+xfQ = reshape(xf{QUAD},Nfp,Nfaces*K);
+yfQ = reshape(yf{QUAD},Nfp,Nfaces*K);
+mapMQ = reshape(1:Nfp*Nfaces*K,Nfp,Nfaces*K);
 
 Nfaces = 3;
 K = size(xf{TRI},2);
-xfT = reshape(xf{TRI},(N+1),Nfaces*K);
-yfT = reshape(yf{TRI},(N+1),Nfaces*K);
-mapMT = reshape(1:(N+1)*Nfaces*K,N+1,Nfaces*K);
+xfT = reshape(xf{TRI},Nfp,Nfaces*K);
+yfT = reshape(yf{TRI},Nfp,Nfaces*K);
+mapMT = reshape(1:Nfp*Nfaces*K,Nfp,Nfaces*K);
 
 % make quad/tri maps periodic in y-direction
 fQ1 = find(sum(abs(yfQ-yQmax)) < 1e-9); % top 
@@ -336,7 +344,7 @@ mapP{TRI}(mapMT(:,fT2)) = flipud(mapMT(:,fT1));
 % text(xfQ(:)+.025,yfQ(:)+.025,num2str((1:length(xfQ(:)))'))
 % return
 
-if 1
+if 1   
     % make hybrid tri-quad maps
     fQ1 = find(sum(abs(xfQ - xQmax)) < 1e-9); % dividing line
     fQ2 = find(sum(abs(xfQ - xQmin)) < 1e-9);
@@ -348,16 +356,41 @@ if 1
     fT = [fT1(:); fT2(:)];
     mapMT = mapMT(:,fT);
     
-    xfQ_hybrid = xfQ(mapMQ); yfQ_hybrid = yfQ(mapMQ);
-    xfT_hybrid = xfT(mapMT); yfT_hybrid = yfT(mapMT);
+    % interp to mortar nodes
+    [rq1D_mortar wq1D_mortar] = JacobiGQ(0,0,N); 
+    Vq1D_quad = Vandermonde1D(N,rq1D_quad);
+    Vq1D_tri = Vandermonde1D(N,rq1D_tri);           
+    Vq1D_mortar = Vandermonde1D(N,rq1D_mortar); 
+    V1D_GLL = Vandermonde1D(N,JacobiGL(0,0,N));
+    
+    % quad/tri to mortar thru PN    
+    PQ1D_GLL = ((Vq1D_quad/V1D_GLL)'*diag(wq1D_quad)*(Vq1D_quad/V1D_GLL))\((Vq1D_quad/V1D_GLL)'*diag(wq1D_quad));
+    PT1D_GLL = ((Vq1D_tri/V1D_GLL)'*diag(wq1D_tri)*(Vq1D_tri/V1D_GLL))\((Vq1D_tri/V1D_GLL)'*diag(wq1D_tri));
+    VQmortar = (Vq1D_mortar/V1D_GLL)*PQ1D_GLL; 
+    VTmortar = (Vq1D_mortar/V1D_GLL)*PT1D_GLL;
+    xfQ_hybrid = VQmortar * xfQ(mapMQ);
+    yfQ_hybrid = VQmortar * yfQ(mapMQ);
+    xfT_hybrid = VTmortar * xfT(mapMT);
+    yfT_hybrid = VTmortar * yfT(mapMT);
+    
+    % extrapolate from mortar to quad/tri boundary nodes 
+    % using degree N nodal polynomials on trace space
+    global EQmortar ETmortar    
+    Vq1D_quad = Vandermonde1D(N,rq1D_quad)/V1D_GLL;
+    Vq1D_tri = Vandermonde1D(N,rq1D_tri)/V1D_GLL;
+    Vq1D_mortar = Vq1D_mortar/V1D_GLL;
+    PQ_mortar = (Vq1D_quad'*diag(wq1D_quad)*Vq1D_quad)\(Vq1D_mortar'*diag(wq1D_mortar));
+    PT_mortar = (Vq1D_tri'*diag(wq1D_tri)*Vq1D_tri)\(Vq1D_mortar'*diag(wq1D_mortar));
+    EQmortar = (Vandermonde1D(N,rq1D_quad)/V1D_GLL) * PQ_mortar;
+    ETmortar = (Vandermonde1D(N,rq1D_tri)/V1D_GLL) * PT_mortar;    
     
     if norm(mean(yfQ_hybrid,1)-mean(yfT_hybrid,1))>1e-8
         % if gets here, need to check ordering!
         keyboard
     end
     
-    mapPQ = zeros(N+1,length(fQ));
-    mapPT = zeros(N+1,length(fT));
+    mapPQ = zeros(Nfp,length(fQ));
+    mapPT = zeros(Nfp,length(fT));
     for f = 1:length(fQ)
         [x1 y1] = meshgrid(xfQ_hybrid(:,f),yfQ_hybrid(:,f));
         [x2 y2] = meshgrid(xfT_hybrid(:,f),yfT_hybrid(:,f));
@@ -365,27 +398,27 @@ if 1
         D = abs(y1-y2'); % WARNING: ASSUMES ORDERED + CARTESIAN INTERFACES INCLUDING PERIODIC BOUNDARIES
         
         [p,~] = find(D < 1e-9);
-        mapPQ(:,f) = p + (f-1)*(N+1);
+        mapPQ(:,f) = p + (f-1)*Nfp;
         
         [p,~] = find(D' < 1e-9);
-        mapPT(:,f) = p + (f-1)*(N+1);
+        mapPT(:,f) = p + (f-1)*Nfp;
     end
     
     % check matches
     u = {};
     for TYPE = 1:2
-        u{TYPE} = 1+sin(pi*(x{TYPE} + y{TYPE}));
+        u{TYPE} = 1+sin(pi/L*(x{TYPE} + y{TYPE}));
         uf{TYPE} = Vf{TYPE}*u{TYPE};
     end
     
     mapPT = mapMQ(mapPT);
     mapPQ = mapMT(mapPQ);
-    err = norm(uf{TRI}(mapMT) - uf{QUAD}(mapPT),'fro') + norm(uf{QUAD}(mapMQ) - uf{TRI}(mapPQ),'fro');
+    err = norm(VTmortar*uf{TRI}(mapMT) - VQmortar*uf{QUAD}(mapPT),'fro') + norm(VQmortar*uf{QUAD}(mapMQ) - VTmortar*uf{TRI}(mapPQ),'fro');
     if err > 1e-12
         keyboard
     end
 end
-% return
+
 
 %% visualize connectivity
 
@@ -499,8 +532,7 @@ for TYPE = 1:2
     rhoM{TYPE} = [];
     uM{TYPE} = [];
     vM{TYPE} = [];
-    EM{TYPE} = [];
-    
+    EM{TYPE} = [];    
     
     % Runge-Kutta residual storage
     K = size(xq{TYPE},2);
@@ -511,6 +543,7 @@ for TYPE = 1:2
     res4{TYPE} = zeros(Nq,K);
 end
 
+% [a b c d] = vortexSolution(0,0,0)
 % clf
 % for TYPE=1:2
 %     vv = rho{TYPE};
@@ -527,6 +560,11 @@ Nsteps = ceil(FinalTime/dt);
 dt = FinalTime/Nsteps;
 
 entropy = zeros(Nsteps,1);
+rhstest = zeros(Nsteps,1);
+v1 = {};
+v2 = {};
+v3 = {};
+v4 = {};
 figure(1)
 for i = 1:Nsteps
     for INTRK = 1:5
@@ -537,10 +575,30 @@ for i = 1:Nsteps
             q3q = VqPq{TYPE}*V3(rho{TYPE},rhou{TYPE},rhov{TYPE},E{TYPE});
             q4q = VqPq{TYPE}*V4(rho{TYPE},rhou{TYPE},rhov{TYPE},E{TYPE});
             
+            v1{TYPE} = q1q;
+            v2{TYPE} = q2q;
+            v3{TYPE} = q3q;
+            v4{TYPE} = q4q;
+            
             q1M = VfPq{TYPE}*q1q;
             q2M = VfPq{TYPE}*q2q;
             q3M = VfPq{TYPE}*q3q;
             q4M = VfPq{TYPE}*q4q;
+            
+            if 1
+                % interp to mortar
+                if TYPE==QUAD
+                    q1M(mapMQ) = VQmortar*q1M(mapMQ);
+                    q2M(mapMQ) = VQmortar*q2M(mapMQ);
+                    q3M(mapMQ) = VQmortar*q3M(mapMQ);
+                    q4M(mapMQ) = VQmortar*q4M(mapMQ);
+                elseif TYPE==TRI
+                    q1M(mapMT) = VTmortar*q1M(mapMT);
+                    q2M(mapMT) = VTmortar*q2M(mapMT);
+                    q3M(mapMT) = VTmortar*q3M(mapMT);
+                    q4M(mapMT) = VTmortar*q4M(mapMT);
+                end
+            end
             
             rhoq{TYPE}  = U1(q1q,q2q,q3q,q4q);
             rhouq       = U2(q1q,q2q,q3q,q4q);
@@ -554,13 +612,17 @@ for i = 1:Nsteps
             rhovM       = U3(q1M,q2M,q3M,q4M);
             EM{TYPE}    = U4(q1M,q2M,q3M,q4M);
             uM{TYPE} = rhouM./rhoM{TYPE};
-            vM{TYPE} = rhovM./rhoM{TYPE};                                   
+            vM{TYPE} = rhovM./rhoM{TYPE}; 
         end
                 
         for TYPE = 1:2
             
             [rhs1, rhs2, rhs3, rhs4]  = RHS2Dsimple(rhoq{TYPE},uq{TYPE},vq{TYPE},Eq{TYPE},...
                 rhoM,uM,vM,EM,TYPE);
+            
+            if (INTRK==5)
+                rhstest(i) = rhstest(i) + sum(sum(wJq_type{TYPE}.*(rhs1.*v1{TYPE} + rhs2.*v2{TYPE} + rhs3.*v3{TYPE} + rhs4.*v4{TYPE})));
+            end
 
             res1{TYPE} = rk4a(INTRK)*res1{TYPE} + dt*rhs1;
             res2{TYPE} = rk4a(INTRK)*res2{TYPE} + dt*rhs2;
@@ -596,6 +658,13 @@ for i = 1:Nsteps
     end
 end
 
+figure
+entropy = entropy - min(entropy) + 1;
+semilogy(dt*(1:Nsteps),abs(rhstest),'o--')
+hold on
+semilogy(dt*(1:Nsteps),entropy,'x--')
+legend('Entropy rhs','entropy')
+
 L2err = 0;
 for TYPE=1:2
     [rhoex uex vex pex] = vortexSolution(xq{TYPE},yq{TYPE},FinalTime);
@@ -610,55 +679,6 @@ L2err
 
 
 %%
-
-function [mapMq mapPq] = buildMaps(EToE,EToF,xf,yf)
-
-NfqNfaces = size(xf,1);
-Nfaces = size(EToF,2);
-Nfq = NfqNfaces/Nfaces;
-K = size(EToE,1);
-mapMq = reshape(1:length(xf(:)),Nfq*Nfaces,K);
-mapPq = mapMq;
-
-tol = 1e-11;
-for e = 1:K
-    for f = 1:Nfaces
-        enbr = EToE(e,f);
-        if e ~= enbr % if it's a neighbor
-            fnbr = EToF(e,f);
-            id1 = (1:Nfq) + (f-1)*Nfq;
-            id2 = (1:Nfq) + (fnbr-1)*Nfq;
-            x1 = xf(id1,e); y1 = yf(id1,e);
-            x2 = xf(id2,enbr); y2 = yf(id2,enbr);
-            
-            [X1 Y1] = meshgrid(x1,y1);
-            [X2 Y2] = meshgrid(x2,y2);
-            DX = (X1-X2').^2;
-            DY = (Y1-Y2').^2;
-            D = DX + DY;
-            [p,~] = find(D<tol);
-            
-%             % NOTE - does not work if K1D is too small!!
-%             if length(p) == 0
-%                 % assume periodic boundary, find match in x,y
-%                 [px,~] = find(DX<tol);
-%                 [py,~] = find(DY<tol);
-%                 if length(px)==0
-%                     p = py;
-%                 elseif length(py)==0
-%                     p = px;
-%                 else
-%                     keyboard
-%                 end
-%             end
-            fids = id2(p) + (enbr-1)*(Nfq*Nfaces);
-            mapPq(id1,e) = fids(:);
-        end
-    end
-end
-
-end
-
 
 function [rhs1 rhs2 rhs3 rhs4] = RHS2Dsimple(rhoq,uq,vq,Eq,rhoM_type,uM_type,vM_type,EM_type,TYPE)
 
@@ -696,20 +716,20 @@ vP = vM(mapP{TYPE});
 EP = EM(mapP{TYPE});
 
 % hybrid coupling
+global QUAD TRI
+global EQmortar ETmortar
 if 1
-    % uf{TRI}(mapMT) - uf{QUAD}(mapPT)
-    % uf{QUAD}(mapMQ) - uf{TRI}(mapPQ)
-    global QUAD TRI
+    % get mortar info
     if TYPE==QUAD
         rhoP(mapMQ) = rhoM_type{TRI}(mapPQ);
         uP(mapMQ) = uM_type{TRI}(mapPQ);
         vP(mapMQ) = vM_type{TRI}(mapPQ);
-        EP(mapMQ) = EM_type{TRI}(mapPQ);
+        EP(mapMQ) = EM_type{TRI}(mapPQ);                
     elseif TYPE==TRI
         rhoP(mapMT) = rhoM_type{QUAD}(mapPT);
         uP(mapMT) = uM_type{QUAD}(mapPT);
         vP(mapMT) = vM_type{QUAD}(mapPT);
-        EP(mapMT) = EM_type{QUAD}(mapPT);
+        EP(mapMT) = EM_type{QUAD}(mapPT);                
     end
 end
 
@@ -747,6 +767,21 @@ fSf1 = fSf1  - .25*Lf1;
 fSf2 = fSf2  - .25*Lf2;
 fSf3 = fSf3  - .25*Lf3;
 fSf4 = fSf4  - .25*Lf4;
+
+if 1
+    % transfer from mortar to regular nodes
+    if TYPE==QUAD
+        fSf1(mapMQ) = EQmortar*fSf1(mapMQ);
+        fSf2(mapMQ) = EQmortar*fSf2(mapMQ);
+        fSf3(mapMQ) = EQmortar*fSf3(mapMQ);
+        fSf4(mapMQ) = EQmortar*fSf4(mapMQ);
+    elseif TYPE==TRI
+        fSf1(mapMT) = ETmortar*fSf1(mapMT);
+        fSf2(mapMT) = ETmortar*fSf2(mapMT);
+        fSf3(mapMT) = ETmortar*fSf3(mapMT);
+        fSf4(mapMT) = ETmortar*fSf4(mapMT);
+    end
+end
 
 rhoN = [rhoq; rhoM];
 uN = [uq; uM];
@@ -800,7 +835,7 @@ rhs2 = 2*VqPN*divF2 + VqLq*(fSf2);
 rhs3 = 2*VqPN*divF3 + VqLq*(fSf3);
 rhs4 = 2*VqPN*divF4 + VqLq*(fSf4);
 
-% apply wadg at the end
+% assume mass lumping or Jq const (tris)
 rhs1 = -(rhs1./Jq);
 rhs2 = -(rhs2./Jq);
 rhs3 = -(rhs3./Jq);
@@ -840,7 +875,7 @@ if 0
     p = rho.^gamma;
 end
 
-if 0
+if 1
     % pulse condition
     x0 = 2.5;
     rho = 2 + (abs(x-x0) < 5);
@@ -848,6 +883,54 @@ if 0
     v = 0*rho;
     p = rho.^gamma;
     
+end
+
+end
+
+function [mapMq mapPq] = buildMaps(EToE,EToF,xf,yf)
+
+NfqNfaces = size(xf,1);
+Nfaces = size(EToF,2);
+Nfq = NfqNfaces/Nfaces;
+K = size(EToE,1);
+mapMq = reshape(1:length(xf(:)),Nfq*Nfaces,K);
+mapPq = mapMq;
+
+tol = 1e-11;
+for e = 1:K
+    for f = 1:Nfaces
+        enbr = EToE(e,f);
+        if e ~= enbr % if it's a neighbor
+            fnbr = EToF(e,f);
+            id1 = (1:Nfq) + (f-1)*Nfq;
+            id2 = (1:Nfq) + (fnbr-1)*Nfq;
+            x1 = xf(id1,e); y1 = yf(id1,e);
+            x2 = xf(id2,enbr); y2 = yf(id2,enbr);
+            
+            [X1 Y1] = meshgrid(x1,y1);
+            [X2 Y2] = meshgrid(x2,y2);
+            DX = (X1-X2').^2;
+            DY = (Y1-Y2').^2;
+            D = DX + DY;
+            [p,~] = find(D<tol);
+            
+%             % NOTE - does not work if K1D is too small!!
+%             if length(p) == 0
+%                 % assume periodic boundary, find match in x,y
+%                 [px,~] = find(DX<tol);
+%                 [py,~] = find(DY<tol);
+%                 if length(px)==0
+%                     p = py;
+%                 elseif length(py)==0
+%                     p = px;
+%                 else
+%                     keyboard
+%                 end
+%             end
+            fids = id2(p) + (enbr-1)*(Nfq*Nfaces);
+            mapPq(id1,e) = fids(:);
+        end
+    end
 end
 
 end

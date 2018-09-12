@@ -1,257 +1,41 @@
 \pdfoutput=1
 
-\documentclass[review]{siamart0216}
+%\documentclass[review]{siamart0216}
+\documentclass{svjour3}                     % onecolumn (standard format)
+%\documentclass[smallcondensed]{svjour3}     % onecolumn (ditto)
+%\documentclass[smallextended]{svjour3}       % onecolumn (second format)
+%\documentclass[twocolumn]{svjour3}          % twocolumn
 
-\usepackage{amsmath,amssymb,amsfonts}
-\newtheorem*{remark}{Remark}
-\theoremstyle{assumption}
-\newtheorem{assumption}{Assumption}
+\smartqed  % flush right qed marks, e.g. at end of proof
 
-%\documentclass[preprint,10pt]{elsarticle}
-%\usepackage{amsmath,amssymb,amsfonts,amsthm}
-%\theoremstyle{definition}
-%\newtheorem{definition}{Definition}
-%\theoremstyle{lemma}
-%\newtheorem{lemma}{Lemma}
+\makeatletter
+\renewcommand*{\@thmcounterend}{}
+\makeatother
+%\spnewtheorem{lemma}{Lemma}{\bfseries}{\itshape}
+\spnewtheorem{assumption}{Assumption}{\bfseries}{\itshape}
+%\spnewtheorem{remark}{Remark}{\bfseries}{\itshape}
+\usepackage{cite}
+
+
+\usepackage{amsmath, amssymb, amsfonts}
 %\newtheorem*{remark}{Remark}
-%\theoremstyle{theorem}
-%\newtheorem{theorem}{Theorem}
 %\theoremstyle{assumption}
 %\newtheorem{assumption}{Assumption}
-%\usepackage{fullpage}
-
 
 \usepackage[titletoc,toc,title]{appendix}
-
-\usepackage{array} 
-\usepackage{listings}
-\usepackage{mathtools}
-\usepackage{pdfpages}
-\usepackage[textsize=footnotesize,color=green]{todonotes}
-\usepackage{bm}
-\usepackage{bbm}
-
 \usepackage{tikz}
-\usepackage[normalem]{ulem}
 \usepackage{hhline}
-
-\usepackage{graphicx}
+\usepackage{graphicx, color, bm}
 \usepackage{subfig}
-\usepackage{color}
-
-%% ====================================== graphics
-
 \usepackage{pgfplots}
 \usepackage{pgfplotstable}
-\definecolor{markercolor}{RGB}{124.9, 255, 160.65}
-\pgfplotsset{
-compat=1.3,
-width=10cm,
-tick label style={font=\small},
-label style={font=\small},
-legend style={font=\small}
-}
+\usepackage{slopetri}
 
-\usetikzlibrary{calc}
-\usetikzlibrary{intersections} 
+\renewcommand{\hat}{\widehat}
 
-%%% START MACRO FOR ANNOTATION OF TRIANGLE WITH SLOPE %%%.
-\newcommand{\logLogSlopeTriangle}[5]
-{
-    % #1. Relative offset in x direction.
-    % #2. Width in x direction, so xA-xB.
-    % #3. Relative offset in y direction.
-    % #4. Slope d(y)/d(log10(x)).
-    % #5. Plot options.
-
-    \pgfplotsextra
-    {
-        \pgfkeysgetvalue{/pgfplots/xmin}{\xmin}
-        \pgfkeysgetvalue{/pgfplots/xmax}{\xmax}
-        \pgfkeysgetvalue{/pgfplots/ymin}{\ymin}
-        \pgfkeysgetvalue{/pgfplots/ymax}{\ymax}
-
-        % Calculate auxilliary quantities, in relative sense.
-        \pgfmathsetmacro{\xArel}{#1}
-        \pgfmathsetmacro{\yArel}{#3}
-        \pgfmathsetmacro{\xBrel}{#1-#2}
-        \pgfmathsetmacro{\yBrel}{\yArel}
-        \pgfmathsetmacro{\xCrel}{\xArel}
-
-        \pgfmathsetmacro{\lnxB}{\xmin*(1-(#1-#2))+\xmax*(#1-#2)} % in [xmin,xmax].
-        \pgfmathsetmacro{\lnxA}{\xmin*(1-#1)+\xmax*#1} % in [xmin,xmax].
-        \pgfmathsetmacro{\lnyA}{\ymin*(1-#3)+\ymax*#3} % in [ymin,ymax].
-        \pgfmathsetmacro{\lnyC}{\lnyA+#4*(\lnxA-\lnxB)}
-        \pgfmathsetmacro{\yCrel}{\lnyC-\ymin)/(\ymax-\ymin)} % THE IMPROVED EXPRESSION WITHOUT 'DIMENSION TOO LARGE' ERROR.
-
-        % Define coordinates for \draw. MIND THE 'rel axis cs' as opposed to the 'axis cs'.
-        \coordinate (A) at (rel axis cs:\xArel,\yArel);
-        \coordinate (B) at (rel axis cs:\xBrel,\yBrel);
-        \coordinate (C) at (rel axis cs:\xCrel,\yCrel);
-
-        % Draw slope triangle.
-        \draw[#5]   (A)-- node[pos=0.5,anchor=north] {}
-                    (B)-- 
-                    (C)-- node[pos=0.5,anchor=west] {\textcolor{black}{#4}}
-                    cycle;
-    }
-}
-%%% END MACRO FOR ANNOTATION OF TRIANGLE WITH SLOPE %%%.
-
-\newcommand{\logLogSlopeTriangleNeg}[5]
-{
-    % #1. Relative offset in x direction.
-    % #2. Width in x direction, so xA-xB.
-    % #3. Relative offset in y direction.
-    % #4. Slope d(y)/d(log10(x)).
-    % #5. Plot options.
-
-    \pgfplotsextra
-    {
-        \pgfkeysgetvalue{/pgfplots/xmin}{\xmin}
-        \pgfkeysgetvalue{/pgfplots/xmax}{\xmax}
-        \pgfkeysgetvalue{/pgfplots/ymin}{\ymin}
-        \pgfkeysgetvalue{/pgfplots/ymax}{\ymax}
-
-        % Calculate auxilliary quantities, in relative sense.
-        \pgfmathsetmacro{\xArel}{#1}
-        \pgfmathsetmacro{\yArel}{#3}
-        \pgfmathsetmacro{\xBrel}{#1-#2}
-        \pgfmathsetmacro{\yBrel}{\yArel}
-        \pgfmathsetmacro{\xCrel}{\xArel}
-
-        \pgfmathsetmacro{\lnxB}{\xmin*(1-(#1-#2))+\xmax*(#1-#2)} % in [xmin,xmax].
-        \pgfmathsetmacro{\lnxA}{\xmin*(1-#1)+\xmax*#1} % in [xmin,xmax].
-        \pgfmathsetmacro{\lnyA}{\ymin*(1-#3)+\ymax*#3} % in [ymin,ymax].
-        \pgfmathsetmacro{\lnyC}{\lnyA+#4*(\lnxA-\lnxB)}
-        \pgfmathsetmacro{\yCrel}{\lnyC-\ymin)/(\ymax-\ymin)} % THE IMPROVED EXPRESSION WITHOUT 'DIMENSION TOO LARGE' ERROR.
-
-        % Define coordinates for \draw. MIND THE 'rel axis cs' as opposed to the 'axis cs'.
-        \coordinate (A) at (rel axis cs:\xArel,\yArel);
-        \coordinate (B) at (rel axis cs:\xBrel,\yBrel);
-        \coordinate (C) at (rel axis cs:\xCrel,\yCrel);
-
-        % Draw slope triangle.
-        \draw[#5]   (A)-- node[pos=.5,anchor=south] {}
-                    (B)-- 
-                    (C)-- node[pos=0.5,anchor=west] {\textcolor{black}{#4}}
-                    cycle;
-    }
-}
-%%% END MACRO FOR ANNOTATION OF TRIANGLE WITH SLOPE %%%.
-
-%%% START MACRO FOR ANNOTATION OF TRIANGLE WITH SLOPE %%%.
-\newcommand{\logLogSlopeTriangleFlipNeg}[5]
-{
-    % #1. Relative offset in x direction.
-    % #2. Width in x direction, so xA-xB.
-    % #3. Relative offset in y direction.
-    % #4. Slope d(y)/d(log10(x)).
-    % #5. Plot options.
-
-    \pgfplotsextra
-    {
-        \pgfkeysgetvalue{/pgfplots/xmin}{\xmin}
-        \pgfkeysgetvalue{/pgfplots/xmax}{\xmax}
-        \pgfkeysgetvalue{/pgfplots/ymin}{\ymin}
-        \pgfkeysgetvalue{/pgfplots/ymax}{\ymax}
-
-        % Calculate auxilliary quantities, in relative sense.
-        %\pgfmathsetmacro{\xArel}{#1}
-        %\pgfmathsetmacro{\yArel}{#3}
-        \pgfmathsetmacro{\xBrel}{#1-#2}
-        \pgfmathsetmacro{\yBrel}{#3}
-        \pgfmathsetmacro{\xCrel}{#1}
-
-        \pgfmathsetmacro{\lnxB}{\xmin*(1-(#1-#2))+\xmax*(#1-#2)} % in [xmin,xmax].
-        \pgfmathsetmacro{\lnxA}{\xmin*(1-#1)+\xmax*#1} % in [xmin,xmax].
-        \pgfmathsetmacro{\lnyA}{\ymin*(1-#3)+\ymax*#3} % in [ymin,ymax].
-        \pgfmathsetmacro{\lnyC}{\lnyA+#4*(\lnxA-\lnxB)}
-        \pgfmathsetmacro{\yCrel}{\lnyC-\ymin)/(\ymax-\ymin)} % THE IMPROVED EXPRESSION WITHOUT 'DIMENSION TOO LARGE' ERROR.
-
-	\pgfmathsetmacro{\xArel}{\xBrel}
-        \pgfmathsetmacro{\yArel}{\yCrel}
-
-        % Define coordinates for \draw. MIND THE 'rel axis cs' as opposed to the 'axis cs'.
-        \coordinate (A) at (rel axis cs:\xArel,\yArel);
-        \coordinate (B) at (rel axis cs:\xBrel,\yBrel);
-        \coordinate (C) at (rel axis cs:\xCrel,\yCrel);
-
-        % Draw slope triangle.
-        \draw[#5]   (A)-- node[pos=0.5,anchor=east] {\textcolor{black}{#4}}
-                    (B)-- 
-                    (C)-- node[pos=0.5,anchor=north] {1}
-                    cycle;
-    }
-}
-%%% END MACRO FOR ANNOTATION OF TRIANGLE WITH SLOPE %%%.
-
-
-%%% START MACRO FOR ANNOTATION OF TRIANGLE WITH SLOPE %%%.
-\newcommand{\logLogSlopeTriangleFlip}[5]
-{
-    % #1. Relative offset in x direction.
-    % #2. Width in x direction, so xA-xB.
-    % #3. Relative offset in y direction.
-    % #4. Slope d(y)/d(log10(x)).
-    % #5. Plot options.
-
-    \pgfplotsextra
-    {
-        \pgfkeysgetvalue{/pgfplots/xmin}{\xmin}
-        \pgfkeysgetvalue{/pgfplots/xmax}{\xmax}
-        \pgfkeysgetvalue{/pgfplots/ymin}{\ymin}
-        \pgfkeysgetvalue{/pgfplots/ymax}{\ymax}
-
-        % Calculate auxilliary quantities, in relative sense.
-        %\pgfmathsetmacro{\xArel}{#1}
-        %\pgfmathsetmacro{\yArel}{#3}
-        \pgfmathsetmacro{\xBrel}{#1-#2}
-        \pgfmathsetmacro{\yBrel}{#3}
-        \pgfmathsetmacro{\xCrel}{#1}
-
-        \pgfmathsetmacro{\lnxB}{\xmin*(1-(#1-#2))+\xmax*(#1-#2)} % in [xmin,xmax].
-        \pgfmathsetmacro{\lnxA}{\xmin*(1-#1)+\xmax*#1} % in [xmin,xmax].
-        \pgfmathsetmacro{\lnyA}{\ymin*(1-#3)+\ymax*#3} % in [ymin,ymax].
-        \pgfmathsetmacro{\lnyC}{\lnyA+#4*(\lnxA-\lnxB)}
-        \pgfmathsetmacro{\yCrel}{\lnyC-\ymin)/(\ymax-\ymin)} % THE IMPROVED EXPRESSION WITHOUT 'DIMENSION TOO LARGE' ERROR.
-
-	\pgfmathsetmacro{\xArel}{\xBrel}
-        \pgfmathsetmacro{\yArel}{\yCrel}
-
-        % Define coordinates for \draw. MIND THE 'rel axis cs' as opposed to the 'axis cs'.
-        \coordinate (A) at (rel axis cs:\xArel,\yArel);
-        \coordinate (B) at (rel axis cs:\xBrel,\yBrel);
-        \coordinate (C) at (rel axis cs:\xCrel,\yCrel);
-
-        % Draw slope triangle.
-        \draw[#5]   (A)-- node[pos=0.5,anchor=east] {\textcolor{black}{#4}}
-                    (B)-- 
-                    (C)-- node[pos=0.5,anchor=south] {}
-                    cycle;
-    }
-}
-%%% END MACRO FOR ANNOTATION OF TRIANGLE WITH SLOPE %%%.
-
-
-
-\usepackage{stmaryrd}
-
-\renewcommand{\hat}[1]{\hat{#1}}
-\renewcommand{\topfraction}{0.85}
-\renewcommand{\textfraction}{0.1}
-\renewcommand{\floatpagefraction}{0.75}
-
-\newcommand{\vect}[1]{\ensuremath\boldsymbol{#1}}
-\newcommand{\tensor}[1]{\underline{\bm{#1}}}
-\newcommand{\del}{\triangle}
-\newcommand{\curl}{\grad \times}
-\renewcommand{\div}{\grad \cdot}
-
-\newcommand{\bbm}[1]{\mathbbm{#1}}
-\newcommand{\bs}[1]{\boldsymbol{#1}}
-\newcommand{\equaldef}{\stackrel{\mathrm{def}}{=}}
-
+%% d in integrand
+\newcommand*\diff[1]{\mathop{}\!{\mathrm{d}#1}}
+\newcommand{\diag}[1]{{\rm diag}\LRp{#1}}
 \newcommand{\td}[2]{\frac{{\rm d}#1}{{\rm d}{\rm #2}}}
 \newcommand{\pd}[2]{\frac{\partial#1}{\partial#2}}
 \newcommand{\nor}[1]{\left\| #1 \right\|}
@@ -262,85 +46,41 @@ legend style={font=\small}
 \newcommand{\LRc}[1]{\left\{ #1 \right\}}
 \newcommand{\LRceil}[1]{\left\lceil #1 \right\rceil}
 \newcommand{\LRl}[1]{\left. #1 \right|}
-\newcommand{\pdd}[2]{\frac{\partial^2#1}{\partial#2^2}}
 \newcommand{\pdn}[3]{\frac{\partial^{#3}#1}{\partial#2^{#3}}}
-\newcommand{\mb}[1]{\mathbf{#1}}
-\newcommand{\mbb}[1]{\mathbb{#1}}
-\newcommand{\mc}[1]{\mathcal{#1}}
-\newcommand{\snor}[1]{\left| #1 \right|}
-
-
-%\newcommand{\cond}[1]{\kappa\LRp{#1}}
-\newcommand{\cond}[2]{\nor{#1}_{#2}\nor{{#1}^{-1}}_{#2}}
-
-
 \newcommand{\Grad} {\ensuremath{\nabla}}
-\newcommand{\Div} {\ensuremath{\nabla\cdot}}
 \newcommand{\jump}[1] {\ensuremath{\llbracket#1\rrbracket}}
 \newcommand{\avg}[1] {\ensuremath{\LRc{\!\{#1\}\!}}}
 
-\newcommand{\Oh}{{\Omega_h}}
-\renewcommand{\L}{L^2\LRp{\Omega}}
-\newcommand{\LK}{L^2\LRp{D^k}}
-\newcommand{\LdK}{L^2\LRp{\partial D^k}}
-\newcommand{\Dhat}{\hat{D}}
-\newcommand{\Lhat}{L^2\LRp{\Dhat}}
-
-\renewcommand{\hat}{\widehat}
-
-\newcommand{\eval}[2][\right]{\relax
-  \ifx#1\right\relax \left.\fi#2#1\rvert}
-
-\def\etal{{\it et al.~}}
-
-
-\newcommand{\note}[1]{{\color{blue}{#1}}}
-%\newcommand{\noteOne}[1]{{\color{blue}{#1}}}
-%\newcommand{\noteTwo}[1]{{\color{red}{#1}}}
-%\newcommand{\note}[1]{#1}
-%\newcommand{\noteOne}[1]{#1}
-%\newcommand{\noteTwo}[1]{#1}
-
-
-\newcommand{\LinfDk}{L^{\infty}\LRp{D^k}}
-
-\newcommand{\diag}[1]{{\rm diag}\LRp{#1}}
-
-\newcommand{\Ksub}{K_{\rm sub}}
-
-\newcolumntype{C}[1]{>{\centering\let\newline\\\arraybackslash\hspace{0pt}}m{#1}}
-
-%% d in integrand
-\newcommand*\diff[1]{\mathop{}\!{\mathrm{d}#1}}
-
-\makeatletter
-\renewcommand\d[1]{\mspace{6mu}\mathrm{d}#1\@ifnextchar\d{\mspace{-3mu}}{}}
-\makeatother
-
-\date{}
-\author{Jesse Chan}%, David C.\ Del Rey Fernandez}
-\title{Skew-symmetric entropy stable discontinuous Galerkin formulations}
+\renewcommand{\note}[1]{{\color{blue}{#1}}}
 
 \graphicspath{{./figs/}}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+
+\date{}
+\author{Jesse Chan}
+\title{Skew-symmetric entropy stable discontinuous Galerkin formulations}
 
 \begin{document}
 
 \maketitle
 
 \begin{abstract}
-Entropy stable high order methods for nonlinear conservation laws satisfy an inherent discrete entropy inequality.  The construction of such schemes has relied on the use of carefully chosen collocation points \cite{gassner2013skew, fisher2013high, carpenter2014entropy, chan2018efficient} or volume and surface quadrature rules \cite{chan2017discretely, chan2018discretely} to produce operators which satisfy a summation-by-parts (SBP) property.  In this work, we show how to construct skew-symmetric schemes which are entropy stable even for volume and surface quadratures under which an SBP property does not hold.  These skew-symmetric formulations avoid the use of a ``strong'' SBP property, and require only that operators exactly differentiate constants and satisfy a discrete form of the fundamental theorem of calculus.   We conclude by discussing mortar-based implementations of skew-symmetric formulations for entropy stable schemes on hybrid meshes. 
+Entropy stable high order methods for nonlinear conservation laws satisfy an inherent discrete entropy inequality.  The construction of such schemes has relied on the use of carefully chosen collocation points \cite{gassner2013skew, fisher2013high, carpenter2014entropy, chan2018efficient} or volume and surface quadrature rules \cite{chan2017discretely, chan2018discretely} to produce operators which satisfy a summation-by-parts (SBP) property.  In this work, we show how to construct skew-symmetric schemes which are entropy stable even for volume and surface quadratures under which an SBP property does not hold.  These skew-symmetric formulations avoid the use of a ``strong'' SBP property, and require only that operators exactly differentiate constants and satisfy a discrete form of the fundamental theorem of calculus.   We conclude with an application of the skew-symmetric formulation for entropy stable schemes on mixed quadrilateral-triangle meshes. 
 \end{abstract}
 
 %\tableofcontents
 
 \section{Introduction}
 
-High order methods for the simulation of time-dependent compressible flow have the potential to achieve higher levels of accuracy at lower costs compared to current low order schemes \cite{wang2013high}.  In addition to superior accuracy, % and efficiency on modern computing architectures, 
-the low numerical dispersion and dissipation of high order methods \cite{ainsworth2004dispersive} enables the accurate propagation of waves over long distances and time scales.  The same properties also make high order methods attractive for unsteady phenomena such as vorticular and turbulent flows, which are sensitive to numerical dissipation \cite{visbal1999high, wang2013high}.  
+High order methods for the simulation of time-dependent compressible flow have the potential to achieve higher levels of accuracy at lower costs compared to current low order schemes \cite{wang2013high}.  In addition to superior accuracy, the low numerical dispersion and dissipation of high order methods \cite{ainsworth2004dispersive} enables the accurate propagation of waves over long distances and time scales.  The same properties also make high order methods attractive for unsteady phenomena such as vorticular and turbulent flows, which are sensitive to numerical dissipation \cite{visbal1999high, wang2013high}.  
 
-However, 
-%while high order methods are often provably stable for wave problems, high order schemes for nonlinear conservation laws have consistently been hampered by problems of instability.  
-when applied to nonlinear conservation laws, high order methods can experience artificial growth and blow-up near under-resolved features such as shocks, turbulence, or boundary layers.  In practice, the application of high order methods to practical problems requires shock capturing and stabilization techniques (such as artificial viscosity) or solution regularization (such as filtering or limiting) to prevent solution blow-up.  The resulting schemes for nonlinear conservation laws walk a fine line between stability, robustness, and accuracy.  Aggressive stabilization or regularization can result in the loss of high order accuracy, while too little can result in instability \cite{wang2013high}.  Moreover, it can be difficult to determine robust expressions for stabilization paramaters, as parameters which work for one simulation can fail when applied to a different physical regime or discretization setting.  
+However, when applied to nonlinear conservation laws, high order methods can experience artificial growth and blow-up near under-resolved features such as shocks, turbulence, or boundary layers.  In practice, the application of high order methods to practical problems requires shock capturing and stabilization techniques (such as artificial viscosity) or solution regularization (such as filtering or limiting) to prevent solution blow-up.  The resulting schemes for nonlinear conservation laws walk a fine line between stability, robustness, and accuracy.  Aggressive stabilization or regularization can result in the loss of high order accuracy, while too little can result in instability \cite{wang2013high}.  Moreover, it can be difficult to determine robust expressions for stabilization paramaters, as parameters which work for one simulation can fail when applied to a different physical regime or discretization setting.  
 
 These issues have motivated the introduction of high order \textit{entropy stable} discretizations, which satisfy a semi-discrete entropy inequality while maintaining high order accuracy in smooth regions.  Proofs of continuous entropy inequalities rely on the chain rule, which does not hold discretely due to effects such as quadrature error.   By using an approach referred to as ``flux differencing'', entropy stable schemes account for the loss of the chain rule while maintaining a semi-discrete analogue of the continuous entropy inequality.  These schemes were first introduced as high order collocation methods on tensor product elements in \cite{fisher2013high, carpenter2014entropy, gassner2016split, gassner2017br1}, and were extended to simplicial elements in \cite{crean2017high, chen2017entropy, crean2018entropy, chan2017discretely, chan2018discretely}.  Entropy stable methods have also been extended to a variety of other discretization settings, including staggered grids \cite{parsani2016entropy}, Gauss-Legendre collocation \cite{chan2018efficient}, and non-conforming meshes \cite{friedrich2017entropy}.  
 
@@ -348,7 +88,7 @@ Entropy stable discretizations are built upon flux differencing and a summation-
 
 This work proposes an alternative formulation which utilizes a skew-symmetric form of flux differencing.  Under such a formulation, the proof of entropy stability requires only a weaker ``variational'' form of the SBP property, which holds under a more general class of quadrature rules compared to the decoupled SBP property introduced in \cite{chan2017discretely, chan2018discretely}.  We show that the skew-symmetric formulation is entropy stable, locally conservative, and free-stream preserving on curved elements, and confirm theoretical results with numerical experiments on triangular, quadrilateral, and hybrid triangular-quadrilateral meshes.  
 
-It should be noted that a similar approach to entropy stable discretizations was introduced within a finite difference framework \cite{chen2017entropy, crean2018entropy} using multidimensional differencing operators which are constructed to satisfy accuracy conditions and an SBP property \cite{hicken2016multidimensional}.  These operators do not correspond to any specific basis or approximation space, but can be shown to exist for nodal points corresponding to sufficiently accurate choices of volume and surface quadrature.  The formulations presented in this work require similar accuracy conditions, but differ from those of \cite{chen2017entropy, crean2018entropy} in that they build upon an explicit approximation space.  In contrast with traditional SBP coupling terms \cite{crean2017high}, the use of decoupled SBP operators also accomodates general choices of volume and surface quadrature (e.g.\ volume quadratures without boundary nodes and over-integrated rules) while ensuring compact coupling conditions between neighboring elements.  
+It should be noted that a similar approach to entropy stable discretizations was introduced within a finite difference framework \cite{chen2017entropy, crean2018entropy} using multidimensional differencing operators which are constructed to satisfy accuracy conditions and an SBP property \cite{hicken2016multidimensional}.  These operators do not correspond to any specific basis or approximation space, but can be shown to exist for nodal points corresponding to sufficiently accurate choices of volume and surface quadrature and can be computed either algebraically or through an optimization problem.  The formulations presented in this work require similar accuracy conditions, but differ from those of \cite{chen2017entropy, crean2018entropy} in that we start with an explicit approximation space, which then induce quadrature-based operators.  The formulations presented here also accomodate general choices of volume and surface quadrature (e.g.\ volume quadratures without boundary nodes and over-integrated rules) while ensuring compact coupling conditions between neighboring elements.  
 
 The structure of the paper is as follows: Section~\ref{sec:nonlin} describes the continuous entropy inequality which we aim to replicate discretely.  Section~\ref{sec:approx} and Section~\ref{sec:sbp} introduce polynomial approximation spaces and quadrature-based SBP operators on simplicial and tensor product elements.  Section~\ref{sec:skew1} then introduces the variational SBP property and an entropy conservative skew-symmetric formulation.  Section~\ref{sec:skew2} extends the skew-symmetric formulation to curved elements, and Section~\ref{sec:num} presents numerical experiments which verify the theoretical assumptions, stability, and accuracy of the proposed formulations.
 
@@ -455,7 +195,7 @@ f\pd{g}{x_i} \approx \LRs{\begin{array}{cc}
 %\end{align*}
 
 For sufficiently accurate quadrature rules, the matrix $\bm{Q}^i_N$ also satisfies a decoupled summation-by-parts (SBP) property, which is used to prove semi-discrete entropy stability for nonlinear conservation laws.  
-\begin{lemma}
+\begin{theorem}%[Theorem 1 in \cite{chan2017discretely}]
 Assume that the volume and surface quadrature rules are sufficiently accurate such that the quantities
 \[
 \int_{\hat{D}} \pd{u}{x_i} v, \qquad \int_{\partial \hat{D}} u v n_i
@@ -469,15 +209,15 @@ are integrated exactly for all $u,v \in V^N\LRp{\hat{D}}$ and $i = 1,\ldots, d$.
 %\item The quadrature integrates exactly $\int_{\hat{D}} \pd{u}{x_i} v$ for all $u,v \in V^N\LRp{\hat{D}}$ and $i = 1,\ldots, d$.
 %\end{enumerate}
 \label{lemma:dsbp}
-\end{lemma}
+\end{theorem}
 \begin{proof}
 The proof is a straightforward extension of Theorem 1 in \cite{chan2017discretely} to polynomial approximation spaces on non-simplicial elements.  
 \end{proof}
 
-The assumptions of Lemma~\ref{lemma:dsbp} are satisfied for sufficiently accurate volume and surface quadratures.  For example, on simplicial elements, (\ref{eq:dsbp}) holds if the volume quadrature is exact for polynomial integrands of total degree $(2N-1)$, and the surface integral is exact for degree $2N$ polynomials on each face.  Tensor product elements require stricter conditions: (\ref{eq:dsbp}) holds if both the volume and surface quadratures are exact for polynomial integrands of degree $2N$ in each coordinate, due to the fact that derivatives of $u\in Q^N$ are degree $(N-1)$ polynomials with respect to one coordinate and degree $N$ with respect to others.  
+The assumptions of Theorem~\ref{lemma:dsbp} are satisfied for sufficiently accurate volume and surface quadratures.  For example, on simplicial elements, (\ref{eq:dsbp}) holds if the volume quadrature is exact for polynomial integrands of total degree $(2N-1)$, and the surface integral is exact for degree $2N$ polynomials on each face.  Tensor product elements require stricter conditions: (\ref{eq:dsbp}) holds if both the volume and surface quadratures are exact for polynomial integrands of degree $2N$ in each coordinate, due to the fact that derivatives of $u\in Q^N$ are degree $(N-1)$ polynomials with respect to one coordinate and degree $N$ with respect to others.  
 
 \begin{remark}
-It is worth noting that the assumptions of Lemma~\ref{lemma:dsbp} are sufficient but not necessary conditions.  For example, suppose $\hat{D}$ is a quadrilateral element, and that the volume quadrature is a tensor product of $(N+1)$ point one-dimensional Gauss-Legendre-Lobatto (GLL) rule.  If the surface quadrature also taken to be an $(N+1)$-point GLL rule over each face, then $\bm{Q}^i$ satisfies a traditional SBP property, which can be used to prove the decoupled SBP property for $\bm{Q}^i_N$.  
+It should be stressed that the assumptions of Theorem~\ref{lemma:dsbp} are sufficient but not necessary conditions.  For example, suppose $\hat{D}$ is a quadrilateral element, and that the volume quadrature is a tensor product of $(N+1)$ point one-dimensional Gauss-Legendre-Lobatto (GLL) rule.  If the surface quadrature also taken to be an $(N+1)$-point GLL rule over each face, then $\bm{Q}^i$ satisfies a traditional SBP property, which implies the decoupled SBP property for $\bm{Q}^i_N$.  
 \end{remark}
 
 \section{Skew-symmetric entropy conservative formulations on a single element}
@@ -492,13 +232,13 @@ In this section, we give examples of specific pairings of volume and surface qua
 \subfloat[GLL volume quadrature, Gauss surface quadrature]{\includegraphics[width=.4\textwidth]{figs/gllgauss.png}\label{subfig:gllgq}}
 \hspace{2em}
 \subfloat[Degree $2N$ volume quadrature, GLL surface quadrature]{\includegraphics[width=.4\textwidth]{figs/trigll.png}\label{subfig:trigll}}
-\caption{Volume and surface quadrature pairs which do not satisfy the assumptions of Lemma~\ref{lemma:dsbp}, and thus do not possess the decoupled SBP property (\ref{eq:dsbp}). Volume quadrature nodes are drawn as circles, while surface quadrature nodes are drawn as squares.}
+\caption{Volume and surface quadrature pairs which do not satisfy the assumptions of Theorem~\ref{lemma:dsbp}, and thus do not possess the decoupled SBP property (\ref{eq:dsbp}). Volume quadrature nodes are drawn as circles, while surface quadrature nodes are drawn as squares.}
 \label{fig:sbploss}
 \end{figure}
 
-\paragraph{Quadrilateral elements (Figure~\ref{subfig:gllgq})} We first consider a quadrilateral element $\hat{D}$ with an $(N+1)$ point tensor product GLL volume quadrature and $(N+1)$ point Gauss quadrature on each face.  Let $u,v \in Q^N$ denote two arbitrary degree $N$ polynomials.  The assumptions of Lemma~\ref{lemma:dsbp} are that the volume quadrature exactly integrates $\int_{\hat{D}} \pd{u}{x} v$ and that the surface quadrature exactly integrates $\int_{\partial \hat{D}} u v n_i$ on $\hat{D}$.  Because the $(N+1)$-point Gauss rule is exact for polynomials of degree $2N+1$ and the product $uv \in P^{2N}$ on each face, the surface quadrature satisfies the assumptions of Lemma~\ref{lemma:dsbp}.  However, the 1D GLL rule is only exact for polynomials of degree $(2N-1)$.  The derivative $\pd{u}{x}$ is a polynomial of degree $(N-1)$ in $x$, but is degree $N$ in $y$.  Thus, $\pd{u}{x}v$ is a polynomial of degree $(2N-1)$ in $x$ but degree $2N$ in $y$, and is not integrated exactly by the volume quadrature.  
+\paragraph{Quadrilateral elements (Figure~\ref{subfig:gllgq})} We first consider a quadrilateral element $\hat{D}$ with an $(N+1)$ point tensor product GLL volume quadrature and $(N+1)$ point Gauss quadrature on each face.  Let $u,v \in Q^N$ denote two arbitrary degree $N$ polynomials.  The assumptions of Theorem~\ref{lemma:dsbp} are that the volume quadrature exactly integrates $\int_{\hat{D}} \pd{u}{x} v$ and that the surface quadrature exactly integrates $\int_{\partial \hat{D}} u v n_i$ on $\hat{D}$.  Because the $(N+1)$-point Gauss rule is exact for polynomials of degree $2N+1$ and the product $uv \in P^{2N}$ on each face, the surface quadrature satisfies the assumptions of Theorem~\ref{lemma:dsbp}.  However, the 1D GLL rule is only exact for polynomials of degree $(2N-1)$.  The derivative $\pd{u}{x}$ is a polynomial of degree $(N-1)$ in $x$, but is degree $N$ in $y$.  Thus, $\pd{u}{x}v$ is a polynomial of degree $(2N-1)$ in $x$ but degree $2N$ in $y$, and is not integrated exactly by the volume quadrature.  
 
-\paragraph{Triangular elements (Figure~\ref{subfig:trigll})} We next consider a triangular element $\hat{D}$, where the volume quadrature is exact for degree $2N$ polynomials \cite{xiao2010quadrature} and an $(N+1)$-point GLL quadrature on each face.  Let $u,v \in P^N$ denote two arbitrary degree $N$ polynomials.  The derivative $\pd{u}{x} \in P^{(N-1)}$, and $\pd{u}{x}v \in P^{(2N-1)}$, so the volume quadrature satisfies the assumptions of Lemma~\ref{lemma:dsbp}.  However, because the surface quadrature is exact only degree $(2N-1)$ polynomials and the trace of $uv\in P^{2N}$, the surface quadrature does not satisfy the assumptions of Lemma~\ref{lemma:dsbp}.
+\paragraph{Triangular elements (Figure~\ref{subfig:trigll})} We next consider a triangular element $\hat{D}$, where the volume quadrature is exact for degree $2N$ polynomials \cite{xiao2010quadrature} and an $(N+1)$-point GLL quadrature on each face.  Let $u,v \in P^N$ denote two arbitrary degree $N$ polynomials.  The derivative $\pd{u}{x} \in P^{(N-1)}$, and $\pd{u}{x}v \in P^{(2N-1)}$, so the volume quadrature satisfies the assumptions of Theorem~\ref{lemma:dsbp}.  However, because the surface quadrature is exact only degree $(2N-1)$ polynomials and the trace of $uv\in P^{2N}$, the surface quadrature does not satisfy the assumptions of Theorem~\ref{lemma:dsbp}.
 
 \begin{figure}
 \centering
@@ -580,8 +320,7 @@ Recall that $\bm{Q}_i = \bm{W} \bm{V}_q \bm{D}^i\bm{P}_q$.  The quadrature-based
 %Additionally, since $\Pi_N u \in V^N$ and $v\in V^M$ on the surface of $\hat{D}$, the surface quadrature is exact for the surface integral and 
 By the exactness of the surface quadrature in Assumption~\ref{ass:quad}, 
 \begin{align*}
-&\int_{\partial \hat{D}} (\Pi_N u) v \hat{n}_i -   \int_{\hat{D}} \LRp{\Pi_N u} \pd{v}{\hat{x}_i} =\\
- &\bm{v}_f^T\bm{B}^i \bm{E}\bm{u}_q - \LRp{\bm{V}_q\bm{D}^i\bm{P}_q\bm{v}_q}^T\bm{W} \bm{V}_q\bm{P}_q\bm{u}_q\\
+\int_{\partial \hat{D}} (\Pi_N u) v \hat{n}_i -   \int_{\hat{D}} \LRp{\Pi_N u} \pd{v}{\hat{x}_i} &=\bm{v}_f^T\bm{B}^i \bm{E}\bm{u}_q - \LRp{\bm{V}_q\bm{D}^i\bm{P}_q\bm{v}_q}^T\bm{W} \bm{V}_q\bm{P}_q\bm{u}_q\\
 =& \bm{v}_q^T {\bm{E}}^T\bm{B}^i \bm{E}\bm{u}_q - \bm{v}_q^T \bm{P}_q^T\LRp{\bm{D}^i}^T \bm{V}_q^T \bm{W} \bm{V}_q\bm{P}_q\bm{u}_q,
 \end{align*}
 where we have used that, since $v \in V^N$, $\bm{v}_f = \bm{V}_f\bm{P}_q\bm{v}_q = \bm{E}\bm{v}_q$.  The proof is completed by noting that 
@@ -765,57 +504,57 @@ On tensor product elements, we can take any degree $(2N-1)$ quadrature rule whic
 %\note{link SBP accuracy section} %These issues will be discussed further in Section~\ref{sec:num}.
 %This minimal degree of surface quadrature accuracy will depend on the nature of the physical mesh, and will differ between affine and curved elements.  
 
-\subsection{On the accuracy of the skew-symmetric formulation}
-
-We note that, while the proofs in this Section show that it is possible to maintain entropy stability under reduced accuracy surface quadrature rules, the accuracy of the resulting schemes depend on the accuracy of the volume and surface quadrature.  %We briefly remark on the accuracy of (\ref{eq:esdgSkew}).   
-
-It was shown in \cite{chan2017discretely} that, when combined with quadrature-based $L^2$ projection and lifting operators, the decoupled SBP operator (\ref{eq:dsbp}) is a degree $N$ approximation to the derivative.  This approximation can be interpreted as augmenting a volume approximation of the derivative with boundary correction terms \cite{chan2018efficient}.  Let $f(\bm{x}),g(\bm{x})$ denote two $L^2$ integrable functions, and let $\bm{f}_N, \bm{g}_N$ denote the vectors of values of $f,g$ at both volume and surface quadrature points.  A degree $N$ approximation $u\in V^N$ to $f\pd{g}{x_i}$ can be constructed via
-\[
-\bm{M}\bm{u} = \LRs{\begin{array}{c}
-\bm{V}_q \\ \bm{V}_f\end{array}}^T \diag{\bm{f}_N}\bm{Q}^i_N\bm{g}_N, \qquad \bm{f}_N = \begin{bmatrix} \bm{f}_q\\ \bm{f}_f\end{bmatrix}, \quad \bm{g}_N = \begin{bmatrix} \bm{g}_q\\ \bm{g}_f\end{bmatrix},
-\]
-where $\bm{u}$ denotes the vector of coefficients for $u$.  Expanding terms using (\ref{eq:dsbp}) yields 
-%\note{fix!  add $E = V_fP_q$}
-\begin{align*}
-\bm{M}\bm{u} &= \bm{V}_q^T \diag{\bm{f}_q} \bm{Q}^i \bm{g}_q + \frac{1}{2}\bm{V}_q^T\diag{\bm{f}_q}\bm{E}^T\bm{B}^i \LRp{\bm{g}_f -\bm{E}\bm{g}_q}  \\
-&\qquad + \frac{1}{2}\bm{V}_f^T\diag{\bm{f}_f}\bm{B}^i \LRp{\bm{g}_f -\bm{E}\bm{g}_q}.
-\end{align*}
-where we have used that $\bm{B}^i$ is diagonal and that diagonal matrices commute.  Let $\bm{v}$ are coefficients of some test function $v\in V^N$, and let $\bm{v}_q = \bm{V}_q\bm{v}$ and $\bm{v}_f = \bm{V}_f \bm{v}$.  Multiplying by $\bm{v}^T$ on both sides yields that $\bm{v}^T\bm{M}\bm{u}$ is equal to
-\begin{align*}
-\LRp{\diag{\bm{f}_q}\bm{v}_q}^T \bm{Q}^i \bm{g}_q + \frac{1}{2}\LRp{\diag{\bm{f}_f}\bm{v}_f+\bm{E}\diag{\bm{f}_q}\bm{v}_q}^T\bm{B}^i \LRp{\bm{g}_f -\bm{E}\bm{g}_q} .
-\end{align*}
-This algebraic expression can be reinterpreted as a quadrature approximation of the following variational problem
-\begin{equation}
-\int_{\hat{D}} u v = \int_{\hat{D}} f\pd{\Pi_N g}{x_i}v + \int_{\partial \hat{D}} \LRp{g - \Pi_Ng} \LRp{\frac{fv + \Pi_N(fv)}{2}} \hat{n}_i, \qquad \forall v\in V^N.
-\label{eq:var}
-\end{equation}
-
-The skew-symmetric formulation can be interpreted as approximating a skew symmetric form of (\ref{eq:var}).  Integrating half of the volume term by parts yields 
-\begin{align}
-&\frac{1}{2} \int_{\hat{D}} \LRp{f\pd{\Pi_N g}{x_k}v - g \pd{\Pi_N\LRp{fv}}{x_i}} \label{eq:skewDN}\\
-&+\frac{1}{2} \int_{\partial \hat{D}} \LRp{fgv\hat{n}_i + \LRp{g - \Pi_Ng} \LRp{\frac{fv + \Pi_N(fv)}{2}} \hat{n}_i}\nonumber
-\end{align}
-Approximating integrals using quadrature allows us to express (\ref{eq:skewDN}) as a matrix equation using $\bm{B}^i_N$ in (\ref{eq:dsbp})
+%\subsection{On the accuracy of the skew-symmetric formulation}
+%
+%We note that, while the proofs in this Section show that it is possible to maintain entropy stability under reduced accuracy surface quadrature rules, the accuracy of the resulting schemes depend on the accuracy of the volume and surface quadrature.  %We briefly remark on the accuracy of (\ref{eq:esdgSkew}).   
+%
+%It was shown in \cite{chan2017discretely} that, when combined with quadrature-based $L^2$ projection and lifting operators, the decoupled SBP operator (\ref{eq:dsbp}) is a degree $N$ approximation to the derivative.  This approximation can be interpreted as augmenting a volume approximation of the derivative with boundary correction terms \cite{chan2018efficient}.  Let $f(\bm{x}),g(\bm{x})$ denote two $L^2$ integrable functions, and let $\bm{f}_N, \bm{g}_N$ denote the vectors of values of $f,g$ at both volume and surface quadrature points.  A degree $N$ approximation $u\in V^N$ to $f\pd{g}{x_i}$ can be constructed via
+%\[
+%\bm{M}\bm{u} = \LRs{\begin{array}{c}
+%\bm{V}_q \\ \bm{V}_f\end{array}}^T \diag{\bm{f}_N}\bm{Q}^i_N\bm{g}_N, \qquad \bm{f}_N = \begin{bmatrix} \bm{f}_q\\ \bm{f}_f\end{bmatrix}, \quad \bm{g}_N = \begin{bmatrix} \bm{g}_q\\ \bm{g}_f\end{bmatrix},
+%\]
+%where $\bm{u}$ denotes the vector of coefficients for $u$.  Expanding terms using (\ref{eq:dsbp}) yields 
+%%\note{fix!  add $E = V_fP_q$}
 %\begin{align*}
-%\bm{v}^T\bm{M}\bm{u} &= \bm{v}^T\LRp{\LRs{\begin{array}{c}
-%\bm{V}_q \\ \bm{V}_f\end{array}}}^T\diag{\bm{f}_N}\LRp{\bm{B}^i_N + \frac{1}{2}\LRp{\bm{Q}_N-\bm{Q}_N^T}}{\bm{g}_N}\\
-%&= \bm{v}^T \LRp{\frac{1}{2}\LRp{\LRs{\begin{array}{c}
-%\bm{V}_q \\ \bm{V}_f\end{array}}}^T \LRp{\diag{\bm{f}_N}{\LRp{\bm{Q}_N-\bm{Q}_N^T}}{\bm{g}_N}} +  \bm{V}_f^T \diag{\bm{f}_f}\bm{B}^i \bm{g}_f}.  
+%\bm{M}\bm{u} &= \bm{V}_q^T \diag{\bm{f}_q} \bm{Q}^i \bm{g}_q + \frac{1}{2}\bm{V}_q^T\diag{\bm{f}_q}\bm{E}^T\bm{B}^i \LRp{\bm{g}_f -\bm{E}\bm{g}_q}  \\
+%&\qquad + \frac{1}{2}\bm{V}_f^T\diag{\bm{f}_f}\bm{B}^i \LRp{\bm{g}_f -\bm{E}\bm{g}_q}.
 %\end{align*}
-%Since this holds for all vectors $\bm{v}$, we recover the matrix equation
-\begin{align*}
-\bm{M}\bm{u} &= {\frac{1}{2}\LRp{\LRs{\begin{array}{c}
-\bm{V}_q \\ \bm{V}_f\end{array}}}^T \LRp{\diag{\bm{f}_N}{\LRp{\bm{Q}_N-\bm{Q}_N^T}}{\bm{g}_N}} +  \bm{V}_f^T \diag{\bm{f}_f}\bm{B}^i \bm{g}_f}.
-\end{align*}
-
-The accuracy of this approximation depends on the degree of accuracy of the volume and surface quadrature rules.  
-
-The entropy conservative skew-symmetric formulation (\ref{eq:esdgSkew})
-
-\note{Fix this up: if IBP holds for $v\in P^M$, the approximation should be $O(h^M)$}. 
-
-
-\note{Add in continuous formulation and note that skew-symmetry approximates it.}
+%where we have used that $\bm{B}^i$ is diagonal and that diagonal matrices commute.  Let $\bm{v}$ are coefficients of some test function $v\in V^N$, and let $\bm{v}_q = \bm{V}_q\bm{v}$ and $\bm{v}_f = \bm{V}_f \bm{v}$.  Multiplying by $\bm{v}^T$ on both sides yields that $\bm{v}^T\bm{M}\bm{u}$ is equal to
+%\begin{align*}
+%\LRp{\diag{\bm{f}_q}\bm{v}_q}^T \bm{Q}^i \bm{g}_q + \frac{1}{2}\LRp{\diag{\bm{f}_f}\bm{v}_f+\bm{E}\diag{\bm{f}_q}\bm{v}_q}^T\bm{B}^i \LRp{\bm{g}_f -\bm{E}\bm{g}_q} .
+%\end{align*}
+%This algebraic expression can be reinterpreted as a quadrature approximation of the following variational problem
+%\begin{equation}
+%\int_{\hat{D}} u v = \int_{\hat{D}} f\pd{\Pi_N g}{x_i}v + \int_{\partial \hat{D}} \LRp{g - \Pi_Ng} \LRp{\frac{fv + \Pi_N(fv)}{2}} \hat{n}_i, \qquad \forall v\in V^N.
+%\label{eq:var}
+%\end{equation}
+%
+%The skew-symmetric formulation can be interpreted as approximating a skew symmetric form of (\ref{eq:var}).  Integrating half of the volume term by parts yields 
+%\begin{align}
+%&\frac{1}{2} \int_{\hat{D}} \LRp{f\pd{\Pi_N g}{x_k}v - g \pd{\Pi_N\LRp{fv}}{x_i}} \label{eq:skewDN}\\
+%&+\frac{1}{2} \int_{\partial \hat{D}} \LRp{fgv\hat{n}_i + \LRp{g - \Pi_Ng} \LRp{\frac{fv + \Pi_N(fv)}{2}} \hat{n}_i}\nonumber
+%\end{align}
+%Approximating integrals using quadrature allows us to express (\ref{eq:skewDN}) as a matrix equation using $\bm{B}^i_N$ in (\ref{eq:dsbp})
+%%\begin{align*}
+%%\bm{v}^T\bm{M}\bm{u} &= \bm{v}^T\LRp{\LRs{\begin{array}{c}
+%%\bm{V}_q \\ \bm{V}_f\end{array}}}^T\diag{\bm{f}_N}\LRp{\bm{B}^i_N + \frac{1}{2}\LRp{\bm{Q}_N-\bm{Q}_N^T}}{\bm{g}_N}\\
+%%&= \bm{v}^T \LRp{\frac{1}{2}\LRp{\LRs{\begin{array}{c}
+%%\bm{V}_q \\ \bm{V}_f\end{array}}}^T \LRp{\diag{\bm{f}_N}{\LRp{\bm{Q}_N-\bm{Q}_N^T}}{\bm{g}_N}} +  \bm{V}_f^T \diag{\bm{f}_f}\bm{B}^i \bm{g}_f}.  
+%%\end{align*}
+%%Since this holds for all vectors $\bm{v}$, we recover the matrix equation
+%\begin{align*}
+%\bm{M}\bm{u} &= {\frac{1}{2}\LRp{\LRs{\begin{array}{c}
+%\bm{V}_q \\ \bm{V}_f\end{array}}}^T \LRp{\diag{\bm{f}_N}{\LRp{\bm{Q}_N-\bm{Q}_N^T}}{\bm{g}_N}} +  \bm{V}_f^T \diag{\bm{f}_f}\bm{B}^i \bm{g}_f}.
+%\end{align*}
+%
+%The accuracy of this approximation depends on the degree of accuracy of the volume and surface quadrature rules.  
+%
+%The entropy conservative skew-symmetric formulation (\ref{eq:esdgSkew})
+%
+%\note{Fix this up: if IBP holds for $v\in P^M$, the approximation should be $O(h^M)$}. 
+%
+%
+%\note{Add in continuous formulation and note that skew-symmetry approximates it.}
 
 \section{Skew-symmetric entropy conservative formulations on mapped elements}
 \label{sec:skew2}
@@ -917,7 +656,9 @@ where the physical boundary matrix $\bm{B}^i_k$ is defined as
 \]
 \end{lemma}
 \begin{proof}
-The proof of $\bm{Q}^i_k\bm{1} = \bm{0}$ was shown for for tensor product elements in \cite{kopriva2006metric} and for simplicial elements in \cite{chan2018discretely}, and relies only on the fact that $G^k_{ij} \in V^N$.  We focus on showing that the discrete fundamental theorem of calculus $\bm{1}^T\bm{Q}^i_k\bm{u} = \bm{1}^T\bm{B}^i_k\bm{u}$ holds.  Using (\ref{eq:dncurved}), we have that
+The proof of $\bm{Q}^i_k\bm{1} = \bm{0}$ was shown for for tensor product elements in \cite{kopriva2006metric} and for simplicial elements in \cite{chan2018discretely}, and relies only on the fact that $G^k_{ij} \in V^N$.  
+
+The discrete fundamental theorem of calculus $\bm{1}^T\bm{Q}^i_k\bm{u} = \bm{1}^T\bm{B}^i_k\bm{u}$ can be shown to hold using (\ref{eq:dncurved}):
 \begin{align*}
 \bm{1}^T\bm{Q}^i_k\bm{u} &= \frac{1}{2}\sum_{j=1}^d \bm{1}^T{\LRp{\diag{\bm{G}^k_{ij}}\hat{\bm{Q}}^j_N + \hat{\bm{Q}}^j_N\diag{\bm{G}^k_{ij}}}} \bm{u} \\
 &= \frac{1}{2}\sum_{j=1}^d \LRp{\LRp{\bm{G}^k_{ij}}^T \hat{\bm{Q}}^j_N\bm{u} + \bm{1}^T\hat{\bm{Q}}^j_N\diag{\bm{G}^k_{ij}}\bm{u}}.
@@ -996,18 +737,17 @@ where we have used the definition of $\bm{Q}^i_k$ in (\ref{eq:dncurved}).  Rearr
 \bm{V}_q \\
 \bm{V}_f\end{array}}^T\diag{\bm{G}^k_{ij}} \LRp{-\LRp{\hat{\bm{Q}}^j_N}^T +\hat{\bm{B}}^j_N}\bm{1} = 0.
 \end{align*}
-Let $u$ denote the constant value of the solution such that the values of the solution at quadrature points is $u\bm{1}$.  Multiplying both sides by the constant solution $\bm{u}_h^T$ yields
+Let $u$ denote the constant value of the solution such that the values of the solution at quadrature points is $u\bm{1}$.  Multiplying both sides by the constant solution $\bm{u}_h^T$ yields that $\frac{1}{2}\pd{}{t}\LRp{\bm{u}_h^T\bm{M}^k\bm{u}_h}$ is equal to 
 \begin{align*}
-&\frac{1}{2}\pd{}{t}\LRp{\bm{u}_h^T\bm{M}^k\bm{u}_h} + \\
-&\frac{u}{2} \sum_{j=1}^d \LRp{\bm{1}^T \LRp{-\LRp{\hat{\bm{Q}}^j_N}^T +\hat{\bm{B}}^j_N}\bm{G}^k_{ij}
-+\LRp{\bm{G}^k_{ij}}^T \LRp{-\LRp{\hat{\bm{Q}}^j_N}^T +\hat{\bm{B}}^j_N}\bm{1}} = 0.
+-\frac{u}{2} \sum_{j=1}^d \LRp{\bm{1}^T \LRp{-\LRp{\hat{\bm{Q}}^j_N}^T +\hat{\bm{B}}^j_N}\bm{G}^k_{ij}
++\LRp{\bm{G}^k_{ij}}^T \LRp{-\LRp{\hat{\bm{Q}}^j_N}^T +\hat{\bm{B}}^j_N}\bm{1}}.% = 0.
 \end{align*}
 By assumption, Lemma~\ref{lemma:vdsbp} holds for test functions $\bm{1}$ and $\bm{G}^k_{ij}$, and the formulation reduces to
 \begin{align*}
 \frac{1}{2}\pd{}{t}\LRp{\bm{u}_h^T\bm{M}^k\bm{u}_h} + \frac{u}{2} \sum_{j=1}^d \LRp{\bm{1}^T \hat{\bm{Q}}^j_N\bm{G}^k_{ij}
 +\LRp{\bm{G}^k_{ij}}^T \hat{\bm{Q}}^j_N\bm{1}} = 0.
 \end{align*}
-We have that $\hat{\bm{Q}}^j_N\bm{1} = 0$ by construction, and $\sum_{j=1}^d \bm{1}^T \hat{\bm{Q}}^j_N\bm{G}^k_{ij} = 0$ since $G^k_{ij}$ satisfies the GCL.  This implies that $\pd{}{t}\LRp{\bm{u}_h^T\bm{M}^k\bm{u}_h} = 0$ on $D^k$.  Since $\bm{M}^k$ is symmetric and positive-definite, $\bm{u}_h^T\bm{M}^k\bm{u}_h$ is a norm on $\bm{u}_h$.  Summing $\pd{}{t}\LRp{\bm{u}_h^T\bm{M}^k\bm{u}_h} = 0$ over all elements ensures that global constants are stationary solutions.  
+By construction, $\hat{\bm{Q}}^j_N\bm{1} = 0$, and $\sum_{j=1}^d \bm{1}^T \hat{\bm{Q}}^j_N\bm{G}^k_{ij} = 0$ since $G^k_{ij}$ satisfies the GCL.  This implies that the latter term vanishes and $\pd{}{t}\LRp{\bm{u}_h^T\bm{M}^k\bm{u}_h} = 0$ on $D^k$.  Since $\bm{M}^k$ is symmetric and positive-definite, $\bm{u}_h^T\bm{M}^k\bm{u}_h$ is a norm on $\bm{u}_h$.  Summing $\pd{}{t}\LRp{\bm{u}_h^T\bm{M}^k\bm{u}_h} = 0$ over all elements ensures that globally constant solutions are stationary and that $\pd{\bm{u}_h}{t} = 0$.  
 \end{proof}
 
 The proof of global entropy conservation follows from summing up (\ref{eq:esdgthm}) over all elements and noting that the surface terms cancel due to the symmetry and conservation properties of the Tadmor flux (\ref{eq:esflux}) \cite{chan2017discretely}.  The entropy conservative formulations presented in this work can be made entropy stable by adding appropriate interface dissipation, such as Lax-Friedrichs or matrix-based penalization terms \cite{winters2017uniquely, chen2017entropy, chan2017discretely}.  
@@ -1019,21 +759,18 @@ It is also possible to replace the curved mass matrix $\bm{M}^k$ with a more eas
 
 \subsection{On quadrature conditions for Assumption~\ref{ass:quad} for $v = 1$ and $v = G^k_{ij}$}
 
-Semi-discrete entropy conservation on curved meshes requires that Assumption~\ref{ass:quad} holds for $v = 1$ and $v = G^k_{ij}$.  We discuss specific choices of volume and surface quadrature on for which this assumption is valid.  \note{Emphasize we're interested in taking $N_{\rm geo}$ as large as possible for a given quadrature rule, and that there is a focus on degree $(2N-1)$ quadrature rules.}
+Semi-discrete entropy conservation on curved meshes requires that Assumption~\ref{ass:quad} holds for $v = 1$ and $v = G^k_{ij}$.  We discuss specific choices of volume and surface quadrature on for which this assumption is valid, and summarize the maximum degree $N_{\rm geo}$ of the polynomial geometric approximation under which entropy stability holds for common choices of volume and surface quadrature.  
+%\note{Emphasize we're interested in taking $N_{\rm geo}$ as large as possible for a given quadrature rule, and that there is a focus on degree $(2N-1)$ quadrature rules.}
 
 \subsubsection{Simplicial elements} 
 
-On simplicial elements, for $u \in P^N$, $\pd{u}{\hat{x}_j}\in P^{N-1}$, and for $N_{\rm geo}\leq (N+1)$, $G^k_{ij}\in P^{N_{\rm geo}-1}$.  Thus, the integrands in Assumption~\ref{ass:quad} $\pd{u}{\hat{x}_j} v \in P^{N+N_{\rm geo}-1}$ and $uv n_i \in P^{N+N_{\rm geo}}$ for $v = G^k_{ij}$.  
-
-Thus, a volume quadrature rule of degree $(2N-1)$ and surface quadrature of degree $2N$ are sufficient to ensure semi-discrete entropy conservation for $N_{\rm geo}\leq N$.  
-\note{Add discussion on triangular elements.}
+On simplicial elements, for $u \in P^N$, $\pd{u}{\hat{x}_j}\in P^{N-1}$, and for $N_{\rm geo}\leq (N+1)$, $G^k_{ij}\in P^{N_{\rm geo}-1}$.  Thus, the integrands in Assumption~\ref{ass:quad} $\pd{u}{\hat{x}_j} v \in P^{N+N_{\rm geo}-1}$ and $uv n_i \in P^{N+N_{\rm geo}}$ for $v = G^k_{ij}$.  A volume quadrature rule of degree $(2N-1)$ and surface quadrature of degree $2N$ are then sufficient to ensure semi-discrete entropy conservation for $N_{\rm geo}\leq N$.  If the volume quadrature is instead exact for degree $2N$ polynomials, then entropy conservation is guaranteed up to $N_{\rm geo} \leq N+1$.
+%\note{Add discussion on triangular elements.}
 
 \subsubsection{Tensor product elements} 
 
 %Tensor product $(N+1)$-point GLL quadratures are a common choice for quadrilateral and hexahedral elements, and are exact for polynomials of degree $(2N-1)$ in each coordinate direction.  
-It was shown in Section~\ref{sec:assump1} that tensor product quadratures of degree $(2N-1)$ satisfy Assumption~\ref{ass:quad} holds for $v = 1$.  However, in contrast to the simplicial case, it is not immediately clear that degree $(2N-1)$ volume quadratures exactly integrate $\int_{\hat{D}} \pd{u}{\hat{x}_j}v$ for $v = G^k_{ij}$ for tensor product elements.  
-
-The key difference between simplicial and tensor product elements is the polynomial space in which the derivative lies.  In contrast to the simplicial case, if $u \in Q^N$, $\pd{u}{\hat{x}_j} \not\in Q^{N-1}$.  Consider the three-dimensional case with $i = 1$, $u, v \in Q^N$.  Then, $\pd{u}{\hat{x}_1} \in Q^{N-1,N,N}$, and differentiation reduces the polynomial degree in one coordinate but not others.  As a result, $\pd{u}{\hat{x}_j}v \not\in Q^{2N-1}$, and a tensor product quadrature of degree $(2N-1)$ does not exactly integrate $\int_{\hat{D}} \pd{u}{\hat{x}_j}v$ for general $v\in Q^N$.  
+It was shown in Section~\ref{sec:assump1} that tensor product quadratures of degree $(2N-1)$ satisfy Assumption~\ref{ass:quad} holds for $v = 1$.  However, in contrast to the simplicial case, it is not immediately clear that degree $(2N-1)$ volume quadratures exactly integrate $\int_{\hat{D}} \pd{u}{\hat{x}_j}v$ for $v = G^k_{ij}$ for tensor product elements.  The difference between simplicial and tensor product elements is the polynomial space in which the derivative lies.  In contrast to the simplicial case, if $u \in Q^N$, $\pd{u}{\hat{x}_j} \not\in Q^{N-1}$.  Consider the three-dimensional case with $u, v \in Q^N$ and $i = 1$.  Then, differentiation reduces the polynomial degree in one coordinate but not others and $\pd{u}{\hat{x}_1} \in Q^{N-1,N,N}$.  As a result, $\pd{u}{\hat{x}_j}v \not\in Q^{2N-1}$, and a tensor product quadrature of degree $(2N-1)$ does not exactly integrate $\int_{\hat{D}} \pd{u}{\hat{x}_j}v$ for general $v\in Q^N$.  
 
 We first consider the two dimensional case, and show that Assumption~\ref{ass:quad} holds with $v = G^k_{ij}$ for all $N_{\rm geo} \leq N$.  On quadrilateral elements, $G^k_{ij}$ is
 \begin{align*}
@@ -1085,18 +822,19 @@ For convenience, this section summarizes conditions on the accuracy of volume an
 %
 %We summarize the 
 
-\section{A mortar-based implementation}
-
-For hybrid meshes, the choice of surface quadrature for an interface may vary depending on the neighboring elements.  Consider, for example, a mixed triangular-quadrilateral mesh where the quadrilaterals utilize GLL quadrature on each face.  While te skew-symmetric formulation allows for the stable coupling of quadrilaterals and triangles using a GLL face quadrature, one may wish to utilize more accurate Gauss face quadratures for triangle-triangle interfaces.  To accomodate arbitrary combinations of face quadrature, we introduce a mortar-based implementation.  
-
-We assume that each element 
-
-\note{Finish - figure out notation for face interp!}
+%\section{A mortar-based implementation}
+%
+%For hybrid meshes, the choice of surface quadrature for an interface may vary depending on the neighboring elements.  Consider, for example, a mixed triangular-quadrilateral mesh where the quadrilaterals utilize GLL quadrature on each face.  While te skew-symmetric formulation allows for the stable coupling of quadrilaterals and triangles using a GLL face quadrature, one may wish to utilize more accurate Gauss face quadratures for triangle-triangle interfaces.  To accomodate arbitrary combinations of face quadrature, we introduce a mortar-based implementation.  
+%
+%We assume that each element 
+%
+%\note{Finish - figure out notation for face interp!}
 
 \section{Numerical experiments}
 \label{sec:num}
 
-In this section, we present two-dimensional experiments which verify the theoretical results presented.  %on hybrid meshes consisting of quadrilaterals and triangles, as well as on non-conforming meshes of quadrilateral elements.  
+In this section, we present two-dimensional experiments which verify the theoretical results presented.  We first investigate triangular and quadrilateral meshes, and then   
+%on hybrid meshes consisting of quadrilaterals and triangles, as well as on non-conforming meshes of quadrilateral elements.  
 
 \subsection{Triangular meshes}
 
@@ -1110,17 +848,10 @@ In this section, we present two-dimensional experiments which verify the theoret
 
 It is not immediately clear that the outward normals as defined by (\ref{eq:normals}) will be equal and opposite across interfaces shared by elements of different types.  Thus, we restrict ourselves to straight-sided meshes in this case, and will investigate the effect of curvilinear mappings on hybrid meshes in future work.  
 
-%\subsection{Non-conforming meshes}
-
-%\appendix
-%
-%\section{An explicit skew-symmetric entropy stable formulation for DG-SEM} 
-%
-%\note{$\bm{V}_q,\bm{P}_q = \bm{I}$, while $\bm{V}_f$ reduces to a permutation matrix.  }
-%
-%\note{For non-conforming faces, need to interpolate entropy variables to form fluxes.  Given this info, can rotate from skew form to strong form using mortar variables.  }
-
 \section{Conclusions}
+
+\note{Need mortar to .}
+
 
 \section{Acknowledgments}
 
