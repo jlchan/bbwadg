@@ -1,10 +1,10 @@
 % clear
 Globals2D
 
-N = 1;
-K1D = 2;
-FinalTime = 1;
-CFL = .5;
+N = 4;
+K1D = 16;
+FinalTime = 1.0;
+CFL = .75;
 global tau
 tau = 1;
 a = 0/16; % curv warping
@@ -34,6 +34,7 @@ global nxJ nyJ nrJ nsJ nrJq nsJq
 global mapPq
 Nq = 2*N;
 [rq sq wq] = Cubature2D(Nq); % integrate u*v*c
+[rq1D wq1D] = JacobiGQ(0,0,N);
 
 Vq = Vandermonde2D(N,rq,sq)/V;
 M = Vq'*diag(wq)*Vq;
@@ -44,21 +45,11 @@ VqPq = Vq*Pq;
 xq = Vq*x; yq = Vq*y;
 Jq = Vq*J;
 
-rxJ = rx.*J; sxJ = sx.*J;
-ryJ = ry.*J; syJ = sy.*J;
-rxJ = Vq*rxJ; sxJ = Vq*sxJ;
-ryJ = Vq*ryJ; syJ = Vq*syJ;
-J = Vq*J;
-
-[rq1D wq1D] = JacobiGQ(0,0,ceil(Nq/2));
 rfq = [rq1D; -rq1D; -ones(size(rq1D))];
 sfq = [-ones(size(rq1D)); rq1D; -rq1D];
 wfq = [wq1D; wq1D; wq1D]; % sJhat scaling built into sJ
 Vq1D = Vandermonde1D(N,rq1D)/Vandermonde1D(N,JacobiGL(0,0,N));
-% plot(rfq,sfq,'o')
 Nfq = length(rq1D);
-
-Nq = length(rq);
 
 Vfq = Vandermonde2D(N,rfq,sfq)/V;
 Vfqf = kron(eye(3),Vq1D);
@@ -67,13 +58,6 @@ Lq = M\(Vfq'*diag(wfq));
 
 Pq1D = (Vq1D'*diag(wq1D)*Vq1D) \ (Vq1D'*diag(wq1D));
 Pfqf = kron(eye(3),Pq1D);
-
-nx = Vfqf*nx;
-ny = Vfqf*ny;
-sJ = Vfqf*sJ;
-nxJ = (nx.*sJ);
-nyJ = (ny.*sJ);
-Fscale = Vfqf*Fscale;
 
 nrJ = [-zeros(size(rq1D)); ones(size(rq1D)); -ones(size(rq1D)); ];
 nsJ = [-ones(size(rq1D)); ones(size(rq1D)); -zeros(size(rq1D)); ];
@@ -87,7 +71,6 @@ Drq = (Vq*Dr*Pq - .5*Vq*Lq*diag(nrJ)*Vfq*Pq);
 Dsq = (Vq*Ds*Pq - .5*Vq*Lq*diag(nsJ)*Vfq*Pq);
 VfPq = (Vfq*Pq);
 VqLq = Vq*Lq;
-
 
 % DNr = [Drq .5*Vq*Lq*diag(nrJ);-.5*diag(nrJ)*Vf*Pq];
 
@@ -183,10 +166,10 @@ sJ = sJ.*Jf;
 xf = Vfq*x;
 yf = Vfq*y;
 
-plot(xf,yf,'o')
-hold on
-quiver(xf,yf,nxJ,nyJ)
-return
+% plot(xf,yf,'o')
+% hold on
+% quiver(xf,yf,nxJ,nyJ)
+% return
 
 %% fluxes
 global gamma
@@ -300,7 +283,6 @@ res4 = zeros(Nq,K);
 CN = (N+1)*(N+2)/2; % guessing...
 CNh = max(CN*max(sJ(:)./Jf(:)));
 dt = CFL*2/CNh;
-dt = .01;
 
 Nsteps = ceil(FinalTime/dt);
 dt = FinalTime/Nsteps;
@@ -370,16 +352,25 @@ for i = 1:Nsteps
     
 end
 
-[rhoex uex vex pex] = vortexSolution(xq,yq,FinalTime);
-rhoex = rho0;
 
+[rq2 sq2 wq2] = Cubature2D(3*N+4); % integrate u*v*c
+Vq2 = Vandermonde2D(N,rq2,sq2)/V;
+Pq2 = (Vq2'*diag(wq2)*Vq2)\(Vq2'*diag(wq2)); % J's cancel out
+wJq2 = diag(wq2)*(Vq2*Pq*J);
+xq2 = Vq2*x;
+yq2 = Vq2*y;
 
-err = wJq.*(rho-rhoex).^2;
-L2err = sqrt(sum(err(:)))
+[rhoex uex vex pex] = vortexSolution(xq2,yq2,FinalTime);
+rhouex = (rhoex.*uex);
+rhovex = (rhoex.*vex);
+Eex    = (pex/(gamma-1) + .5*rhoex.*(uex.^2+vex.^2));
+
+err = wJq2.*((Vq2*Pq*rho-rhoex).^2 + (Vq2*Pq*rhou-rhouex).^2 + (Vq2*Pq*rhov-rhovex).^2 + (Vq2*Pq*E-Eex).^2);
+L2err = sqrt(sum(err(:)));
+fprintf('L2err = %8.8g\n',L2err)
 
 figure(2)
 dS = abs(S-S(1));
-dS(end)
 semilogy(dt*(1:Nsteps),dS(1:Nsteps),'--','linewidth',2)
 hold on
 ylabel('$\Delta U(t)$','fontsize',15,'Interpreter','latex')

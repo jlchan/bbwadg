@@ -4,24 +4,27 @@ Globals2D
 a = 0/8; % warping factor
 % FinalTime = 10;
 
-N = 2;
+N = 4;
 K1D = 16;
 FinalTime = 1;
 
+Nq = 2*N;
+[rq sq wq] = Cubature2D(Nq); % integrate u*v*c
+[rq1D wq1D] = JacobiGL(0,0,N);
+
+
 wadgProjEntropyVars = abs(a)>1e-8;
-CFL = .25;
+CFL = .5;
 global tau
 tau = 1;
 global useSkew;
 useSkew = 1;
-useGLL = 0;
-
 
 % Lx = 7.5; Ly = 5; ratiox = 3/4; ratioy = .5;
 Lx = 10; Ly = 5; ratiox = 1; ratioy = Ly/Lx;
 [Nv, VX, VY, K, EToV] = unif_tri_mesh(round(ratiox*K1D),round(K1D*ratioy));
-% VX = VX/max(abs(VX));  VY = VY/max(abs(VY));
-% VX = (VX+1)*Lx; VY = VY*Ly;
+VX = VX/max(abs(VX));  VY = VY/max(abs(VY));
+VX = (VX+1)*Lx; VY = VY*Ly;
 
 % VX = VX + randn(size(VX));
 StartUp2D;
@@ -39,9 +42,7 @@ global M Vq Pq Lq Vfqf Vfq Pfqf VqPq VqLq
 global rxJ sxJ ryJ syJ rxJf sxJf ryJf syJf
 global nxJ nyJ nrJ nsJ nrJq nsJq wfq
 global mapPq
-Nq = 2*N;
-[rq sq wq] = Cubature2D(Nq); % integrate u*v*c
-[rq sq wq] = QNodes2D(N); if length(rq)~=Np;  keyboard; end
+% [rq sq wq] = QNodes2D(N); if length(rq)~=Np;  keyboard; end
 
 Vq = Vandermonde2D(N,rq,sq)/V;
 M = Vq'*diag(wq)*Vq;
@@ -50,17 +51,6 @@ Pq = M\(Vq'*diag(wq)); % J's cancel out
 xq = Vq*x; yq = Vq*y;
 Jq = Vq*J;
 
-rxJ = rx.*J; sxJ = sx.*J;
-ryJ = ry.*J; syJ = sy.*J;
-rxJ = Vq*rxJ; sxJ = Vq*sxJ;
-ryJ = Vq*ryJ; syJ = Vq*syJ;
-J = Vq*J;
-
-if useGLL
-    [rq1D wq1D] = JacobiGL(0,0,N);
-else
-    [rq1D wq1D] = JacobiGQ(0,0,N);
-end
 rfq = [rq1D; -rq1D; -ones(size(rq1D))];
 sfq = [-ones(size(rq1D)); rq1D; -rq1D];
 wfq = [wq1D; wq1D; wq1D];
@@ -171,7 +161,8 @@ end
 
 global mapBwall
 %mapBwall = find(abs(xf-max(x(:)))<1e-8 | abs(xf-min(x(:)))<1e-8);
-mapBwall = find(abs(yf-max(y(:)))<1e-8 | abs(yf-min(y(:)))<1e-8);
+% mapBwall = find(abs(yf-max(y(:)))<1e-8 | abs(yf-min(y(:)))<1e-8);
+mapBwall = [];
 
 % plot(xf,yf,'o')
 % hold on
@@ -419,7 +410,7 @@ for i = 1:Nsteps
         axis tight
         colorbar
         title(sprintf('time = %f, N = %d, K1D = %d',dt*i,N,K1D))
-        view(3)
+%         view(3)
         drawnow
     end    
 end
@@ -440,7 +431,8 @@ rhouq = Vq2*Pq*rhou;
 rhovq = Vq2*Pq*rhov;
 Eq = Vq2*Pq*E;
 err = wJq2.*((rhoq-rhoex).^2 + (rhouq-rhouex).^2 + (rhovq-rhovex).^2 + (Eq-Eex).^2);
-L2err = sqrt(sum(err(:)))
+L2err = sqrt(sum(err(:)));
+fprintf('L2err = %8.8g\n',L2err)
 
 dS = abs(entropy-entropy(1));
 dS = entropy + max(abs(entropy));
@@ -610,7 +602,7 @@ if 0
     p = rho.^gamma;    
 end
 
-if 1 % sod
+if 0 % sod
     x0 = 0;
     rhoL = 1; rhoR = .125;
     pL = 1; pR = .1;        

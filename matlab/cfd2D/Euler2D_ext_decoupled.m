@@ -12,7 +12,7 @@ FinalTime = 1;
 wadgProjEntropyVars = abs(a)>1e-8;
 CFL = .25;
 global tau
-tau = 1;
+tau = 0;
 
 % Lx = 7.5; Ly = 5; ratiox = 3/4; ratioy = .5;
 Lx = 10; Ly = 5; ratiox = 1; ratioy = Ly/Lx;
