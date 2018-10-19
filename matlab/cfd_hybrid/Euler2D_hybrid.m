@@ -1,19 +1,91 @@
-clear
+% Kvec = [6 12];
+% for N = 1:4
+%     
+%     fprintf('N = %d\n',N)
+%     fprintf('L2err_GLL_GLL = [');                
+%     for K1D = Kvec
+%         fprintf('%10.10g ',L2err_GLL_GLL{N,K1D});        
+%     end
+%     fprintf('];\n');
+%     
+%     fprintf('L2err_GLL_GQ = [');                
+%     for K1D = Kvec
+%         fprintf('%10.10g ',L2err_GLL_GQ{N,K1D});        
+%     end
+%     fprintf('];\n');
+%     
+%     fprintf('L2err_GQ_GQ = [');                
+%     for K1D = Kvec
+%         fprintf('%10.10g ',L2err_GQ_GQ{N,K1D});        
+%     end
+%     fprintf('];\n');
+% end
+
+L2err_GLL_GLL = {};
+L2err_GQ_GLL = {};
+L2err_GQ_GQ = {};
+
+for K1D = [24 48]
+    for N = 1:4
+        close all
+        
+        fprintf('N = %d, K1D = %d, GLL-GLL ------------\n',N,K1D)
+        
+        [rq1D_vol wq1D_vol] = JacobiGL(0,0,N);
+        [rq1D_face wq1D_face] = JacobiGL(0,0,N);
+        L2err = Euler2D(N, K1D, rq1D_vol, wq1D_vol, rq1D_face, wq1D_face)
+        L2err_GLL_GLL{N,K1D} = L2err;
+        
+        close all
+        
+        fprintf('N = %d, K1D = %d, GQ-GLL ------------\n',N,K1D)
+        
+        [rq1D_vol wq1D_vol] = JacobiGL(0,0,N);
+        [rq1D_face wq1D_face] = JacobiGQ(0,0,N);
+        L2err = Euler2D(N, K1D, rq1D_vol, wq1D_vol, rq1D_face, wq1D_face)
+        L2err_GLL_GQ{N,K1D} = L2err;
+        close all
+        
+        fprintf('N = %d, K1D = %d, GQ-GQ ------------\n',N,K1D)
+        
+        [rq1D_vol wq1D_vol] = JacobiGQ(0,0,N);
+        [rq1D_face wq1D_face] = JacobiGQ(0,0,N);
+        L2err = Euler2D(N, K1D, rq1D_vol, wq1D_vol, rq1D_face, wq1D_face)
+        L2err_GQ_GQ{N,K1D} = L2err;
+        
+    end
+end
+
+
+
+function L2err = Euler2D(Nin, K1D, rq1D_quad_vol, wq1D_quad_vol, rq1D_face, wq1D_face)
+
 useQuads = 0; mypath;
-% clear -globals
-% Globals2D
+clear -globals
+Globals2D
 
-N = 1;
-K1D = 6; % K1D = multiples of 3
+if nargin==0
+    N = 1;
+    K1D = 24; % K1D = multiples of 3
+    
+    [rq1D_quad_vol wq1D_quad_vol] = JacobiGQ(0,0,N);
+    [rq1D_face wq1D_face] = JacobiGQ(0,0,N);
+else
+    N = Nin;
+end
 
-a = 0*.125/K1D; % warping
+a = .125; %/K1D; % warping
+CFL = .75;
 
-FinalTime = .50;
+plotMesh = 0;
+
+FinalTime = 5.0;
+global tau
+tau = 1;
+
+%% init hybrid mesh stuff
 
 wadgProjEntropyVars = abs(a)>1e-8;
-CFL = .125;
-global tau
-tau = 0;
 
 global QUAD TRI
 QUAD = 1;
@@ -43,19 +115,19 @@ nxJ_type = {}; nyJ_type = {};
 J = {};
 
 % for computing geofacs
-Vq = {};
+V = {}; Vq = {}; Vf = {};
 Dr = {}; Ds = {};
-Vp = {};
-Vf = {};
-xp = {}; yp = {};
-nrJ = {}; nsJ_type = {};
+Vp = {}; xp = {}; yp = {};
+nrJ = {}; nsJ = {};
 
 %% setup quad mesh and tri mesh
 
 [Nv, VX, VY, K, EToV] = QuadMesh2D(K1D,round(4/3*K1D));
 iids = find(abs(abs(VX)-1)>1e-8 & abs(abs(VY)-1)>1e-8);
-VX(iids) = VX(iids) + a*randn(size(VX(iids)));
-VY(iids) = VY(iids) + a*randn(size(VX(iids)));
+% VX(iids) = VX(iids) + a*randn(size(VX(iids)));
+% VY(iids) = VY(iids) + a*randn(size(VX(iids)));
+VX = VX + a*cos(pi/2*VX).*sin(pi*VY);
+VY = VY + a*sin(pi*VX).*cos(pi/2*VY);
 
 L = 7.5;
 VX = (VX+1)/2 * L;
@@ -73,17 +145,19 @@ y{QUAD} = V1*VY(EToV)';
 % plot(x{QUAD},y{QUAD},'o')
 
 % volume nodes
-[rq1D wq1D] = JacobiGQ(0,0,N);
+rq1D = rq1D_quad_vol;
+wq1D = wq1D_quad_vol;
 [rq sq] = meshgrid(rq1D); rq = rq(:); sq = sq(:);
 [wrq wsq] = meshgrid(wq1D);
 wq{QUAD} = wrq(:).*wsq(:);
-rp1D = linspace(-1,1,15);
+
+rp1D = linspace(-1,1,10);
 [rp sp] = meshgrid(rp1D); rp = rp(:); sp = sp(:);
 V1D = Vandermonde1D(N,r1D);
 D1D = GradVandermonde1D(N,r1D)/V1D;
-V = Vandermonde2DQuad(N,r,s);
+V{QUAD} = Vandermonde2DQuad(N,r,s);
 
-Vq{QUAD} = Vandermonde2DQuad(N,rq,sq)/V;
+Vq{QUAD} = Vandermonde2DQuad(N,rq,sq)/V{QUAD};
 xq{QUAD} = Vq{QUAD}*x{QUAD};
 yq{QUAD} = Vq{QUAD}*y{QUAD};
 
@@ -96,20 +170,19 @@ xp{QUAD} = Vp{QUAD}*x{QUAD};
 yp{QUAD} = Vp{QUAD}*y{QUAD};
 
 % face nodes
-[rq1D wq1D] = JacobiGQ(0,0,N); % 2N-1
-rq1D_quad = rq1D;
-wq1D_quad = wq1D;
+rq1D = rq1D_face;
+wq1D = wq1D_face;
 
 e = ones(size(rq1D));
 rfq = [rq1D; e; rq1D; -e];
 sfq = [-e; rq1D; e; rq1D];
 wfq = [wq1D; wq1D; wq1D; wq1D];
 V1D = Vandermonde1D(N,JacobiGL(0,0,N));
-Vfq = Vandermonde2DQuad(N,rfq,sfq)/V;
+Vfq = Vandermonde2DQuad(N,rfq,sfq)/V{QUAD};
 Vf{QUAD} = Vfq;
 
 nrJ{QUAD} = [0*e; e; 0*e; -e]; % sJ_type = 2 for all faces,
-nsJ_type{QUAD} = [-e; 0*e; e; 0*e];
+nsJ{QUAD} = [-e; 0*e; e; 0*e];
 
 % quadrature operators
 M = Vq{QUAD}'*diag(wq{QUAD})*Vq{QUAD};
@@ -127,8 +200,8 @@ Qr = diag(wq{QUAD})*Vq{QUAD}*Dr{QUAD}*Pq;
 Qs = diag(wq{QUAD})*Vq{QUAD}*Ds{QUAD}*Pq;
 QNr = .5*[Qr-Qr' VfPq{QUAD}'*diag(wfq.*nrJ{QUAD});
     -diag(wfq.*nrJ{QUAD})*VfPq{QUAD} diag(0*wfq)];
-QNs = .5*[Qs-Qs' VfPq{QUAD}'*diag(wfq.*nsJ_type{QUAD});
-    -diag(wfq.*nsJ_type{QUAD})*VfPq{QUAD} diag(0*wfq)];
+QNs = .5*[Qs-Qs' VfPq{QUAD}'*diag(wfq.*nsJ{QUAD});
+    -diag(wfq.*nsJ{QUAD})*VfPq{QUAD} diag(0*wfq)];
 
 QNr(abs(QNr)<1e-8) = 0; QNr = sparse(QNr);
 QNs(abs(QNs)<1e-8) = 0; QNs = sparse(QNs);
@@ -138,7 +211,7 @@ DNr_type{QUAD} = diag(1./[wq{QUAD};wfq])*QNr;
 DNs_type{QUAD} = diag(1./[wq{QUAD};wfq])*QNs;
 
 BNr{QUAD} = diag([zeros(size(Qr,1),1); nrJ{QUAD}]);
-BNs{QUAD} = diag([zeros(size(Qr,1),1); nsJ_type{QUAD}]);
+BNs{QUAD} = diag([zeros(size(Qr,1),1); nsJ{QUAD}]);
 
 % make maps
 xf{QUAD} = Vfq*x{QUAD};
@@ -148,33 +221,29 @@ yf{QUAD} = Vfq*y{QUAD};
 [mapMq mapPq] = buildMaps(EToE,EToF,xf{QUAD},yf{QUAD});
 mapP{QUAD} = mapPq;
 
-% for e = 1:K
-%     v = EToV(e,:);
-%     text(mean(VX(v)),mean(VY(v)),num2str(e))
-%     hold on
-%     v = [v v(1)];
-%     plot(VX(v),VY(v),'k-','linewidth',2)
-% end
-% axis equal
+if plotMesh
+    for e = 1:K
+        v = EToV(e,:);
+        %         text(mean(VX(v)),mean(VY(v)),num2str(e))
+        hold on
+        v = [v v(1)];
+        plot(VX(v),VY(v),'k-','linewidth',2)
+    end
+    axis equal
+end
+% return
 
 %% build tri stuff
 
 [Nv, VX, VY, K, EToV] = unif_tri_mesh(K1D,round(4/3*K1D));
 iids = find(abs(abs(VX)-1)>1e-8 & abs(abs(VY)-1)>1e-8);
-VX(iids) = VX(iids) + a*randn(size(VX(iids)));
-VY(iids) = VY(iids) + a*randn(size(VX(iids)));
+% VX(iids) = VX(iids) + a*randn(size(VX(iids)));
+% VY(iids) = VY(iids) + a*randn(size(VX(iids)));
+VX = VX + a*cos(pi/2*VX).*sin(pi*VY);
+VY = VY + a*sin(pi*VX).*cos(pi/2*VY);
 
 VX = (VX+1)/2*L + L;
 VY = VY*5;
-
-% hold on
-% for e = 1:K
-%     v = EToV(e,:);
-%     v = [v v(1)];
-%     plot(VX(v),VY(v),'k-','linewidth',2)
-%     hold on
-% end
-% return
 
 [r s] = Nodes2D(N); [r s] = xytors(r,s);
 r1 = [-1 1 -1]';
@@ -183,34 +252,33 @@ V1 = Vandermonde2D(1,r,s)/Vandermonde2D(1,r1,s1);
 x{TRI} = V1*VX(EToV)';
 y{TRI} = V1*VY(EToV)';
 
-V = Vandermonde2D(N,r,s);
+V{TRI} = Vandermonde2D(N,r,s);
 [Vr Vs] = GradVandermonde2D(N,r,s);
-Dr{TRI} = Vr/V;
-Ds{TRI} = Vs/V;
+Dr{TRI} = Vr/V{TRI};
+Ds{TRI} = Vs/V{TRI};
 
-[rq sq wqtri] = Cubature2D(2*N);
+[rq sq wqtri] = Cubature2D(2*N+1);
 wq{TRI} = wqtri;
-Vq{TRI} = Vandermonde2D(N,rq,sq)/V;
+Vq{TRI} = Vandermonde2D(N,rq,sq)/V{TRI};
 xq{TRI} = Vq{TRI}*x{TRI};
 yq{TRI} = Vq{TRI}*y{TRI};
 
-[rp sp] = EquiNodes2D(15); [rp sp] = xytors(rp,sp);
-Vp{TRI} = Vandermonde2D(N,rp,sp)/V;
+[rp sp] = EquiNodes2D(5); [rp sp] = xytors(rp,sp);
+Vp{TRI} = Vandermonde2D(N,rp,sp)/V{TRI};
 xp{TRI} = Vp{TRI}*x{TRI};
 yp{TRI} = Vp{TRI}*y{TRI};
 
 % face nodes
-[rq1D wq1D] = JacobiGQ(0,0,N);
-rq1D_tri = rq1D;
-wq1D_tri = wq1D;
+rq1D = rq1D_face;
+wq1D = wq1D_face;
 
 rfq = [rq1D; -rq1D; -ones(size(rq1D))];
 sfq = [-ones(size(rq1D)); rq1D; -rq1D];
 wfq = [wq1D;wq1D;wq1D];
-Vfq = Vandermonde2D(N,rfq,sfq)/V;
+Vfq = Vandermonde2D(N,rfq,sfq)/V{TRI};
 Vf{TRI} = Vfq;
 nrJ{TRI} = [-zeros(size(rq1D)); ones(size(rq1D)); -ones(size(rq1D)); ];
-nsJ_type{TRI} = [-ones(size(rq1D)); ones(size(rq1D)); -zeros(size(rq1D)); ];
+nsJ{TRI} = [-ones(size(rq1D)); ones(size(rq1D)); -zeros(size(rq1D)); ];
 
 % operators
 M = Vq{TRI}'*diag(wq{TRI})*Vq{TRI};
@@ -227,8 +295,8 @@ Qr = diag(wq{TRI})*Vq{TRI}*Dr{TRI}*Pq;
 Qs = diag(wq{TRI})*Vq{TRI}*Ds{TRI}*Pq;
 QNr = .5*[Qr-Qr' VfPq{TRI}'*diag(wfq.*nrJ{TRI});
     -diag(wfq.*nrJ{TRI})*VfPq{TRI} diag(0*wfq)];
-QNs = .5*[Qs-Qs' VfPq{TRI}'*diag(wfq.*nsJ_type{TRI});
-    -diag(wfq.*nsJ_type{TRI})*VfPq{TRI} diag(0*wfq)];
+QNs = .5*[Qs-Qs' VfPq{TRI}'*diag(wfq.*nsJ{TRI});
+    -diag(wfq.*nsJ{TRI})*VfPq{TRI} diag(0*wfq)];
 QNr(abs(QNr)<1e-8) = 0; QNr = sparse(QNr);
 QNs(abs(QNs)<1e-8) = 0; QNs = sparse(QNs);
 
@@ -237,7 +305,7 @@ DNr_type{TRI} = diag(1./[wq{TRI};wfq])*QNr;
 DNs_type{TRI} = diag(1./[wq{TRI};wfq])*QNs;
 
 BNr{TRI} = diag([zeros(size(Qr,1),1); nrJ{TRI}]);
-BNs{TRI} = diag([zeros(size(Qr,1),1); nsJ_type{TRI}]);
+BNs{TRI} = diag([zeros(size(Qr,1),1); nsJ{TRI}]);
 
 % make maps
 xf{TRI} = Vfq*x{TRI};
@@ -245,6 +313,19 @@ yf{TRI} = Vfq*y{TRI};
 [EToE,EToF]= tiConnect2D(EToV);
 [mapMq mapPq] = buildMaps(EToE,EToF,xf{TRI},yf{TRI});
 mapP{TRI} = mapPq;
+
+if plotMesh
+    hold on
+    for e = 1:K
+        v = EToV(e,:);
+        v = [v v(1)];
+        plot(VX(v),VY(v),'k-','linewidth',2)
+        hold on
+    end
+    axis off
+    return
+end
+
 
 %% build geometric factors
 
@@ -265,33 +346,35 @@ for TYPE = 1:2
     Jq_type{TYPE} = Vq{TYPE}*J{TYPE};
     
     dnrJ = spdiag(nrJ{TYPE});
-    dnsJ_type = spdiag(nsJ_type{TYPE});
+    dnsJ_type = spdiag(nsJ{TYPE});
     nxJ_type{TYPE} = dnrJ*(Vf{TYPE}*rxJ{TYPE}) + dnsJ_type*(Vf{TYPE}*sxJ{TYPE});
     nyJ_type{TYPE} = dnrJ*(Vf{TYPE}*ryJ{TYPE}) + dnsJ_type*(Vf{TYPE}*syJ{TYPE});
     sJ_type{TYPE} = sqrt(nxJ_type{TYPE}.^2 + nyJ_type{TYPE}.^2);
     
     wJq_type{TYPE} = diag(wq{TYPE})*(Vq{TYPE}*Jt);
     
-%     quiver(xf{TYPE},yf{TYPE},nxJ_type{TYPE},nyJ_type{TYPE})
-%     hold on
-%     axis equal
+    %     quiver(xf{TYPE},yf{TYPE},nxJ_type{TYPE},nyJ_type{TYPE})
+    %     hold on
+    %     axis equal
     
 end
 
 %% test differentiation
-
-f = @(x,y) exp(x+y);
-df = @(x,y) exp(x+y);
-
-for TYPE = 1:2
-    u = f(x{TYPE},y{TYPE});
-    dudxJ = rxJ{TYPE}.*(Dr{TYPE}*u) + sxJ{TYPE}.*(Ds{TYPE}*u);
-    norm(dudxJ - df(x{TYPE},y{TYPE}).*J{TYPE},'fro')
-    
-    uN = [Vq{TYPE};Vf{TYPE}]*u;
-    dudxJ = VqPN_type{TYPE}*(rxJN_type{TYPE}.*((.5*BNr{TYPE} + DNr_type{TYPE})*uN) + sxJN_type{TYPE}.*((.5*BNs{TYPE} + DNs_type{TYPE})*uN));
-    norm(dudxJ - df(xq{TYPE},yq{TYPE}).*(Vq{TYPE}*J{TYPE}),'fro')
-end
+%
+% if 0
+%     f = @(x,y) exp(x+y);
+%     df = @(x,y) exp(x+y);
+%
+%     for TYPE = 1:2
+%         u = f(x{TYPE},y{TYPE});
+%         dudxJ = rxJ{TYPE}.*(Dr{TYPE}*u) + sxJ{TYPE}.*(Ds{TYPE}*u);
+%         norm(dudxJ - df(x{TYPE},y{TYPE}).*J{TYPE},'fro')
+%
+%         uN = [Vq{TYPE};Vf{TYPE}]*u;
+%         dudxJ = VqPN_type{TYPE}*(rxJN_type{TYPE}.*((.5*BNr{TYPE} + DNr_type{TYPE})*uN) + sxJN_type{TYPE}.*((.5*BNs{TYPE} + DNs_type{TYPE})*uN));
+%         norm(dudxJ - df(xq{TYPE},yq{TYPE}).*(Vq{TYPE}*J{TYPE}),'fro')
+%     end
+% end
 
 %% make maps for quad/tri interface
 
@@ -315,12 +398,12 @@ yfT = reshape(yf{TRI},Nfp,Nfaces*K);
 mapMT = reshape(1:Nfp*Nfaces*K,Nfp,Nfaces*K);
 
 % make quad/tri maps periodic in y-direction
-fQ1 = find(sum(abs(yfQ-yQmax)) < 1e-9); % top 
+fQ1 = find(sum(abs(yfQ-yQmax)) < 1e-9); % top
 fQ2 = find(sum(abs(yfQ-yQmin)) < 1e-9); % bottom
 mapP{QUAD}(mapMQ(:,fQ1)) = mapMQ(:,fQ2); % ASSUMES SAME ORDERING
-mapP{QUAD}(mapMQ(:,fQ2)) = mapMQ(:,fQ1); 
+mapP{QUAD}(mapMQ(:,fQ2)) = mapMQ(:,fQ1);
 
-fT1 = find(sum(abs(yfT-yTmax)) < 1e-9); % top 
+fT1 = find(sum(abs(yfT-yTmax)) < 1e-9); % top
 fT2 = find(sum(abs(yfT-yTmin)) < 1e-9); % bottom
 mapP{TRI}(mapMT(:,fT1)) = flipud(mapMT(:,fT2)); % ASSUMES LOCALLY REVERSED ORDERING
 mapP{TRI}(mapMT(:,fT2)) = flipud(mapMT(:,fT1));
@@ -344,7 +427,7 @@ mapP{TRI}(mapMT(:,fT2)) = flipud(mapMT(:,fT1));
 % text(xfQ(:)+.025,yfQ(:)+.025,num2str((1:length(xfQ(:)))'))
 % return
 
-if 1   
+if 1
     % make hybrid tri-quad maps
     fQ1 = find(sum(abs(xfQ - xQmax)) < 1e-9); % dividing line
     fQ2 = find(sum(abs(xfQ - xQmin)) < 1e-9);
@@ -356,33 +439,10 @@ if 1
     fT = [fT1(:); fT2(:)];
     mapMT = mapMT(:,fT);
     
-    % interp to mortar nodes
-    [rq1D_mortar wq1D_mortar] = JacobiGQ(0,0,N); 
-    Vq1D_quad = Vandermonde1D(N,rq1D_quad);
-    Vq1D_tri = Vandermonde1D(N,rq1D_tri);           
-    Vq1D_mortar = Vandermonde1D(N,rq1D_mortar); 
-    V1D_GLL = Vandermonde1D(N,JacobiGL(0,0,N));
-    
-    % quad/tri to mortar thru PN    
-    PQ1D_GLL = ((Vq1D_quad/V1D_GLL)'*diag(wq1D_quad)*(Vq1D_quad/V1D_GLL))\((Vq1D_quad/V1D_GLL)'*diag(wq1D_quad));
-    PT1D_GLL = ((Vq1D_tri/V1D_GLL)'*diag(wq1D_tri)*(Vq1D_tri/V1D_GLL))\((Vq1D_tri/V1D_GLL)'*diag(wq1D_tri));
-    VQmortar = (Vq1D_mortar/V1D_GLL)*PQ1D_GLL; 
-    VTmortar = (Vq1D_mortar/V1D_GLL)*PT1D_GLL;
-    xfQ_hybrid = VQmortar * xfQ(mapMQ);
-    yfQ_hybrid = VQmortar * yfQ(mapMQ);
-    xfT_hybrid = VTmortar * xfT(mapMT);
-    yfT_hybrid = VTmortar * yfT(mapMT);
-    
-    % extrapolate from mortar to quad/tri boundary nodes 
-    % using degree N nodal polynomials on trace space
-    global EQmortar ETmortar    
-    Vq1D_quad = Vandermonde1D(N,rq1D_quad)/V1D_GLL;
-    Vq1D_tri = Vandermonde1D(N,rq1D_tri)/V1D_GLL;
-    Vq1D_mortar = Vq1D_mortar/V1D_GLL;
-    PQ_mortar = (Vq1D_quad'*diag(wq1D_quad)*Vq1D_quad)\(Vq1D_mortar'*diag(wq1D_mortar));
-    PT_mortar = (Vq1D_tri'*diag(wq1D_tri)*Vq1D_tri)\(Vq1D_mortar'*diag(wq1D_mortar));
-    EQmortar = (Vandermonde1D(N,rq1D_quad)/V1D_GLL) * PQ_mortar;
-    ETmortar = (Vandermonde1D(N,rq1D_tri)/V1D_GLL) * PT_mortar;    
+    xfQ_hybrid = xfQ(mapMQ);
+    yfQ_hybrid = yfQ(mapMQ);
+    xfT_hybrid = xfT(mapMT);
+    yfT_hybrid = yfT(mapMT);
     
     if norm(mean(yfQ_hybrid,1)-mean(yfT_hybrid,1))>1e-8
         % if gets here, need to check ordering!
@@ -413,7 +473,7 @@ if 1
     
     mapPT = mapMQ(mapPT);
     mapPQ = mapMT(mapPQ);
-    err = norm(VTmortar*uf{TRI}(mapMT) - VQmortar*uf{QUAD}(mapPT),'fro') + norm(VQmortar*uf{QUAD}(mapMQ) - VTmortar*uf{TRI}(mapPQ),'fro');
+    err = norm(uf{TRI}(mapMT) - uf{QUAD}(mapPT),'fro') + norm(uf{QUAD}(mapMQ) - uf{TRI}(mapPQ),'fro');
     if err > 1e-12
         keyboard
     end
@@ -430,7 +490,7 @@ end
 %     plot(xf{TRI}(mapP{TRI}(i)),yf{TRI}(mapP{TRI}(i)),'x','markersize',20)
 %     pause%(.1)
 % end
-% 
+%
 % for i = 1:length(mapP{QUAD}(:))
 %     clf
 %     hold on
@@ -475,7 +535,6 @@ U3 = @(V1,V2,V3,V4) rhoeV(V1,V2,V3,V4).*(V3);
 U4 = @(V1,V2,V3,V4) rhoeV(V1,V2,V3,V4).*(1-(V2.^2+V3.^2)./(2*V4));
 
 
-global fxS1 fyS1 fxS2 fyS2 fxS3 fyS3 fxS4 fyS4
 global pfun beta pavg plogmean vnormavg avg
 
 avg = @(x,y) .5*(x+y);
@@ -484,17 +543,6 @@ beta = @(rho,u,v,E) rho./(2*pfun(rho,u,v,E));
 pavg     = @(rhoL,uL,vL,EL,rhoR,uR,vR,ER)     avg(rhoL,rhoR)./(2*avg(beta(rhoL,uL,vL,EL),beta(rhoR,uR,vR,ER)));
 plogmean = @(rhoL,uL,vL,EL,rhoR,uR,vR,ER) logmean(rhoL,rhoR)./(2*logmean(beta(rhoL,uL,vL,EL),beta(rhoR,uR,vR,ER)));
 vnormavg = @(uL,vL,uR,vR) 2*(avg(uL,uR).^2 + avg(vL,vR).^2) - (avg(uL.^2,uR.^2) + avg(vL.^2,vR.^2));
-
-fxS1 = @(rhoL,uL,vL,EL,rhoR,uR,vR,ER) logmean(rhoL,rhoR).*avg(uL,uR);
-fxS2 = @(rhoL,uL,vL,EL,rhoR,uR,vR,ER) logmean(rhoL,rhoR).*avg(uL,uR).^2 + pavg(rhoL,uL,vL,EL,rhoR,uR,vR,ER);
-fxS3 = @(rhoL,uL,vL,EL,rhoR,uR,vR,ER) logmean(rhoL,rhoR).*avg(uL,uR).*avg(vL,vR);
-fxS4 = @(rhoL,uL,vL,EL,rhoR,uR,vR,ER) (plogmean(rhoL,uL,vL,EL,rhoR,uR,vR,ER)/(gamma-1) + pavg(rhoL,uL,vL,EL,rhoR,uR,vR,ER) + .5*logmean(rhoL,rhoR).*vnormavg(uL,vL,uR,vR)).*avg(uL,uR);
-
-fyS1 = @(rhoL,uL,vL,EL,rhoR,uR,vR,ER) logmean(rhoL,rhoR).*avg(vL,vR);
-fyS2 = @(rhoL,uL,vL,EL,rhoR,uR,vR,ER) logmean(rhoL,rhoR).*avg(uL,uR).*avg(vL,vR);
-fyS3 = @(rhoL,uL,vL,EL,rhoR,uR,vR,ER) logmean(rhoL,rhoR).*avg(vL,vR).^2 + pavg(rhoL,uL,vL,EL,rhoR,uR,vR,ER);
-fyS4 = @(rhoL,uL,vL,EL,rhoR,uR,vR,ER) (plogmean(rhoL,uL,vL,EL,rhoR,uR,vR,ER)/(gamma-1) + pavg(rhoL,uL,vL,EL,rhoR,uR,vR,ER) + .5*logmean(rhoL,rhoR).*vnormavg(uL,vL,uR,vR)).*avg(vL,vR);
-
 
 
 %% run solver
@@ -532,7 +580,7 @@ for TYPE = 1:2
     rhoM{TYPE} = [];
     uM{TYPE} = [];
     vM{TYPE} = [];
-    EM{TYPE} = [];    
+    EM{TYPE} = [];
     
     % Runge-Kutta residual storage
     K = size(xq{TYPE},2);
@@ -554,8 +602,9 @@ end
 % return
 
 % compute time step size
-CN = (N+1)*(N+2)/2; % for quads (larger than tris)
-dt = CFL * 1/K1D;
+h_estimate = min(min(J{TYPE})./max(sJ_type{TYPE})); % estimate h using ||J||/||sJ||
+CN = (N+1)*(N+2)/2; % trace const for quads (larger than tris)
+dt = CFL * h_estimate/CN; % h = J/Jf
 Nsteps = ceil(FinalTime/dt);
 dt = FinalTime/Nsteps;
 
@@ -585,36 +634,21 @@ for i = 1:Nsteps
             q3M = VfPq{TYPE}*q3q;
             q4M = VfPq{TYPE}*q4q;
             
-            if 1
-                % interp to mortar
-                if TYPE==QUAD
-                    q1M(mapMQ) = VQmortar*q1M(mapMQ);
-                    q2M(mapMQ) = VQmortar*q2M(mapMQ);
-                    q3M(mapMQ) = VQmortar*q3M(mapMQ);
-                    q4M(mapMQ) = VQmortar*q4M(mapMQ);
-                elseif TYPE==TRI
-                    q1M(mapMT) = VTmortar*q1M(mapMT);
-                    q2M(mapMT) = VTmortar*q2M(mapMT);
-                    q3M(mapMT) = VTmortar*q3M(mapMT);
-                    q4M(mapMT) = VTmortar*q4M(mapMT);
-                end
-            end
-            
             rhoq{TYPE}  = U1(q1q,q2q,q3q,q4q);
             rhouq       = U2(q1q,q2q,q3q,q4q);
             rhovq       = U3(q1q,q2q,q3q,q4q);
             Eq{TYPE}    = U4(q1q,q2q,q3q,q4q);
             uq{TYPE} = rhouq./rhoq{TYPE};
             vq{TYPE} = rhovq./rhoq{TYPE};
-                        
+            
             rhoM{TYPE}  = U1(q1M,q2M,q3M,q4M);
             rhouM       = U2(q1M,q2M,q3M,q4M);
             rhovM       = U3(q1M,q2M,q3M,q4M);
             EM{TYPE}    = U4(q1M,q2M,q3M,q4M);
             uM{TYPE} = rhouM./rhoM{TYPE};
-            vM{TYPE} = rhovM./rhoM{TYPE}; 
+            vM{TYPE} = rhovM./rhoM{TYPE};
         end
-                
+        
         for TYPE = 1:2
             
             [rhs1, rhs2, rhs3, rhs4]  = RHS2Dsimple(rhoq{TYPE},uq{TYPE},vq{TYPE},Eq{TYPE},...
@@ -623,7 +657,7 @@ for i = 1:Nsteps
             if (INTRK==5)
                 rhstest(i) = rhstest(i) + sum(sum(wJq_type{TYPE}.*(rhs1.*v1{TYPE} + rhs2.*v2{TYPE} + rhs3.*v3{TYPE} + rhs4.*v4{TYPE})));
             end
-
+            
             res1{TYPE} = rk4a(INTRK)*res1{TYPE} + dt*rhs1;
             res2{TYPE} = rk4a(INTRK)*res2{TYPE} + dt*rhs2;
             res3{TYPE} = rk4a(INTRK)*res3{TYPE} + dt*rhs3;
@@ -634,15 +668,15 @@ for i = 1:Nsteps
             rhov{TYPE} = rhov{TYPE} + rk4b(INTRK)*res3{TYPE};
             E{TYPE}    = E{TYPE}    + rk4b(INTRK)*res4{TYPE};
         end
-    end;        
+    end;
     
     for TYPE = 1:2
         Sq = -rho{TYPE}.*s(rho{TYPE},rhou{TYPE},rhov{TYPE},E{TYPE});
         entropy(i) = entropy(i) + sum(sum(wJq_type{TYPE}.*Sq));
     end
-
-    if  (mod(i,5)==0 || i==Nsteps)
-        clf        
+    
+    if  (mod(i,10)==0 || i==Nsteps)
+        clf
         hold on
         for TYPE=1:2
             vv = rho{TYPE};
@@ -651,10 +685,8 @@ for i = 1:Nsteps
         axis equal
         axis tight
         colorbar
-        title(sprintf('time = %f, N = %d, K1D = %d',dt*i,N,K1D))
+        title(sprintf('time = %f, step %d out of %d, N = %d, K1D = %d',dt*i,i,Nsteps,N,K1D))
         drawnow
-%                     keyboard
-
     end
 end
 
@@ -667,27 +699,40 @@ legend('Entropy rhs','entropy')
 
 L2err = 0;
 for TYPE=1:2
-    [rhoex uex vex pex] = vortexSolution(xq{TYPE},yq{TYPE},FinalTime);
+    if TYPE==1 %quad
+        [rq1D2 wq1D2] = JacobiGQ(0,0,N+2);
+        [rq2 sq2] = meshgrid(rq1D2); rq2 = rq2(:); sq2 = sq2(:);
+        [wrq wsq] = meshgrid(wq1D2); wq2 = wrq(:).*wsq(:);
+        Vq2 = Vandermonde2DQuad(N,rq2,sq2)/V{QUAD};
+    else
+        [rq2 sq2 wq2] = Cubature2D(2*N+2);
+        Vq2 = Vandermonde2D(N,rq2,sq2)/V{TRI};
+    end
+    VqPq = Vq2*((Vq{TYPE}'*diag(wq{TYPE})*Vq{TYPE})\(Vq{TYPE}'*diag(wq{TYPE})));
+    xq2 = Vq2*x{TYPE};
+    yq2 = Vq2*y{TYPE};
+    wJq2 = diag(wq2)*(Vq2*J{TYPE});
+    [rhoex uex vex pex] = vortexSolution(xq2,yq2,FinalTime);
     rhouex = rhoex.*uex;
     rhovex = rhoex.*vex;
     Eex = pex/(gamma-1) + .5*rhoex.*(uex.^2+vex.^2);
     
-    err = wJq_type{TYPE}.*((rho{TYPE}-rhoex).^2 + (rhou{TYPE}-rhouex).^2 + (rhov{TYPE}-rhovex).^2 + (E{TYPE}-Eex).^2);
-    L2err = L2err+sqrt(sum(err(:)));
+    err = wJq2.*((VqPq*rho{TYPE}-rhoex).^2 + (VqPq*rhou{TYPE}-rhouex).^2 + (VqPq*rhov{TYPE}-rhovex).^2 + (VqPq*E{TYPE}-Eex).^2);
+    L2err = L2err + sum(err(:));
 end
-L2err
+L2err = sqrt(L2err);
 
-
+end
 %%
 
 function [rhs1 rhs2 rhs3 rhs4] = RHS2Dsimple(rhoq,uq,vq,Eq,rhoM_type,uM_type,vM_type,EM_type,TYPE)
 
-Globals2D;
+% Globals2D;
 
 global DNr_type DNs_type VqPN_type VqLq_type
 global mapP mapMT mapPT mapMQ mapPQ
 global rxJN_type sxJN_type ryJN_type syJN_type Jq_type nxJ_type nyJ_type sJ_type
-global fxS1 fyS1 fxS2 fyS2 fxS3 fyS3 fxS4 fyS4 beta avg
+global beta avg
 
 DNr = DNr_type{TYPE};
 DNs = DNs_type{TYPE};
@@ -717,24 +762,24 @@ EP = EM(mapP{TYPE});
 
 % hybrid coupling
 global QUAD TRI
-global EQmortar ETmortar
 if 1
-    % get mortar info
+    % get nbr info
     if TYPE==QUAD
         rhoP(mapMQ) = rhoM_type{TRI}(mapPQ);
         uP(mapMQ) = uM_type{TRI}(mapPQ);
         vP(mapMQ) = vM_type{TRI}(mapPQ);
-        EP(mapMQ) = EM_type{TRI}(mapPQ);                
+        EP(mapMQ) = EM_type{TRI}(mapPQ);
     elseif TYPE==TRI
         rhoP(mapMT) = rhoM_type{QUAD}(mapPT);
         uP(mapMT) = uM_type{QUAD}(mapPT);
         vP(mapMT) = vM_type{QUAD}(mapPT);
-        EP(mapMT) = EM_type{QUAD}(mapPT);                
+        EP(mapMT) = EM_type{QUAD}(mapPT);
     end
 end
 
 betaq = beta(rhoq,uq,vq,Eq);
-betafq = beta(rhoM,uM,vM,EM);
+betaM = beta(rhoM,uM,vM,EM);
+betaP = beta(rhoP,uP,vP,EP);
 
 % Lax-Friedrichs flux
 global gamma tau
@@ -758,35 +803,37 @@ Lf2 = tau*LFc.*dQ2.*sJ;
 Lf3 = tau*LFc.*dQ3.*sJ;
 Lf4 = tau*LFc.*dQ4.*sJ;
 
-fSf1 = nxJ.*fxS1(rhoM,uM,vM,EM,rhoP,uP,vP,EP) + nyJ.*fyS1(rhoM,uM,vM,EM,rhoP,uP,vP,EP);
-fSf2 = nxJ.*fxS2(rhoM,uM,vM,EM,rhoP,uP,vP,EP) + nyJ.*fyS2(rhoM,uM,vM,EM,rhoP,uP,vP,EP);
-fSf3 = nxJ.*fxS3(rhoM,uM,vM,EM,rhoP,uP,vP,EP) + nyJ.*fyS3(rhoM,uM,vM,EM,rhoP,uP,vP,EP);
-fSf4 = nxJ.*fxS4(rhoM,uM,vM,EM,rhoP,uP,vP,EP) + nyJ.*fyS4(rhoM,uM,vM,EM,rhoP,uP,vP,EP);
+[FxS1 FxS2 FxS3 FxS4 FyS1 FyS2 FyS3 FyS4] = euler_flux(rhoM,rhoP,uM,uP,vM,vP,betaM,betaP,gamma);
+
+fSf1 = nxJ.*FxS1 + nyJ.*FyS1;
+fSf2 = nxJ.*FxS2 + nyJ.*FyS2;
+fSf3 = nxJ.*FxS3 + nyJ.*FyS3;
+fSf4 = nxJ.*FxS4 + nyJ.*FyS4;
 
 fSf1 = fSf1  - .25*Lf1;
 fSf2 = fSf2  - .25*Lf2;
 fSf3 = fSf3  - .25*Lf3;
 fSf4 = fSf4  - .25*Lf4;
 
-if 1
-    % transfer from mortar to regular nodes
-    if TYPE==QUAD
-        fSf1(mapMQ) = EQmortar*fSf1(mapMQ);
-        fSf2(mapMQ) = EQmortar*fSf2(mapMQ);
-        fSf3(mapMQ) = EQmortar*fSf3(mapMQ);
-        fSf4(mapMQ) = EQmortar*fSf4(mapMQ);
-    elseif TYPE==TRI
-        fSf1(mapMT) = ETmortar*fSf1(mapMT);
-        fSf2(mapMT) = ETmortar*fSf2(mapMT);
-        fSf3(mapMT) = ETmortar*fSf3(mapMT);
-        fSf4(mapMT) = ETmortar*fSf4(mapMT);
-    end
-end
+% if 1
+%     % transfer from mortar to regular nodes
+%     if TYPE==QUAD
+%         fSf1(mapMQ) = fSf1(mapMQ);
+%         fSf2(mapMQ) = fSf2(mapMQ);
+%         fSf3(mapMQ) = fSf3(mapMQ);
+%         fSf4(mapMQ) = fSf4(mapMQ);
+%     elseif TYPE==TRI
+%         fSf1(mapMT) = fSf1(mapMT);
+%         fSf2(mapMT) = fSf2(mapMT);
+%         fSf3(mapMT) = fSf3(mapMT);
+%         fSf4(mapMT) = fSf4(mapMT);
+%     end
+% end
 
 rhoN = [rhoq; rhoM];
 uN = [uq; uM];
 vN = [vq; vM];
-betaN = [betaq;betafq];
+betaN = [betaq;betaM];
 
 divF1 = zeros(size(DNr,1),K);
 divF2 = zeros(size(DNr,1),K);
@@ -799,19 +846,7 @@ for e = 1:K
     [betax, betay] = meshgrid(betaN(:,e));
     
     % optimized evaluations
-    rholog = logmean(rhox,rhoy);
-    rhoavg = avg(rhox,rhoy);
-    uavg = avg(ux,uy);
-    vavg = avg(vx,vy);
-    vnavg = 2*(uavg.^2 + vavg.^2) - (avg(ux.^2,uy.^2) + avg(vx.^2,vy.^2));
-    pa = rhoavg./(2*avg(betax,betay));
-    
-    FxS1 = rholog.*uavg;      FyS1 = rholog.*vavg;
-    FxS2 = FxS1.*uavg + pa;   FyS2 = FyS1.*uavg;
-    FxS3 = FyS2;              FyS3 = FyS1.*vavg + pa;
-    f4aux = rholog./(2*(gamma-1)*logmean(betax,betay)) + pa + .5*rholog.*vnavg;
-    FxS4 = f4aux.*uavg;
-    FyS4 = f4aux.*vavg;
+    [FxS1 FxS2 FxS3 FxS4 FyS1 FyS2 FyS3 FyS4] = euler_flux(rhox,rhoy,ux,uy,vx,vy,betax,betay,gamma);
     
     [rxJ1, rxJ2] = meshgrid(rxJN(:,e));
     [sxJ1, sxJ2] = meshgrid(sxJN(:,e));
@@ -840,6 +875,28 @@ rhs1 = -(rhs1./Jq);
 rhs2 = -(rhs2./Jq);
 rhs3 = -(rhs3./Jq);
 rhs4 = -(rhs4./Jq);
+
+end
+
+
+function [FxS1 FxS2 FxS3 FxS4 FyS1 FyS2 FyS3 FyS4] = euler_flux(rhox,rhoy,ux,uy,vx,vy,betax,betay,gamma)
+
+rholog = logmean(rhox,rhoy);
+
+% arithmetic avgs
+rhoavg = .5*(rhox+rhoy);
+uavg = .5*(ux+uy);
+vavg = .5*(vx+vy);
+
+vnavg = 2*(uavg.^2 + vavg.^2) - .5*((ux.^2+uy.^2) + (vx.^2+vy.^2));
+pa = rhoavg./(betax+betay);
+
+FxS1 = rholog.*uavg;      FyS1 = rholog.*vavg;
+FxS2 = FxS1.*uavg + pa;   FyS2 = FyS1.*uavg;
+FxS3 = FyS2;              FyS3 = FyS1.*vavg + pa;
+f4aux = rholog./(2*(gamma-1)*logmean(betax,betay)) + pa + .5*rholog.*vnavg;
+FxS4 = f4aux.*uavg;
+FyS4 = f4aux.*vavg;
 
 end
 
@@ -875,7 +932,7 @@ if 0
     p = rho.^gamma;
 end
 
-if 1
+if 0
     % pulse condition
     x0 = 2.5;
     rho = 2 + (abs(x-x0) < 5);
@@ -914,19 +971,19 @@ for e = 1:K
             D = DX + DY;
             [p,~] = find(D<tol);
             
-%             % NOTE - does not work if K1D is too small!!
-%             if length(p) == 0
-%                 % assume periodic boundary, find match in x,y
-%                 [px,~] = find(DX<tol);
-%                 [py,~] = find(DY<tol);
-%                 if length(px)==0
-%                     p = py;
-%                 elseif length(py)==0
-%                     p = px;
-%                 else
-%                     keyboard
-%                 end
-%             end
+            %             % NOTE - does not work if K1D is too small!!
+            %             if length(p) == 0
+            %                 % assume periodic boundary, find match in x,y
+            %                 [px,~] = find(DX<tol);
+            %                 [py,~] = find(DY<tol);
+            %                 if length(px)==0
+            %                     p = py;
+            %                 elseif length(py)==0
+            %                     p = px;
+            %                 else
+            %                     keyboard
+            %                 end
+            %             end
             fids = id2(p) + (enbr-1)*(Nfq*Nfaces);
             mapPq(id1,e) = fids(:);
         end

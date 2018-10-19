@@ -6,12 +6,12 @@ function advec1D_simple
 Globals1D;
 
 % Order of polymomials used for approximation
-N = 4;
-Ksub = 8; %ceil(N/2);
+N = 15;
+Ksub = 1; %ceil(N/2);
 NB = N+Ksub-1; % number of sub-mesh splines
 
 % Generate simple mesh
-K1D = 4; 
+K1D = 1; 
 [Nv, VX, K, EToV] = MeshGen1D(-1,1,K1D);
 
 K*(NB+1) % total # dofs
@@ -58,6 +58,7 @@ uex = @(x) sin(2*pi*x);
 % u = uex(x);
 u = BVDM\uex(xB); % initialize w/lsq fit
 
+keyboard
 %% check eigs
 
 if 1
