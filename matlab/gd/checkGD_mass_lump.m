@@ -1,7 +1,7 @@
-clear
+% clear
 
 N = 3;
-K = 8;
+K = 64;
 
 % plotting points
 Npts = 1000;
@@ -13,7 +13,11 @@ rp = linspace(a,b,Npts)';
 VX = VX';
 plot(VX,VX*0,'o')
 hold on
-plot(rp,Vp);return
+plot(rp,Vp(:,N+2),'linewidth',2);
+% return
+
+% 1st N+1 basis functions get modified - can orthogonalize w.r.t others?
+% should just be able to modify first p+1 entries
 
 %%
 
@@ -21,67 +25,83 @@ h = @(r) repmat(diff(VX),length(r),1);
 map = @(r) reshape(h(r).*(repmat(r,1,K)+1)/2 + repmat(VX(1:end-1),length(r),1),length(r)*K,1);
 L = (max(VX)-min(VX))/2;
 
-if 1
-    % quadrature
-    [rqe wqe] = JacobiGQ(0,0,N);
-    rq = [];% zeros(length(rqe),K);
-    wq = rq;
-    for e = 1:K
-        if e==1 || e==K
-            [rqe wqe] = JacobiGL(0,0,N);
-        else
-            [rqe wqe] = JacobiGL(0,0,N);
-        end
-        h = (max(VX)-min(VX))/K;
-        rq = [rq; h*(rqe+1)/2 + VX(e)];
-        wq = [wq; h/2*wqe];
-        D1D{e} = GradVandermonde1D(N,rqe)/Vandermonde1D(N,rqe);
+% mass quadrature
+rq = []; wq = [];
+rqfull = []; wqfull = [];
+for e = 1:K
+    off = (N+1)/2-1; % this seems to work for N=1,3,5,7
+    if e==off+1 || e==K-off
+        [rqe wqe] = JacobiGQ(0,0,N);
+    elseif e > off+1 && e < K - off
+        [rqe wqe] = JacobiGL(0,0,1);
+%         [rqe wqe] = JacobiGQ(0,0,N);
+    else
+        [rqe wqe] = JacobiGQ(0,0,N);
     end
-    % rq = rq(:); wq = wq(:);
-    % rq = map(rqe); rq = rq(:);
-    % wq = repmat(wqe,1,K).*h(rqe)/2; wq = wq(:);
+    h = (max(VX)-min(VX))/K;
+    rq = [rq; h*(rqe+1)/2 + VX(e)];
+    wq = [wq; h/2*wqe];
+    
+    % full quadrature
+    [rqe wqe] = JacobiGQ(0,0,N);
+    D1D = GradVandermonde1D(N,rqe)/Vandermonde1D(N,rqe);
+    rqfull = [rqfull; h*(rqe+1)/2 + VX(e)];
+    wqfull = [wqfull; h/2*wqe];    
 end
 
-[H2 Q2 X2] = CSBPp2(K+1);
-[H3 Q3 X3] = CSBPp3(K+1);
-[H4 Q4 X4] = CSBPp4(K+1);
-% wq = diag(H);
-% rq = X*L;
+% [H D tL tR X] = HGTpEQ3(K);
+% [H Q X] = CSBPp2(K+1);
+% [H3 Q3 X3] = CSBPp3(K+1);
+% [H Q X] = CSBPp4(K+1);
+% wq = diag(H); rq = X*L;
 % plot(rq,rq*0,'o');return
 
 Vq = GDVDM(N,K,rq);
 M = (Vq'*diag(wq)*Vq);
 Pq = M\(Vq'*diag(wq));
 
-VN = GDVDM(N,K,rq);
-DN = blkdiag(D1D{:});%kron(eye(K),GradVandermonde1D(N,rqe)/Vandermonde1D(N,rqe)); % block diff
+Vqfull = GDVDM(N,K,rqfull);
+Mfull = Vqfull'*diag(wqfull)*Vqfull;
+
+VN = GDVDM(N,K,rqfull);
+DN = kron(eye(K),D1D);
 rx = 2;
-Q = VN'*diag(wq)*(rx*DN*VN); % Galerkin first deriv mat
+Q = VN'*diag(wqfull)*(rx*DN*VN); % Galerkin first deriv mat
 Q(abs(Q)<1e-8) = 0;
+
+[nm,~] = size(M);
+M2 = Mfull;
+pskip = N+2;
+inds = pskip:nm-(pskip)+1;
+MDiag = diag(sum(M,2));
+M2(inds,:) = MDiag(inds,:);
+% M2 = M2';
+
+% M = M-diag(sum(M,2))+diag(sum(Mfull,2));
+
+% offd = sum(M2(1:N+1,pskip:end),2);
+% M2(1:N+1,pskip:end) = 0;
+% M2(1:N+1,1:N+1) = M2(1:N+1,1:N+1) + diag(offd);
+% offd = sum(M2(end-N:end,1:end-N-1),2);
+% M2(end-N:end,1:end-N-1) = 0;
+% M2(end-N:end,end-N:end) = M2(end-N:end,end-N:end) + diag(offd);
+% clf;imagesc(M2);return
 
 f = @(x) exp(sin(pi*x/L));
 df = @(x) (pi*cos((pi*x)/L).*exp(sin((pi*x)/L)))/L;
 
-f = @(x) x;
-df = @(x) 1+0*x;
+% f = @(x) 1 + x;
+% df = @(x) 1 + 0*x;
 
-% plot(rq,(rx*DN*VN)*Pq*f(rq),'.')
-%plot(rq,Vq*(M\Q)*Pq*f(rq),'.')
-plot(VX,(M\Q)*Pq*f(rq),'.')
-hold on;plot(VX,(diag(1./sum(M,2))*Q)*f(X2),'o')
-% plot(rp,Vp*((1./diag(M)).*(Q*f(VX(:)))),'.')
+clf
+% plot(rp,df(rp),'--')
 hold on
-plot(rp,df(rp),'-')
+plot(VX,(M\Q)*f(VX)-df(VX),'o','linewidth',2,'markersize',16)
+% plot(VX,(diag(1./sum(M,2))*Q)*f(VX),'x--')
+plot(VX,(M2\Q)*f(VX)-df(VX),'x','linewidth',2,'markersize',16)
 return
 
-% check mass lumping
-if 0
-    [nm,~] = size(M);
-    MDiag  = diag(sum(M,2));
-    pskip = N+2;
-    inds = pskip:nm-(pskip)+1;
-    M(inds,:) = MDiag(inds,:);
-end
+
 
 clf
 Vf = GDVDM(N,K,[min(VX); max(VX)]);
