@@ -11,7 +11,6 @@
 %\usepackage{caption}
 
 
-
 %% ====================================== graphics
 \newcommand{\smiley}{\tikz[baseline=-0.75ex,black]{
     \draw circle (2mm);
@@ -171,6 +170,10 @@ title style={font=\footnotesize}
 \usepackage{graphicx}
 %\usepackage{subfigure}
 \usepackage{subfig}
+\makeatletter
+\let\@@magyar@captionfix\relax
+\makeatother
+
 %\usepackage{caption}
 %\usepackage{subcaption}
 

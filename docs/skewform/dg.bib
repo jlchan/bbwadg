@@ -1,13 +1,43 @@
-@article{chan2018efficient,
-  title={Efficient entropy stable Gauss collocation schemes},
-  author={Chan, Jesse and Fernandez, David C Del Rey and Carpenter, Mark},
-  journal={},
-  volume={},
-  number={},
-  pages={},
-  year={2018},
-  note={In preparation.}
+@article{gassner2011comparison,
+  title={{A comparison of the dispersion and dissipation errors of Gauss and Gauss--Lobatto discontinuous Galerkin spectral element methods}},
+  author={Gassner, Gregor and Kopriva, David A},
+  journal={SIAM Journal on Scientific Computing},
+  volume={33},
+  number={5},
+  pages={2560--2579},
+  year={2011},
+  publisher={SIAM}
 }
+
+@article{baker1976effect,
+  title={The effect of quadrature errors on finite element approximations for second order hyperbolic equations},
+  author={Baker, Garth A and Dougalis, Vassilios A},
+  journal={SIAM journal on numerical analysis},
+  volume={13},
+  number={4},
+  pages={577--598},
+  year={1976},
+  publisher={SIAM}
+}
+
+@article{kozdon2018energy,
+  title={{An energy stable approach for discretizing hyperbolic equations with nonconforming discontinuous Galerkin methods}},
+  author={Kozdon, Jeremy E and Wilcox, Lucas C},
+  journal={Journal of Scientific Computing},
+  volume={76},
+  number={3},
+  pages={1742--1784},
+  year={2018},
+  publisher={Springer}
+}
+
+@article{chan2018efficient,
+  title={{Efficient entropy stable Gauss collocation methods}},
+  author={Chan, Jesse and Fernandez, David C and Carpenter, Mark H},
+  journal={arXiv preprint arXiv:1809.01178},
+  year={2018}
+}
+
 @book{canuto2007spectral,
   title={Spectral Methods: Fundamentals in Single Domains},
   author={Canuto, Claudio and Hussaini, M Yousuff and Quarteroni, Alfio and Zang, Thomas A},
@@ -468,11 +498,15 @@ author = "Cengke Shi and Chi-Wang Shu",
   publisher={Elsevier}
 }
 
-@article{ranocha2017comparison,
+@article{ranocha2018comparison,
   title={{Comparison of some entropy conservative numerical fluxes for the Euler equations}},
   author={Ranocha, Hendrik},
-  journal={arXiv preprint arXiv:1701.02264},
-  year={2017}
+  journal={Journal of Scientific Computing},
+  volume={76},
+  number={1},
+  pages={216--242},
+  year={2018},
+  publisher={Springer}
 }
 
 @article{chandrashekar2013kinetic,
@@ -705,6 +739,15 @@ author = "Cengke Shi and Chi-Wang Shu",
   publisher={Elsevier}
 }
 
+@article{chan2018multi,
+  title={{Multi-patch discontinuous Galerkin isogeometric analysis for wave propagation: Explicit time-stepping and efficient mass matrix inversion}},
+  author={Chan, Jesse and Evans, John A},
+  journal={Computer Methods in Applied Mechanics and Engineering},
+  volume={333},
+  pages={22--54},
+  year={2018},
+  publisher={Elsevier}
+}
 @article{chan2017weight,
   title={{Weight-adjusted discontinuous Galerkin methods: matrix-valued weights and elastic wave propagation in heterogeneous media}},
   author={Chan, Jesse},
@@ -2350,101 +2393,6 @@ author = {Warburton, T and Embree, Mark},
   publisher={Elsevier}
 }
 
-%% Schoeberl papers on sparse operators ?
-
-%% Mark Ainsworth
-@article{ainsworth2011bernstein,
-  title={Bernstein-{B}{\'e}zier finite elements of arbitrary order and optimal assembly procedures},
-  author={Ainsworth, Mark and Andriamaro, Miangaly Gaelle and Davydov, Oleg},
-  journal={SIAM Journal on Scientific Computing},
-  volume={33},
-  number={6},
-  pages={3087--3109},
-  year={2011}
-}
-
-@article{ainsworth2015bernstein,
-  title={A {Bernstein--B}{\'e}zier Basis for Arbitrary Order {Raviart--Thomas} Finite Elements},
-  author={Ainsworth, Mark and Andriamaro, Gaelle and Davydov, Oleg},
-  journal={Constructive Approximation},
-  volume={41},
-  number={1},
-  pages={1--22},
-  year={2015},
-  publisher={Springer}
-}
-@article{ainsworth2014pyramid,
-  title={Pyramid Algorithms for {Bernstein--B}{\'e}zier Finite Elements of High, Nonuniform Order in Any Dimension},
-  author={Ainsworth, Mark},
-  journal={SIAM Journal on Scientific Computing},
-  volume={36},
-  number={2},
-  pages={A543--A569},
-  year={2014},
-  publisher={SIAM}
-}
-@article{ainsworth2016bernstein,
-  title={{Bernstein-B{\'e}zier finite elements on tetrahedral--hexahedral--pyramidal partitions}},
-  author={Ainsworth, Mark and Davydov, Oleg and Schumaker, Larry L},
-  journal={Computer Methods in Applied Mechanics and Engineering},
-  volume={304},
-  pages={140--170},
-  year={2016},
-  publisher={Elsevier}
-}
-%% Rob Kirby
-@article{kirby2015efficient,
-  title={Efficient discontinuous {Galerkin} finite element methods via {Bernstein} polynomials},
-  author={Kirby, Robert C},
-  journal={arXiv preprint arXiv:1504.03990},
-  year={2015}
-}
-
-@article{kirby2014low,
-  title={Low-complexity Finite Element Algorithms for the de {Rham} Complex on Simplices},
-  author={Kirby, Robert C},
-  journal={SIAM Journal on Scientific Computing},
-  volume={36},
-  number={2},
-  pages={A846--A868},
-  year={2014},
-  publisher={SIAM}
-}
-
-@article{kirby2011fast,
-  title={Fast simplicial finite element algorithms using {Bernstein} polynomials},
-  author={Kirby, Robert C},
-  journal={Numerische Mathematik},
-  volume={117},
-  number={4},
-  pages={631--652},
-  year={2011},
-  publisher={Springer}
-}
-
-@article{kirby2012fast,
-  title={Fast simplicial quadrature-based finite element operators using {Bernstein} polynomials},
-  author={Kirby, Robert C and Thinh, Kieu Tri},
-  journal={Numerische Mathematik},
-  volume={121},
-  number={2},
-  pages={261--279},
-  year={2012},
-  publisher={Springer}
-}
-
-%% review article on Bernstein
-@article{farouki2012bernstein,
-  title={The {Bernstein} polynomial basis: a centennial retrospective},
-  author={Farouki, Rida T},
-  journal={Computer Aided Geometric Design},
-  volume={29},
-  number={6},
-  pages={379--419},
-  year={2012},
-  publisher={Elsevier}
-}
-
 @article{johnson1986analysis,
   title={An analysis of the discontinuous {Galerkin} method for a scalar hyperbolic equation},
   author={Johnson, Claes and Pitk{\"a}ranta, Juhani},
@@ -2455,25 +2403,3 @@ author = {Warburton, T and Embree, Mark},
   year={1986}
 }
 
-@article{michoski2015foundations,
-title = "Foundations of the blended isogeometric discontinuous {Galerkin (BIDG)} method ",
-journal = "Computer Methods in Applied Mechanics and Engineering ",
-volume = "305",
-number = "",
-pages = "658 - 681",
-year = "2016",
-note = "",
-issn = "0045-7825",
-doi = "http://dx.doi.org/10.1016/j.cma.2016.02.015",
-url = "http://www.sciencedirect.com/science/article/pii/S0045782516300457",
-author = "C. Michoski and J. Chan and L. Engvall and J.A. Evans",
-keywords = "Discontinuous Galerkin",
-keywords = "Isogeometric",
-keywords = "Blended methods "
-}
-
-@article{engvall2015isogeometric,
-  title={Isogeometric Triangular {Bernstein-B}{\'e}zier Discretizations: Automatic Mesh Generation and Geometrically Exact Finite Element Analysis},
-  author={Engvall, Luke and Evans, John A},
-  year={2015}
-}

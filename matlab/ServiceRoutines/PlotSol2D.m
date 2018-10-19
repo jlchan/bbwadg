@@ -3,8 +3,8 @@ function PlotSol2D(xin, yin, uin)
 % function [TRI,xout,yout,uout,interp] = PlotField2D(Nplot, xin, yin, uin)
 % Purpose: filled contour plot of solution data
 
-Globals2D;
-
+% Globals2D;
+K = size(uin,2);
 for Nplot = 1:50
     Npout = (Nplot+1)*(Nplot+2)/2;
     if Npout == size(xin,1)

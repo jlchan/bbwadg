@@ -1,5 +1,5 @@
 % clear
-N = 5;
+N = 2;
 [r1D w1D] = JacobiGL(0,0,N);
 [r s t] = meshgrid(r1D);
 r = r(:); s = s(:); t = t(:);
@@ -33,7 +33,7 @@ Dr = kron(kron(I,D1D),I);
 Ds = kron(kron(I,I),D1D);
 Dt = kron(kron(D1D,I),I);
 
-rxJ = Dt*((Ds*y).*z) - Ds*((Dt*y).*z); % this is the problematic one
+rxJ = Dt*((Ds*y).*z) - Ds*((Dt*y).*z); 
 sxJ = Dr*((Dt*y).*z) - Dt*((Dr*y).*z);
 txJ = Ds*((Dr*y).*z) - Dr*((Ds*y).*z);
 

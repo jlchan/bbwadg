@@ -1,4 +1,3 @@
-
 \documentclass[compress]{beamer}
 \mode<presentation>
 \usetheme{Warsaw}
@@ -159,6 +158,10 @@ title style={font=\footnotesize}
 \usepackage{graphicx}
 %\usepackage{subfigure}
 \usepackage{subfig}
+\makeatletter
+\let\@@magyar@captionfix\relax
+\makeatother
+
 %\usepackage{caption}
 %\usepackage{subcaption}
 
@@ -232,6 +235,7 @@ title style={font=\footnotesize}
 \institute[Rice CAAM]{\inst{1}Department of Computational and Applied Math}
 
 \begin{document}
+
 \makeatletter
 \@addtoreset{subfigure}{framenumber}% subfigure counter resets every frame
 \makeatother

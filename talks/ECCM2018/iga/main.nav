@@ -6,9 +6,9 @@
 \headcommand {\beamer@framepages {7}{7}}
 \headcommand {\slideentry {0}{0}{4}{8/11}{}{0}}
 \headcommand {\beamer@framepages {8}{11}}
-\headcommand {\sectionentry {1}{Inverting IGA mass matrices }{12}{Inverting IGA mass matrices }{0}}
 \headcommand {\beamer@sectionpages {1}{11}}
 \headcommand {\beamer@subsectionpages {1}{11}}
+\headcommand {\sectionentry {1}{Inverting IGA mass matrices }{12}{Inverting IGA mass matrices }{0}}
 \headcommand {\slideentry {1}{0}{1}{12/13}{}{0}}
 \headcommand {\beamer@framepages {12}{13}}
 \headcommand {\slideentry {1}{0}{2}{14/14}{}{0}}
@@ -23,9 +23,9 @@
 \headcommand {\beamer@framepages {21}{22}}
 \headcommand {\slideentry {1}{0}{7}{23/23}{}{0}}
 \headcommand {\beamer@framepages {23}{23}}
-\headcommand {\sectionentry {2}{Why splines vs $C^0$-FEM? CFL restrictions}{24}{Why splines vs $C^0$-FEM? CFL restrictions}{0}}
 \headcommand {\beamer@sectionpages {12}{23}}
 \headcommand {\beamer@subsectionpages {12}{23}}
+\headcommand {\sectionentry {2}{Why splines vs $C^0$-FEM? CFL restrictions}{24}{Why splines vs $C^0$-FEM? CFL restrictions}{0}}
 \headcommand {\slideentry {2}{0}{1}{24/24}{}{0}}
 \headcommand {\beamer@framepages {24}{24}}
 \headcommand {\slideentry {2}{0}{2}{25/25}{}{0}}
@@ -34,9 +34,9 @@
 \headcommand {\beamer@framepages {26}{26}}
 \headcommand {\slideentry {2}{0}{4}{27/29}{}{0}}
 \headcommand {\beamer@framepages {27}{29}}
-\headcommand {\sectionentry {3}{Optimizing splines for explicit solvers}{30}{Optimizing splines for explicit solvers}{0}}
 \headcommand {\beamer@sectionpages {24}{29}}
 \headcommand {\beamer@subsectionpages {24}{29}}
+\headcommand {\sectionentry {3}{Optimizing splines for explicit solvers}{30}{Optimizing splines for explicit solvers}{0}}
 \headcommand {\slideentry {3}{0}{1}{30/30}{}{0}}
 \headcommand {\beamer@framepages {30}{30}}
 \headcommand {\slideentry {3}{0}{2}{31/31}{}{0}}
@@ -69,4 +69,4 @@
 \headcommand {\beamer@subsectionpages {30}{52}}
 \headcommand {\beamer@sectionpages {30}{52}}
 \headcommand {\beamer@documentpages {52}}
-\headcommand {\def \inserttotalframenumber {21}}
+\headcommand {\gdef \inserttotalframenumber {21}}

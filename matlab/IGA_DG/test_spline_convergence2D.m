@@ -13,6 +13,7 @@ pex = @(x,y,t) cos(k*pi*x/2).*cos(k*pi*y/2);
 % pex = @(x,y,t) exp(x.*y).*sin(k*pi*x).*sin(k*pi*y); 
 % pex = @(x,y,t) exp(x.*y);
 
+a = .25;
 a = .125;
 % a = 1/64;
 % a = 1/512;
@@ -67,22 +68,22 @@ for ii = 1:4
                 Vp = Vandermonde1D(N,rp1D)/Vandermonde1D(N,JacobiGL(0,0,N));
                 hold on
                 for i = 1:N+1
-                    plot(Vp*xK(:,i),Vp*yK(:,i),'k--');
+                    plot(Vp*xK(:,i),Vp*yK(:,i),'k-','linewidth',2);
                 end
                 for i = 1:N+1
-                    plot(Vp*xK(i,:)',Vp*yK(i,:)','k--');
+                    plot(Vp*xK(i,:)',Vp*yK(i,:)','k-','linewidth',2);
                 end
-                plot(xK(:),yK(:),'ko','markersize',8,'MarkerFaceColor',[.49 1 .63]);hold on
+                plot(xK(:),yK(:),'ko','linewidth',2,'markersize',12,'MarkerFaceColor',[.49 1 .63]);hold on
             end
             
             axis off
             axis tight
-%             print(gcf,'-dpng','../talks/UT2017/figs/mapped.png')
+            print(gcf,'-dpng','mapped.png')
             return
         end
         
         % isoparametric - interpolate geofacs
-        [rx,sx,ry,sy,J] = GeometricFactorsQuad2D(x,y,Dr,Ds);
+        [rx,sx,ry,sy,J] = GeometricFactors2D(x,y,Dr,Ds);
         
 %         % initialize TP operators
 %         rp1D = linspace(-1,1,150);

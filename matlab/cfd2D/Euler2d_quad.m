@@ -2,17 +2,17 @@ clear
 clear -globals
 Globals2D
 
-a = .125; % warping factor
+a = .125/2; % warping factor
 
-N = 2;
-K1D = 4;
-FinalTime = 1.0;
+N = 3;
+K1D = 2;
+FinalTime = 5.0;
 
 wadgProjEntropyVars = abs(a)>1e-8;
 CFL = .5;
 global tau
 tau = 0;
-plotMesh = 1;
+plotMesh = 0;
 
 % Lx = 7.5; Ly = 5; ratiox = 3/4; ratioy = .5;
 Lx = 10; Ly = 5; ratiox = 1; ratioy = Ly/Lx;
@@ -30,51 +30,34 @@ VX = (VX+1)*Lx; VY = VY*Ly;
 StartUp2D;
 BuildPeriodicMaps2D(max(VX)-min(VX),max(VY)-min(VY));
 
-
-% plotting nodes
-[rp sp] = EquiNodes2D(15); [rp sp] = xytors(rp,sp);
-Vp = Vandermonde2D(N,rp,sp)/V;
-xp = Vp*x; yp = Vp*y;
-% PlotMesh2D; axis on;return
-
 global M Vq Pq Lq Vfqf Vfq Pfqf VqPq VqLq
 global rxJ sxJ ryJ syJ rxJf sxJf ryJf syJf
 global nxJ nyJ nrJ nsJ wfq
 global mapPq
 
 % vol nodes
-[rq1D wq1D] = JacobiGL(0,0,N); 
+[rq1D wq1D] = JacobiGQ(0,0,N); 
 [rq sq] = meshgrid(rq1D);
 rq = rq(:); sq = sq(:);
 [wr ws] = meshgrid(wq1D); 
 wq = wr(:).*ws(:);
 
-Nq = length(rq);
-
 Vq = Vandermonde2D(N,rq,sq)/V;
 M = Vq'*diag(wq)*Vq;
-
 Pq = M\(Vq'*diag(wq)); % J's cancel out
-xq = Vq*x; yq = Vq*y;
-Jq = Vq*J;
-
-rxJ = rx.*J; sxJ = sx.*J;
-ryJ = ry.*J; syJ = sy.*J;
-rxJ = Vq*rxJ; sxJ = Vq*sxJ;
-ryJ = Vq*ryJ; syJ = Vq*syJ;
-J = Vq*J;
 
 % face nodes
 [rq1D wq1D] = JacobiGQ(0,0,N); % 2N-1
+%[rq1D wq1D] = JacobiGQ(0,0,ceil((N-1)/2)); % min for entropy stability on affine meshes
 % rq1D = rq1D*(1-1e-10);
 % rq1D = [-1+(1+rq1D)/2; (1+rq1D)/2];
 % wq1D = [wq1D; wq1D]/2;
-% rq1D = rq1D*(1-1e-9);
+% rq1D = rq1D*(1-5e-10);
 Nfq = length(rq1D);
 
 e = ones(size(rq1D));
-rfq = [rq1D; e; -rq1D; -e]; 
-sfq = [-e; rq1D; e; -rq1D]; 
+rfq = [rq1D; e; rq1D; -e]; 
+sfq = [-e; rq1D; e; rq1D]; 
 wfq = [wq1D; wq1D; wq1D; wq1D];
 V1D = Vandermonde1D(N,JacobiGL(0,0,N));
 Vq1D = Vandermonde1D(N,rq1D)/V1D;
@@ -83,26 +66,17 @@ Vfq = Vandermonde2D(N,rfq,sfq)/V;
 Mf = Vfq'*diag(wfq)*Vfq;
 Lq = M\(Vfq'*diag(wfq));
 
-nx = Vfqf*nx;
-ny = Vfqf*ny;
-sJ = Vfqf*sJ;
-nxJ = (nx.*sJ);
-nyJ = (ny.*sJ);
-Fscale = Vfqf*Fscale;
-
 nrJ = [0*e; e; 0*e; -e]; % sJ = 2 for all faces, 
 nsJ = [-e; 0*e; e; 0*e];
-% quiver(rfq,sfq,nrJ,nsJ);return
 
 % flux differencing operators
-
-Drq = (Vq*Dr*Pq - .5*Vq*Lq*diag(nrJ)*Vfq*Pq);
-Dsq = (Vq*Ds*Pq - .5*Vq*Lq*diag(nsJ)*Vfq*Pq);
 VfPq = (Vfq*Pq);
 VqLq = Vq*Lq;
 VqPq = Vq*Pq;
 
 global DNr DNs WN 
+Drq = (Vq*Dr*Pq - .5*Vq*Lq*diag(nrJ)*Vfq*Pq);
+Dsq = (Vq*Ds*Pq - .5*Vq*Lq*diag(nsJ)*Vfq*Pq);
 DNr = [Drq .5*VqLq*diag(nrJ);
     -.5*diag(nrJ)*VfPq .5*diag(nrJ)];
 DNs = [Dsq .5*VqLq*diag(nsJ);
@@ -150,6 +124,11 @@ norm(v'*QNr*u - v'*(BNr-QNr')*u)
 % Qr = diag(wq)*(Vq*Dr*Pq);
 % norm(Qr+Qr' - Vfq'*diag(nrJ.*wfq)*Vfq)
 
+% plotting nodes
+[rp sp] = EquiNodes2D(15); [rp sp] = xytors(rp,sp);
+Vp = Vandermonde2D(N,rp,sp)/V;
+xp = Vp*x; yp = Vp*y;
+% PlotMesh2D; axis on;return
 
 %% make quadrature face maps
 
@@ -212,32 +191,25 @@ xq = Vq*x; yq = Vq*y;
 xp = Vp*x; yp = Vp*y;
 xf = Vfq*x;    yf = Vfq*y;
 
-rxJ = zeros(Nq,K); sxJ = zeros(Nq,K);
-ryJ = zeros(Nq,K); syJ = zeros(Nq,K);
-J = zeros(Nq,K);
-rxJf = zeros(Nfq*Nfaces,K); sxJf = zeros(Nfq*Nfaces,K);
-ryJf = zeros(Nfq*Nfaces,K); syJf = zeros(Nfq*Nfaces,K);
-Jf = zeros(Nfq*Nfaces,K);
-for e = 1:K
-    [rxk,sxk,ryk,syk,Jk] = GeometricFactors2D(x(:,e),y(:,e),Vq*Dr,Vq*Ds);
-    rxJ(:,e) = rxk.*Jk;    sxJ(:,e) = sxk.*Jk;
-    ryJ(:,e) = ryk.*Jk;    syJ(:,e) = syk.*Jk;
-    J(:,e) = Jk;
-    
-    [rxk,sxk,ryk,syk,Jk] = GeometricFactors2D(x(:,e),y(:,e),Vfq*Dr,Vfq*Ds);
-    rxJf(:,e) = rxk.*Jk;    sxJf(:,e) = sxk.*Jk;
-    ryJf(:,e) = ryk.*Jk;    syJf(:,e) = syk.*Jk;
-    Jf(:,e) = Jk;
-end
+[rx sx ry sy J] = GeometricFactors2D(x,y,Vq*Dr,Vq*Ds);
+rxJ = rx.*J; sxJ = sx.*J;
+ryJ = ry.*J; syJ = sy.*J;
+
+% rxJf = Vfq*rxJ; sxJf = Vfq*sxJ;
+% ryJf = Vfq*ryJ; syJf = Vfq*syJ;
+
+[rxf,sxf,ryf,syf,Jf] = GeometricFactors2D(x,y,Vfq*Dr,Vfq*Ds);
+rxJf = rxf.*Jf; sxJf = sxf.*Jf;
+ryJf = ryf.*Jf; syJf = syf.*Jf;
 
 nxJ = rxJf.*nrJ + sxJf.*nsJ;
 nyJ = ryJf.*nrJ + syJf.*nsJ;
 
-nx = nxJ./Jf;
-ny = nyJ./Jf;
-sJ = sqrt(nx.^2 + ny.^2);
-nx = nx./sJ; ny = ny./sJ;
-sJ = sJ.*Jf;
+% nx = nxJ./Jf;
+% ny = nyJ./Jf;
+sJ = sqrt(nxJ.^2 + nyJ.^2);
+% nx = nxJ./sJ; ny = nyJ./sJ;
+% sJ = sJ.*Jf;
 
 
 if plotMesh
@@ -365,6 +337,7 @@ global wJq
 wJq = diag(wq)*(J);
 
 % Runge-Kutta residual storage
+Nq = length(rq);
 res1 = zeros(Nq,K);
 res2 = zeros(Nq,K);
 res3 = zeros(Nq,K);
@@ -639,7 +612,7 @@ p = rho.^gamma;
 if 1
     % pulse condition
     x0 = 5;
-    rho = 2 + (abs(x-x0) < 5);
+    rho = 2 + 0*(abs(x-x0) < 5);
     u = 0*rho;
     v = 0*rho;
     p = rho.^gamma;

@@ -266,13 +266,13 @@ for K1D = Kvec
     
     Nq = 2*N+1;
     
-    [rq sq wq] = Cubature2D(Nq); % integrate u*v*c
+    [rq sq wq] = Cubature2D(Nq); 
     Vq = Vandermonde2D(N,rq,sq)/V;
     M = Vq'*diag(wq)*Vq;
-    Pq = M\(Vq'*diag(wq)); % J's cancel out
+    Pq = M\(Vq'*diag(wq)); 
     xq = Vq*x; yq = Vq*y;        
     
-    w = 2+exp(xq+yq).*sin(pi*xq).*sin(pi*yq);
+    w = 2 + exp(xq+yq).*sin(pi*xq).*sin(pi*yq);
     
     Jq = Vq*J;
     wJq = diag(wq)*Jq;
@@ -294,6 +294,7 @@ for K1D = Kvec
     
     err3 = Vq*(fproj-fwadg);
 %     err3 = f(xq,yq)-Vq*fwadg;
+
     L2err_diff(sk) = sqrt(sum(sum(wJq.*err3.^2)));    
     
     sk = sk + 1;
