@@ -63,7 +63,7 @@
 
 \date{}
 \author{Jesse Chan}
-\title{Skew-symmetric entropy stable discontinuous Galerkin formulations}% with applications to hybrid meshes}
+\title{Skew-symmetric entropy stable discontinuous Galerkin formulations with applications to hybrid meshes}
 \titlerunning{Skew-symmetric entropy stable DG formulations}
 
 \begin{document}
@@ -83,13 +83,13 @@ Rice University\\
 Entropy stable high order methods for nonlinear conservation laws satisfy an inherent discrete entropy inequality.  The construction of such schemes has relied on the use of carefully chosen collocation points \cite{gassner2013skew, fisher2013high, carpenter2014entropy, crean2018entropy, chan2018efficient} or volume and surface quadrature rules \cite{chan2017discretely, chan2018discretely} to produce operators which satisfy a summation-by-parts (SBP) property.  In this work, we show how to construct skew-symmetric schemes which are entropy stable even for volume and surface quadratures under which a traditional SBP property does not hold.  These skew-symmetric formulations avoid the use of a ``strong'' SBP property, and require only that operators exactly differentiate constants and satisfy a discrete form of the fundamental theorem of calculus.   We conclude with an application of the skew-symmetric formulation for entropy stable schemes on mixed quadrilateral-triangle meshes. 
 \end{abstract}
 
-%\tableofcontents
+\tableofcontents
 
 \section{Introduction}
 
 High order methods for the simulation of time-dependent compressible flow have the potential to achieve higher levels of accuracy at lower costs compared to current low order schemes \cite{wang2013high}.  In addition to superior accuracy, the low numerical dispersion and dissipation of high order methods \cite{ainsworth2004dispersive} enables the accurate propagation of waves over long distances and time scales.  The same properties also make high order methods attractive for unsteady phenomena such as vorticular and turbulent flows, which are sensitive to numerical dissipation \cite{visbal1999high, wang2013high}.  
 
-However, when applied to nonlinear conservation laws, high order methods can experience artificial growth and blow-up near under-resolved features such as shocks, turbulence, or boundary layers.  In practice, the application of high order methods to practical problems requires shock capturing and stabilization techniques (such as artificial viscosity) or solution regularization (such as filtering or limiting) to prevent solution blow-up.  The resulting schemes for nonlinear conservation laws walk a fine line between stability, robustness, and accuracy.  Aggressive stabilization or regularization can result in the loss of high order accuracy, while too little can result in instability \cite{wang2013high}.  Moreover, it can be difficult to determine robust expressions for stabilization paramaters, as parameters which work for one simulation can fail when applied to a different physical regime or discretization setting.  
+However, when applied to nonlinear conservation laws, high order methods can experience artificial growth and blow-up near under-resolved features such as shocks or turbulence.  In practice, the application of high order methods to practical problems requires shock capturing and stabilization techniques (such as artificial viscosity) or solution regularization (such as filtering or limiting) to prevent solution blow-up.  The resulting schemes for nonlinear conservation laws walk a fine line between stability, robustness, and accuracy.  Aggressive stabilization or regularization can result in the loss of high order accuracy, while too little can result in instability \cite{wang2013high}.  Moreover, it can be difficult to determine robust expressions for stabilization paramaters, as parameters which work for one simulation can fail when applied to a different physical regime or discretization setting.  
 
 These issues have motivated the introduction of high order \textit{entropy stable} discretizations, which satisfy a semi-discrete entropy inequality while maintaining high order accuracy in smooth regions.  Proofs of continuous entropy inequalities rely on the chain rule, which does not hold discretely due to effects such as quadrature error.   By using an approach referred to as ``flux differencing'', entropy stable schemes account for the loss of the chain rule while maintaining a semi-discrete analogue of the continuous entropy inequality.  These schemes were first introduced as high order collocation methods on tensor product elements in \cite{fisher2013high, carpenter2014entropy, gassner2016split, gassner2017br1}, and were extended to simplicial elements in \cite{crean2017high, chen2017entropy, crean2018entropy, chan2017discretely, chan2018discretely}.  Entropy stable methods have also been extended to a variety of other discretization settings, including staggered grids \cite{parsani2016entropy}, Gauss-Legendre collocation \cite{chan2018efficient}, and non-conforming meshes \cite{friedrich2017entropy}.  
 
@@ -242,7 +242,7 @@ It should be stressed that sufficiently accurate volume and surface quadratures 
 \label{remark:dsbp}
 \end{remark}
 
-We are interested in addressing cases where the generalized SBP property (and as a result, the strong decoupled SBP property in Theorem~\ref{lemma:dsbp}) do not hold. 
+When a generalized SBP property holds for $\bm{Q}^i$, entropy stability can be proven using the strong SBP property in Theorem~\ref{lemma:dsbp} \cite{chan2017discretely, chan2018discretely}.  The focus of this work is to address cases where the generalized SBP property (and as a result, the SBP property in Theorem~\ref{lemma:dsbp}) do not hold. 
 
 \section{Skew-symmetric entropy conservative formulations on a single element}
 \label{sec:skew1}
@@ -455,7 +455,7 @@ We can now show that the skew-symmetric formulation is entropy conservative.
 Suppose Assumption~\ref{ass:quad} holds for $v(\bm{x}) = 1$.  
 Then, the formulation (\ref{eq:esdgSkew}) is entropy conservative such that
 \begin{equation}
-\bm{1}^T\bm{W}\pd{U(\bm{u}_q)}{t} + \sum_{i=1}^d\bm{1}^T\bm{B}^i \LRp{\psi_i(\tilde{\bm{u}}_f) - \tilde{\bm{v}}_f^T\bm{f}_i^*} = 0, \qquad \bm{u}_q = \bm{V}_q\bm{u}.
+\bm{1}^T\bm{W}\pd{U(\bm{u}_q)}{t} + \sum_{i=1}^d\bm{1}^T\bm{B}^i \LRp{\tilde{\bm{v}}_f^T\bm{f}_i^* - \psi_i(\tilde{\bm{u}}_f)} = 0, \qquad \bm{u}_q = \bm{V}_q\bm{u}.
 \label{eq:esdgthm}
 \end{equation}
 \label{thm:esdg}
@@ -465,8 +465,9 @@ Testing (\ref{eq:esdgSkew}) by $\bm{v}_h = \bm{P}_q\bm{v}_q$ yields
 \begin{align}
 \bm{v}_q^T\bm{W}\pd{\LRp{\bm{V}_q\bm{u}}}{t} + \sum_{i=1}^d
 \tilde{\bm{v}}^T \LRp{\LRp{\bm{Q}^i_N - \LRp{\bm{Q}^i_N}^T} \circ \bm{F}^i_S}\bm{1} + \tilde{\bm{v}}_f^T \bm{B}^i\bm{f}_i^* = 0.
+\label{eq:entropyrhs}
 \end{align}
-One can show that \cite{chan2017discretely}
+Algebraic manipulations (see \cite{chan2017discretely} for details) yields that 
 \begin{align*}
 \tilde{\bm{v}}^T \LRp{\LRp{\bm{Q}^i_N - \LRp{\bm{Q}^i_N}^T} \circ \bm{F}^i_S}\bm{1} &= \tilde{\bm{v}}^T \LRp{\bm{Q}^i_N \circ \bm{F}^i_S}\bm{1} - \tilde{\bm{v}}^T \LRp{\LRp{\bm{Q}^i_N}^T \circ \bm{F}^i_S}\bm{1}\\
 &= \tilde{\bm{v}}^T \LRp{\bm{Q}^i_N \circ \bm{F}^i_S}\bm{1} - \bm{1}^T \LRp{{\bm{Q}^i_N} \circ \bm{F}^i_S}\tilde{\bm{v}}.
@@ -593,7 +594,7 @@ For curved elements, steps must also be taken to ensure that the analogue of Lem
 \end{align}
 where we have used that $\hat{\bm{D}}^j_N \bm{1} = 0$.  We refer to the condition $\bm{Q}^i_k\bm{1} = 0$ as the discrete geometric conservation law (GCL) \cite{thomas1979geometric, kopriva2006metric}.  For degree $N$ isoparametric mappings, the GCL is automatically satisfied in two dimensions due to the fact that the exact geometric terms ${G}^k_{ij}$ are polynomials of degree $N$ \cite{kopriva2006metric}.  However, in three dimensions, the GCL is not automatically satisfied due to the fact that the degree of $G^k_{ij}$ is larger than $N$.  Thus, the geometric terms cannot be represented exactly using degree $N$ polynomials, and (\ref{eq:dgcl}) must be enforced through an alternative construction of ${G}^k_{ij}$.  
 
-A common approach is to rewrite the geometric terms as the curl of some quantity $\bm{r}^i$, but to interpolate $\bm{r}^i$ before applying the curl \cite{visbal2002use, kopriva2006metric, hindenlang2012explicit, chan2018discretely}:
+To ensure that the geometric terms satisfy the GCL, we first rewrite the geometric terms as the curl of some quantity $\bm{r}^i$, but interpolate $\bm{r}^i$ before applying the curl \cite{visbal2002use, kopriva2006metric, hindenlang2012explicit, chan2018discretely}:
 \begin{gather}
 \bm{r}^i = { \pd{\bm{x}}{\hat{x}_i}\times \bm{x}}, \qquad
 \LRs{\begin{array}{c}
@@ -611,7 +612,7 @@ N & \text{(hexahedra)}
 \end{cases},\nonumber
 \label{eq:iconscurl}
 \end{gather}
-where $I_{N_{\rm geo}}$ denotes a degree $N_{\rm geo}$ polynomial interpolation operator with appropriate interpolation nodes.\footnote{This interpolation step must be performed using interpolation points with an appropriate number of nodes on each boundary \cite{chan2018discretely}.  These include, for example, GLL nodes on tensor product elements, as well as Warp and Blend nodes on non-tensor product elements \cite{warburton2006explicit, chan2015comparison}.}  The restriction on the maximum value of $N_{\rm geo}$ ensures that $G^k_{ij} \in V^N$ (e.g. $G^k_{ij} \in P^N$ on tetrahedral elements and $G^k_{ij}\in Q^N$ on hexahedral elements), which is also necessary to guarantee (\ref{eq:dgcl}).
+where $I_{N_{\rm geo}}$ denotes a degree $N_{\rm geo}$ polynomial interpolation operator with appropriate interpolation nodes.\footnote{This interpolation step must be performed using interpolation points with an appropriate number of nodes on each boundary \cite{chan2018discretely}.  These include, for example, GLL nodes on tensor product elements, and optimized interpolation nodes on non-tensor product elements \cite{hesthaven1998electrostatics, warburton2006explicit, chan2015comparison}.}  The restriction on the maximum value of $N_{\rm geo}$ ensures that $G^k_{ij} \in V^N$ (e.g. $G^k_{ij} \in P^N$ on tetrahedral elements and $G^k_{ij}\in Q^N$ on hexahedral elements), which is also necessary to guarantee (\ref{eq:dgcl}).
 
 Because the decoupled SBP operators $\bm{D}^i_k$ are now defined through (\ref{eq:dncurved}), Lemma~\ref{lemma:sbpcor} and the proof of entropy stability no longer hold for curved elements and must be modified.  The introduction of curvilinear meshes will impose slightly different conditions on the accuracy of the surface quadrature.  We discuss simplicial and tensor product elements separately, as differences in the natural polynomial approximation spaces will result in different assumptions for each proof.
 
@@ -684,7 +685,7 @@ is semi-discretely entropy conservative on $D^k$ such that for $\bm{u}_q = \bm{V
 Additionally, the method is free-stream preserving such that $\pd{\bm{u}_h}{t} = 0$ for constant solutions.
 \end{theorem}
 \begin{proof}
-The proof of entropy stability is identical to that of Theorem~\ref{thm:esdg}, except that Lemma~\ref{lemma:vdsbpcurved} is used instead of Lemma~\ref{lemma:sbpcor}.  However, the proof of free-stream preservation differs from proofs found in the literature, which typically show that the right hand side is zero for $\bm{u}_h$ constant \cite{crean2018entropy, chan2018discretely}.  This strategy for is appropriate for ``strong'' formulations, but must be modified for the skew-symmetric formulation (\ref{eq:skewformcurved}).  
+The proof of entropy stability is identical to that of Theorem~\ref{thm:esdg}, except that Lemma~\ref{lemma:vdsbpcurved} is used instead of Lemma~\ref{lemma:sbpcor}.  However, proving free-stream preservation differs from approaches in the literature, which typically show that the right hand side is zero for $\bm{u}_h$ constant \cite{crean2018entropy, chan2018discretely}.  This strategy for is appropriate for ``strong'' formulations, but must be modified for the skew-symmetric formulation (\ref{eq:skewformcurved}).  
 
 We have that $\bm{f}_i^* = \bm{f}^i_S(\tilde{\bm{u}}_f^+,\tilde{\bm{u}}_f) = \bm{f}_i(\bm{u}_f)$ using the consistency property of the Tadmor flux (\ref{eq:esflux}) and the fact that the solution is globally constant.  For $\bm{u}_h$ constant, $\bm{F}_S$ is also constant.  We assume (without loss of generality) that $\bm{F}_S$ and $\bm{f}_i(\bm{u}_f)$ are the matrix and vector of ones, respectively.  Then, 
 \[
@@ -739,35 +740,54 @@ Thus, the volume terms in the skew-symmetric formulation may be applied using on
 It is also possible to replace the curved mass matrix $\bm{M}^k$ with a more easily invertible weight-adjusted approximation while maintaining high order accuracy, entropy stability, and local conservation \cite{chan2018discretely}.  This approximation avoids the inversion of dense weighted $L^2$ mass matrices $\bm{M}^k$ on curved simplicial elements, but is generally unnecessary on tensor product elements as common choices of volume quadrature result in a diagonal (lumped) mass matrix \cite{carpenter2014entropy, parsani2016entropy, chan2018efficient}.
 \end{remark}
 
+\section{Conditions on the accuracy of volume and surface quadrature rules}
+
+The previous sections outline minimal conditions under which entropy stability is guaranteed under a skew-symmetric formulation and a polynomial geometric mapping.  In Section~\ref{sec:curvgeo}, we translate these minimial conditions into conditions on quadrature accuracy.  
+
+Additionally, while it is possible to maintain entropy stability under reduced accuracy quadratures, the accuracy of the resulting schemes depend on the accuracy of the volume and surface quadrature rules.  We analyze the degree of accuracy expected based on the accuracy of different quadrature rules in Section~\ref{sec:accskew}.  
+
 \subsection{On quadrature conditions for Assumption~\ref{ass:quad} for $v = 1$ and $v = G^k_{ij}$}
 \label{sec:curvgeo}
+
 Semi-discrete entropy conservation on curved meshes requires that Assumption~\ref{ass:quad} holds for $v = 1$ and $v = G^k_{ij}$.  We discuss specific choices of volume and surface quadrature on for which this assumption is valid, and summarize the maximum degree $N_{\rm geo}$ of the polynomial geometric approximation under which entropy stability holds for common choices of volume and surface quadrature.  
 %\note{Emphasize we're interested in taking $N_{\rm geo}$ as large as possible for a given quadrature rule, and that there is a focus on degree $(2N-1)$ quadrature rules.}
 
-\subsubsection{Simplicial elements} 
+In order to ensure that the mass matrix is positive-definite in Assumption~\ref{ass:quad}, the volume quadrature must be degree $2N$ in general on simplices.  The following lemma summarizes expected behavior for surface quadrature rules of varying order:
+\begin{lemma}
+Let $\hat{D}$ be a simplex with volume quadrature which is exact for degree $2N$ polynomials.  Let the surface quadrature be exact for polynomials of degree $M+N$.  Then, the skew-symmetric formulation (\ref{eq:skewformcurved}) is entropy stable for $N_{\rm geo} \leq \min\LRp{N+1,M+1}$.
+\label{lemma:curvsimp}
+\end{lemma}
+\begin{proof}
+Entropy stability holds if Assumption~\ref{ass:quad} holds for $v = 1$ and $v = G^k_{ij}$.  
+Simplicial elements require $N_{\rm geo}\leq (N+1)$ in order to guarantee that $G^k_{ij}\in P^{N_{\rm geo}-1} \subset P^{N}$, which is necessary to satisfy the discrete GCL \cite{chan2018discretely}.  Then, for $u \in P^N$, $\pd{u}{\hat{x}_j}\in P^{N-1}$, the integrands in Assumption~\ref{ass:quad} are $\pd{u}{\hat{x}_j} v \in P^{N+N_{\rm geo}-2}$ and $uv n_i \in P^{N+N_{\rm geo}-1}$ for $v = G^k_{ij}$.  The volume quadrature exactly integrates the first integrand for $N_{\rm geo} \leq N+1$, while the surface quadrature exactly integrates the second integrand for $M \geq N_{\rm geo}-1$, or $N_{\rm geo} \leq M+1$.
+\end{proof}
 
-On simplicial elements, for $u \in P^N$, $\pd{u}{\hat{x}_j}\in P^{N-1}$, and for $N_{\rm geo}\leq (N+1)$, $G^k_{ij}\in P^{N_{\rm geo}-1}$.  Thus, the integrands in Assumption~\ref{ass:quad} $\pd{u}{\hat{x}_j} v \in P^{N+N_{\rm geo}-1}$ and $uv n_i \in P^{N+N_{\rm geo}}$ for $v = G^k_{ij}$.  A volume quadrature rule of degree $(2N-1)$ and surface quadrature of degree $2N$ are then sufficient to ensure semi-discrete entropy conservation for $N_{\rm geo}\leq N$.  However, that in order to ensure that the mass matrix is positive-definite in Assumption~\ref{ass:quad}, the volume quadrature must be degree $2N$ in general on simplices.  If the volume quadrature is instead exact for degree $2N$ polynomials, then entropy conservation is guaranteed up to $N_{\rm geo} \leq N+1$.  
-%\note{Add discussion on triangular elements.}
+The situation is more complicated for curved tensor product elements.  It was shown in Section~\ref{sec:assump1} that tensor product quadratures of degree $(2N-1)$ satisfy Assumption~\ref{ass:quad} holds for $v = 1$.  However, in contrast to the simplicial case, it is not immediately clear that degree $(2N-1)$ volume quadratures exactly integrate $\int_{\hat{D}} \pd{u}{\hat{x}_j}v$ for $v = G^k_{ij}$ for tensor product elements.  The difference between simplicial and tensor product elements is the polynomial space in which the derivative lies.  In contrast to the simplicial case, if $u \in Q^N$, $\pd{u}{\hat{x}_j} \not\in Q^{N-1}$.  Consider the three-dimensional case with $u, v \in Q^N$ and $i = 1$.  Then, differentiation reduces the polynomial degree in one coordinate but not others and $\pd{u}{\hat{x}_1} \in Q^{N-1,N,N}$.  As a result, $\pd{u}{\hat{x}_j}v \not\in Q^{2N-1}$, and a tensor product quadrature of degree $(2N-1)$ (in each coordinate) does not exactly integrate $\int_{\hat{D}} \pd{u}{\hat{x}_j}v$ for general $v\in Q^N$.  
 
-\subsubsection{Tensor product elements} 
-
-%Tensor product $(N+1)$-point GLL quadratures are a common choice for quadrilateral and hexahedral elements, and are exact for polynomials of degree $(2N-1)$ in each coordinate direction.  
-It was shown in Section~\ref{sec:assump1} that tensor product quadratures of degree $(2N-1)$ satisfy Assumption~\ref{ass:quad} holds for $v = 1$.  However, in contrast to the simplicial case, it is not immediately clear that degree $(2N-1)$ volume quadratures exactly integrate $\int_{\hat{D}} \pd{u}{\hat{x}_j}v$ for $v = G^k_{ij}$ for tensor product elements.  The difference between simplicial and tensor product elements is the polynomial space in which the derivative lies.  In contrast to the simplicial case, if $u \in Q^N$, $\pd{u}{\hat{x}_j} \not\in Q^{N-1}$.  Consider the three-dimensional case with $u, v \in Q^N$ and $i = 1$.  Then, differentiation reduces the polynomial degree in one coordinate but not others and $\pd{u}{\hat{x}_1} \in Q^{N-1,N,N}$.  As a result, $\pd{u}{\hat{x}_j}v \not\in Q^{2N-1}$, and a tensor product quadrature of degree $(2N-1)$ does not exactly integrate $\int_{\hat{D}} \pd{u}{\hat{x}_j}v$ for general $v\in Q^N$.  
-
-We first consider the two dimensional case with volume quadrature of degree $(2N-1)$ and show that Assumption~\ref{ass:quad} holds with $v = G^k_{ij}$ for all $N_{\rm geo} \leq N$.  On quadrilateral elements, $G^k_{ij}$ is
+We address the quadrilateral case first:
+\begin{lemma}
+Let $\hat{D}$ be a quadrilateral.  Suppose the volume quadrature be exact for degree $M+N$ polynomials, and that the surface quadrature be exact for polynomials of degree $M+N$.  Then, the skew-symmetric formulation (\ref{eq:skewformcurved}) is entropy stable for $N_{\rm geo} \leq \min\LRp{N,M+1}$.
+\label{lemma:curvquad}
+\end{lemma}
+\begin{proof}
+As in Lemma~\ref{lemma:curvsimp}, entropy stability holds if Assumption~\ref{ass:quad} holds for $v = 1$ and $v = G^k_{ij}$.  The case of $v = 1$ was addressed previously, and we focus on $v = G^k_{ij}$.  We first characterize the polynomial degree of the geometric terms $G^k_{ij}$.  In contrast to the simplicial case, tensor product elements require $N_{\rm geo}\leq N$ in order to ensure that $G^k_{ij}\in Q^{N,N}$ and that the discrete GCL is satisfied \cite{kopriva2006metric}.  On a quadrilateral element with a degree $N_{\rm geo}$ geometric mapping, $G^k_{ij}$ is
+% with volume quadrature of degree $(2N-1)$ and show that Assumption~\ref{ass:quad} holds with $v = G^k_{ij}$ for all $N_{\rm geo} \leq N$.  
 \begin{align*}
 G^k_{11} &= \pd{x_2}{\hat{x}_2} \in Q^{N_{\rm geo}, N_{\rm geo}-1}, \qquad G^k_{12} = -\pd{x_2}{\hat{x}_1} \in Q^{N_{\rm geo}-1, N_{\rm geo}},\\
-G^k_{21} &= -\pd{x_1}{\hat{x}_2} \in Q^{N_{\rm geo}, N_{\rm geo}-1}, \qquad G^k_{22} = \pd{x_1}{\hat{x}_1}\in Q^{N_{\rm geo}-1, N_{\rm geo}}.
+G^k_{21} &= -\pd{x_1}{\hat{x}_2} \in Q^{N_{\rm geo}, N_{\rm geo}-1}, \qquad G^k_{22} = \pd{x_1}{\hat{x}_1}\in Q^{N_{\rm geo}-1, N_{\rm geo}}.\nonumber
 \end{align*}
 Since $\pd{u}{\hat{x}_1} \in Q^{N-1,N}$ and $\pd{u}{\hat{x}_2} \in Q^{N,N-1}$
 \[
-\pd{u}{\hat{x}_i}G^k_{ij} \in Q^{N+N_{\rm geo}-1} \subset Q^{2N-1}, \qquad \forall N_{\rm geo}\leq N.
+\pd{u}{\hat{x}_i}G^k_{ij} \in Q^{N+N_{\rm geo}-1}.% \subset Q^{2N-1}, \qquad \forall N_{\rm geo}\leq N.
 \]
-Thus, any quadrature rule of degree $(2N-1)$ exactly integrates $\int_{\hat{D}}\pd{u}{\hat{x}_i}v$ for $v = G^k_{ij}$.  
+The volume quadrature exactly integrates this integrand for $M \geq N_{\rm geo}-1$.
 
-We now consider the condition in Assumption~\ref{ass:quad} on the surface integrals $\int_{\partial \hat{D}} u v \hat{n}_j$ for $v= G^k_{ij}$.  For left and right faces of the quadrilateral, $\hat{n}_2 = 0$, so this condition reduces to ensuring that the quantity $u G^k_{i1}$ is integrated exactly using quadrature for $i = 1,2$.  Since $G^k_{i1}$ are degree $N_{\rm geo}-1$ in the $\hat{x}_2$ coordinate, $G^k_{i1}$ is degree $N_{\rm geo}-1$ and $uG^k_{i1} \hat{n}_1 \in Q^{N+N_{\rm geo}-1}$ along the left and right faces.  Similarly, $uG^k_{i2} \hat{n}_2 \in Q^{N+N_{\rm geo}-1}$ along the top and bottom faces and are zero along the left and right faces.  Thus, any surface quadrature rule exact for degree $N+N_{\rm geo}-1$ polynomials satisfies Assumption~\ref{ass:quad}, and for a degree $(2N-1)$ surface quadrature, entropy stability is guaranteed for any $N_{\rm geo}\leq N$.
+We now consider the condition in Assumption~\ref{ass:quad} on the surface integrals $\int_{\partial \hat{D}} u v \hat{n}_j$ for $v= G^k_{ij}$.  For left and right faces of the quadrilateral, $\hat{n}_2 = 0$, so this condition reduces to ensuring that the quantity $u G^k_{i1}$ is integrated exactly using quadrature for $i = 1,2$.  Since $G^k_{i1}$ are degree $N_{\rm geo}-1$ in the $\hat{x}_2$ coordinate, $G^k_{i1}$ is degree $N_{\rm geo}-1$ and $uG^k_{i1} \hat{n}_1 \in Q^{N+N_{\rm geo}-1}$ along the left and right faces.  Similarly, $uG^k_{i2} \hat{n}_2 \in Q^{N+N_{\rm geo}-1}$ along the top and bottom faces and are zero along the left and right faces.  The surface quadrature rule exactly integrates such integrands for $M \geq N_{\rm geo} - 1$, or $N_{\rm geo} \leq M+1$.
+\end{proof}
 
-We now consider the three-dimensional case.  Unlike quadrilateral elements, Assumption~\ref{ass:quad} does not hold under degree $(2N-1)$ volume quadrature for $N_{\rm geo} = N$ on general curved hexahedra.  Expanding out (\ref{eq:iconscurl}) gives
+Existing proofs of entropy stability on quadrilaterals rely on $(N+1)$-point GLL volume and surface quadratures, which are exact for degree $2N-1$ polynomials.   The novelty of Lemma~\ref{lemma:curvquad} is that the proof holds for any combination of degree $2N-1$ volume and surface quadratures (for example, $(N+1)$-point GLL volume quadrature and an $(N-1)$-point Gauss surface quadrature).  
+
+We now consider the three-dimensional case.  In contrast to the quadrilateral case, the GCL is not automatically satisfied for a degree $N_{\rm geo} \leq N$ geometric mapping.  Instead, GCL-satisfying geometric terms are approximated using (\ref{eq:iconscurl}).  Expanding out the expression for $G^k_{11}$ gives
 \[
 G^k_{11} = \pd{}{\hat{x}_3} I_{N_{\rm geo}}\LRp{{x}_3 \pd{x_2}{\hat{x}_2}} - \pd{}{\hat{x}_2} I_{N_{\rm geo}}\LRp{{x}_3 \pd{x_2}{\hat{x}_3}} \in Q^{N_{\rm geo}}.
 \]
@@ -777,53 +797,22 @@ Repeating for the other geometric terms, one can show that $G^k_{ij} \in Q^{N_{\
 \]  
 Then, the geometric terms satisfy $\Grad \times \bm{r}^i \in Q^{N,N-1,N-1}\times Q^{N-1,N,N-1} \times Q^{N-1,N-1,N}$ with traces in $Q^{N-1}$, and Assumption~\ref{ass:quad} holds under degree $(2N-1)$ volume and surface quadrature.  This approach will be investigated in more detail in future work.  %Numerical results show that this approach produces geometric terms which are up to an order of magnitude more accurate than those constructed simply by taking $N_{\rm geo} \leq (N-1)$.  This approach will be investigated in more detail in future work.
 }
+We summarize these findings in the following lemma for hexahedral elements:
+\begin{lemma}
+Let $\hat{D}$ be a hexahedral element, with geometric terms constructed using (\ref{eq:iconscurl}).  Let the volume quadrature be exact for degree $M+N$ polynomials, and let the surface quadrature be exact for polynomials of degree $M+N$.  Then, the skew-symmetric formulation (\ref{eq:skewformcurved}) is entropy stable for $N_{\rm geo} \leq \min\LRp{N,M}$.
+\label{lemma:curvquad}
+\end{lemma}
 
 Most implementations on tensor product elements utilize volume and surface quadratures of either degree $(2N-1)$ or $2N$.  We summarize below for different pairings of volume and surface quadrature the maximum degree $N_{\rm geo}$ under which Assumption~\ref{ass:quad} is satisfied and entropy stability is guaranteed:
 \begin{enumerate}
-\item On quadrilateral elements, Assumption~\ref{ass:quad} holds for $N_{\rm geo} = N$ and any tensor product volume and surface quadratures of degree $(2N-1)$ 
-\item On hexahedral elements, Assumption~\ref{ass:quad} holds for $N_{\rm geo} = N-1$ and any tensor product volume and surface quadratures of degree $(2N-1)$.  If the SBP property holds (for example, when the volume and surface quadratures are of degree $2N$) then Assumption~\ref{ass:quad} holds for $N_{\rm geo} = N$.
+\item On quadrilateral elements, Assumption~\ref{ass:quad} holds for $N_{\rm geo} \leq N$ and any tensor product volume and surface quadratures of degree $(2N-1)$ 
+\item On hexahedral elements, Assumption~\ref{ass:quad} holds for $N_{\rm geo} \leq N-1$ and any tensor product volume and surface quadratures of degree $(2N-1)$.  If the SBP property holds (e.g.\ for GLL quadrature, or for volume and surface quadratures of degree $2N$) then Assumption~\ref{ass:quad} holds for $N_{\rm geo} \leq N$.
 \end{enumerate}
 
-We note that the condition $N_{\rm geo} = N-1$ is non-standard for tensor product elements.  However, this condition is only necessary for entropy stability when $\bm{Q}^i$ does not satisfy a generalized SBP property (see Remark~\ref{remark:dsbp}).  To the author's knowledge, this setting has not been considered within the literature on tensor product elements.  
-
-%\note{Finish}
-%\begin{remark}
-%We note that this work assumes that the same quadrature is used to volume contributions in each direction, and can be refined slightly 
-%\note{add line DG}
-
-% $G^k_{1j} = \pd{\hat{x}_j}{x_1}$, $j = 1,2,3$ yields
-%\begin{align*}
-%G^k_{11} &= \pd{I_{\rm Ngeo} \LRp{\pd{x_2}{\hat{x}_2}x_3}}{\hat{x}_3}- \pd{I_{\rm Ngeo} \LRp{\pd{x_2}{\hat{x}_3}x_3}}{\hat{x}_2} \in Q^{N_{\rm geo}}\\
-%G^k_{12} &= \pd{I_{\rm Ngeo} \LRp{\pd{x_2}{\hat{x}_3}x_3}}{\hat{x}_1}- \pd{I_{\rm Ngeo} \LRp{\pd{x_2}{\hat{x}_3}x_3}}{\hat{x}_1} \in Q^{N_{\rm geo}}\\
-%G^k_{13} &= \pd{I_{\rm Ngeo} \LRp{\pd{x_2}{\hat{x}_1}x_3}}{\hat{x}_2}- \pd{I_{\rm Ngeo} \LRp{\pd{x_2}{\hat{x}_2}x_3}}{\hat{x}_1} \in Q^{N_{\rm geo}}.
-%%Dt*((Ds*y).*z) - Ds*((Dt*y).*z)
-%\end{align*}
-
-%Lemma~\ref{lemma:vdsbpcurved} implies that the polynomial degree $R$ of the surface geometric terms must be compatible with the accuracy of the surface quadrature.  This, in turn, depends on the polynomial degree $N_{\rm geo}$ to which geometric terms are approximated.  \note{Kopriva trick to enforcing GCL still results in $Q^N$ normals 3D.  May not satisfy requirement that $\bm{1}^T\bm{Q}^i_N \psi_i(\tilde{\bm{u}}) = \bm{1}^T\bm{B}^i_N \psi_i(\tilde{\bm{u}})$ because of quadrature inaccuracy.  Note - this still works regardless for conforming hexes because of the full matrix SBP property.}  
-
-%\begin{lemma}
-%\label{lemma:curlPN}
-%Let $\bm{u} \in \mathbb{R}^3$ be represented on a hexahedron by polynomials of the form
-%\begin{gather*}
-%\bm{u} = \begin{pmatrix}u\\v\\w\end{pmatrix}, \qquad u \in Q^{N-1,N,N}, \qquad v \in Q^{N,N-1,N}, \qquad w \in Q^{N,N,N-1}.
-%\end{gather*}
-%Then 
-%\[
-%\Grad \times \bm{u} \in \begin{pmatrix} Q^{N,N-1,N-1}\\Q^{N-1,N,N-1}\\Q^{N-1,N-1,N}\end{pmatrix}
-%\]
-%and traces of $\LRl{\bm{u}}\cdot\bm{n} \in Q^{N-1}$ (\note{CHECK THIS}).
-%\end{lemma}
-%\begin{proof}
-%The proof is a straightforward computation
-%\end{proof}
-%
-%We summarize the 
-
-
+We note that the condition $N_{\rm geo} \leq N-1$ is non-standard for tensor product elements.  However, this condition is only necessary for entropy stability when $\bm{Q}^i$ does not satisfy a generalized SBP property (see Remark~\ref{remark:dsbp}).  To the author's knowledge, this setting has not been considered within the literature.
 
 \subsection{On the accuracy of the skew-symmetric formulation}
-
-We note that, while it is possible to maintain entropy stability under reduced accuracy quadratures, the accuracy of the resulting schemes depend on the accuracy of the volume and surface quadrature rules.  In this section, we analyze the degree of accuracy expected for volume and surface quadrature rules of a given accuracy.  
+\label{sec:accskew}
 
 It was shown in \cite{chan2017discretely, chan2018efficient} that the decoupled SBP operator can be interpreted as augmenting a volume approximation of the derivative with boundary correction terms.  Let $f(\bm{x}),g(\bm{x})$ denote two $L^2$ integrable functions, and let $\bm{f}_N, \bm{g}_N$ denote the vectors of values of $f,g$ at both volume and surface quadrature points.  A degree $N$ approximation $u\in V^N$ to $f\pd{g}{x_i}$ can be constructed via
 \begin{equation}
@@ -859,7 +848,7 @@ The accuracy of the formulations (\ref{eq:esdgSkew}) and (\ref{eq:skewformcurved
 
 From (\ref{eq:dsbpapprox}), it can be shown that when $\bm{Q}^i$ satisfies a generalized SBP property, the decoupled SBP operator (\ref{eq:dsbp}) produces a degree $N$ approximation to the derivative \cite{chan2017discretely}.  When $\bm{Q}^i$ does not satisfy a generalized SBP property, we have the following lemma on the accuracy of (\ref{eq:dsbpapprox}):
 \begin{lemma}
-Suppose that the volume quadrature is exact for degree $M+N-1$ polynomials on simplices, or for polynomials in $Q^{M+N-1,M+N,M+N}$ on tensor product elements.  Furthermore, assume that the surface quadrature is exact for degree $M+N$ polynomials.  Then, the skew-symmetric approximation of the $x$-derivative (\ref{eq:dsbpapprox}) is exact for all polynomials of degree $M$.  
+Suppose that the volume quadrature is exact for degree $M+N-1$ polynomials on simplices, or for polynomials in $Q^{M+N-1,M+N,M+N}$ on tensor product elements.  Furthermore, assume that the surface quadrature is exact for degree $M+N$ polynomials on simplices and $Q^{M+N,M+N}$ on tensor product elements.  Then, the skew-symmetric approximation of the derivative (\ref{eq:dsbpapprox}) is exact for polynomials of degree $M$.  
 \label{lemma:dsbpapprox}
 \end{lemma}
 \begin{proof}
@@ -869,7 +858,7 @@ Suppose $u \in P^M$.  Let $\bm{u}$ denote the polynomial coefficients of $u$, an
 \bm{V}_q \\ \bm{V}_f\end{array}}^T\LRp{\bm{Q}^i_N - \LRp{\bm{Q}^i_N}^T + \bm{B}^i_N}\bm{u}_N,
 \]
 where $\bm{e}$ is a polynomial of degree $N$.  
-If Assumption~\ref{ass:quad} is satisfied and $u(\bm{x})$ is polynomial, then the values of $u$ at quadrature points are $\bm{u}_q = \bm{V}_q\bm{u}$ and $\bm{u} = \bm{P}_q\bm{u}_q$.  This implies that $\bm{u}_f = \bm{V}_f \bm{P}_q\bm{u}_q =  \bm{E}\bm{u}_q$.  Expanding the latter term yields 
+If Assumption~\ref{ass:quad} is satisfied and $u(\bm{x})$ is polynomial, then the values of $u(\bm{x})$ at quadrature points are $\bm{u}_q = \bm{V}_q\bm{u}$ and $\bm{u} = \bm{P}_q\bm{u}_q$.  This implies that $\bm{u}_f = \bm{V}_f \bm{P}_q\bm{u}_q =  \bm{E}\bm{u}_q$.  Expanding the latter term yields 
 \begin{align*}
 &\frac{1}{2}\bm{M}^{-1}\LRs{\begin{array}{c}
 \bm{V}_q \\ \bm{V}_f\end{array}}^T\LRp{\bm{Q}^i_N - \LRp{\bm{Q}^i_N}^T + \bm{B}^i_N}\bm{u}_N \\
@@ -909,6 +898,8 @@ Combining this with (\ref{eq:skewerr}) implies that $\bm{e}^T\bm{M}\bm{e} = 0$, 
 
 Lemma~\ref{lemma:dsbpapprox} suggests that, when a generalized SBP property does not hold, the use of under-integrated quadratures results in a loss of one or more orders of accuracy.  For example, using $(N+1)$ point GLL rules (which are exact for only polynomials of degree $2N-1$) for either volume or surface quadratures should result in a loss of one order of accuracy compared to the use of $(N+1)$-point Gauss rules (which are exact for polynomials of degree $2N$).  This is indeed observed in numerical experiments.  
 
+
+
 \section{Numerical experiments}
 \label{sec:num}
 
@@ -938,7 +929,7 @@ where $\rho e$ and $s$ can be expressed in terms of the entropy variables as
 \rho e = \LRp{\frac{(\gamma-1)}{\LRp{-v_4}^{\gamma}}}^{1/(\gamma-1)}e^{\frac{-s}{\gamma-1}}, \qquad s = \gamma - v_1 + \frac{{v_2^2+v_3^2}}{2v_4}.
 \end{equation*}
 
-There exist several choices for entropy conservative fluxes \cite{ismail2009affordable, ranocha2018comparison,chandrashekar2013kinetic}.  For the following experiments, we utilize the
+There exist several choices for entropy conservative fluxes \cite{ismail2009affordable, ranocha2018comparison,chandrashekar2013kinetic}.  We utilize the
 the entropy conservative numerical fluxes given by Chandrashekar in \cite{chandrashekar2013kinetic}
 \begin{align*}
 &f^1_{1,S}(\bm{u}_L,\bm{u}_R) = \avg{\rho}^{\log} \avg{u},& &f^1_{2,S}(\bm{u}_L,\bm{u}_R) = \avg{\rho}^{\log} \avg{v},&\\
@@ -948,9 +939,10 @@ the entropy conservative numerical fluxes given by Chandrashekar in \cite{chandr
 \end{align*}
 where the quantities $p_{\rm avg}, E_{\rm avg},  \nor{\bm{u}}^2_{\rm avg}$ are defined as
 \begin{gather*}
-p_{\rm avg} = \frac{\avg{\rho}}{2\avg{\beta}}, \qquad E_{\rm avg} = \frac{\avg{\rho}^{\log}}{2\avg{\beta}^{\log}\LRp{\gamma -1}}   + \frac{\nor{\bm{u}}^2_{\rm avg}}{2}, \\
- \nor{\bm{u}}^2_{\rm avg} = 2(\avg{u}^2 + \avg{v}^2) - \LRp{\avg{u^2} +\avg{v^2}} \nonumber.  
+p_{\rm avg} = \frac{\avg{\rho}}{2\avg{\beta}}, \qquad E_{\rm avg} = \frac{\avg{\rho}^{\log}}{2\avg{\beta}^{\log}\LRp{\gamma -1}}   + \frac{\nor{\bm{u}}^2_{\rm avg}}{2}, \qquad  \beta = \frac{\rho}{2p},\\
+ \nor{\bm{u}}^2_{\rm avg} = 2(\avg{u}^2 + \avg{v}^2) - \LRp{\avg{u^2} +\avg{v^2}} \nonumber.
 \end{gather*}
+From here on, \emph{entropy conservative} refers to a scheme which uses these entropy conservative fluxes at inter-element interfaces.  We will refer to schemes which add interface dissipation as \emph{entropy stable}.  In this work, we utilize a local Lax-Friedrichs interface dissipation.  
 
 For all convergence experiments, we compare the numerical solution to analytic solution for the isentropic vortex problem \cite{shu1998essentially} 
 \begin{align*}
@@ -959,6 +951,12 @@ u(\bm{x},t) &= 1 - \frac{\beta}{2\pi} e^{1-r(\bm{x},t)^2}(x_2-c_2), \qquad v(\bm
 \end{align*}
 Here, $u, v$ are the $x_1$ and $x_2$ velocity and $r(\bm{x},t) = \sqrt{(x_1-c_1-t)^2 + (x_2-c_2)^2}$.  The following experiments utilize $c_1 = 5, c_2 = 0$ and $\beta = 5$.  
 
+A low storage 4th order Runge-Kutta scheme \cite{carpenter1994fourth} is used for all numerical experiments.  The time-step is estimated based on formulas derived for linear advection in \cite{chan2015gpu, chan2018multi}
+\[
+dt = C \frac{h}{c_{\max} \max\LRc{\frac{1}{2}C_T, C_I}}
+\]
+where $h$ is the mesh size, $c_{\max}$ is the maximum wave-speed, $C$ is a user-defined CFL constant, and $C_T, C_I$ are constants in finite element inverse and trace inequalities.  These constants scale proportionally to $N^2$, though precise values of $C_I, C_T$ vary slightly depending on the choice of volume or surface quadrature used.  The dependence of $C_I, C_T$ on quadrature is discussed in more detail in Appendix~\ref{sec:consts}, where computed values of $C_I, C_T$ are also given.
+
 \subsection{Choices of volume and surface quadrature considered}
 \label{sec:opts}
 
@@ -966,9 +964,9 @@ On quadrilaterals, we consider volume quadratures which are tensor products of o
 
 We consider three choices of volume and surface quadrature on quadrilaterals: 
 \begin{enumerate}
-\item $(N+1)$ point Gauss quadrature, $(N+1)$ point Gauss surface quadrature,
-\item $(N+1)$ point GLL volume quadrature, $(N+1)$ point Gauss surface quadrature,
 \item $(N+1)$ point GLL volume quadrature, $(N+1)$ point GLL surface quadrature.
+\item $(N+1)$ point GLL volume quadrature, $(N+1)$ point Gauss surface quadrature,
+\item $(N+1)$ point Gauss quadrature, $(N+1)$ point Gauss surface quadrature,
 \end{enumerate}
 On triangles, we consider two cases:
 \begin{enumerate}
@@ -984,197 +982,217 @@ These choices can be combined to provide three different options on two-dimensio
 \end{enumerate}
 All three options assume a triangular volume quadrature which is exact for all polynomials of degree $2N$ or less.  
 
-All options result in similar computational costs on on triangles, but slight differences in computational cost and complexity on quadrilaterals.  On quadrilaterals, Option~\ref{opt:1} is the most computationally efficient option, as the formulation (\ref{thm:skewformcurved}) reduces to a standard entropy stable DG-SEM \cite{gassner2016split} or spectral collocation method \cite{carpenter2014entropy}.  Option~\ref{opt:2} is slightly more expensive, and requires interpolating the solution from GLL to Gauss nodes on the boundary, as well as computing two-point flux interactions between boundary GLL and Gauss nodes.  Option 3 is most involved, and results in a Gauss collocation method on quadrilaterals, as described in \cite{chan2018efficient}, and requires both interpolation and two-point flux interactions between lines of volume quadrature nodes and boundary nodes.  However, Option~\ref{opt:3} provides some advantages over Options~\ref{opt:1} and \ref{opt:2} in terms of accuracy and stable timestep restrictions.  
- 
-\subsection{Choice of quadrature and timestep restrictions}
+All three options result in similar computational costs on on triangles, but slight differences in computational cost and complexity on quadrilaterals.  On quadrilaterals, Option~\ref{opt:1} is the most computationally efficient option, as the formulation (\ref{thm:skewformcurved}) reduces to a standard entropy stable DG-SEM \cite{gassner2016split} or spectral collocation method \cite{carpenter2014entropy}.  Option 3 is most involved, resulting in a Gauss collocation method on quadrilaterals \cite{chan2018efficient}, and requires interpolation and two-point flux interactions between lines of volume quadrature nodes and boundary nodes.  %However, Option~\ref{opt:3} provides some advantages over Options~\ref{opt:1} and \ref{opt:2} in terms of accuracy and stable timestep restrictions.  
 
-We first investigate how the maximum stable timestep depends on specific choices of volume and surface quadrature.  The dependence of timestep on quadrature has been documented for tensor product elements in \cite{gassner2011comparison}, where they showed that for a high order Taylor method in time, the maximum stable timestep under  $(N+1)$-point GLL volume and surface quadratures is roughly twice as large as the maximum stable timestep when volume/surface integrals are approximated using $(N+1)$ point Gauss quadratures.  
+Option~\ref{opt:2} is slightly more expensive than Option~\ref{opt:1}, as the solution must be interpolated from GLL to Gauss nodes on the boundary.  However, this is less expensive than Option~\ref{opt:3} since volume GLL nodes include GLL boundary nodes as a subset.  This implies that the matrix $\bm{V}_f$ is sparse, such that interpolation to boundary Gauss nodes involves only nodal values at boundary GLL nodes.  Thus, Option~\ref{opt:2} requires only two-point flux computations between boundary GLL and Gauss nodes.  In contrast, the Gauss collocation scheme in Option~\ref{opt:3} computes two-point flux interactions through $\bm{f}_S$ between each boundary node and a line of volume nodes.  
 
-This discrepancy can be understood in terms of constants in finite element inverse Markov and trace inequalities.  It was shown in \cite{chan2015gpu, chan2018multi} that, for linear problems, the maximum stable time-step scales inversely with the order-dependent constants $C_M, C_T$, where
+%Using interpolation and projection matrices between boundary Gauss and GLL nodes, Option~\ref{opt:2} can also be reformulated and implemented in a way which more closely resembles a traditional DG-SEM method.  For brevity, we avoid describing the details of this implementation in this work, and instead refer the reader to the manuscript \note{ADD CITATION TO MORTAR PAPER}.  
+
+\subsection{Verification of discrete entropy conservation}
+
+We first verify that, for an entropy conservative flux and periodic domain, the spatial formulation tested against the projected entropy variables (\ref{eq:entropyrhs}) is numerically zero.  We refer to this quantity as the entropy right-hand side (RHS).   Section~\ref{sec:curvgeo} outlines conditions on quadrature accuracy which guarantee that the formulations (\ref{eq:esdgSkew}) and (\ref{eq:skewformcurved}) are discretely entropy conservative.  These numerical results confirm that these conditions are tight.  
+
+We induce a curved polynomial mapping by defining curved coordinates $\tilde{\bm{x}}$ through a mapping of Cartesian coordinates $\bm{x} \in [-1,1]^2$ 
+\begin{align*}
+\tilde{x}_1 &= x_1 + \alpha \cos\LRp{\frac{\pi}{2}x_1}\sin\LRp{\pi x_2}\\
+\tilde{x}_2 &= x_2 + \alpha \sin\LRp{{\pi}x_1}\cos\LRp{\frac{\pi}{2} x_2},
+\end{align*}
+where $\alpha = 1/8$ for the following experiments.  We vary the geometric degree of this mapping from $N_{\rm geo} = 1$ to $N_{\rm geo} = N$, where $N_{\rm geo}$ denotes the polynomial degree of the geometric mapping on a quadrilateral or triangular element.  
+
+Since Assumption~\ref{ass:quad} requires that the volume quadrature is sufficiently accurate to ensure that the mass matrix is positive-definite, we fix the volume to quadrature to be exact for degree $2N$ polynomials on triangles.  On quadrilaterals, we fix the volume quadrature to be an $(N+1)$ point GLL quadrature.  To verify the conditions given in Section~\ref{sec:curvgeo}, we vary the accuracy of the 2D surface quadrature rule.  
+
+The initial condition is taken as the $L^2$ projection of the discontinuous profile
 \[
-\int_{\hat{D}} \LRb{\Grad u}^2 \leq C_M \int_{\hat{D}} u^2, \qquad \int_{\partial \hat{D}} u^2 \leq C_T  \int_{\hat{D}} u^2, \qquad \forall u \in V^N.
+    \rho = \begin{cases}
+    3 & |x-x_0| < 2.5\\
+    2 & \text{ otherwise}
+    \end{cases}, \qquad 
+    x_0 = 7.5, \qquad u = v = 0, \qquad p = \rho^\gamma.
 \]
-Here, the integrals over $\hat{D}, \partial \hat{D}$ are computed using the same volume and surface quadrature rules used for computations.  These constants can be used to bound surface integrals which appear in DG formulations, which can in turn be used to construct bounds on the spectral radius of DG discretization matrices.  These result in the following estimate of the maximum stable timestep 
-\[
-dt \leq \frac{h}{\LRb{\lambda}_{\max} C_T}
-\]
-
-While the Markov constant $C_M$ is not affected by the choices of quadrature described in Section~\ref{sec:opts}, the constant $C_T$ depends on the choice of surface quadrature on triangular elements.  It is known that $L^2$ norm computed using GLL quadrature is weaker than the full $L^2$ norm \cite{quarteroni1994introduction,canuto2007spectral}.  Specifically, 
-\[
-\LRp{2+\frac{1}{N}}^{-1/2}\int_{\partial \hat{D}, {\rm GLL}} u^2 \leq \int_{\partial \hat{D}} u^2 \qquad \forall u \in P^{N}\LRp{[-1,1]}, 
-\]
-where the former integral is under-integrated using GLL quadrature.  In other words, when using GLL surface quadrature, the trace constant is not $C_T$ but $C_T \LRp{2+1/N}^{d/2}$.  As a result, the triangular elements in Option~\ref{opt:1} (which use GLL surface quadrature) will have a smaller maximum stable timestep than the triangular elements for Options~\ref{opt:2} or \ref{opt:3} (though the timestep restriction for hexahedral elements in Option~\ref{opt:1} remains identical to that of a standard DG-SEM scheme).
-
-For Option~\ref{opt:2}, the timestep restriction 
+We evolve the solution until final time $T = 1.0$ on a domain $[0,15]\times[-.5,.5]$ using the skew symmetric formulation with $N = 6$ and a CFL of $1/2$.  Table~\ref{table:ecrhs} shows the maximum entropy RHS over the duration of the simulation.We observe that for all $N_{\rm geo} \leq M+1$, the maximum entropy RHS is $O(10^{-14})$ and at the level of machine precision.  When $N_{\rm geo}> M+1$, we observe that the maximum entropy RHS increases .  We note that the case of $M= 5$ for the quadrilateral corresponds to the use of an $(N+1)$-point GLL rule for both volume and surface quadrature.  The strong SBP property holds for this choice of quadrature, and the skew-symmetric formulation is equivalent to the entropy stable spectral collocation or DG-SEM  methods of \cite{carpenter2014entropy, gassner2016split}.  
 
 \begin{table}
 \centering
-\subfloat[Quadrilateral elements]{
+\subfloat[Triangular mesh]{
+\begin{tabular}{c||c|c|c|c|c|c|}
+& $N_{\rm geo} = 1$ & $N_{\rm geo} = 2$ & $N_{\rm geo} = 3$ & $N_{\rm geo} = 4$ & $N_{\rm geo} = 5$ & $N_{\rm geo} = 6$ \\
+\hline\hline
+$M = 5 $ &  8.68e-14 & 9.41e-14 & 9.31e-14 & 9.10e-14& 9.92e-14 & 8.90e-14\\
+\hline
+$M = 3 $ &  1.01e-13 & 8.87e-14 & 8.79e-14 & 9.68e-14 & 0.00833 & 0.00967 \\
+\hline
+$M = 1 $ & 1.8e-13 & 1.82e-13 & 1.998 & 2.104 & 2.080 & 2.086\\
+\hline
+\end{tabular}
+}\\
+\subfloat[Quadrilateral mesh]{
+\begin{tabular}{c||c|c|c|c|c|c|}
+& $N_{\rm geo} = 1$ & $N_{\rm geo} = 2$ & $N_{\rm geo} = 3$ & $N_{\rm geo} = 4$ & $N_{\rm geo} = 5$ & $N_{\rm geo} = 6$ \\
+\hline\hline
+$M = 5$ & 1.74e-14 & 1.06e-14 & 1.31e-14 &  1.35e-14 & 1.06e-14 & 1.31e-14\\
+$M = 3$ & 2.89e-14 & 2.59e-14 &  2.83e-14 & 2.43e-14 & 3.20e-05 & 3.27e-05 \\
+\hline
+$M = 1$ &4.68e-14 & 3.77e-14 & 0.1548 &  0.1532 & 0.1517 & 0.1517\\
+\hline
+\end{tabular}
+}
+\caption{Maximum absolute value of the entropy RHS over $t\in [0,1]$ for degree $N=6$ approximations on triangular and quadrilateral meshes.  The volume quadrature for the quadrilateral mesh is taken to be $(N+1)$-point GLL quadrature.  The surface quadrature is taken to be a 1D GLL quadrature with a varying number of points, such that the rule is exact for degree $M+N$ polynomials.  }
+\label{table:ecrhs}
+\end{table}
+
+%On hybrid meshes, we observe for Options~\ref{opt:1}, \ref{opt:2} and \ref{opt:3} that the entropy RHS is $O(10^{-14})$ in double precision on both affine and non-affine meshes as well.  This indicates that the semi-discrete formulations  are indeed discretely entropy conservative.  We omit the results here for brevity, as they are qualitatively similar to the previous results for quad-only or triangle-only meshes.  %in \cite{crean2018entropy, chan2017discretely}.  
+
+
+\subsection{Hybrid quadrilateral-triangular meshes}
+
+We conclude with experiments on a mixed mesh containing both quadrilateral and triangular elements (Figure~\ref{fig:hybridmesh}).  Figure~\ref{fig:hybriderrors} shows $L^2$ errors for the isentropic vortex computed at $T = 5$ for Options~\ref{opt:1}, \ref{opt:2}, and \ref{opt:3}.  
+
+We observe that, in all cases, Option~\ref{opt:1} is less accurate than Options~\ref{opt:2} and \ref{opt:3}, and that Option~\ref{opt:3} achieves a rate of convergence close to the optimal $O(h^{N+1})$ rate, while Option~\ref{opt:1} typically achieves rates of convergence between $O(h^N)$ and $O(h^{N+1/2})$.  However, Option~\ref{opt:2} behaves differently depending on the order $N$.  For $N = 1$, Option~\ref{opt:2} achieves an accuracy similar to Option~\ref{opt:1}.  However, as $N$ increases, Option~\ref{opt:2} becomes more accurate.  For $N=4$, Option~\ref{opt:2} achieves the same level of error observed for Option~\ref{opt:3}.  This suggests that Lemma~\ref{lemma:dsbpapprox} may be sufficient but not necessary for full order accuracy.
+
+%\begin{figure}
+%\centering
+%\caption{Coarsest hybrid mesh used for convergence studies. }
+%\label{fig:hybridmesh}
+%\end{figure}
+
+\begin{figure}
+\centering
+\subfloat{\raisebox{3em}{
+\includegraphics[width=.43\textwidth]{figs/hybrid_mesh.png}
+}\label{fig:hybridmesh}}
+\subfloat[Convergence for $N = 1,2,3,4$]{
+\begin{tikzpicture}
+\begin{loglogaxis}[
+    width=.5\textwidth,
+    xlabel={Mesh size $h$},
+    ylabel={$L^2$ errors}, 
+    xmax=.75,
+    ymin=1e-5, ymax=5,
+    legend pos=south east, legend cell align=left, legend style={font=\tiny},	
+    xmajorgrids=true, ymajorgrids=true, grid style=dashed,
+    legend entries={GLL-GLL, GLL-Gauss, Gauss-Gauss} 
+]
+\pgfplotsset{
+cycle list={{blue, mark=*}, {red, dashed ,mark=square*},{black ,mark=triangle*}}
+}
+\addplot+[semithick, mark options={solid, fill=markercolor}]
+coordinates{(0.333333,2.50656)(0.166667,1.874)(0.0833333,1.05647)(0.0416667,0.438926)};
+\addplot+[semithick, mark options={solid, fill=markercolor}]
+coordinates{(0.333333,2.42633)(0.166667,1.75142)(0.0833333,0.958902)(0.0416667,0.462137)};
+\addplot+[semithick, mark options={solid, fill=markercolor}]
+coordinates{(0.333333,2.09363)(0.166667,0.981664)(0.0833333,0.264928)(0.0416667,0.0536376)};
+\addplot+[semithick, mark options={solid, fill=markercolor}]
+coordinates{(0.333333,1.36947)(0.166667,0.390076)(0.0833333,0.0623387)(0.0416667,0.011361)};
+\addplot+[semithick, mark options={solid, fill=markercolor}]
+coordinates{(0.333333,1.28187)(0.166667,0.326338)(0.0833333,0.0427717)(0.0416667,0.00402484)};
+\addplot+[semithick, mark options={solid, fill=markercolor}]
+coordinates{(0.333333,0.859449)(0.166667,0.132239)(0.0833333,0.0187852)(0.0416667,0.0026063)};
+\addplot+[semithick, mark options={solid, fill=markercolor}]
+coordinates{(0.333333,0.48545)(0.166667,0.0615538)(0.0833333,0.00665061)(0.0416667,0.000711264)};
+\addplot+[semithick, mark options={solid, fill=markercolor}]
+coordinates{(0.333333,0.446407)(0.166667,0.0477486)(0.0833333,0.00372164)(0.0416667,0.000309705)};
+\addplot+[semithick, mark options={solid, fill=markercolor}]
+coordinates{(0.333333,0.286258)(0.166667,0.0331728)(0.0833333,0.00239593)(0.0416667,0.000144346)};
+\addplot+[semithick, mark options={solid, fill=markercolor}]
+coordinates{(0.333333,0.211329)(0.166667,0.0179798)(0.0833333,0.000816429)(0.0416667, 4.583068530777824e-05)};
+\addplot+[semithick, mark options={solid, fill=markercolor}]
+coordinates{(0.333333,0.160937)(0.166667,0.0110045)(0.0833333,0.00041413)(0.0416667, 1.438708299584088e-05)};
+\addplot+[semithick, mark options={solid, fill=markercolor}]
+coordinates{(0.333333,0.13975)(0.166667,0.00977304)(0.0833333,0.00037731)(0.0416667, 1.337566281886131e-05)};
+\node at (axis cs:.5,2.5) {$N = 1$};
+\node at (axis cs:.5,1.2) {$N = 2$};
+\node at (axis cs:.5,.425) {$N = 3$};
+\node at (axis cs:.5,.185) {$N = 4$};
+\end{loglogaxis}
+\end{tikzpicture}
+}
+\caption{Coarse hybrid mesh and  $L^2$ errors for the isentropic vortex solution for Option~\ref{opt:1}, Option~\ref{opt:2}, and Option~\ref{opt:3} for $N = 1,\ldots, 4$.}
+\label{fig:hybriderrors}
+\end{figure}
+
+\section{Conclusions}
+
+We have constructed skew-symmetric ``modal'' DG formulations of nonlinear conservation laws which are entropy stable under less restrictive conditions on quadrature accuracy.  These formulations are motivated by volume and surface quadratures which arise naturally on hybrid meshes.  Because these quadrature rules do not necessarily induce operators which satisfy a ``strong'' matrix summation-by-parts property, we generalize proofs of entropy stability and free stream (constant) preservation using a weaker ``variational'' SBP property.  This variational SBP property is also used to construct explicit conditions relating between the order of accuracy and degree of accuracy of each quadrature rule.  Finally, we derive conditions between the degree of quadrature accuracy and polynomial degree of the geometric mapping under which the skew-symmetric formulation is entropy stable on curved meshes.  Numerical experiments confirm the entropy stability and high order accuracy of the proposed schemes on triangular, quadrilateral, and 2D hybrid meshes.  
+
+\section{Acknowledgments} 
+
+The author thanks David C.\ Del Rey Fernandez for helpful discussions.  Jesse Chan is supported by the National Science Foundation under awards DMS-1719818 and DMS-1712639.  
+
+\appendix
+\section{Dependence of inverse and trace constants on quadrature}
+\label{sec:consts}
+
+The maximum stable timestep under explicit time-stepping depends on specific choices of volume and surface quadrature.  The dependence of timestep on quadrature has been documented for tensor product elements in \cite{gassner2011comparison}, where they showed that for a high order Taylor method in time, the maximum stable timestep under  $(N+1)$-point GLL volume and surface quadratures is roughly twice as large as the maximum stable timestep when volume/surface integrals are approximated using $(N+1)$ point Gauss quadratures.  
+
+This discrepancy can be understood in terms of constants in finite element inverse and trace inequalities.  It was shown in \cite{chan2015gpu, chan2018multi} that, for linear problems, the maximum stable time-step scales inversely with the order-dependent constants $C_I, C_T$, where
+\begin{align}
+\int_{\hat{D}} \LRb{\Grad u}^2 \leq C_I \int_{\hat{D}} u^2, \qquad \int_{\partial \hat{D}} u^2 \leq C_T  \int_{\hat{D}} u^2, \qquad \forall u \in V^N \label{eq:consts}.
+\end{align}
+Here, the integrals over $\hat{D}, \partial \hat{D}$ are computed using the same volume and surface quadrature rules used for computations.  These constants can be used to bound surface integrals which appear in DG formulations, which can in turn be used to construct bounds on the spectral radius of DG discretization matrices.  The maximum stable timestep $dt_{\max}$ is thus inversely proportional to the inverse and trace constants
+\[
+dt_{\max} \propto C_T^{-1}, C_I^{-1}
+\]
+The constants $C_I, C_T$ depend on the choices of volume and surface quadrature used to evaluate each of the integrals in (\ref{eq:consts}).  It is known that $L^2$ norm computed using GLL quadrature is weaker than the full $L^2$ norm \cite{quarteroni1994introduction,canuto2007spectral}.  For the domain $\hat{D} = [-1,1]^d$ in $d$ dimensions, it can be shown that
+\begin{equation}
+\int_{\hat{D}} u^2 \leq \int_{\hat{D}, {\rm GLL}} u^2 \leq \LRp{2+\frac{1}{N}}^{d/2}\int_{\hat{D}} u^2 \qquad \forall u \in Q^{N},%\LRp{[-1,1]^d}, 
+\label{eq:gllineq}
+\end{equation}
+where the middle integral is under-integrated using GLL quadrature.  In other words, the discrete $L^2$ norm induced using GLL quadrature is weaker than the $L^2$ norm induced by a more accurate quadrature rule, which will be reflected in the trace and inverse constants.  
+
+\begin{table}
+\centering
+\subfloat[$C_I$, quadrilateral elements]{
  \begin{tabular}{|c || c| c| c| c| c| c| c|} 
  \hline
  N & 1 & 2& 3 & 4 & 5 & 6& 7\\
  \hline\hline
-GLL/GLL &&&&&&&\\
+Volume GLL & 2 & 12 & 37.16 & 91.67 &195.98&374.78&657.28\\
  \hline
-Gauss/Gauss &&&&&&&\\
+Volume Gauss &6&30& 85.06 & 190.12 & 369.45 &652.30 &1072.75\\
  \hline
-Gauss/GLL &&&&&&&\\
+ \end{tabular}
+ }\\
+ \subfloat[$C_T$, quadrilateral elements]{
+ \begin{tabular}{|c || c| c| c| c| c| c| c|} 
  \hline
-GLL/Gauss  &&&&&&&\\
+ N & 1 & 2& 3 & 4 & 5 & 6& 7\\
+ \hline\hline
+Volume GLL, surface GLL & 2 & 6 & 12 & 20&30&42&56\\
+% \hline
+%Volume GLL, surface Gauss  & 2 & 6 & 12 & 20&30&42&56 \\
+ \hline
+Volume Gauss, surface Gauss &6&12&20&30&42&56&72\\
+ \hline
+ \end{tabular}
+ }\\
+ \subfloat[$C_I$, triangular elements]{
+ \begin{tabular}{|c || c| c| c| c| c| c| c|} 
+ \hline
+ N & 1 & 2& 3 & 4 & 5 & 6& 7\\
+ \hline\hline
+Deg.\ $2N$ vol.\ quad.\  \cite{xiao2010quadrature} &9&39.27&100.10 &213.28 &401.16 &695.48 &1127.48\\
+ \hline
+ \end{tabular}
+ }\\
+\subfloat[$C_T$, triangular elements]{
+ \begin{tabular}{|c || c| c| c| c| c| c| c|} 
+ \hline
+ N & 1 & 2& 3 & 4 & 5 & 6& 7\\
+ \hline\hline
+Surface GLL & 12 & 16.14 & 20.52 & 28.12 &35.42 & 45.97 & 55.76\\
+ \hline
+Surface Gauss  &6&10.90&16.29& 24 & 31.88 &42.42 &52.89\\
  \hline
  \end{tabular}
  }
- \caption{Markov and trace constants for different configurations of triangular and quadrilateral elements.}
+ \caption{Inverse and trace constants for triangular and quadrilateral elements with different quadrature configurations.}
+ \label{tab:consts}
 \end{table}
 
-\note{Add experiments}
+Table~\ref{tab:consts} shows trace and inverse constants for triangular and quadrilateral elements under several different configurations of quadrature.  For quadrilateral elements at high orders, we observe that the degree $N$ inverse constants $C_I$ under Gauss quadrature are roughly as large as the degree $(N+1)$ inverse constants under (volume) GLL quadrature.  The degree $N$ trace constants $C_T$ under Gauss quadrature are exactly equal to the degree $(N+1)$ trace constants under GLL quadrature, which was proven in \cite{chan2015gpu}.  Trace constants under GLL volume and Gauss surface quadrature are also identical to trace constants computed using GLL quadrature for both volume and surface integrals, which is a consequence of the lower bound in (\ref{eq:gllineq}).  
 
+Several observations can be made based on the values of $C_I, C_T$ presented in Table~\ref{tab:consts}.  On quadrilaterals, the maximum stable time-step for a degree $N$ DG scheme using Gauss quadrature is expected to be smaller than that of a degree $N$ scheme using GLL quadrature, which matches observations in \cite{gassner2011comparison}.  Additionally, the maximum stable timestep under GLL volume quadrature and Gauss surface quadrature should be the same as the maximum stable timestep when GLL quadrature is used for both volume and surface integrals (e.g.\ DG-SEM).  For triangles, the maximum stable timestep should be smaller under surface GLL quadrature compared to surface Gauss quadrature.  However, we note that, while bounds on the maximum stable time-step can be derived based on the constants $C_I, C_T$ \cite{chan2015gpu, chan2018multi}, these bounds are not tight for upwind or dissipative fluxes \cite{krivodonova2013analysis}.  
 
-%\subsection{Quadrature accuracy and rates of convergence}
-%
-%\subsection{Triangular meshes}
-%
-%\note{Affine and curved triangles with GLL surface quadrature (under-integrated).}
-%
-%\subsection{Quadrilateral meshes}
-%
-%\note{ GLL quadrilaterals with Gauss surface quadrature.  Explain that for GLL quadratures, the decoupled SBP property doesn't hold when Gauss points are used.  }
-
-\subsection{Hybrid quadrilateral-triangular meshes}
-
-It is not immediately clear that the outward normals as defined by (\ref{eq:normals}) will be equal and opposite across interfaces shared by elements of different types.  Thus, we restrict ourselves to straight-sided meshes in this case, and will investigate the effect of curvilinear mappings on hybrid meshes in future work.  
-
-\begin{figure}
-\centering
-%\subfloat{\raisebox{2.85em}{
-\includegraphics[width=.45\textwidth]{figs/hybrid_mesh.png}
-%}}
-\caption{Coarsest hybrid mesh used for convergence studies. }
-\end{figure}
-
-\begin{figure}
-\centering
-%\subfloat{\raisebox{2.85em}{\includegraphics[width=.45\textwidth]{figs/hybrid_mesh.png}}}
-%\hspace{.25em}
-%\subfloat[Option~\ref{opt:1}]{
-\begin{tikzpicture}
-\begin{loglogaxis}[
-    width=.7\textwidth,
-    xlabel={Mesh size $h$},
-    ylabel={$L^2$ errors}, 
-    xmax=.7,
-    ymin=1e-5, ymax=5,
-    legend pos=south east, legend cell align=left, legend style={font=\tiny},	
-    xmajorgrids=true, ymajorgrids=true, grid style=dashed,
-    legend entries={Option~\ref{opt:1},Option~\ref{opt:2},Option~\ref{opt:3}}    
-]
-\pgfplotsset{
-cycle list={{blue, mark=*}, {red, dashed ,mark=triangle*}, {black, mark=square*}}
-}
-\addplot+[semithick, mark options={solid, fill=markercolor}]
-coordinates{(0.333333,2.29471)(0.166667,1.55868)(0.0833333,0.746603)(0.0416667,0.274017)};
-\addplot+[semithick, mark options={solid, fill=markercolor}]
-coordinates{(0.333333,2.39742)(0.166667,1.63628)(0.0833333,0.885414)(0.0416667,0.435973)};
-\addplot+[semithick, mark options={solid, fill=markercolor}]
-coordinates{(0.333333,1.74989)(0.166667,0.687578)(0.0833333,0.169682)(0.0416667,0.0350721)};
-\addplot+[semithick, mark options={solid, fill=markercolor}]
-coordinates{(0.333333,1.06222)(0.166667,0.267115)(0.0833333,0.0395222)(0.0416667,0.00569986)};
-\addplot+[semithick, mark options={solid, fill=markercolor}]
-coordinates{(0.333333,1.11474)(0.166667,0.265955)(0.0833333,0.0382799)(0.0416667,0.00492061)};
-\addplot+[semithick, mark options={solid, fill=markercolor}]
-coordinates{(0.333333,0.51272)(0.166667,0.0625001)(0.0833333,0.00835287)(0.0416667,0.00120101)};
-\addplot+[semithick, mark options={solid, fill=markercolor}]
-coordinates{(0.333333,0.321422)(0.166667,0.037836)(0.0833333,0.00336728)(0.0416667,0.000268691)};
-\addplot+[semithick, mark options={solid, fill=markercolor}]
-coordinates{(0.333333,0.364547)(0.166667,0.0393928)(0.0833333,0.00357584)(0.0416667,0.000392883)};
-\addplot+[semithick, mark options={solid, fill=markercolor}]
-coordinates{(0.333333,0.133053)(0.166667,0.0122055)(0.0833333,0.000730739)(0.0416667,4.37208e-05)};
-\addplot+[semithick, mark options={solid, fill=markercolor}]
-coordinates{(0.333333,0.10556)(0.166667,0.00654941)(0.0833333,0.000267376)(0.0416667,NaN)};
-\addplot+[semithick, mark options={solid, fill=markercolor}]
-coordinates{(0.333333,0.0955729)(0.166667,0.00649092)(0.0833333,0.000236043)(0.0416667,NaN)};
-\addplot+[semithick, mark options={solid, fill=markercolor}]
-coordinates{(0.333333,0.0525951)(0.166667,0.00229986)(0.0833333,6.74854e-05)(0.0416667,NaN)};
-\node at (axis cs:.45, 2.25) {$N = 1$};
-\node at (axis cs:.45,.8) {$N = 2$};
-\node at (axis cs:.45,.225) {$N = 3$};
-\node at (axis cs:.45,.075) {$N = 4$};
-\end{loglogaxis}
-\end{tikzpicture}
-
-%}
-%\subfloat[Option~\ref{opt:2}]{
-%\begin{tikzpicture}
-%\begin{loglogaxis}[
-%    width=.49\textwidth,
-%    xlabel={Mesh size $h$},
-%    ylabel={$L^2$ errors}, 
-%%    xmax=1,
-%    ymin=1e-5, ymax=5,
-%    legend pos=south east, legend cell align=left, legend style={font=\tiny},	
-%    xmajorgrids=true, ymajorgrids=true, grid style=dashed,
-%    legend entries={$N=1$, $N=2$, $N=3$, $N=4$}    
-%]
-%\pgfplotsset{
-%cycle list name=color
-%}
-%\addplot+[semithick, mark options={solid, fill=markercolor}]
-%coordinates{(0.333333,2.39742)(0.166667,1.63628)(0.0833333,0.885414)(0.0416667,0.435973)};
-%\addplot+[semithick, mark options={solid, fill=markercolor}]
-%coordinates{(0.333333,1.11474)(0.166667,0.265955)(0.0833333,0.0382799)(0.0416667,0.00492061)};
-%\addplot+[semithick, mark options={solid, fill=markercolor}]
-%coordinates{(0.333333,0.364547)(0.166667,0.0393928)(0.0833333,0.00357584)(0.0416667,0.000392883)};
-%\addplot+[semithick, mark options={solid, fill=markercolor}]
-%coordinates{(0.333333,0.0955729)(0.166667,0.00649092)(0.0833333,0.000236043)(0.0416667,NaN)};
-%\end{loglogaxis}
-%\end{tikzpicture}
-%}
-%
-%\subfloat[Option~\ref{opt:3}]{
-%\begin{tikzpicture}
-%\begin{loglogaxis}[
-%    width=.49\textwidth,
-%    xlabel={Mesh size $h$},
-%    ylabel={$L^2$ errors}, 
-%%    xmax=1,
-%    ymin=1e-5, ymax=5,
-%    legend pos=south east, legend cell align=left, legend style={font=\tiny},	
-%    xmajorgrids=true, ymajorgrids=true, grid style=dashed,
-%    legend entries={$N=1$, $N=2$, $N=3$, $N=4$}    
-%]
-%\pgfplotsset{
-%cycle list name=color
-%}
-%\addplot+[semithick, mark options={solid, fill=markercolor}]
-%coordinates{(0.333333,1.74989)(0.166667,0.687578)(0.0833333,0.169682)(0.0416667,0.0350721)};
-%\addplot+[semithick, mark options={solid, fill=markercolor}]
-%coordinates{(0.333333,0.51272)(0.166667,0.0625001)(0.0833333,0.00835287)(0.0416667,0.00120101)};
-%\addplot+[semithick, mark options={solid, fill=markercolor}]
-%coordinates{(0.333333,0.133053)(0.166667,0.0122055)(0.0833333,0.000730739)(0.0416667,4.37208e-05)};
-%\addplot+[semithick, mark options={solid, fill=markercolor}]
-%coordinates{(0.333333,0.0525951)(0.166667,0.00229986)(0.0833333,6.74854e-05)(0.0416667,NaN)};
-%\end{loglogaxis}
-%\end{tikzpicture}
-%}
-\caption{Convergence of $L^2$ errors for the isentropic vortex solution for Option~\ref{opt:1}, Option~\ref{opt:2}, and Option~\ref{opt:3} for $N = 1,\ldots, 4$.}
-\end{figure}
-
-\begin{itemize}
-\item \note{GQ-GQ hexes, tris}
-\item \note{GLL-GQ hexes, tris}
-\item \note{GQ-GLL hexes, GLL tris}
-\end{itemize}
-
-\section{Conclusions}
-
-\note{GLL quadrature really is super convenient.}
-
-\note{Need mortar to .}
-
-
-%\section{Acknowledgments} The author thanks David C.\ Del Rey Fernandez for 
-
-%\appendix
 %
 %\section{A modified Geometric terms}
 
