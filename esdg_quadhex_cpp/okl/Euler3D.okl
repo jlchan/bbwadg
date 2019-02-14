@@ -113,17 +113,17 @@ void euler3d_flux(dfloat rho_i, dfloat rho_j, dfloat u_i, dfloat u_j,
   FxS[3] = FxS[0] * wavg;
   FyS[3] = FyS[0] * wavg;
   FzS[3] = FzS[0] * wavg + pa;
-
+ 
   FxS[4] = f4aux * uavg;
   FyS[4] = f4aux * vavg;
   FzS[4] = f4aux * wavg;
-
+  
 #define testGCL 0
 #if testGCL
   // for testing GCL
-  FxS[0] = 1.0;
-  FyS[0] = 1.0;
-  FzS[0] = 1.0;	    
+  FxS[4] = 1.0;
+  FyS[4] = 1.0;
+  FzS[4] = 1.0;	    
 #endif 
 }
 
@@ -234,6 +234,8 @@ void euler3d_flux(dfloat rho_i, dfloat rho_j, dfloat u_i, dfloat u_j,
   }
 }
 
+
+// NOTE: ERROR if p_Nq3 > 256!!  E.g. need N < 6.  
 @kernel void volume(const int K,
 		    const dfloat *  vgeo,
 		    const dfloat *  vfgeo,
@@ -257,7 +259,7 @@ void euler3d_flux(dfloat rho_i, dfloat rho_j, dfloat u_i, dfloat u_j,
     // store geofacs/face values dimension by dimension
     @shared dfloat s_G[3][p_Nq1][p_Nq1][p_Nq1];
     @shared dfloat s_nJ[3][2][p_Nq1][p_Nq1];
-    @shared dfloat s_Qf[p_Nfields][2][p_Nq1][p_Nq1];            
+    @shared dfloat s_Qf[p_Nfields][2][p_Nq1][p_Nq1];
 
     // temp storage for rhs
     @exclusive dfloat r_val[p_Nfields];    
@@ -412,12 +414,11 @@ void euler3d_flux(dfloat rho_i, dfloat rho_j, dfloat u_i, dfloat u_j,
 	  idi = ii;  idj = jj;  idk = kk;
 	}else if (dim==1){ // s 
 	  idi = jj;  idj = ii;  idk = kk;
-	}else{ // t 
+	}else{ // t
 	  idi = kk;  idj = ii;  idk = jj;
 	}
-	  
+
 	for (int ff = 0; ff < 2; ++ff){
-	  const int f = 2*dim+ff; 
 
 	  const dfloat rho_j = s_Qf[0][ff][idj][idk];
 	  const dfloat inv_rho_j = 1.0/rho_j;
@@ -426,12 +427,13 @@ void euler3d_flux(dfloat rho_i, dfloat rho_j, dfloat u_i, dfloat u_j,
 	  const dfloat w_j = s_Qf[3][ff][idj][idk] * inv_rho_j;	
 	  const dfloat E_j = s_Qf[4][ff][idj][idk];
 	  const dfloat beta_j = beta(rho_j,u_j,v_j,w_j,E_j);
+	 
 	  euler3d_flux(rho_i, rho_j, u_i, u_j, v_i, v_j, w_i, w_j,
 		       E_i, E_j, beta_i, beta_j, FxS, FyS, FzS);
 
 	  // left vs right face normal vector, index	    
 	  const dfloat nsgn = (ff==0) ? -1.0 : 1.0; 
-	  const int lid = (ff==0) ? idi : p_Nq1-idi-1;  
+	  const int lid = (ff==0) ? idi : p_Nq1-idi-1; // left vs right face
 
 	  const dfloat geox = .5 * (nsgn * s_G[0][ii][jj][kk] + s_nJ[0][ff][idj][idk]);
 	  const dfloat geoy = .5 * (nsgn * s_G[1][ii][jj][kk] + s_nJ[1][ff][idj][idk]);
@@ -439,7 +441,7 @@ void euler3d_flux(dfloat rho_i, dfloat rho_j, dfloat u_i, dfloat u_j,
 	  const dfloat Lx = geox * s_Lf[lid];
 	  const dfloat Ly = geoy * s_Lf[lid];
 	  const dfloat Lz = geoz * s_Lf[lid];
-    
+	  
 	  r_val[0] += Lx * FxS[0] + Ly * FyS[0] + Lz * FzS[0];
 	  r_val[1] += Lx * FxS[1] + Ly * FyS[1] + Lz * FzS[1];
 	  r_val[2] += Lx * FxS[2] + Ly * FyS[2] + Lz * FzS[2];
@@ -513,13 +515,11 @@ void euler3d_flux(dfloat rho_i, dfloat rho_j, dfloat u_i, dfloat u_j,
 
 	  } // ff loop
 	}// i < Nq2
-	
       }// inner0
 
-      // ensure done
+      // ensure finished so we can reuse smem
       @barrier("localMemFence");
-
-      
+     
     } // for dim < 3		
 
     for (int i = 0; i < p_Nq3; ++i; @inner(0)){    

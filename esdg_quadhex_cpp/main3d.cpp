@@ -11,8 +11,8 @@ static void VortexSolution3d(MatrixXd x, MatrixXd y, MatrixXd z, double t,
   rhow.resize(x.rows(),x.cols());  
   E.resize(x.rows(),x.cols()); 
   
-  double x0 = 5.0;
-  double y0 = 5.0;
+  double x0 = 7.5;
+  double y0 = 7.5;
   MatrixXd xt = x.array() - x0;
   MatrixXd yt = y.array() - y0 - t;
 
@@ -37,8 +37,11 @@ static void VortexSolution3d(MatrixXd x, MatrixXd y, MatrixXd z, double t,
   E = p0 / gm1 * (1.0 + tmp.array().pow(GAMMA)) +
     .5 * (rhou.array().square() + rhov.array().square() + rhow.array().square())/rho.array();
 
-  //rho.fill(4.0);    rhou.fill(.1);    rhov.fill(.25);    rhow.fill(.5);    E.fill(2.0);  
-
+  // DEBUGGING
+#if 0
+  rho.fill(4.0);    rhou.fill(.1);    rhov.fill(.25);    rhow.fill(.5);    E.fill(2.0);  
+#endif
+  
 }
 
 static void TaylorGreen3d(MatrixXd x, MatrixXd y, MatrixXd z, double t,
@@ -101,14 +104,14 @@ int main(int argc, char **argv){
 
 #if VORTEX   // isentropic vortex
   printf("Running isentropic vortex\n");
-  // [0,10] x [0,20] x [0,10] for vortex  
-  HexMesh3d(mesh,K1D,2*K1D,K1D); // make Cartesian mesh
-  double Lx = 5;
-  double Ly = 10;
+  // [0,15] x [0,20] x [0,5] for vortex  
+  HexMesh3d(mesh,3*K1D,4*K1D,K1D); // make Cartesian mesh
+  double Lx = 15;
+  double Ly = 20;
   double Lz = 5;  
-  mesh->VX = (mesh->VX.array()+1.0)*Lx;
-  mesh->VY = (mesh->VY.array()+1.0)*Ly;
-  mesh->VZ = (mesh->VZ.array()+1.0)*Lz;  
+  mesh->VX = .5*(mesh->VX.array()+1.0)*Lx;
+  mesh->VY = .5*(mesh->VY.array()+1.0)*Ly;
+  mesh->VZ = .5*(mesh->VZ.array()+1.0)*Lz;  
 #endif  
 
 #if TAYLOR_GREEN   // Taylor Green on [-pi,pi]^3
@@ -129,9 +132,9 @@ int main(int argc, char **argv){
 
   // apply curved warping
 #if VORTEX
-  MatrixXd xx = PI*(x.array()-5.0)/5.0;
-  MatrixXd yy = 2.0*PI*(y.array()-10.0)/10.0;
-  MatrixXd zz = PI*(z.array()-5.0)/5.0;
+  MatrixXd xx = PI*(x.array()-.5*Lx)/(.5*Lx);
+  MatrixXd yy = 2.0*PI*(y.array()-.5*Ly)/(.5*Ly);
+  MatrixXd zz = PI*(z.array()-(.5*Lz))/(.5*Lz);
   MatrixXd d = xx.array().sin()*yy.array().sin()*zz.array().sin();
   MatrixXd dx = d;
   MatrixXd dy = d;
@@ -189,8 +192,8 @@ int main(int argc, char **argv){
   
   //App *app = (App*) calloc(1, sizeof(App));
   App *app = new App;
-  //app->device.setup("mode: 'Serial'");
-  app->device.setup("mode: 'CUDA', device_id: 0");
+  app->device.setup("mode: 'Serial'");
+  //app->device.setup("mode: 'CUDA', device_id: 0");
   //app->device.setup("mode      : 'CUDA', "
   //		    "device_id : 0");
   
@@ -273,7 +276,6 @@ int main(int argc, char **argv){
   setOccaArray(app, V1D, o_V1D);
   setOccaArray(app, wJq, o_wJq);
   setOccaArray(app, KE, o_KE);
-
 #endif
  
   //app->eval_surface = app->device.buildKernel("okl/test3D.okl","eval_surface",app->props);return 0;
@@ -286,22 +288,27 @@ int main(int argc, char **argv){
   app->eval_surface = app->device.buildKernel(path.c_str(),"eval_surface",app->props);
   occa::kernel compute_aux = app->device.buildKernel(path.c_str(),"compute_aux",app->props);
 
+  // DEBUGGING
 #if 0
   app->eval_surface(K, app->o_Vf1D,app->o_Q, app->o_Qf);
-  //  MatrixXd Qf(Nfields*NfpNfaces,K);
-  //  getOccaArray(app,app->o_Qf,Qf);
-  //  MatrixXd rhof = Qf.middleRows(0,NfpNfaces);
-  //  cout << "rhof = " << rhof << endl;
+  /* 
+     MatrixXd Qf(Nfields*NfpNfaces,K);
+     getOccaArray(app,app->o_Qf,Qf);
+     MatrixXd rhof = Qf.middleRows(0,NfpNfaces);
+     cout << "rhof = " << rhof << endl;
+     return 0;
+  */
   
-  // test rhs eval
+  // test rhs eval  
   app->volume(K, app->o_vgeo, app->o_vfgeo,app->o_fgeo,
 	      app->o_D1D, app->o_Vf1D, app->o_Lf1D,
 	      app->o_Q, app->o_Qf,
-	      app->o_rhs, app->o_rhsf);
-
+	      app->o_rhs, app->o_rhsf);  
   getOccaArray(app,app->o_rhs,Q);
   MatrixXd rhs1  = Q.middleRows(0,Np);  
   //  cout << "vol only rhs = " << endl << rhs1 << endl;
+
+  return 0;
   
   app->surface(K, app->o_vgeo, app->o_fgeo, app->o_mapPq,
 	       app->o_Lf1D, app->o_Qf, app->o_rhsf,

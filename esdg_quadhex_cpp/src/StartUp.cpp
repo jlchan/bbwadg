@@ -1081,7 +1081,6 @@ void BuildFaceNodeMaps(Mesh *mesh, MatrixXd xf, MatrixXd yf, MatrixXd zf, Matrix
           mapP(i + f1*Nfpts,k1) = i + f1*Nfpts + xf.rows()*k1;
         }
       }else{
-
 	//printf("Looking for matches on elem %d, face %d to elem %d, face %d\n",k1,f1,k2,f2);
 
         MatrixXd xM(Nfpts,3);
