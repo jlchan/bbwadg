@@ -96,8 +96,8 @@ int main(int argc, char **argv){
   
   Mesh *mesh = (Mesh*) calloc(1, sizeof(Mesh));  
 
-#define VORTEX 0
-#define TAYLOR_GREEN 1
+#define VORTEX 1
+#define TAYLOR_GREEN 0
 
 #if VORTEX   // isentropic vortex
   printf("Running isentropic vortex\n");
@@ -227,7 +227,10 @@ int main(int argc, char **argv){
     rhow,
     E;
   setOccaArray(app, Q, app->o_Q); 
-
+#if VORTEX
+  app->props["defines/p_ceil2Nq"] = 1; // dummy var
+#endif
+  
 #if TAYLOR_GREEN
   // for KE computation
   int log2Nq = (int)ceil(log2(Np));
@@ -320,7 +323,7 @@ int main(int argc, char **argv){
   int Nsteps = (int) ceil(FinalTime/dt);
   dt = FinalTime/(double) Nsteps;
 
-  printf("dt = %f, FinalTime = %f, Nsteps = %d\n",dt,FinalTime,Nsteps);  
+  printf("h = %f, CN = %f, CFL = %f, dt = %f, FinalTime = %f, Nsteps = %d\n",h,CN,CFL,dt,FinalTime,Nsteps);  
 
   // interp to surface to start
   app->eval_surface(K, app->o_Vf1D,app->o_Q, app->o_Qf);
@@ -411,7 +414,7 @@ int main(int argc, char **argv){
 	++sk;
       }
     }
-  } 
+  }
   MatrixXd Vqtmp = Vandermonde3DHex(N,rq2,sq2,tq2);
   MatrixXd VqN = Vandermonde3DHex(N,mesh->rq,mesh->sq,mesh->tq);  
   MatrixXd Vq2 = mrdivide(Vqtmp,VqN);
