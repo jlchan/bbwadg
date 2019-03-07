@@ -57,7 +57,8 @@ dfloat logmean(dfloat aL, dfloat aR)
   const dfloat f = (xi - ONE) / (xi + ONE);
   const dfloat u = f * f;
   const dfloat u2 = u * u;
-
+  //return xi;
+  
   dfloat F = HALF * LOGDF(xi) / f;
   if (fabs(u) < TOL)
     {
@@ -96,6 +97,8 @@ void euler2d_flux(dfloat rho_i, dfloat rho_j, dfloat u_i, dfloat u_j,
                   dfloat &FyS4)
 {
 
+
+#if 1
   const dfloat rholog = logmean(rho_i, rho_j);
   const dfloat rhoavg = avg(rho_i, rho_j);
   const dfloat uavg = avg(u_i, u_j);
@@ -109,7 +112,7 @@ void euler2d_flux(dfloat rho_i, dfloat rho_j, dfloat u_i, dfloat u_j,
     rholog / (TWO * (p_gamma - ONE) * logmean(beta_i, beta_j)) + pa +
     HALF * rholog * vnavg;
 
-  FxS1 = rholog * uavg;
+  FxS1 = rholog * uavg;  
   FyS1 = rholog * vavg;
   FxS2 = FxS1 * uavg + pa;
   FyS2 = FyS1 * uavg;
@@ -117,7 +120,39 @@ void euler2d_flux(dfloat rho_i, dfloat rho_j, dfloat u_i, dfloat u_j,
   FyS3 = FyS1 * vavg + pa;
   FxS4 = f4aux * uavg;
   FyS4 = f4aux * vavg;
+#endif  
+}
+
+dfloat testlog(dfloat aL, dfloat aR)
+{
+  const dfloat xi = aL / aR;
+  const dfloat f = (xi - ONE) / (xi + ONE);
+  const dfloat u = f * f;
+  const dfloat u2 = u * u;
+
+  //  dfloat F = HALF * LOGDF(xi) / f;
+  return LOGDF(xi);
+  //return HALF * (aL + aR) / F;
+
+}
+
+@kernel void test(const int K, dfloat *val){
+
+  for (int e = 0; e < K; ++e; @outer(0)){
+    for (int i = 0; i < 10; ++i; @inner(0)){
+      
+      const dfloat rho_i = 1.0;
+      const dfloat rho_j = 1.1;
+      dfloat FxS1;
+      //FxS1 = logmean(rho_i, rho_j);
+      FxS1 = testlog(rho_i,rho_j); 
+      
+      val[0] = FxS1;
+      
+    }
+  }
   
+
 }
 
 // initialize surface values from interior
@@ -150,9 +185,9 @@ void euler2d_flux(dfloat rho_i, dfloat rho_j, dfloat u_i, dfloat u_j,
 	dfloat V1,V2,V3,V4;
 	VU(rho, rhou, rhov, E, V1, V2, V3, V4);
 
-	//	if (e==0){
-	//	  printf("V1-V4(%d) = %f, %f, %f, %f\n",i,V1,V2,V3,V4);
-	//	}
+	//if (e==0){
+	//  printf("V1-V4(%d) = %f, %f, %f, %f\n",i,V1,V2,V3,V4);
+	//}
 	s_V[0][ii][jj] = V1;
 	s_V[1][ii][jj] = V2;
 	s_V[2][ii][jj] = V3;
@@ -300,6 +335,7 @@ void euler2d_flux(dfloat rho_i, dfloat rho_j, dfloat u_i, dfloat u_j,
     for (int i = 0; i < p_T; ++i; @inner(0)){
 
       if (i < p_Nq2){
+	
 	const int jj = i % p_Nq1; // y index
 	const int ii = i / p_Nq1; // x index
 
@@ -331,7 +367,7 @@ void euler2d_flux(dfloat rho_i, dfloat rho_j, dfloat u_i, dfloat u_j,
 	  const dfloat beta_j = beta(rho_j,u_j,v_j,E_j);
 	  dfloat FxS1,FxS2,FxS3,FxS4,FyS1,FyS2,FyS3,FyS4;
 	  euler2d_flux(rho_i, rho_j, u_i, u_j, v_i, v_j, E_i, E_j, beta_i, beta_j,
-		       FxS1, FyS1, FxS2, FyS2, FxS3, FyS3, FxS4, FyS4);
+	  	       FxS1, FyS1, FxS2, FyS2, FxS3, FyS3, FxS4, FyS4);
 		
 	  const dfloat Dr = s_D[ii][j]; // ii,jj = which line of nodes
 
@@ -343,8 +379,7 @@ void euler2d_flux(dfloat rho_i, dfloat rho_j, dfloat u_i, dfloat u_j,
 	  val[2] += Dx * FxS3 + Dy * FyS3;
 	  val[3] += Dx * FxS4 + Dy * FyS4;
 	}
-	
-	
+
 	// diff in s direction
 	const dfloat sxi = s_G[2][ii][jj];
 	const dfloat syi = s_G[3][ii][jj];
@@ -372,7 +407,6 @@ void euler2d_flux(dfloat rho_i, dfloat rho_j, dfloat u_i, dfloat u_j,
 	  val[2] += Dx * FxS3 + Dy * FyS3;
 	  val[3] += Dx * FxS4 + Dy * FyS4;	       
 	}
-
 
 	// lift fluxes: 4 face contribs per node (remember +/- of nhat)
 	dfloat FxS1LR[2],FxS2LR[2],FxS3LR[2],FxS4LR[2];
@@ -402,17 +436,19 @@ void euler2d_flux(dfloat rho_i, dfloat rho_j, dfloat u_i, dfloat u_j,
 	dfloat GxR = HALF*(rxi + s_Gf[0][fLR[1]][surf_id]);
 	dfloat GyL = HALF*(ryi + s_Gf[1][fLR[0]][surf_id]);
 	dfloat GyR = HALF*(ryi + s_Gf[1][fLR[1]][surf_id]);
-	
+
 	dfloat LxL = -GxL * s_Lf[vol_id]; // output = nodes in r direction
 	dfloat LyL = -GyL * s_Lf[vol_id];      
 	dfloat LxR =  GxR * s_Lf[p_Nq1 - vol_id - 1];
 	dfloat LyR =  GyR * s_Lf[p_Nq1 - vol_id - 1];
+
 	val[0] +=  LxL * FxS1LR[0] + LyL * FyS1LR[0] + LxR * FxS1LR[1] + LyR * FyS1LR[1];
 	val[1] +=  LxL * FxS2LR[0] + LyL * FyS2LR[0] + LxR * FxS2LR[1] + LyR * FyS2LR[1];
 	val[2] +=  LxL * FxS3LR[0] + LyL * FyS3LR[0] + LxR * FxS3LR[1] + LyR * FyS3LR[1];
 	val[3] +=  LxL * FxS4LR[0] + LyL * FyS4LR[0] + LxR * FxS4LR[1] + LyR * FyS4LR[1];
 	
 	// ============ accum s = +/- 1 faces
+
 	fLR[0] = 0;  fLR[1] = 2;
 	vol_id = jj;  surf_id = ii; // "output" (vol) index, "input" (face) index       
 	for (int ff = 0; ff < 2; ++ff){
@@ -427,6 +463,7 @@ void euler2d_flux(dfloat rho_i, dfloat rho_j, dfloat u_i, dfloat u_j,
 		       FxS1LR[ff],FyS1LR[ff],FxS2LR[ff],FyS2LR[ff],
 		       FxS3LR[ff],FyS3LR[ff],FxS4LR[ff],FyS4LR[ff]);	
 	}
+
 	// geometric terms      
 	GxL = HALF*(sxi + s_Gf[2][fLR[0]][surf_id]);
 	GxR = HALF*(sxi + s_Gf[2][fLR[1]][surf_id]);
@@ -441,20 +478,17 @@ void euler2d_flux(dfloat rho_i, dfloat rho_j, dfloat u_i, dfloat u_j,
 	val[1] +=  LxL * FxS2LR[0] + LyL * FyS2LR[0] + LxR * FxS2LR[1] + LyR * FyS2LR[1];
 	val[2] +=  LxL * FxS3LR[0] + LyL * FyS3LR[0] + LxR * FxS3LR[1] + LyR * FyS3LR[1];
 	val[3] +=  LxL * FxS4LR[0] + LyL * FyS4LR[0] + LxR * FxS4LR[1] + LyR * FyS4LR[1];
-
 	//printf("rhs vol = %f, %f, %f, %f\n", val[0], val[1], val[2], val[3]);
-	
+
 	int id = i + e*p_Nq2*p_Nfields;
 	rhs[id] = val[0]; id += p_Nq2;
 	rhs[id] = val[1]; id += p_Nq2;
 	rhs[id] = val[2]; id += p_Nq2;
 	rhs[id] = val[3];
 
-	
       }// i < Np
-      
-      if (i < p_NfpNfaces){
 
+      if (i < p_NfpNfaces){
 	const int fid = i % p_Nfp;
 	const int f = i / p_Nfp;
 
@@ -525,10 +559,12 @@ void euler2d_flux(dfloat rho_i, dfloat rho_j, dfloat u_i, dfloat u_j,
 	rhsf[id] = -val[0]; id += p_NfpNfaces;
 	rhsf[id] = -val[1]; id += p_NfpNfaces;
 	rhsf[id] = -val[2]; id += p_NfpNfaces;
-	rhsf[id] = -val[3]; 	
-      }      
-      
+	rhsf[id] = -val[3];
+
+      }
+
     }// inner0
+
 
   }
 }

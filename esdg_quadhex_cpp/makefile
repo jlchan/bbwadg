@@ -6,7 +6,8 @@ else
 endif
 
 paths += -I./include 
-flags += -DOCCA_GL_ENABLED=1 -g 
+#flags += -DOCCA_GL_ENABLED=1 -g
+flags += -DOCCA_GL_ENABLED=1 -O3
 
 ifeq ($(OS),OSX)
 	linkerFlags += -framework OpenGL -framework GLUT

@@ -132,25 +132,33 @@ int main(int argc, char **argv){
 
   // apply curved warping
 #if VORTEX
-  MatrixXd xx = PI*(x.array()-.5*Lx)/(.5*Lx);
-  MatrixXd yy = 2.0*PI*(y.array()-.5*Ly)/(.5*Ly);
-  MatrixXd zz = PI*(z.array()-(.5*Lz))/(.5*Lz);
-  MatrixXd d = xx.array().sin()*yy.array().sin()*zz.array().sin();
-  MatrixXd dx = d;
-  MatrixXd dy = d;
-  MatrixXd dz = d;      
+  MatrixXd xx = (x.array()-.5*Lx)/Lx;
+  MatrixXd yy = (y.array()-.5*Ly)/Ly;
+  MatrixXd zz = (z.array()-.5*Lz)/Lz;
+  MatrixXd dy = (3.*PI*xx).array().cos() * (PI*yy).array().cos() * (PI*zz).array().cos();
+  y = y + a*Ly*dy;
+  
+  yy = (y.array()-.5*Ly)/Ly;    
+  MatrixXd dx = (PI*xx).array().cos() * (4.*PI*yy).array().sin() * (PI*zz).array().cos();
+  x = x + a*Lx*dx;
+
+  xx = (x.array()-.5*Lx)/Lx;
+  MatrixXd dz = (3.*PI*xx).array().cos() * (4.*PI*yy).array().sin() * (PI*zz).array().cos();
+  //MatrixXd dz = (PI*xx).array().cos() * (2.*PI*yy).array().sin() * (PI*zz).array().cos();
+  z = z + a*Lz*dz;  
 #endif
 
 #if TAYLOR_GREEN
   MatrixXd d = x.array().sin()*y.array().sin()*z.array().sin();
   MatrixXd dx = d;
   MatrixXd dy = d;
-  MatrixXd dz = d;      
-#endif
-  
+  MatrixXd dz = d;
   x = x + a*dx;
   y = y + a*dy;
   z = z + a*dz;
+  
+#endif
+  
   mesh->x = x;
   mesh->y = y;
   mesh->z = z;
@@ -192,8 +200,8 @@ int main(int argc, char **argv){
   
   //App *app = (App*) calloc(1, sizeof(App));
   App *app = new App;
-  app->device.setup("mode: 'Serial'");
-  //app->device.setup("mode: 'CUDA', device_id: 0");
+  //app->device.setup("mode: 'Serial'");
+  app->device.setup("mode: 'CUDA', device_id: 0");
   //app->device.setup("mode      : 'CUDA', "
   //		    "device_id : 0");
   

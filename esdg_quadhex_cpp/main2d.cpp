@@ -21,7 +21,7 @@ static void VortexSolution2d(MatrixXd x,MatrixXd y,double t,
   rho = rho.array().pow(1.0/(GAMMA-1.0));
   p   = rho.array().pow(GAMMA);
 
-  /*  
+  /*
   rho.fill(2.0);
   u.fill(.1);
   v.fill(.2);
@@ -197,21 +197,25 @@ int main(int argc, char **argv){
   
   App *app = new App;
   //app->device.setup("mode: 'Serial'");
-  app->device.setup("mode: 'CUDA', device_id: 0");  
-  setupOccaMesh2d(mesh,app); // build mesh geofacs
+  app->device.setup("mode: 'CUDA', device_id: 0");
+  //  app->props["compiler_flags"] = "-ftz=false -prec-div=true -prec-sqrt=true -arch=sm_30";
+  app->props["compiler_flags"] = "-arch=sm_30";
   
+  setupOccaMesh2d(mesh,app); // build mesh geofacs
+
+
   app->props["defines/p_gamma"] = GAMMA;
   app->props["defines/p_Nfields"] = Nfields;
   if (sizeof(dfloat)==4){
     app->props["defines/p_tau"] = 1.f;
   }else{
-    app->props["defines/p_tau"] = 0.0;
-    printf("setting p_tau = 0.0\n");
+    app->props["defines/p_tau"] = 1.0;
+    //printf("setting p_tau = 0.0\n");
   }
 
   MatrixXi bcFlag(xf.rows(),xf.cols());
   bcFlag.fill(0);
-#if 1 // specify wall BCs - MAY NOT WORK FOR GLL (CORNER PTS)
+#if SHOCK_VORTEX // specify wall BCs - MAY NOT WORK FOR GLL (CORNER PTS)
   double ymax = yf.maxCoeff();
   double ymin = yf.minCoeff();    
   for (int i = 0; i < xf.rows()*xf.cols(); ++i){
@@ -231,7 +235,7 @@ int main(int argc, char **argv){
   app->volume = app->device.buildKernel(path.c_str(),"volume",app->props);
   app->surface = app->device.buildKernel(path.c_str(),"surface",app->props);
   app->update = app->device.buildKernel(path.c_str(),"update",app->props);
-  app->eval_surface = app->device.buildKernel(path.c_str(),"eval_surface",app->props);  
+  app->eval_surface = app->device.buildKernel(path.c_str(),"eval_surface",app->props);
 
   // set initial condition
   MatrixXd xq = mesh->Vq*mesh->x;
@@ -276,6 +280,9 @@ int main(int argc, char **argv){
 
   setOccaArray(app, Q, app->o_Q);
 
+  //  occa::kernel test = app->device.buildKernel(path.c_str(),"test",app->props);
+  //  test(10,app->o_Q);   return 0;
+  
 
   // ============== run RK solver ==================
 
