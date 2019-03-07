@@ -1,4 +1,4 @@
-\pdfoutput=1
+%\pdfoutput=1
 
 \documentclass{svjour3}                     % onecolumn (standard format)
 %\documentclass[smallcondensed]{svjour3}     % onecolumn (ditto)
@@ -32,7 +32,8 @@
 \usepackage{subfig}
 \usepackage{pgfplots}
 \usepackage{pgfplotstable}
-\usepackage{slopetri} % my own package for drawing triangle slopes
+\definecolor{markercolor}{RGB}{124.9, 255, 160.65}
+%\usepackage{slopetri} % my own package for drawing triangle slopes
 
 \renewcommand{\hat}{\widehat}
 \renewcommand{\tilde}{\widetilde}
@@ -1009,7 +1010,7 @@ The initial condition is taken as the $L^2$ projection of the discontinuous prof
     \end{cases}, \qquad 
     x_0 = 7.5, \qquad u = v = 0, \qquad p = \rho^\gamma.
 \]
-We evolve the solution until final time $T = 1.0$ on a domain $[0,15]\times[-.5,.5]$ using the skew symmetric formulation with $N = 6$ and a CFL of $1/2$.  Table~\ref{table:ecrhs} shows the maximum entropy RHS over the duration of the simulation.We observe that for all $N_{\rm geo} \leq M+1$, the maximum entropy RHS is $O(10^{-14})$ and at the level of machine precision.  When $N_{\rm geo}> M+1$, we observe that the maximum entropy RHS increases .  We note that the case of $M= 5$ for the quadrilateral corresponds to the use of an $(N+1)$-point GLL rule for both volume and surface quadrature.  The strong SBP property holds for this choice of quadrature, and the skew-symmetric formulation is equivalent to the entropy stable spectral collocation or DG-SEM  methods of \cite{carpenter2014entropy, gassner2016split}.  
+We evolve the solution until final time $T = 1.0$ on a domain $[0,15]\times[-.5,.5]$ using the skew symmetric formulation with $N = 6$ and a CFL of $1/2$.  Table~\ref{table:ecrhs} shows the maximum entropy RHS over the duration of the simulation. We observe that for all $N_{\rm geo} \leq M+1$, the maximum entropy RHS is $O(10^{-14})$ and at the level of machine precision.  When $N_{\rm geo}> M+1$, we observe that the maximum entropy RHS increases .  We note that the case of $M= 5$ for the quadrilateral corresponds to the use of an $(N+1)$-point GLL rule for both volume and surface quadrature.  The strong SBP property holds for this choice of quadrature, and the skew-symmetric formulation is equivalent to the entropy stable spectral collocation or DG-SEM  methods of \cite{carpenter2014entropy, gassner2016split}.  
 
 \begin{table}
 \centering

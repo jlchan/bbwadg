@@ -1,0 +1,117 @@
+\pdfoutput=1
+
+\documentclass{article}
+\usepackage{fullpage}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{bm}
+%\usepackage{bbm}
+%\usepackage{tikz}
+%\usepackage[normalem]{ulem}
+%\usepackage{hhline}
+%\usepackage{graphicx}
+%\usepackage{subfig}
+\usepackage{color}
+%\usepackage{doi}
+
+%\renewcommand{\topfraction}{0.85}
+%\renewcommand{\textfraction}{0.1}
+%\renewcommand{\floatpagefraction}{0.75}
+%
+%
+%\newcommand{\bbm}[1]{\mathbbm{#1}}
+%\newcommand{\bs}[1]{\boldsymbol{#1}}
+%\newcommand{\equaldef}{\stackrel{\mathrm{def}}{=}}
+%
+%
+%\newcommand{\mb}[1]{\mathbf{#1}}
+%\newcommand{\mbb}[1]{\mathbb{#1}}
+%\newcommand{\mc}[1]{\mathcal{#1}}
+%
+%\renewcommand{\hat}{\widehat}
+%\renewcommand{\tilde}{\widetilde}
+\newcommand{\td}[2]{\frac{{\rm d}#1}{{\rm d}{\rm #2}}}
+\newcommand{\pd}[2]{\frac{\partial#1}{\partial#2}}
+%\newcommand{\pdn}[3]{\frac{\partial^{#3}#1}{\partial#2^{#3}}}
+%\newcommand{\snor}[1]{\left| #1 \right|}
+%\newcommand{\nor}[1]{\left\| #1 \right\|}
+\newcommand{\LRp}[1]{\left( #1 \right)}
+\newcommand{\LRs}[1]{\left[ #1 \right]}
+%\newcommand{\LRa}[1]{\left\langle #1 \right\rangle}
+%\newcommand{\LRb}[1]{\left| #1 \right|}
+%\newcommand{\LRc}[1]{\left\{ #1 \right\}}
+%\newcommand{\LRceil}[1]{\left\lceil #1 \right\rceil}
+%\newcommand{\LRl}[1]{\left. \LRp{#1} \right|}
+%\newcommand{\jump}[1] {\ensuremath{\llbracket#1\rrbracket}}
+%\newcommand{\avg}[1] {\ensuremath{\LRc{\!\{#1\}\!}}}
+%\newcommand{\Grad} {\ensuremath{\nabla}}
+%\renewcommand{\d}{\partial}
+\newcommand{\diag}[1]{{\rm diag}\LRp{#1}}
+
+\newcommand{\note}[1]{{\color{blue}{#1}}}
+\newcommand{\bnote}[1]{{\color{blue}{#1}}}
+\newcommand{\rnote}[1]{{\color{red}{#1}}}
+
+
+\newcommand{\LK}{L^2\LRp{D^k}}
+\newcommand{\LdK}{L^2\LRp{\partial D^k}}
+\newcommand{\Dhat}{\widehat{D}}
+\newcommand{\Lhat}{L^2\LRp{\Dhat}}
+
+
+\newcommand*\diff[1]{\mathop{}\!{\mathrm{d}#1}} % d in integrand
+
+\begin{document}
+
+%\maketitle
+
+\note{We thank both Reviewers 1 and 2 for their feedback.  We describe steps taken to address reviewer comments and suggestions, which are described in the following response.  Revisions in the manuscript are also colored for ease of identification.  We hope these revisions improve the readability of this paper and its suitability for the audience of SISC.}
+
+\section{Reviewer 1}
+
+\begin{itemize}
+\item The paper is well-written for the most part (authors should adjust a few grammatical typos throughout their paper), and is interesting.  It would be good if the authors would add a few more numerical tests with model problems in domains with complex geometry where curved meshes are actually needed (at this point, authors considered either rectangular or parallelepiped domain).
+
+\note{blah}
+\end{itemize}
+
+\section{Reviewer 2}
+
+\begin{itemize}
+\item Page 7, eqn (3.8): why this equation holds? Can you add some comment here?
+
+\note{Certainly.  We've added a continuous description of the equation, and have interpreted the matrix version as a quadrature approximation of a specific variational problem for the approximation of the derivative.  This variational problem includes boundary correction terms, which correspond to the matrix ``strong form'' of (3.8).}
+
+\item Page 10, Theorem 3.4: In the proof, this leads to a extra coefficient 1/2 in front of the second term of the equation below (3.14).
+
+\note{We thank the reviewer for catching this, and have fixed this in the revised version.}
+
+\item In Theorem 3.4, it presents an semi-discrete entropy conservation for a two-element mesh. How to extend this to general case with multiple elements?
+
+\note{The block structure of the two-element mesh can be extended to multiple elements.  We have added a discussion involving a three-element mesh, which illustrates the procedure without introducing too much additional notation.  The approach simply requires a global SBP operator over the entire mesh, which is constructed in a block fashion.  We hope this revision makes the extension to multiple elements more clear. }
+
+\item In the statement, boundary condition is not considered. How to utilize this theorem to solve the initial-boundary value problem numerically?
+
+\note{We have added a short discussion describing how to impose boundary conditions in a weak fashion through a boundary numerical flux.  If the boundary numerical flux satisfies an entropy stability property, then the discretization with boundary conditions is also entropy stable.}
+
+\item A pseudo code showing how to solve 1D conservation law would be very helpful.
+
+\note{We have added a description of how to numerically solve the proposed system of ODEs using explicit time-stepping.  With the exception of the evaluation of the nonlinear term, the procedure is relatively standard for time-explicit DG formulations. }
+
+\item Page 19, Section 5.3: this problem is solved on the triangular mesh. How to generalized the proposed scheme from quadrilateral and hexahedral meshes to triangular mesh?
+
+\note{We apologize for the confusion.  Here, ``triangulated'' simply means ``meshed''.  The meshes considered are all quadrilateral and hexahedral, with triangular and simplicial meshes treated in a separate work.}
+
+\item Page 4, line 152: Does the matrix size of $V_f$ equal to $(N+1) \times 2$ or $2 \times (N+1)$?
+
+\note{We thank the reviewer for catching this - it is indeed $2\times (N+1)$.}
+
+\item Page 14. line 495: $\bm{u} = (\bm{u}_1, . . . , \bm{u}_d)$. Is $\bm{u}_i$ a vector or a scalar?  
+
+\note{We apologize for the confusion.  $\bm{u}_i$ should be a scalar, and we have edited the paper to clear this up.  We are no longer using bold to denote velocity $u_i$.}
+
+\item Page 15, line 518-522: $u$ and $v$ here represent the velocity in $x$ and $y$-direction, respectively. These conflict with the notations in previous sections, where, $u$ is the conservative variable and $v$ is the entropy variable. Definition of $\{\{\cdot\}\}$ should be added here, too.
+
+\note{We have added definitions of the average and logarithmic mean.  We have also clarified the notation that $u,v$ denote $x,y$ velocity, while bolded $\bm{u},\bm{v}$ denote conservative and entropy variables.}
+\end{itemize}
+
+\end{document}
