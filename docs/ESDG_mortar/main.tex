@@ -319,7 +319,7 @@ legend style={font=\small}
 
 %\date{}
 \author{Jesse Chan, David C.\ Del Rey Fernandez}
-\title{Mortar-based entropy stable discontinuous Galerkin methods}
+\title{Mortar-based entropy stable modal discontinuous Galerkin methods}
 \graphicspath{{./figs/}}
 
 
@@ -327,30 +327,63 @@ legend style={font=\small}
 
 \maketitle
 
+\begin{abstract}
+Entropy stable schemes provide a semi-discrete statement of stability for nonlinear systems of conservation laws.  Entropy stable nodal discontinuous Galerkin (DG) methods have been constructed using entropy conservative finite volume fluxes \cite{tadmor1987numerical} and a summation-by-parts (SBP) finite difference framework \cite{gassner2013skew, carpenter2014entropy, gassner2016split, chen2017entropy, crean2018entropy, chan2017discretely, chan2018efficient}.  Such DG schemes require evaluating entropy conservative numerical fluxes between combinations of volume and surface quadrature nodes.  
+\end{abstract}
+
 \section{Introduction}
 
 \note{Boilerplate introduction on high order + stability}
 
+The work presented here builds upon the skew-symmetric formulation introduced in \cite{chan2019skew}, but focuses instead on geometrically non-conforming meshes of tensor product elements.  Such meshes may arise when applying domain decomposition techniques to a complex geometry (e.g. meshing sub-domains independently)  \cite{maday1989non, bernardi1993domain} or performing local mesh refinement \cite{staten2010hexahedral}.  Entropy stable GLL collocation schemes have been constructed on non-conforming meshes in \cite{friedrich2017entropy} using special SBP projection operators.  We study an alternative mortar-based approach to non-conforming interfaces, which differs from \cite{friedrich2017entropy} in that it is applicable to a broader class of ESDG methods (such as Gauss collocation schemes \cite{chan2018efficient}).  The proposed approach will also reduce costs for both GLL and Gauss collocation on 3D non-conforming hexahedral meshes.  
+
+\section{Entropy stable modal discontinuous Galerkin formulations}
+
+The primary complication of non-conforming meshes is the presence of hanging nodes or T-junctions, which arise where one element shares a ``non-conforming'' face with two or more neighboring elements.  These are handled naturally by DG discretizations through the use of composite quadrature rules on non-conforming faces \cite{bui2012analysis, Kozdon2018}, which the proposed approach will utilize.  
+
+The skew-symmetric formulation (\ref{eq:esdgSkew}) can be stably applied to non-conforming meshes using composite quadratures, but results in high computational costs.  These costs are due to the structure of matrices present in the formulation (\ref{eq:esdgSkew}), which can be rewritten in block matrix form as
+\begin{equation}
+\bm{M}\td{\bm{u}_h}{t} + \sum_{i=1}^d\LRp{\begin{bmatrix} \bm{V}_q \\ \bm{V}_f \end{bmatrix}^T
+\LRp{\begin{bmatrix}
+\bm{Q}^i-\LRp{\bm{Q}^i}^T & \bm{E}^T\bm{B}^i\\
+-\bm{B}^i\bm{E} & \bm{0}
+\end{bmatrix} \circ \bm{F}^i_S}\bm{1} + \bm{V}_f^T\bm{B}^i\bm{f}_i^*} = 0.  
+\label{eq:esdgSkewBlock}
+\end{equation}
+The matrix $\bm{F}^i_S$ is formed by computing $\LRp{\bm{F}^i_S}_{jk} = \bm{f}^i_S\LRp{\tilde{\bm{u}}_j,\tilde{\bm{u}}_k}$ on the fly.  Each entry requires evaluating the entropy conservative dyadic flux $\bm{f}^i_S$, resulting in a large number of floating point operations \cite{wintermeyer2018entropy}.  However, due to the Hadamard product in (\ref{eq:esdgSkewBlock}), dyadic flux evaluations are only necessary between pairs of nodes corresponding to non-zero entries of  $\LRp{\bm{Q}^i-(\bm{Q}^i)^T}$ and $\bm{E}$.  
+
+For quad and hex elements under tensor product volume quadrature, $\bm{Q}^i$ is the Kronecker product of 1D differentiation and identity matrices, which induces sparsity.  As a result, dyadic flux evaluations are only required between ``lines'' of volume nodes \cite{carpenter2014entropy, chan2018efficient}.  Dyadic flux evaluations also follow the sparsity pattern of the matrix $\bm{E}$, which maps from volume nodes to surface nodes.  For GLL or Gauss collocation methods on conforming quad/hex meshes, $\bm{E}$ is also sparse when surface quadrature nodes are aligned with volume quadrature nodes \cite{chan2018efficient}.  In such cases, dyadic flux evaluations are required only between lines of volume nodes and adjacent surface nodes  (Figure~\ref{subfig:aligned}).  
+
+Composite quadrature rules on non-conforming meshes, however, are not aligned with volume nodes.  It can be shown that the resulting matrix $\bm{E}$ is fully dense, and evaluating the formulation (\ref{eq:esdgSkewBlock}) requires dyadic flux evaluations between each surface node and \textit{all} volume nodes (as illustrated in Figure~\ref{subfig:nonaligned}).  This greatly increases computational costs, especially at high orders of approximation.  The proposed work will reduce the number of dyadic flux evaluations required for such composite quadratures.  The increased cost of (\ref{eq:esdgSkewBlock}) under composite quadrature is due to the lack of sparsity in $\bm{E}$, which interpolates from volume to surface (composite) nodes.  The proposed work avoids this issue by treating composite quadrature nodes as ``mortar'' nodes which are coupled directly to surface nodes but not directly to volume nodes, as illustrated in Figure~\ref{subfig:mortar}.
+
+\begin{figure}
+\centering
+\subfloat[Dyadic flux evaluations (aligned surface nodes)]{\raisebox{.1em}{\includegraphics[width=.375\textwidth]{figs/aligned.png}}\label{subfig:aligned}}
+\hspace{4em}
+\subfloat[Dyadic flux evaluations (composite surface nodes)]{\includegraphics[width=.374\textwidth]{figs/nonaligned.png}\label{subfig:nonaligned}}
+\caption{Figure~\ref{subfig:aligned} and \ref{subfig:nonaligned} illustrate when dyadic flux evaluations $\bm{f}^i_S\LRp{\tilde{\bm{u}}_j,\tilde{\bm{u}}_k}$ between nodes are necessary (indicated by dashed red lines) for conforming interfaces (Figure~\ref{subfig:aligned}) and non-conforming interfaces (Figure~\ref{subfig:nonaligned}) under a Gauss collocation scheme.  Conforming interfaces (aligned surface nodes) require evaluations between a surface node and a line of volume nodes, while non-conforming interfaces (nonaligned composite surface nodes) require flux evaluations between a surface node and \textit{all} volume nodes.  The proposed mortar approach (Figure~\ref{subfig:mortar}) reduces the number of dyadic flux evaluations by introducing composite nodes as mortars which couple only to surface nodes. }
+\label{fig:fluxsparsity}
+\end{figure}
 
 
 \section{Mortar methods for hybrid and non-conforming meshes}
 
 This work is motivated by complications which arise when designing entropy stable couplings between elements which do not share the same boundary nodes.  This can arise, for example, for hybrid and non-conforming meshes.  
 
-\paragraph{Hybrid meshes:} entropy stable DG methods on hybrid meshes were introduced in \cite{chan2018skew} using a skew-symmetric formulation.  The resulting methods are stable for more arbitrary choices of surface quadrature, in particular when an SBP property may not hold.  
+\paragraph{Hybrid meshes:} entropy stable DG methods on hybrid meshes were introduced in \cite{chan2019skew} using a skew-symmetric formulation.  The resulting methods are stable for more arbitrary choices of surface quadrature, in particular when an SBP property may not hold.  
 
 \paragraph{Non-conforming meshes}
 
 On conforming meshes, it is most efficient to utilize both Gauss quadrature for volume integrals and Gauss quadrature for face or surface integrals.  For solutions represented in terms of their values at tensor product volume Gauss nodes, extrapolation to face Gauss nodes can be done in an efficient line-by-line manner using one-dimensional interpolation matrices.  
 
-For non-conforming meshes, it can be advantageous to use composite Gauss quadratures on non-conforming interfaces.  \note{Reference JK and LCW's paper on full-side vs split side mortars.}  However, interpolating the solution at volume Gauss nodes to split-side Gauss nodes is no longer a one-dimensional operation.
+For non-conforming meshes, it can be advantageous to use composite Gauss quadratures on non-conforming interfaces \cite{Kozdon2018}.  However, interpolating the solution at volume Gauss nodes to split-side Gauss nodes is no longer a one-dimensional operation.  
 
 \section{Mortar formulation}
 
 \begin{figure}[!h]
 \centering
-\includegraphics[width=.65\textwidth]{figs/mortar.png}
-\caption{Illustration of mortar operators.  The matrix $\bm{E}$ maps from volume quadrature points to surface quadrature points, $\bm{E}_m$ maps from surface to mortar surface points, and $\tilde{\bm{E}}_m$ maps from mortar surface points to surface points. }
+\includegraphics[width=.5\textwidth]{figs/mortar.png}
+\caption{Illustration of mortar operators for a Gauss collocation scheme.  The matrix $\bm{E}$ maps from volume quadrature points to surface quadrature points, $\bm{E}_m$ maps from surface to mortar surface points, and $\tilde{\bm{E}}_m$ maps from mortar surface points to surface points. }
 \label{fig:gqcon_noncon}
 \end{figure}
 
@@ -417,7 +450,7 @@ where we have used that $\bm{W}_m$ is diagonal and that the outward normal $\hat
 
 \section{A mortar-based implementation}
 
-While the formulation presented above is convenient for analysis, it is computationally expensive to implement.  However, using properties of the mortar matrices $\bm{E}_m, \tilde{\bm{E}}_m$, we can rewrite the above formulation in a way which reflects a traditional mortar-based finite element implementation.  In other words, we wish to implement (\ref{eq:mortar}) such that the only modification from the implementations in \cite{chan2017discretely} is a pre-processing step on mortar faces.  
+While the formulation presented above is convenient for analysis, it is computationally expensive to implement.  However, using properties of the mortar matrices $\bm{E}_m, \tilde{\bm{E}}_m$, we can rewrite the above formulation in a way which reflects a traditional mortar-based finite element implementation.  In other words, we wish to implement (\ref{eq:mortar}) such that the only modification from the implementations in \cite{chan2017discretely} is an intermediate step on mortar faces.  
 
 We first note that, since $\bm{E}_m$ maps from surface nodes to mortar nodes, $\bm{V}_m = \bm{E}_m \bm{V}_f$.  Thus, we can rewrite the numerical flux contribution as
 \begin{align*}
@@ -465,7 +498,11 @@ Then, (\ref{eq:mortar}) can be rewritten as
 \tilde{\bm{f}}^*_i &= \tilde{\bm{E}}_m\bm{f}^*_i + \LRp{\tilde{\bm{E}}_m\circ \bm{F}_S^{sm}}\bm{1} - \tilde{\bm{E}}_m \LRp{ \bm{E}_m \circ \bm{F}_S^{ms}}\bm{1} 
 \nonumber
 \end{align}
-If the surface and mortar nodes are identical, then $\bm{E}_m = \tilde{\bm{E}}_m = \bm{I}$ and $\LRp{\tilde{\bm{E}}_m \circ \bm{F}_S^{sm}}\bm{1} = \LRp{ \bm{E}_m \circ \bm{F}_S^{ms}}\bm{1}$.  The correction terms within $\tilde{\bm{f}}^*$ cancel out, and we recover the original scheme from \cite{chan2017discretely}.
+If the surface and mortar nodes are identical, then 
+\[
+\bm{E}_m = \tilde{\bm{E}}_m = \bm{I}, \qquad \LRp{\tilde{\bm{E}}_m \circ \bm{F}_S^{sm}}\bm{1} = \LRp{ \bm{E}_m \circ \bm{F}_S^{ms}}\bm{1}
+\]
+and the correction terms within $\tilde{\bm{f}}^*$ cancel out, and we recover the original scheme from \cite{chan2017discretely}.
 
 Note that in (\ref{eq:mortar2}), the only interactions between surface and mortar nodes occurs within the computation of $\tilde{\bm{f}}^*_i$, which can be done solely on mortar interfaces.  The computational structure of 
 \begin{enumerate}
@@ -473,50 +510,6 @@ Note that in (\ref{eq:mortar2}), the only interactions between surface and morta
 \item Communicate surface contributions to mortar interfaces and compute $\tilde{\bm{f}}^*_i$.
 \item Communicate $\tilde{\bm{f}}^*_i$ back to each element.  
 \end{enumerate}
-%\bm{M}\td{\bm{u}_N}{t} + \begin{bmatrix} \bm{V}_q \\ \bm{V}_f \\ \bm{V}_m \end{bmatrix}^T
-%\LRp{\begin{bmatrix}
-%\bm{Q}_i-\bm{Q}_i^T & \bm{E}^T\bm{B}_i &\\
-%-\bm{B}_i\bm{E} &  & \bm{B}_i\tilde{\bm{E}}_m \\
-%& -\tilde{\bm{B}}_i{\bm{E}}_m & 
-%\end{bmatrix} \circ \bm{F}_S}\bm{1} + \bm{V}_m^T\tilde{\bm{B}}_i\bm{f}_i^* = 0.  
-
-%It is possible to efficiently interpolate from volume Gauss nodes to split-side Gauss nodes in two steps.  We first interpolate to full-side Gauss nodes on the face, then interpolate from full-side  to split-side Gauss nodes.  Each of these two operations can be done using only one-dimensional interpolation matrices, implying that the interpolation matrix from volume to split-side Gauss nodes can be decomposed into 
-%\[
-%\bm{V}_{\rm vol-to-split} = \bm{V}_{\rm vol-to-full} \bm{V}_{\rm full-to-split}
-%\]
-%where each of the matrices in the decomposition possess either a sparse or Kronecker product structure.  
-%
-%ESDG schemes based on decoupled SBP operators introduced in \cite{chan2017discretely} assume a single interpolation matrix which extrapolates from volume to surface nodes.  These schemes require dyadic flux evaluations between all volume and surface nodes connected by this interpolation matrix.  For non-conforming interfaces with split-side Gauss nodes on the face, this necessitates dyadic flux computations between all volume nodes and all split-side Gauss nodes.  
-%
-%We show in this section how to construct an entropy stable Gauss collocation scheme based on two layers of surface nodes: full-side and split-side nodes.  These surface nodes will be loosely through a skew-symmetric coupling term involving polynomial interpolation matrices between full-side and split-side nodes.  This scheme requires dyadic flux computations between volume and full-side surface nodes, and between full-side and split-side surface nodes.  Each set of dyadic flux computations can be reduced to 
-
-
-
-%We first introduce notation which is helpful for operations involving surface traces.  Let the matrix $\bm{R}$ denote the matrix which maps coefficients of a function to coefficients of its trace.  
-%
-%Let ${\bm{V}_f}\tilde{P}_f$ denote the matrix which projects to the trace space using split-side quadrature and evaluates at full-side quadrature points.  Similarly, let $\tilde{\bm{V}_f}{P}_f$ denote the matrix which projects to the trace space using full-side quadrature and evaluates at split-side quadrature points
-%\begin{align*}
-%\bm{C}^i_f &= \begin{pmatrix}
-%\bm{0} & {\rm diag}\LRp{\hat{\bm{n}}_i}{\bm{V}_f}\tilde{\bm{P}}_f\\
-%-\tilde{\bm{V}_f}{\bm{P}}_f{\rm diag}\LRp{\hat{\bm{n}}_i} &\bm{0}
-%\end{pmatrix}, \\
-%\bm{S}^i_f &= \begin{pmatrix}
-%\diag{\bm{w}_f} & \\
-%& \diag{\tilde{\bm{w}}_f}
-%\end{pmatrix}\bm{C}^i_f.
-%\end{align*}
-%It is straightforward to show that the matrix $\bm{S}_f$ is skew-symmetric.
-%
-%%{fig:gqcon_noncon}
-%Let $\tilde{\bm{F}}_S$ denote the flux matrix, then 
-%\[
-%\begin{bmatrix}\bm{L}_f & \tilde{\bm{L}}_f\end{bmatrix} \LRp{\bm{C}^i_f\circ\tilde{\bm{F}}_S}\bm{1}
-%\]
-%is a skew-symmetric correction term which ensures entropy stability and high order accuracy (through consistency up to quadrature order).   
-%
-%Since the difference is high order accurate, you can remove this correction term and still get high order accuracy.  However, the spatial entropy RHS is no longer zero if you use inconsistent surface and coupling quadrature without the correction term (\note{prove this}). 
-%
-%\note{Do we need 3 layers of surface nodes in 3D?  Interpolation to isotropic split-side nodes is a Kronecker product - does that reduce things down?  }
 
 \section{Error estimates}
 
@@ -525,6 +518,69 @@ Note that in (\ref{eq:mortar2}), the only interactions between surface and morta
 \note{Line DG approach can work, but it's flipped: we increase quadrature strength in the direction \emph{orthogonal} to derivative instead.  May improve accuracy over GLL by giving equivalence w/skew form.}
 
 \section{Numerical experiments}
+
+Figure~\ref{subfig:noncon} shows preliminary results for the 2D compressible Euler equations by the PI on a manually constructed non-conforming quadrilateral mesh, with volume, surface, and mortar quadratures constructed from one-dimensional GLL or Gauss quadrature rules.  The PI has verified that this preliminary implementation of the mortar-based formulation is discretely entropy stable.  A preliminary accuracy analysis for the skew-symmetric formulation (\ref{eq:esdgSkew}) also suggests that GLL quadrature should achieve an $O(h^N)$ rate of convergence and that Gauss quadrature should achieve an $O(h^{N+1})$ rate of convergence.  Both predicted rates are confirmed in Figure~\ref{subfig:noncon}.
+
+\begin{figure}
+\centering
+\subfloat[Coarse non-conforming mesh]{\raisebox{3em}{\includegraphics[width=.425\textwidth]{figs/noncon_mesh.png}}}
+\hspace{.25em}
+\subfloat[Sub-optimal rates if under-integrated]{
+\begin{tikzpicture}
+\begin{loglogaxis}[
+    width=.5\textwidth,
+    xlabel={Mesh size $h$},
+    ylabel={$L^2$ errors}, 
+    xmax=1,
+    ymin=5e-5, ymax=5,
+    legend pos=south east, legend cell align=left, legend style={font=\tiny},	
+    xmajorgrids=true, ymajorgrids=true, grid style=dashed,
+    legend entries={Lobatto, Gauss, Lobatto-Gauss}    
+]
+\pgfplotsset{
+cycle list={{blue, mark=*}, {red, dashed ,mark=square*},{black, dashdotted ,mark=triangle*}}
+}
+% N = 1
+\addplot+[semithick, mark options={solid, fill=markercolor}]
+coordinates{(0.333333,2.6993)(0.166667,1.6718)(0.0833333,0.7792)(0.0416667,0.29211)};
+\addplot+[semithick, mark options={solid, fill=markercolor}]
+coordinates{(0.333333,2.0534)(0.166667,0.7966)(0.0833333,0.2022)(0.0416667,0.0449413)};
+\addplot+[semithick, mark options={solid, fill=markercolor}]
+coordinates{(0.333333,2.94072)(0.166667,1.73057)(0.0833333,0.97069)(0.0416667,0.487387)};
+
+% N = 2
+\addplot+[semithick, mark options={solid, fill=markercolor}]
+coordinates{(0.333333,1.1609)(0.166667,0.3562)(0.0833333,0.0768)(0.0416667,0.0192197)};
+\addplot+[semithick, mark options={solid, fill=markercolor}]
+coordinates{(0.333333,0.7191)(0.166667,0.141)(0.0833333,0.0178)(0.0416667,0.00243087)};
+\addplot+[semithick, mark options={solid, fill=markercolor}]
+coordinates{(0.333333,1.20291)(0.166667,0.347365)(0.0833333,0.0606688)(0.0416667,0.0144843)};
+
+% N = 3
+\addplot+[semithick, mark options={solid, fill=markercolor}]
+coordinates{(0.333333,0.551145)(0.166667,0.0754237)(0.0833333,0.0100808)(0.0416667,0.00120633)};
+\addplot+[semithick, mark options={solid, fill=markercolor}]
+coordinates{(0.333333,0.352706)(0.166667,0.0258415)(0.0833333,0.00211953)(0.0416667,0.000132969)};
+\addplot+[semithick, mark options={solid, fill=markercolor}]
+coordinates{(0.333333,0.557084)(0.166667,0.0671373)(0.0833333,0.00744086)(0.0416667,0.000837905)};
+
+% N = 4
+\addplot+[semithick, mark options={solid, fill=markercolor}]
+coordinates{(0.333333,0.267668)(0.166667,0.0192603)(0.0833333,0.00140341)};
+\addplot+[semithick, mark options={solid, fill=markercolor}]
+coordinates{(0.333333,0.128217)(0.166667,0.00779943)(0.0833333,0.000270803)};
+\addplot+[semithick, mark options={solid, fill=markercolor}]
+coordinates{(0.333333,0.212176)(0.166667,0.0151178)(0.0833333,0.000826307)};
+
+\node at (axis cs:.55,2.5) {$N = 1$};
+\node at (axis cs:.55,1.0) {$N = 2$};
+\node at (axis cs:.55,.42) {$N = 3$};
+\node at (axis cs:.55,.16) {$N = 4$};
+\end{loglogaxis}
+\end{tikzpicture}
+}
+\caption{Blah}
+\end{figure}
 
 \subsection{Gauss Lobatto quadrature}
 
