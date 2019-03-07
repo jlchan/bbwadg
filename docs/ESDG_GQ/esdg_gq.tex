@@ -1111,49 +1111,50 @@ where the quantities $\rho e$ and $s$ in terms of the entropy variables are
 \note{The average and logarithmic average are assumed to act component-wise on vector-valued functions.  We evaluate the logarithmic average using the numerically stable approach of \cite{ismail2009affordable}.}
 Explicit expressions for entropy conservative numerical fluxes in two dimensions  are given by Chandrashekar \cite{chandrashekar2013kinetic}
 \begin{align*}
-&f^1_{1,S}(\bm{u}_L,\bm{u}_R) = \avg{\rho}^{\log} \avg{u},& &f^1_{2,S}(\bm{u}_L,\bm{u}_R) = \avg{\rho}^{\log} \avg{v},&\\
-&f^2_{1,S}(\bm{u}_L,\bm{u}_R) = f^1_{1,S} \avg{u} + p_{\rm avg},&  &f^2_{2,S}(\bm{u}_L,\bm{u}_R) = f^1_{2,S} \avg{u},&\nonumber\\
-&f^3_{1,S}(\bm{u}_L,\bm{u}_R) = f^2_{2,S},& &f^3_{2,S}(\bm{u}_L,\bm{u}_R) = f^1_{2,S} \avg{v} + p_{\rm avg},&\nonumber\\
-&f^4_{1,S}(\bm{u}_L,\bm{u}_R) = \LRp{E_{\rm avg} + p_{\rm avg}}\avg{u},& &f^4_{2,S}(\bm{u}_L,\bm{u}_R) = \LRp{E_{\rm avg} + p_{\rm avg} }\avg{v},& \nonumber
+&f^1_{1,S}(\bm{u}_L,\bm{u}_R) = \avg{\rho}^{\log} \avg{u_1},& &f^1_{2,S}(\bm{u}_L,\bm{u}_R) = \avg{\rho}^{\log} \avg{u_2},&\\
+&f^2_{1,S}(\bm{u}_L,\bm{u}_R) = f^1_{1,S} \avg{u_1} + p_{\rm avg},&  &f^2_{2,S}(\bm{u}_L,\bm{u}_R) = f^1_{2,S} \avg{u_1},&\nonumber\\
+&f^3_{1,S}(\bm{u}_L,\bm{u}_R) = f^2_{2,S},& &f^3_{2,S}(\bm{u}_L,\bm{u}_R) = f^1_{2,S} \avg{u_2} + p_{\rm avg},&\nonumber\\
+&f^4_{1,S}(\bm{u}_L,\bm{u}_R) = \LRp{E_{\rm avg} + p_{\rm avg}}\avg{u_1},& &f^4_{2,S}(\bm{u}_L,\bm{u}_R) = \LRp{E_{\rm avg} + p_{\rm avg} }\avg{u_2},& \nonumber
 \end{align*}
-where \note{$u,v$ denote the $x$ and $y$ velocities, respectively, and}  we have defined the auxiliary quantities 
+where we have introduced the auxiliary quantities 
 \begin{gather}
 \note{\beta = \frac{\rho}{2p}}, \qquad p_{\rm avg} = \frac{\avg{\rho}}{2\avg{\beta}}, \qquad \qquad E_{\rm avg} = \frac{\avg{\rho}^{\log}}{2\avg{\beta}^{\log}\LRp{\gamma -1}}   + \frac{\note{u_{\rm avg}^2}}{2}, \label{eq:fluxaux} \\
-\note{u^2_{\rm avg}} = 2(\avg{u}^2 + \avg{v}^2) - \LRp{\avg{u^2} +\avg{v^2}} \nonumber.  
+\note{u^2_{\rm avg}} = 2(\avg{u_1}^2 + \avg{u_1}^2) - \LRp{\avg{u_1^2} +\avg{u_2^2}} \nonumber.  
 \end{gather}
 Expressions for entropy conservative numerical fluxes for the three-dimensional compressible Euler equations can also be explicitly written as
 \begin{gather*}
 \bm{f}_{1,S} = \LRp{\begin{array}{c}
-\avg{\rho}^{\log}\avg{u}\\
-\avg{\rho}^{\log}\avg{u}^2 + p_{\rm avg}\\
-\avg{\rho}^{\log}\avg{u}\avg{v}\\
-\avg{\rho}^{\log}\avg{u}\avg{w}\\
-(E_{\rm avg}+ p_{\rm avg})\avg{u}\\
+\avg{\rho}^{\log}\avg{u_1}\\
+\avg{\rho}^{\log}\avg{u_1}^2 + p_{\rm avg}\\
+\avg{\rho}^{\log}\avg{u_1}\avg{u_2}\\
+\avg{\rho}^{\log}\avg{u_1}\avg{u_3}\\
+(E_{\rm avg}+ p_{\rm avg})\avg{u_1}\\
 \end{array}}, 
 \qquad 
 \bm{f}_{2,S} = \LRp{\begin{array}{c}
-\avg{\rho}^{\log}\avg{v}\\
-\avg{\rho}^{\log}\avg{u}\avg{v}\\
-\avg{\rho}^{\log}\avg{v}^2 + p_{\rm avg}\\
-\avg{\rho}^{\log}\avg{v}\avg{w}\\
-(E_{\rm avg}+ p_{\rm avg})\avg{v}\\
+\avg{\rho}^{\log}\avg{u_2}\\
+\avg{\rho}^{\log}\avg{u_1}\avg{u_2}\\
+\avg{\rho}^{\log}\avg{u_2}^2 + p_{\rm avg}\\
+\avg{\rho}^{\log}\avg{u_2}\avg{u_3}\\
+(E_{\rm avg}+ p_{\rm avg})\avg{u_2}\\
 \end{array}},\\
 \bm{f}_{3,S} = \LRp{\begin{array}{c}
-\avg{\rho}^{\log}\avg{w}\\
-\avg{\rho}^{\log}\avg{u}\avg{w}\\
-\avg{\rho}^{\log}\avg{v}\avg{w}\\
-\avg{\rho}^{\log}\avg{w}^2 + p_{\rm avg}\\
-(E_{\rm avg}+ p_{\rm avg})\avg{w}\\
+\avg{\rho}^{\log}\avg{u_3}\\
+\avg{\rho}^{\log}\avg{u_1}\avg{u_3}\\
+\avg{\rho}^{\log}\avg{u_2}\avg{u_3}\\
+\avg{\rho}^{\log}\avg{u_3}^2 + p_{\rm avg}\\
+(E_{\rm avg}+ p_{\rm avg})\avg{u_3}\\
 \end{array}},\nonumber
 %&f^1_{1,S}(\bm{u}_L,\bm{u}_R) = \avg{\rho}^{\log} \avg{u},& &f^1_{2,S}(\bm{u}_L,\bm{u}_R) = \avg{\rho}^{\log} \avg{v},&\\
 %&f^2_{1,S}(\bm{u}_L,\bm{u}_R) = f^1_{1,S} \avg{u} + p_{\rm avg},&  &f^2_{2,S}(\bm{u}_L,\bm{u}_R) = f^1_{2,S} \avg{u},&\nonumber\\
 %&f^3_{1,S}(\bm{u}_L,\bm{u}_R) = f^2_{2,S},& &f^3_{2,S}(\bm{u}_L,\bm{u}_R) = f^1_{2,S} \avg{v} + p_{\rm avg},&\nonumber\\
 %&f^4_{1,S}(\bm{u}_L,\bm{u}_R) = \LRp{\frac{p_{\rm avg}^{\log}}{\gamma -1} + p_{\rm avg} + \frac{\nor{\bm{u}}^2_{\rm avg}}{2}}\avg{u},& &f^4_{2,S}(\bm{u}_L,\bm{u}_R) = \LRp{\frac{p_{\rm avg}^{\log}}{\gamma -1} + p_{\rm avg} + \frac{\nor{\bm{u}}^2_{\rm avg}}{2}}\avg{v},& \nonumber
 \end{gather*}
-\note{where $u,v,w$ denote the $x,y,z$ velocities, respectively, and} the auxiliary quantities are defined as
+%\note{where $u,v,w$ denote the $x,y,z$ velocities, respectively, and} 
+where the auxiliary quantities are defined as
 \begin{gather*}
 \note{\beta = \frac{\rho}{2p}}, \qquad p_{\rm avg} = \frac{\avg{\rho}}{2\avg{\beta}}, \qquad E_{\rm avg} = \frac{\avg{\rho}^{\log}}{2(\gamma-1)\avg{\beta}^{\log}} + \frac{1}{2}\avg{\rho}^{\log}\note{{u}^2_{\rm avg}}, \\
-\note{u^2_{\rm avg}} = 2(\avg{u}^2 + \avg{v}^2 + \avg{w}^2) - \LRp{\avg{u^2} +\avg{v^2} + \avg{w^2}}.\nonumber
+\note{u^2_{\rm avg}} = 2(\avg{u_1}^2 + \avg{u_2}^2 + \avg{u_3}^2) - \LRp{\avg{u_1^2} +\avg{u_2^2} + \avg{u_3^2}}.\nonumber
 \end{gather*}
 
 In all problems, \note{we use an explicit low storage RK-45 time-stepper \cite{carpenter1994fourth}} and estimate the timestep size $dt$ using $J, J^k_f$, and degree-dependent $L^2$ trace constants $C_N$ 
@@ -1176,9 +1177,9 @@ Numerical results in 1D are similar to those presented in \cite{chan2017discrete
 We begin by examining high order convergence of the proposed methods in two dimensions using the isentropic vortex problem \cite{shu1998essentially, crean2017high}.  The analytical solution is 
 \begin{align}
 \rho(\bm{x},t) &= \LRp{1 - \frac{\frac{1}{2}(\gamma-1)(\beta e^{1-r(\bm{x},t)^2})^2}{8\gamma \pi^2}}^{\frac{1}{\gamma-1}}, \qquad p = \rho^{\gamma},\\
-u(\bm{x},t) &= 1 - \frac{\beta}{2\pi} e^{1-r(\bm{x},t)^2}(y-y_0), \qquad v(\bm{x},t) = \frac{\beta}{2\pi} e^{1-r(\bm{x},t)^2}(x-x_0-t),\nonumber
+u_1(\bm{x},t) &= 1 - \frac{\beta}{2\pi} e^{1-r(\bm{x},t)^2}(y-y_0), \qquad u_2(\bm{x},t) = \frac{\beta}{2\pi} e^{1-r(\bm{x},t)^2}(x-x_0-t),\nonumber
 \end{align}
-where $u, v$ are the $x$ and $y$ velocity and $r(\bm{x},t) = \sqrt{(x-x_0-t)^2 + (y-y_0)^2}$.  Here, we take $x_0 = 5, y_0 = 0$ and $\beta = 5$.  
+where $u_1, u_2$ are the $x$ and $y$ velocity and $r(\bm{x},t) = \sqrt{(x-x_0-t)^2 + (y-y_0)^2}$.  Here, we take $x_0 = 5, y_0 = 0$ and $\beta = 5$.  
 
 \begin{figure}
 \centering
@@ -1406,12 +1407,12 @@ We note that $L^2$ approximation estimates on curved meshes \cite{lenoir1986opti
 As in two dimensions, we test the accuracy of the proposed scheme using an isentropic vortex solution adapted to three dimensions.  The solution is the extruded 2D vortex propagating in the $y$ direction, with an analytic expression given in \cite{williams2013nodal}
 \begin{align*}
 \rho(\bm{x},t) &= \LRp{1-\frac{(\gamma-1)}{2}\Pi^2}^{\frac{1}{\gamma-1}}\\
-\bm{u}(\bm{x},t) &= \Pi \bm{r}, \\
-E(\bm{x},t) &= \frac{p_0}{\gamma-1}\LRp{1-\frac{\gamma-1}{2}\Pi^2}^{\frac{\gamma}{\gamma-1}} + \frac{\rho}{2}\LRb{\bm{u}}.
+u_i(\bm{x},t) &= \Pi r_i, \\
+E(\bm{x},t) &= \frac{p_0}{\gamma-1}\LRp{1-\frac{\gamma-1}{2}\Pi^2}^{\frac{\gamma}{\gamma-1}} + \frac{\rho}{2}\sum_{i=1}^d u_i^2.
 \end{align*}
-where $\bm{u} = (u,v,w)^T$ is the velocity vector and % $\Pi$, $\bm{r}$ are defined as
+where $(u_1,u_2,u_3)^T$ is the velocity vector and % $\Pi$, $\bm{r}$ are defined as
 \[
-\Pi = \Pi_{\max}e^{\frac{1-\bm{r}^T\bm{r}}{2}}, \qquad \bm{r} = \begin{pmatrix}
+\Pi = \Pi_{\max}e^{\frac{1-\sum_{i=1}^dr_i^2}{2}}, \qquad \begin{pmatrix}r_1\\r_2\\r_3\end{pmatrix} = \begin{pmatrix}
 -(x_2-c_2-t)\\
 x_1-c_1\\
 0
@@ -1525,7 +1526,7 @@ We also compared $L^2$ errors for both isoparametric and sub-parametric geometri
 
 The next problem considered is the shock-vortex interaction described in \cite{shu1998essentially}.  The domain is taken to be $[0,2]\times [0,1]$, and is triangulated with uniform quadrilateral elements.  Wall boundary conditions are imposed on the top and bottom boundaries, and inflow boundary conditions are typically imposed on the left and right boundaries.  We modify the problem setup such that periodic boundary conditions are imposed at the left and right boundaries.  Wall boundary conditions are imposed using a mirror state for the normal velocity, which was shown to be entropy stable in \cite{svard2014entropy, chen2017entropy}.  
 
-The initial condition is taken to be the superposition of a stationary shock and a vortex propagating towards the right.  The stationary Mach $M_s = 1.1$ shock is positioned at $x = .5$ normal to the $x$ axis, with left state $\LRp{\rho_L, u_L, v_L, p_L} = \LRp{1, \sqrt{\gamma}, 0, 1}$.  The right state is a scaling of the left state computed using the Rankine-Hugoniot conditions, such that the ratio of upstream and downstream states is
+The initial condition is taken to be the superposition of a stationary shock and a vortex propagating towards the right.  The stationary Mach $M_s = 1.1$ shock is positioned at $x = .5$ normal to the $x$ axis, with left state $\LRp{\rho_L, u_L, v_L, p_L} = \LRp{1, \sqrt{\gamma}, 0, 1}$, \note{where $u_L, v_L$ denote $x,y$ components of the left-state velocity}.  The right state is a scaling of the left state computed using the Rankine-Hugoniot conditions, such that the ratio of upstream and downstream states is
 %$\LRp{\rho_R, u_R, v_R, p_R} = \LRp{\rho_L/ \alpha_\rho, u_L / \alpha_u, 0, p_L/\alpha_p}$, where
 \begin{align*}
 \frac{\rho_L}{\rho_R} = \frac{u_L}{u_R} = \frac{2+ (\gamma-1) M_s^2}{(\gamma+1)M_s^2}, \qquad \frac{p_L}{p_R} = 1+ \frac{2\gamma}{\gamma+1}\LRp{M_s^2-1}, \qquad v_R = 0.
@@ -1545,7 +1546,7 @@ where $r = \sqrt{(x-x_c)^2 + (y-y_c)^2}$ is the radius from the vortex center, $
 \]
 The vortex density and pressure are computed using an isentropic assumption.  To summarize, the initial condition for the shock-vortex interaction problem is 
 \begin{gather*}
-\rho = \rho_s \LRp{\frac{T_{\rm vor}}{T_L}}^{\frac{1}{\gamma-1}}, \qquad u = u_s + \delta u, \qquad v = v_s + \delta v, \qquad p = p_s \LRp{\frac{T_{\rm vor}}{T_L}}^{\frac{1}{\gamma-1}},
+\rho = \rho_s \LRp{\frac{T_{\rm vor}}{T_L}}^{\frac{1}{\gamma-1}}, \qquad u_1 = u_s + \delta u, \qquad u_2 = v_s + \delta v, \qquad p = p_s \LRp{\frac{T_{\rm vor}}{T_L}}^{\frac{1}{\gamma-1}},
 \end{gather*}
 where $(\rho_s,  u_s, v_s, p_s)$ denote the discontinuous stationary shock solution given by the left and right states $\LRp{\rho_L, u_L, v_L, p_L}, \LRp{\rho_R, u_R, v_R, p_R}$.  
 
@@ -1568,21 +1569,21 @@ We compare three different entropy stable Gauss collocation schemes.  All three 
 \begin{align*}
 \bm{R} &= \begin{bmatrix}
 1 & 1 & 0 & 1\\
-\avg{u}-\bar{a} n_x & \avg{u} & n_y & \avg{u}+\bar{a} n_x\\
-\avg{v}-\bar{a} n_y & \avg{v} & -n_x & \avg{v}+\bar{a} n_y\\
-h-\bar{a} \bar{u}_n & \frac{1}{2}\nor{\bm{u}}^2_{\rm avg} & \bar{u}_n n_y - \avg{v}n_x & h + \bar{a} \bar{u}_n
+\avg{u_1}-\bar{a} n_x & \avg{u_1} & n_y & \avg{u_1}+\bar{a} n_x\\
+\avg{u_2}-\bar{a} n_y & \avg{u_2} & -n_x & \avg{u_2}+\bar{a} n_y\\
+h-\bar{a} \bar{u}_n & \frac{1}{2}u^2_{\rm avg} & \bar{u}_n n_y - \avg{u_2}n_x & h + \bar{a} \bar{u}_n
 \end{bmatrix}\\
 \bm{D} &= {\rm diag}{\begin{pmatrix}
 \LRb{\bar{u}_n - a}\frac{\avg{\rho}^{\log}}{2\gamma}, & \LRb{\bar{u}_n}\frac{\avg{\rho}^{\log}(\gamma-1)}{\gamma}, & \LRb{\bar{u}_n}p_{\rm avg}, & \LRb{\bar{u}_n + a}\frac{\avg{\rho}^{\log}}{2\gamma} \end{pmatrix}},
 \end{align*}
 where $\bar{a}, \bar{u}_n$ are defined in 2D as
 \begin{gather*}
-\bar{u}_n = \avg{u}n_x + \avg{v}n_y, \qquad \bar{a} = \sqrt{\frac{\gamma p_{\rm avg}}{\avg{\rho}^{\log}}}, \qquad h = \frac{\gamma}{2(\gamma-1)\avg{\beta}^{\log}} + \frac{1}{2}\bar{u}, 
+\bar{u}_n = \avg{u_1}n_x + \avg{u_2}n_y, \qquad \bar{a} = \sqrt{\frac{\gamma p_{\rm avg}}{\avg{\rho}^{\log}}}, \qquad h = \frac{\gamma}{2(\gamma-1)\avg{\beta}^{\log}} + \frac{1}{2}\bar{u}, 
 \end{gather*}
-and $p_{\rm avg}, \nor{\bm{u}}^2_{\rm avg}$ are defined as in (\ref{eq:fluxaux}).  
+and $p_{\rm avg}, u^2_{\rm avg}$ are defined as in (\ref{eq:fluxaux}).  
 
 %It is known that the Lax-Friedrichs flux is fairly dissipative compared to more nuanced fluxes \cite{harten1983upstream}, though this dissipation is less pronounced at higher polynomial degrees in practice.  
-Figure~\ref{fig:shockvort} shows solutions for $N=4$ and $h = 1/100$ Gauss collocation schemes using a non-dissipative entropy conservative flux, a dissipative Lax-Friedrichs flux, and a matrix dissipation flux.  In all cases, the vortex passes through the shock stably without the use of additional slope limiting, filtering, or artificial viscosity.  However, the entropy conservative scheme produces a large number of spurious oscillations in the solution.  These are reduced away from the shock under Lax-Friedrichs dissipation, though oscillations still persist around a large neighborhood of the discontinuity.  The Gibbs-type oscillations are most localized under the matrix dissipation flux.  
+Figure~\ref{fig:shockvort} shows density solutions for $N=4$ and $h = 1/100$ Gauss collocation schemes using a non-dissipative entropy conservative flux, a dissipative Lax-Friedrichs flux, and a matrix dissipation flux.  In all cases, the vortex passes through the shock stably without the use of additional slope limiting, filtering, or artificial viscosity.  However, the entropy conservative scheme produces a large number of spurious oscillations in the solution.  These are reduced away from the shock under Lax-Friedrichs dissipation, though oscillations still persist around a large neighborhood of the discontinuity.  The Gibbs-type oscillations are most localized under the matrix dissipation flux.  
 
 We note that this experiment also verifies that entropy stable decoupled SBP schemes (including the over-integrated case \cite{chan2017discretely}) are compatible with entropy stable wall boundary conditions.  As far as the authors know, the stable and high order accurate imposition of such boundary conditions for existing GSBP couplings described in \cite{crean2017high} and Section~\ref{sec:gsbpsat} remains an open problem.  
 
@@ -1591,13 +1592,13 @@ We note that this experiment also verifies that entropy stable decoupled SBP sch
 We conclude by investigating the behavior of entropy stable Gauss collocation schemes for the inviscid Taylor--Green vortex \cite{ae1937mechanism, gassner2016split, crean2018entropy}.  This problem is posed on the periodic box $[-\pi,\pi]^3$, with initial conditions 
 \begin{gather*}
 \rho = 1, \qquad p = \frac{100}{\gamma} + \frac{1}{16} \LRp{\cos(2x_1) + \cos(2x_2)}\LRp{2+\cos(2x_3)},\\
-u = \sin(x_1)\cos(x_2)\cos(x_3), \qquad
-v = -\cos(x_1)\sin(x_2)\cos(x_3),\qquad
-w= 0.
+u_1 = \sin(x_1)\cos(x_2)\cos(x_3), \qquad
+u_2 = -\cos(x_1)\sin(x_2)\cos(x_3),\qquad
+u_3 = 0.
 \end{gather*}
 The Taylor--Green vortex is used to study the transition and decay of turbulence.  In the absence of viscosity, the Taylor--Green vortex develops successively smaller scales as time increases.  As a result, the solution is guaranteed to contain under-resolved features after a sufficiently large time.  We study the evolution of kinetic energy $\kappa(t)$ 
 \[
-\kappa(t) =\frac{1}{\LRb{\Omega}} \int_{\Omega} \rho \bm{u}\cdot\bm{u} \diff{\bm{x}},
+\kappa(t) =\frac{1}{\LRb{\Omega}} \int_{\Omega} \rho \note{ \LRp{\sum_{i=1}^d u_i^2}} \diff{\bm{x}},
 \]
 as well as the kinetic energy dissipation rate $-\pd{\kappa}{t}$, which is approximated by differencing $\kappa(t)$.  For both GLL and Gauss collocation schemes, integrals in the kinetic energy formula are evaluated using an $(N+1)$-point Gauss quadrature rule.
 
