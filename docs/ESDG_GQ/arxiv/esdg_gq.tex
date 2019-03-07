@@ -4,7 +4,7 @@
 %\documentclass[preprint,10pt]{amsart}
 %\documentclass[review, 10pt]{siamart0216}
 %\documentclass{siamart0216}
-\documentclass[review,onefignum,onetabnum,final]{siamart171218}
+\documentclass[onefignum,onetabnum,final]{siamart171218}
 
 %\usepackage{fullpage}
 %\usepackage[colorlinks=true]{hyperref}
@@ -395,7 +395,7 @@ The following sections will describe how to construct efficient high order entro
 \label{sec:gsbp}
 We assume the solution is collocated at $(N+1)$ quadrature points $x_i$ with associated quadrature weights $w_i$.  We do not make any assumptions on the points, in order to accommodate both GLL and Gauss nodes using this notation.  The collocation assumption is equivalent to approximating the solution using a degree $N$ Lagrange basis $\ell_j(x)$ defined over the $(N+1)$ quadrature points.  
 
-Let $\bm{D}$ denote the nodal differentiation matrix, and let $\bm{V}_f$ denote the \note{$2\times (N+1)$} matrix which interpolates polynomials at Gauss nodes to values at endpoints.  These two matrices are defined entrywise as
+Let $\bm{D}$ denote the nodal differentiation matrix, and let $\bm{V}_f$ denote the $(N+1)\times 2$ matrix which interpolates polynomials at Gauss nodes to values at endpoints.  These two matrices are defined entrywise as
 \[
 \bm{D}_{ij} = \LRl{\pd{\ell_j}{x}}_{x = x_i}, \qquad \LRp{\bm{V}_f}_{1i} = \ell_i(-1), \qquad  \LRp{\bm{V}_f}_{2i} = \ell_i(1).
 \]
@@ -614,7 +614,7 @@ Then, a polynomial approximation to $f\pd{g}{x}$ can be computed using $\bm{Q}_N
 \end{bmatrix}^T \diag{\bm{f}_N} \bm{Q}_N \bm{g}_N.
 \label{eq:qn}
 \end{equation}
-The approximation (\ref{eq:qn}) can be rewritten in ``strong'' form as follows
+The expression (\ref{eq:qn}) can be rewritten in ``strong'' form as follows
 \begin{align*}
 \bm{u} = \bm{W}^{-1}\begin{bmatrix}
 \bm{I}\\
@@ -623,12 +623,7 @@ The approximation (\ref{eq:qn}) can be rewritten in ``strong'' form as follows
 = \diag{\bm{f}}\bm{D}\bm{g} &+ \frac{1}{2}\diag{\bm{f}} \bm{W}^{-1} \bm{V}_f^T \bm{B}\LRp{\bm{g}_f - \bm{V}_f\bm{g}} \\
 &+ \frac{1}{2}\bm{W}^{-1} \bm{V}_f^T\bm{B}\diag{\bm{f}_f} \LRp{\bm{g}_f - \bm{V}_f\bm{g}},
 \end{align*}
-where we have used the fact that diagonal matrices commute to simplify expressions.  The decoupled SBP operator $\bm{Q}_N$ can thus be interpreted as adding boundary corrections to the GSBP operator $\bm{D}$ in a skew-symmetric fashion.  \note{More specifically, the expression (\ref{eq:qn}) corresponds to a quadrature approximation of the following variational approximation of the derivative \cite{chan2017discretely}: find $u\in P^N([-1,1])$ such that},
-\[
-\note{\int_{-1}^1u({x})v({x})  = \int_{-1}^1 {I_N f\pd{I_Ng}{x}v} + \LRl{(g-I_Ng)\frac{\LRp{fv + I_N(fv)}}{2}}_{-1}^1,} \qquad \forall v\in P^N([-1,1]),
-\]
-\note{where $I_N$ denotes the degree $N$ polynomial approximation at the $(N+1)$ Gauss points.}
-
+where we have used the fact that diagonal matrices commute to simplify expressions.  The decoupled SBP operator $\bm{Q}_N$ can thus be interpreted as adding boundary corrections to the GSBP operator $\bm{D}$ in a skew-symmetric fashion.  
 
 The approximation (\ref{eq:qn}) can also be applied to Gauss collocation schemes for nonlinear conservation laws. Let $u \in P^N$ be represented by the vector $\bm{u}$ of values at Gauss points, and let $f(x), g(x)$ denote two nonlinear functions.   The operator $\bm{Q}_N$ can be used to approximate the quantity $f(u)\pd{g(u)}{x}$ using (\ref{eq:qn}) if $\bm{f}, \bm{g}$ are defined as
 \[
@@ -857,7 +852,7 @@ We can now construct a semi-discretely entropy conservative formulation based on
 Let $\bm{Q}_h$ be defined by (\ref{eq:decoupledsbp2elem}), and let $\bm{u}_h$ denote the two-element solution of the following formulation:
 \begin{gather}
 \label{eq:form}
-\bm{W}_h \td{}{t} \bm{u}_h + \note{2} \bm{I}_h^T\LRp{\bm{Q}_h \circ \bm{F}_S}\bm{1} = 0.
+\bm{W}_h \td{}{t} \bm{u}_h + \bm{I}_h^T\LRp{\bm{Q}_h \circ \bm{F}_S}\bm{1} = 0.
 \end{gather}
 Then, $\bm{u}_h$ satisfies a semi-discrete conservation of entropy
 \begin{gather*}
@@ -915,54 +910,7 @@ where we have used the symmetry of $\bm{B}_h$ in the second to last step.
 The proof of Theorem~\ref{thm:consentropy} follows directly from choosing either GLL or Gauss quadratures in Theorem 4 of \cite{chan2017discretely}.  The proof is reproduced here for clarity, as the two-element case illuminates the skew-symmetric nature and structure of the inter-element coupling more explicitly.  
 \end{remark}
 
-\note{Extending the two-element case to multiple elements can be done by defining analogous ``global'' differentiation matrices.  Suppose that there are now three elements.  Then, the matrices $\bm{S}_h, \bm{B}_h$ can be defined as}
-\begin{gather*}
-\note{\bm{S}_h \myeq \LRs{\begin{array}{cc|cc|cc}
-\bm{S} &  \frac{1}{2}\bm{V}_f^T\bm{B} & &&& \\
- - \frac{1}{2}\bm{B}\bm{V}_f &  & & \frac{1}{2}\bm{e}_R\bm{e}_L^T &&\\ [.2em]
- \hline\\[-1.0em]
-&& \bm{S} &  \frac{1}{2}\bm{V}_f^T\bm{B}&& \\
-& -\frac{1}{2}\bm{e}_L\bm{e}_R^T &  - \frac{1}{2}\bm{B}\bm{V}_f &&\frac{1}{2}\bm{e}_R\bm{e}_L^T&\\
- \hline\\[-1.0em]
-&&&& \bm{S} &  \frac{1}{2}\bm{V}_f^T\bm{B} \\
-&&& -\frac{1}{2}\bm{e}_L\bm{e}_R^T &  - \frac{1}{2}\bm{B}\bm{V}_f &\\
-\end{array}}}
-\\
-\note{\bm{B}_h \myeq \LRs{\begin{array}{cc|c|cc}
-&  & && \\
- & -\bm{e}_L\bm{e}_L^T & && \\
- \hline
-&&  \bm{0} & & \\
- \hline
-&&&&    \\
-&&&  & \bm{e}_R\bm{e}_R^T\\
-\end{array}}, \qquad \bm{I}_h = \begin{bmatrix}
-\bm{I} &&\\
-\bm{V}_f &&\\
-&\bm{I}&\\
-&\bm{V}_f&\\
-&&\bm{I}\\
-&&\bm{V}_f\\
-\end{bmatrix}.}
-\end{gather*}
-\note{These global operators again satisfy the SBP property $\bm{Q}_h + \bm{Q}_h^T = \bm{B}_h$, where $\bm{Q}_h = \bm{S}_h + \frac{1}{2}\bm{B}_h$.  Moreover, $\bm{Q}_h$ can be used to produce high order accurate approximations of derivatives, and can be used to construct entropy conservative schemes as in Theorem~\ref{thm:consentropy}.  The extension to a general number of elements is straightforward. }
-
-It is possible to convert the semi-discrete entropy equality in Theorem~\ref{thm:consentropy} to a semi-discrete entropy inequality by adding appropriate interface dissipation terms, such as Lax-Friedrichs or matrix dissipation \cite{winters2017uniquely}.  We note that these terms must be computed in terms of $\tilde{\bm{u}}_f$ in order to ensure a discrete dissipation of entropy \cite{chen2017entropy, chan2017discretely}.  \note{Boundary conditions can also be incorporated into the formulation (\ref{eq:form}) in a weak fashion.  Let $\bm{u}_L, \bm{u}_R$ denote the values of the solution at the left and right domain boundaries of a 1D domain.  Using the SBP property, we can modify (\ref{eq:form}) to }
-\[
-\note{\bm{W}_h\td{\bm{u}_h}{t} + 2\bm{I}_h^T \LRp{\bm{S}_h\circ \bm{F}_S}\bm{1} + \bm{I}_h^T\bm{B}_h \begin{bmatrix}\bm{0}\\ \bm{f}(\bm{u}_L) \\ \vdots \\ \bm{0}\\ \bm{f}(\bm{u}_R)\end{bmatrix}}= 0,
-\]
-\note{where we have used the consistency of $\bm{f}_S$ and the fact that $\bm{B}_h$ is diagonal to simplify the boundary term.  We can now replace $\bm{f}(\bm{u}_L), \bm{f}(\bm{u}_R)$ with numerical fluxes $\bm{f}^*_L, \bm{f}^*_R$ as follows:}
-\begin{equation}
-\note{\bm{W}_h\td{\bm{u}_h}{t} + 2\bm{I}_h^T \LRp{\bm{S}_h\circ \bm{F}_S}\bm{1} + \bm{I}_h^T \bm{B}_h \begin{bmatrix}\bm{0}\\ \bm{f}^*_L \\ \vdots \\ \bm{0}\\ \bm{f}^*_R\end{bmatrix}}= 0.
-\label{eq:bform}
-\end{equation}
-\note{If the boundary numerical flux satisfies the entropy stability conditions}
-\[
-\note{\psi_L - \bm{v}_L^T\bm{f}^*_{L} \leq 0, \qquad {\psi}_R - \bm{v}_R^T\bm{f}^*_{R} \leq 0}
-\]
-\note{then the resulting scheme satisfies a global entropy inequality \cite{chen2017entropy}.  }
-
-\note{Assuming that the ODE system (\ref{eq:form}) exactly integrated in time and that entropy dissipative numerical fluxes and boundary conditions are used, the solution will satisfy a discrete entropy inequality (\ref{eq:weakentropyineq}).  In practice, the system (\ref{eq:form}) is solved using an ODE time-stepper.  For an explicit time-stepper, then all that is necessary is to invert the diagonal matrix $\bm{W}_h$ and evaluate the spatial terms in (\ref{eq:bform}).  We note that the conservation or dissipation of entropy is guaranteed up to time-stepper accuracy.  In practice, we observe that entropy is dissipated for all problems considered, despite the fact that the proof does not hold at the fully discrete level.}
+It is possible to convert the semi-discrete entropy equality in Theorem~\ref{thm:consentropy} to a semi-discrete entropy inequality by adding appropriate interface dissipation terms, such as Lax-Friedrichs or matrix dissipation \cite{winters2017uniquely}.  We note that these terms must be computed in terms of $\tilde{\bm{u}}_f$ in order to ensure a discrete dissipation of entropy \cite{chen2017entropy, chan2017discretely}.  
 
 \section{Extension to higher dimensions and non-affine meshes}
 \label{sec:2}
@@ -1072,16 +1020,15 @@ Apart from evaluating the GCL-satisfying geometric terms at separate volume and 
 
 \section{Numerical results}
 \label{sec:3}
-
-\note{In this section, we present numerical examples for} the compressible Euler equations, which are given in $d$ dimensions as follows:
+The compressible Euler equations in $d$ dimensions are given as follows:
 \begin{align*}
-\pd{\rho}{t} &+ \note{\sum_{j=1}^d \pd{\LRp{\rho {u}_j}}{x_j}} = 0,\\
-\note{\pd{\rho {u}_i}{t}} &+ \note{\sum_{j=1}^d \pd{\LRp{\rho u_iu_j + p\delta_{ij} }}{x_j}} = 0, \qquad i = 1,\ldots,d\\
-\pd{E}{t} &+ \note{\sum_{j=1}^d \pd{\LRp{{u}_j(E+p)}}{x_j}} = 0.\nonumber
+\pd{\rho}{t} &+ \sum_{j=1}^d \pd{\LRp{\rho \bm{u}_j}}{x_j} = 0,\\
+\pd{\rho \bm{u}_i}{t} &+ \sum_{j=1}^d \pd{\LRp{\rho \bm{u}_i\bm{u}_j + p\delta_{ij} }}{x_j} = 0, \qquad i = 1,\ldots,d\\
+\pd{E}{t} &+ \sum_{j=1}^d \pd{\LRp{\bm{u}_j(E+p)}}{x_j} = 0.\nonumber
 \end{align*}
-Here, $\rho$ is density, \note{$\LRp{{u}_1, \ldots,{u}_d}$} is the vector of velocities, and $E$ is the total energy.  The pressure $p$ and specific internal energy $\rho e$ are given by 
+Here, $\rho$ is density, $\bm{u} = \LRp{\bm{u}_1, \ldots,\bm{u}_d}$ is the vector of velocities, and $E$ is the total energy.  The pressure $p$ and specific internal energy $\rho e$ are given by 
 \[
-\note{p = (\gamma-1)\LRp{E - \frac{1}{2}\rho \LRp{\sum_{j=1}^d u_j^2}}}, \qquad \note{\rho e = E - \frac{1}{2}\rho \LRp{\sum_{j=1}^d u_j^2}}. %\qquad \LRb{\bm{u}}^2 = \LRp{\sum_{j=1}^d u_j^2}.
+p = (\gamma-1)\LRp{E - \frac{1}{2}\rho \LRb{\bm{u}}^2}, \qquad \rho e = E - \frac{1}{2}\rho \LRb{\bm{u}}^2, \qquad \LRb{\bm{u}}^2 = \LRp{\sum_{j=1}^d \bm{u}_j^2}.
 \]
 
 There exists an infinite family of suitable convex entropies for the compressible Euler equations \cite{harten1983symmetric}.  However, there is only a single unique entropy which appropriately treats the viscous heat conduction term in the compressible Navier-Stokes equations \cite{hughes1986new}.  This entropy $S(\bm{u})$ is given by
@@ -1091,24 +1038,19 @@ S(\bm{u}) = -\frac{\rho s}{\gamma-1},
 where $s = \log\LRp{\frac{p}{\rho^\gamma}}$ is the physical specific entropy, and the dimension $d = 1,2,3$.  The entropy variables in $d$ dimensions are given by
 \begin{align*}
 v_1 &= \frac{\rho e (\gamma + 1 - s) - E}{\rho e}, \\
-v_{1+ i}&= \frac{\rho \note{{u}_i}}{\rho e}, \qquad i = 1,\ldots, d,\\
+v_{1+ i}&= \frac{\rho \bm{u}_i}{\rho e}, \qquad i = 1,\ldots, d,\\
 v_{d+2} &= -\frac{\rho}{\rho e},
 \end{align*}
 while the conservation variables in terms of the entropy variables are given by
 \begin{align*}
 \rho &= -(\rho e) v_{d+2}, \\
- \rho \note{u_i} &= (\rho e) v_{1+i}, \qquad i = 1,\ldots,d\\
+ \rho \bm{u}_i &= (\rho e) v_{1+i}, \qquad i = 1,\ldots,d\\
  E &= (\rho e)\LRp{1 - \frac{\sum_{j=1}^d{v_{1+j}^2}}{2 v_{d+2}}},
 \end{align*}
 where the quantities $\rho e$ and $s$ in terms of the entropy variables are 
 \begin{equation*}
 \rho e = \LRp{\frac{(\gamma-1)}{\LRp{-v_{d+2}}^{\gamma}}}^{1/(\gamma-1)}e^{\frac{-s}{\gamma-1}}, \qquad s = \gamma - v_1 + \frac{\sum_{j=1}^d{v_{1+j}^2}}{2v_{d+2}}.
 \end{equation*}
-\note{Let $f$ denote some piecewise polynomial function, and let $f^+$ denote the exterior value of $f$ across an element face.  We define the average and logarithmic averages as follows:}
-\[
-\note{\avg{f} = \frac{f^+ + f}{2}}, \qquad \note{\avg{f}^{\log} = \frac{f+ - f}{\log\LRp{f^+}-\log\LRp{f}}}.
-\]
-\note{The average and logarithmic average are assumed to act component-wise on vector-valued functions.  We evaluate the logarithmic average using the numerically stable approach of \cite{ismail2009affordable}.}
 Explicit expressions for entropy conservative numerical fluxes in two dimensions  are given by Chandrashekar \cite{chandrashekar2013kinetic}
 \begin{align*}
 &f^1_{1,S}(\bm{u}_L,\bm{u}_R) = \avg{\rho}^{\log} \avg{u},& &f^1_{2,S}(\bm{u}_L,\bm{u}_R) = \avg{\rho}^{\log} \avg{v},&\\
@@ -1116,10 +1058,10 @@ Explicit expressions for entropy conservative numerical fluxes in two dimensions
 &f^3_{1,S}(\bm{u}_L,\bm{u}_R) = f^2_{2,S},& &f^3_{2,S}(\bm{u}_L,\bm{u}_R) = f^1_{2,S} \avg{v} + p_{\rm avg},&\nonumber\\
 &f^4_{1,S}(\bm{u}_L,\bm{u}_R) = \LRp{E_{\rm avg} + p_{\rm avg}}\avg{u},& &f^4_{2,S}(\bm{u}_L,\bm{u}_R) = \LRp{E_{\rm avg} + p_{\rm avg} }\avg{v},& \nonumber
 \end{align*}
-where \note{$u,v$ denote the $x$ and $y$ velocities, respectively, and}  we have defined the auxiliary quantities 
+where we have defined the auxiliary quantities 
 \begin{gather}
-\note{\beta = \frac{\rho}{2p}}, \qquad p_{\rm avg} = \frac{\avg{\rho}}{2\avg{\beta}}, \qquad \qquad E_{\rm avg} = \frac{\avg{\rho}^{\log}}{2\avg{\beta}^{\log}\LRp{\gamma -1}}   + \frac{\note{u_{\rm avg}^2}}{2}, \label{eq:fluxaux} \\
-\note{u^2_{\rm avg}} = 2(\avg{u}^2 + \avg{v}^2) - \LRp{\avg{u^2} +\avg{v^2}} \nonumber.  
+p_{\rm avg} = \frac{\avg{\rho}}{2\avg{\beta}}, \qquad E_{\rm avg} = \frac{\avg{\rho}^{\log}}{2\avg{\beta}^{\log}\LRp{\gamma -1}}   + \frac{\nor{\bm{u}}^2_{\rm avg}}{2}, \label{eq:fluxaux} \\
+ \nor{\bm{u}}^2_{\rm avg} = 2(\avg{u}^2 + \avg{v}^2) - \LRp{\avg{u^2} +\avg{v^2}} \nonumber.  
 \end{gather}
 Expressions for entropy conservative numerical fluxes for the three-dimensional compressible Euler equations can also be explicitly written as
 \begin{gather*}
@@ -1150,13 +1092,13 @@ Expressions for entropy conservative numerical fluxes for the three-dimensional 
 %&f^3_{1,S}(\bm{u}_L,\bm{u}_R) = f^2_{2,S},& &f^3_{2,S}(\bm{u}_L,\bm{u}_R) = f^1_{2,S} \avg{v} + p_{\rm avg},&\nonumber\\
 %&f^4_{1,S}(\bm{u}_L,\bm{u}_R) = \LRp{\frac{p_{\rm avg}^{\log}}{\gamma -1} + p_{\rm avg} + \frac{\nor{\bm{u}}^2_{\rm avg}}{2}}\avg{u},& &f^4_{2,S}(\bm{u}_L,\bm{u}_R) = \LRp{\frac{p_{\rm avg}^{\log}}{\gamma -1} + p_{\rm avg} + \frac{\nor{\bm{u}}^2_{\rm avg}}{2}}\avg{v},& \nonumber
 \end{gather*}
-\note{where $u,v,w$ denote the $x,y,z$ velocities, respectively, and} the auxiliary quantities are defined as
-\begin{gather*}
-\note{\beta = \frac{\rho}{2p}}, \qquad p_{\rm avg} = \frac{\avg{\rho}}{2\avg{\beta}}, \qquad E_{\rm avg} = \frac{\avg{\rho}^{\log}}{2(\gamma-1)\avg{\beta}^{\log}} + \frac{1}{2}\avg{\rho}^{\log}\note{{u}^2_{\rm avg}}, \\
-\note{u^2_{\rm avg}} = 2(\avg{u}^2 + \avg{v}^2 + \avg{w}^2) - \LRp{\avg{u^2} +\avg{v^2} + \avg{w^2}}.\nonumber
-\end{gather*}
+with auxiliary quantities 
+\begin{align*}
+p_{\rm avg} &= \frac{\avg{\rho}}{2\avg{\beta}}, \qquad E_{\rm avg} = \frac{\avg{\rho}^{\log}}{2(\gamma-1)\avg{\beta}^{\log}} + \frac{1}{2}\avg{\rho}^{\log}\nor{\bm{u}}^2_{\rm avg}, \\
+\nor{\bm{u}}^2_{\rm avg} &= 2(\avg{u}^2 + \avg{v}^2 + \avg{w}^2) - \LRp{\avg{u^2} +\avg{v^2} + \avg{w^2}}.\nonumber
+\end{align*}
 
-In all problems, \note{we use an explicit low storage RK-45 time-stepper \cite{carpenter1994fourth}} and estimate the timestep size $dt$ using $J, J^k_f$, and degree-dependent $L^2$ trace constants $C_N$ 
+In all problems, we estimate the timestep size $dt$ using $J, J^k_f$, and degree-dependent $L^2$ trace constants $C_N$ 
 \[
 dt = C_{\rm CFL}\frac{ h}{ a C_N}, \qquad h = \frac{1}{{\nor{J^{-1}}_{L^{\infty}}}\nor{J^k_f}_{L^{\infty}}},
 \]
@@ -1191,13 +1133,11 @@ where $u, v$ are the $x$ and $y$ velocity and $r(\bm{x},t) = \sqrt{(x-x_0-t)^2 +
 \end{figure}
 
 We solve on a periodic rectangular domain $[0, 20] \times [-5,5]$ until final time $T=5$, and compute errors over all all solution fields.  For a degree $N$ approximation, we approximate the $L^2$ error using an $(N+2)$ point Gauss quadrature rule.  We also examine the influence of element curvature for both GLL and Gauss collocation schemes by examining $L^2$ errors on a sequence of moderately and heavily warped curvilinear meshes (see Figure~\ref{fig:warp2d}).  These warpings are constructed by modifying nodal positions according to the following mapping
-\note{
 \begin{align*}
-\tilde{x} &= x + L_x\alpha\cos\LRp{\frac{\pi}{L_x}\LRp{x-\frac{L_x}{2}}}\cos\LRp{\frac{3\pi}{L_y}y}, \\
-\tilde{y} &= y + L_y\alpha\sin\LRp{\frac{4\pi}{L_x}\LRp{\tilde{x}-\frac{L_x}{2}}}\cos\LRp{\frac{\pi}{L_y}y},
+\tilde{x} &= x + \alpha\cos\LRp{\frac{\pi}{20}(x-10)}\cos\LRp{\frac{3\pi}{10}y}, \\
+\tilde{y} &= y + \alpha\sin\LRp{\frac{\pi}{5}(\tilde{x}-10)}\cos\LRp{\frac{\pi}{10}y}.
 \end{align*}
-where $L_x = 20, L_y = 10$ denote the lengths of the domain in the $x$ and $y$ directions, respectively.  
-The lightly warped mesh corresponds to $\alpha = 1/64$, the moderately warped mesh corresponds to $\alpha = 1/16$, and the heavily warped mesh corresponds to $\alpha = 1/8$.  All results are computed using $C_{\rm CFL} = 1/2$ and Lax-Friedrichs interface dissipation.  }
+The lightly warped mesh corresponds to $\alpha = 1/32$, the moderately warped mesh corresponds to $\alpha = 1/8$, and the heavily warped mesh corresponds to $\alpha = 1/4$.  All results are computed using $C_{\rm CFL} = 1/2$ and Lax-Friedrichs interface dissipation.  
 
 %\begin{center}
 %\begin{tabular}{|c || c ||c ||c ||c ||c ||c |}
@@ -1417,16 +1357,13 @@ x_1-c_1\\
 0
 \end{pmatrix}.
 \]
-We take \note{$c_1 = c_2 = 7.5$}, $p_0 = {1}/{\gamma}$, and $\Pi_{\max} = 0.4$, and solve on the domain \note{$[0,15]\times [0,20]\times [0,5]$ until final time $T=5$.  We decompose the domain into uniform hexahedral elements with edge length $h$}.  As in the 2D case, we also examine the effect of curvilinear mesh warping.  We construct a curved warping of the initial Cartesian mesh by mapping nodes on each hexahedron to warped nodal positions $(\tilde{x},\tilde{y},\tilde{z})$ through the transformation
+We take $c_1 = c_2 = 5$, $p_0 = {1}/{\gamma}$, and $\Pi_{\max} = 0.4$, and solve on the domain $[0,10]\times [0,20]\times [0,10]$.  As in the 2D case, we also examine the effect of curvilinear mesh warping.  Following \cite{chan2018discretely}, we construct a curved warping of the initial Cartesian mesh by mapping nodes on each hexahedron to warped nodal positions $(\tilde{x},\tilde{y},\tilde{z})$ through the transformation
 \begin{align*}
-\tilde{y} &= y + \note{\frac{1}{8}L_y\cos\LRp{3\pi \frac{(x-7.5)}{15}}\cos\LRp{\pi \frac{(y-10)}{20}}\cos\LRp{\pi \frac{(z-2.5)}{5}}}\\
-\tilde{x} &= x + \note{\frac{1}{8}L_x\cos\LRp{\pi \frac{(x-7.5)}{15}}\sin\LRp{4\pi \frac{(\tilde{y}-10)}{20}}\cos\LRp{\pi \frac{(z-2.5)}{5}}}\\
-\tilde{z} &= z + \note{\frac{1}{8}L_z\cos\LRp{\pi \frac{(\tilde{x}-7.5)}{15}}\cos\LRp{2\pi \frac{(\tilde{y}-10)}{20}}\cos\LRp{\pi \frac{(z-2.5)}{5}}}.
+\tilde{\bm{x}} &= \bm{x} + \sin\LRp{\pi \frac{(x-5)}{5}}\sin\LRp{2\pi \frac{(y-10)}{10}}\sin\LRp{\pi \frac{(z-5)}{5}}.
 \end{align*} 
-where $L_x = 15, L_y = 20, L_z = 5$.  
 On curved meshes, the geometric terms are constructed using the approach of Kopriva described in Section~\ref{sec:2}.  A $C_{\rm CFL} = .75$ is used for all experiments.  
 
-Figure~\ref{fig:err3d} shows the $L^2$ errors for degrees \note{$N = 2,\ldots, 5$}.\footnote{For the $N = 2$ GLL collocation scheme on the coarsest 3D mesh, the error is not shown because the solution diverged. } As in the 2D case, Gauss collocation schemes produce smaller errors than GLL collocation.  The difference between the two schemes on affine meshes is slightly more pronounced than in 2D, while the difference between the two schemes on curved meshes is less significant than observed in 2D experiments.  \note{We expect that this difference is due to the specific curved mapping.  The warped 2D mesh used in Figure~\ref{fig:err2d} was generated to mimic a severe ``vorticular'' warping.  The 3D mapping is less severely warped, due to different  domain dimensions and difficulties ensuring invertibility of the map from the reference to physical element.}
+Figure~\ref{fig:err3d} shows the $L^2$ errors for degrees $N = 2,\ldots, 7$.  As in the 2D case, Gauss collocation schemes produce smaller errors than GLL collocation schemes, especially on on curved meshes.  The difference between the two schemes on affine meshes is slightly more pronounced than in 2D.  The difference between the two schemes on curved meshes is qualitatively similar to the 2D case, with Gauss collocation achieving higher accuracy than GLL collocation schemes at all polynomial degrees and mesh resolutions.  %, which may be due to the specific curvilinear warping applied in this work.  
 
 \begin{figure}
 \centering
@@ -1437,42 +1374,90 @@ Figure~\ref{fig:err3d} shows the $L^2$ errors for degrees \note{$N = 2,\ldots, 5
     xlabel={Mesh size $h$},
     ylabel={$L^2$ errors}, 
 %    xmin=.0125, 
-    ymin=1e-7, ymax=5,
-    legend pos=south east, legend cell align=left, legend style={font=\tiny},	
+    ymin=1e-5, ymax=5,
+    legend pos=north west, legend cell align=left, legend style={font=\tiny},	
     xmajorgrids=true, ymajorgrids=true, grid style=dashed,
     legend entries={GLL, Gauss}    
 ]
 \pgfplotsset{
 cycle list={{blue, mark=*}, {red, dashed ,mark=square*}}
 }
-% N = 2
 \addplot+[semithick, mark options={solid, fill=markercolor}]
-coordinates{(2.5,1.85364)(1.25,0.514785)(0.625,0.0793524)(0.3125,0.0132308)};
+coordinates{(0.25,2.62759)(0.125,0.728523)(0.0625,0.112225)(0.03125,0.018711)};
 \addplot+[semithick, mark options={solid, fill=markercolor}]
-coordinates{(2.5,1.08061)(1.25,0.164679)(0.625,0.0294895)(0.3125,0.00570425)};
+coordinates{(0.25,1.53203)(0.125,0.23283)(0.0625,0.0417033)(0.03125,0.00806707)};
 
-% N = 3
 \addplot+[semithick, mark options={solid, fill=markercolor}]
-coordinates{(2.5,0.661158)(1.25,0.135728)(0.625,0.00847132)(0.3125,0.000394629)};
+coordinates{(0.25,0.934758)(0.125,0.191949)(0.0625,0.0119788)(0.03125,0.000558681)};
 \addplot+[semithick, mark options={solid, fill=markercolor}]
-coordinates{(2.5,0.397063)(1.25,0.0610903)(0.625,0.00189633)(0.3125,9.49625e-05)};
+coordinates{(0.25,0.562488)(0.125,0.0864096)(0.0625,0.00268061)(0.03125,0.000136725)};
 
-% N = 4
 \addplot+[semithick, mark options={solid, fill=markercolor}]
-coordinates{(2.5,0.325704)(1.25,0.0172973)(0.625,0.000580552)(0.3125,2.81526e-05)};
+coordinates{(0.25,0.460425)(0.125,0.02445)(0.0625,0.000821249)(0.03125,4.67491e-05)};
 \addplot+[semithick, mark options={solid, fill=markercolor}]
-coordinates{(2.5,0.169055)(1.25,0.00547459)(0.625,0.000154222)(0.3125,7.74137e-06)};
+coordinates{(0.25,0.239027)(0.125,0.0077433)(0.0625,0.000219705)(0.03125,2.67589e-05)};
 
 % N = 5
 \addplot+[semithick, mark options={solid, fill=markercolor}]
-coordinates{(2.5,0.0977112)(1.25,0.00526152)(0.625,8.73468e-05)(0.3125,9.44473e-07)};
+coordinates{(0.25,0.138105)(0.125,0.00744055)(0.0625,0.000126057)(0.03125,NaN)};
 \addplot+[semithick, mark options={solid, fill=markercolor}]
-coordinates{(2.5,0.0386913)(1.25,0.00171584)(0.625,2.46858e-05)(0.3125,2.07682e-07)};
-
+coordinates{(0.25,0.0547127)(0.125,0.00242675)(0.0625,4.2962e-05)(0.03125,NaN)};
+% N = 6
+\addplot+[semithick, mark options={solid, fill=markercolor}]
+coordinates{(0.25,0.0489719)(0.125,0.000897467)(0.0625,2.55644e-05)(0.03125,NaN)};
+\addplot+[semithick, mark options={solid, fill=markercolor}]
+coordinates{(0.25,0.0246519)(0.125,0.000324802)(0.0625,2.44009e-05)(0.03125,NaN)};
+% N = 7
+\addplot+[semithick, mark options={solid, fill=markercolor}]
+coordinates{(0.25,0.023319)(0.125,0.00021951)(0.0625,NaN)(0.03125,NaN)};
+\addplot+[semithick, mark options={solid, fill=markercolor}]
+coordinates{(0.25,0.00801774)(0.125,7.39203e-05)(0.0625,NaN)(0.03125,NaN)};
 
 \end{loglogaxis}
 \end{tikzpicture}
 }
+%\subfloat[Sub-parametric mesh]{
+%\begin{tikzpicture}
+%\begin{loglogaxis}[
+%    width=.5\textwidth,
+%    xlabel={Mesh size $h$},
+%%    ylabel={$L^2$ errors}, 
+%%    xmin=.0125, 
+%    ymin=1e-6, ymax=5,
+%      legend pos=south east, legend cell align=left, legend style={font=\tiny},	
+%    xmajorgrids=true, ymajorgrids=true, grid style=dashed,
+%    legend entries={GLL, Gauss}    
+%]
+%\pgfplotsset{
+%cycle list={{blue, mark=*}, {red, dashed ,mark=square*}}
+%}
+%\addplot+[semithick, mark options={solid, fill=markercolor}]
+%coordinates{(0.25,2.80762)(0.125,0.951269)(0.0625,0.173495)(0.03125,0.0295367)};
+%\addplot+[semithick, mark options={solid, fill=markercolor}]
+%coordinates{(0.25,1.89337)(0.125,0.366475)(0.0625,0.0599646)(0.03125,0.0133605)};
+%\addplot+[semithick, mark options={solid, fill=markercolor}]
+%coordinates{(0.25,1.21946)(0.125,0.257914)(0.0625,0.0494569)(0.03125,0.00380144)};
+%\addplot+[semithick, mark options={solid, fill=markercolor}]
+%coordinates{(0.25,0.708125)(0.125,0.139733)(0.0625,0.015052)(0.03125,0.000419943)};
+%\addplot+[semithick, mark options={solid, fill=markercolor}]
+%coordinates{(0.25,0.594597)(0.125,0.100782)(0.0625,0.0051111)(0.03125,0.000186621)};
+%\addplot+[semithick, mark options={solid, fill=markercolor}]
+%coordinates{(0.25,0.347316)(0.125,0.0351013)(0.0625,0.000702893)(0.03125,4.39052e-05)};
+%\addplot+[semithick, mark options={solid, fill=markercolor}]
+%coordinates{(0.25,0.306622)(0.125,0.0198205)(0.0625,0.00156957)(0.03125,NaN)};
+%\addplot+[semithick, mark options={solid, fill=markercolor}]
+%coordinates{(0.25,0.142279)(0.125,0.00620177)(0.0625,0.000311399)(0.03125,NaN)};
+%\addplot+[semithick, mark options={solid, fill=markercolor}]
+%coordinates{(0.25,0.130865)(0.125,0.0108333)(0.0625,0.000188656)(0.03125,NaN)};
+%\addplot+[semithick, mark options={solid, fill=markercolor}]
+%coordinates{(0.25,0.0518407)(0.125,0.00289859)(0.0625,3.71549e-05)(0.03125,NaN)};
+%\addplot+[semithick, mark options={solid, fill=markercolor}]
+%coordinates{(0.25,0.0558827)(0.125,0.00251998)(0.0625,NaN)(0.03125,NaN)};
+%\addplot+[semithick, mark options={solid, fill=markercolor}]
+%coordinates{(0.25,0.0208791)(0.125,0.000423102)(0.0625,NaN)(0.03125,NaN)};
+%\end{loglogaxis}
+%\end{tikzpicture}
+%}\\
 \subfloat[Curved mesh]{
 \begin{tikzpicture}
 \begin{loglogaxis}[
@@ -1480,41 +1465,42 @@ coordinates{(2.5,0.0386913)(1.25,0.00171584)(0.625,2.46858e-05)(0.3125,2.07682e-
     xlabel={Mesh size $h$},
     ylabel={$L^2$ errors}, 
 %    xmin=.0125, 
-    ymin=1e-7, ymax=5,
-    legend pos=south east, legend cell align=left, legend style={font=\tiny},	
+    ymin=1e-5, ymax=5,
+    legend pos=north west, legend cell align=left, legend style={font=\tiny},	
     xmajorgrids=true, ymajorgrids=true, grid style=dashed,
     legend entries={GLL, Gauss}    
 ]
 \pgfplotsset{
 cycle list={{blue, mark=*}, {red, dashed ,mark=square*}}
 }
-% N = 2
 \addplot+[semithick, mark options={solid, fill=markercolor}]
-coordinates{(2.5,NaN)(1.25,1.57425)(0.625,0.448088)(0.3125,0.0871033)};
+coordinates{(0.25,2.93541)(0.125,1.00445)(0.0625,0.18488)(0.03125,0.0323814)};
 \addplot+[semithick, mark options={solid, fill=markercolor}]
-coordinates{(2.5,2.48256)(1.25,0.981474)(0.625,0.232946)(0.3125,0.0529084)};
-
-% N = 3
+coordinates{(0.25,1.99429)(0.125,0.423426)(0.0625,0.0787544)(0.03125,0.0173475)};
 \addplot+[semithick, mark options={solid, fill=markercolor}]
-coordinates{(2.5,2.03576)(1.25,0.599779)(0.625,0.101389)(0.3125,0.0120874)};
+coordinates{(0.25,1.23231)(0.125,0.266638)(0.0625,0.0513328)(0.03125,0.00390276)};
 \addplot+[semithick, mark options={solid, fill=markercolor}]
-coordinates{(2.5,1.62319)(1.25,0.336149)(0.625,0.0485175)(0.3125,0.00371689)};
-
-% N = 4
+coordinates{(0.25,0.727022)(0.125,0.148442)(0.0625,0.0158392)(0.03125,0.000446109)};
 \addplot+[semithick, mark options={solid, fill=markercolor}]
-coordinates{(2.5,1.22642)(1.25,0.240606)(0.625,0.0221903)(0.3125,0.000696802)};
+coordinates{(0.25,0.599851)(0.125,0.101098)(0.0625,0.00511836)(0.03125,0.00018702)};
 \addplot+[semithick, mark options={solid, fill=markercolor}]
-coordinates{(2.5,0.90428)(1.25,0.131914)(0.625,0.00712465)(0.3125,0.000207085)};
-
-% N = 5
+coordinates{(0.25,0.351163)(0.125,0.0353206)(0.0625,0.000705351)(0.03125,4.41811e-05)};
 \addplot+[semithick, mark options={solid, fill=markercolor}]
-coordinates{(2.5,0.720447)(1.25,0.0986167)(0.625,0.00367923)(0.3125,0.000120058)};
+coordinates{(0.25,0.310649)(0.125,0.0199095)(0.0625,0.00157312)(0.03125,NaN)};
 \addplot+[semithick, mark options={solid, fill=markercolor}]
-coordinates{(2.5,0.524023)(1.25,0.0500179)(0.625,0.00121588)(0.3125,3.23497e-05)};
+coordinates{(0.25,0.144996)(0.125,0.00619848)(0.0625,0.000311659)(0.03125,NaN)};
+\addplot+[semithick, mark options={solid, fill=markercolor}]
+coordinates{(0.25,0.130579)(0.125,0.0108408)(0.0625,0.000188745)(0.03125,NaN)};
+\addplot+[semithick, mark options={solid, fill=markercolor}]
+coordinates{(0.25,0.0517392)(0.125,0.00290387)(0.0625,3.71606e-05)(0.03125,NaN)};
+\addplot+[semithick, mark options={solid, fill=markercolor}]
+coordinates{(0.25,0.0558635)(0.125,0.00251764)(0.0625,NaN)(0.03125,NaN)};
+\addplot+[semithick, mark options={solid, fill=markercolor}]
+coordinates{(0.25,0.020886)(0.125,0.000421991)(0.0625,NaN)(0.03125,NaN)};
 \end{loglogaxis}
 \end{tikzpicture}
 }
-\caption{$L^2$ errors for the 3D isentropic vortex for \note{$N = 2,\ldots,5$} on sequences of Cartesian and curved meshes.}
+\caption{$L^2$ errors for the 3D isentropic vortex for $N = 2,\ldots,7$ on sequences of Cartesian and curved meshes.}
 \label{fig:err3d}
 \end{figure}
 
@@ -1753,7 +1739,7 @@ We note that results for Gauss collocation are similar to those attained by entr
 
 \section{Acknowledgments}
 
-Jesse Chan is supported by NSF DMS-1719818 and DMS-1712639.  The authors thank Florian Hindenlang and Jeremy Kozdon for helpful discussions and suggestions.
+Jesse Chan is supported by NSF DMS-1719818 and DMS-1712639.  The authors thank Florian Hindenlang for helpful discussions and suggestions.
 
 \appendix
 
