@@ -1,0 +1,97 @@
+%% hybrid
+
+h = 2./[6 12 24 48];
+% CFL = .5, FinalTime = 5
+
+% N = 1, K = 6, 12, 24, 48
+% N = 1
+err_GLL_GLL = [2.506558004318539 1.873997866455337 1.056472054780685 0.438926129699290];
+err_GLL_GQ = [2.426333384151474 1.751422579558173 0.958902329356268 0.462136561408204];
+err_GQ_GQ= [2.093627101722811 0.981664350401488 0.264928215077649 0.053637629590462];
+
+disp(' ------------ N = 1 ')
+(diff(log(err_GLL_GLL))/log(.5))
+(diff(log(err_GLL_GQ))/log(.5))
+(diff(log(err_GQ_GQ))/log(.5))
+% print_pgf_coordinates(h,err_GLL_GLL)
+% print_pgf_coordinates(h,err_GLL_GQ)
+% print_pgf_coordinates(h,err_GQ_GQ)
+
+% N = 2
+err_GLL_GLL = [1.369473059142049 0.390076442420083 0.062338650948647 0.011360980295212];
+err_GLL_GQ = [1.281871276929042 0.326338289166513 0.042771702784155 0.004024840075127];
+err_GQ_GQ= [0.859448958791845 0.132238718753632 0.018785214258996 0.002606302378149];
+
+disp(' ------------ N = 2 ')
+(diff(log(err_GLL_GLL))/log(.5))
+(diff(log(err_GLL_GQ))/log(.5))
+(diff(log(err_GQ_GQ))/log(.5))
+% print_pgf_coordinates(h,err_GLL_GLL)
+% print_pgf_coordinates(h,err_GLL_GQ)
+% print_pgf_coordinates(h,err_GQ_GQ)
+
+% N = 3
+err_GLL_GLL = [0.485450380291208 0.061553824803170 0.006650607312478 7.112639673757679e-04];
+err_GLL_GQ = [0.446406531291524 0.047748604255064 0.003721640901612  3.097051638598392e-04];
+err_GQ_GQ= [0.286257769948150 0.033172769625624 0.002395932926800 1.443461952193142e-04];
+
+disp(' ------------ N = 3 ')
+(diff(log(err_GLL_GLL))/log(.5))
+(diff(log(err_GLL_GQ))/log(.5))
+(diff(log(err_GQ_GQ))/log(.5))
+% print_pgf_coordinates(h,err_GLL_GLL)
+% print_pgf_coordinates(h,err_GLL_GQ)
+% print_pgf_coordinates(h,err_GQ_GQ)
+
+% N = 4 
+err_GLL_GLL = [0.211329168998782 0.017979793762618 8.164287095706692e-04 4.583068530777824e-05];
+err_GLL_GQ = [0.160937068469047 0.011004474289958 4.141301981676450e-04 1.438708299584088e-05];
+err_GQ_GQ= [0.139749565352795 0.009773038703112 3.773095954918788e-04 1.337566281886131e-05];
+
+disp(' ------------ N = 4 ')
+(diff(log(err_GLL_GLL))/log(.5))
+(diff(log(err_GLL_GQ))/log(.5))
+(diff(log(err_GQ_GQ))/log(.5))
+
+% print_pgf_coordinates(h,err_GLL_GLL)
+% print_pgf_coordinates(h,err_GLL_GQ)
+% print_pgf_coordinates(h,err_GQ_GQ)
+
+%% noncon
+
+% N = 1, K = 6, 12, 24
+h = 2./[6 12 24 48];
+
+err_GLL_GLL = [2.6993 1.6718 0.7792 0.292109958892711];
+err_GLL_GQ = [2.940784290640242 1.730573958007535 0.970690441574172 0.487386502922445];
+err_GQ_GQ   = [2.0534 0.7966 0.2022 0.044941319537939];
+
+print_pgf_coordinates(h,err_GLL_GLL)
+print_pgf_coordinates(h,err_GQ_GQ)
+
+% N = 2, K = 6, 12, 24
+% N=2, K = 6 => CFL = .125
+err_GLL_GLL = [1.1609 0.3562 0.0768 0.019219699366989]
+err_GLL_GQ = [1.202913631932297 0.347365488887244 0.060668794291770 0.014484331163411];
+err_GQ_GQ   = [0.7191 0.1410 0.0178 0.002430874467105] ;
+
+print_pgf_coordinates(h,err_GLL_GLL)
+print_pgf_coordinates(h,err_GQ_GQ)
+
+
+% N = 3
+err_GLL_GLL = [0.551144794755657 0.075423746794403 0.010080750935226 0.001206331314505];
+err_GLL_GQ = [0.557083582743921 0.067137254466507 0.007440855236839 8.379051403197340e-04];
+err_GQ_GQ   = [0.352705742384143 0.025841463466792 0.002119526920617 1.329691481517913e-04];
+
+print_pgf_coordinates(h,err_GLL_GLL)
+print_pgf_coordinates(h,err_GQ_GQ)
+
+% N = 4
+err_GLL_GLL = [0.267668437449872 0.019260296092443 0.001403412727647];
+err_GLL_GQ = [0.212176177769505 0.015117765948094 8.263069256789442e-04];
+err_GQ_GQ   = [0.128216544764112  0.007799434615354 2.708033443689105e-04];
+
+print_pgf_coordinates(h(1:3),err_GLL_GLL)
+print_pgf_coordinates(h(1:3),err_GQ_GQ)
+

@@ -1,33 +1,10 @@
-% Kvec = [6 12];
-% for N = 1:4
-%     
-%     fprintf('N = %d\n',N)
-%     fprintf('L2err_GLL_GLL = [');                
-%     for K1D = Kvec
-%         fprintf('%10.10g ',L2err_GLL_GLL{N,K1D});        
-%     end
-%     fprintf('];\n');
-%     
-%     fprintf('L2err_GLL_GQ = [');                
-%     for K1D = Kvec
-%         fprintf('%10.10g ',L2err_GLL_GQ{N,K1D});        
-%     end
-%     fprintf('];\n');
-%     
-%     fprintf('L2err_GQ_GQ = [');                
-%     for K1D = Kvec
-%         fprintf('%10.10g ',L2err_GQ_GQ{N,K1D});        
-%     end
-%     fprintf('];\n');
-% end
 
-L2err_GLL_GLL = {};
-L2err_GQ_GLL = {};
-L2err_GQ_GQ = {};
-
-for K1D = [6 12 24]
-    for N = 1:4
-        
+% L2err_GLL_GLL = {};
+% L2err_GQ_GLL = {};
+% L2err_GQ_GQ = {};
+% 
+% for K1D = [6 12]
+%     for N = 1:4
 %         close all
 %         
 %         fprintf('N = %d, K1D = %d, GLL-GLL ------------\n',N,K1D)
@@ -36,26 +13,26 @@ for K1D = [6 12 24]
 %         [rq1D_face wq1D_face] = JacobiGL(0,0,N);
 %         L2err = Euler2D(N, K1D, rq1D_vol, wq1D_vol, rq1D_face, wq1D_face)
 %         L2err_GLL_GLL{N,K1D} = L2err;
-        
-        close all
-        
-        fprintf('N = %d, K1D = %d, GLL-GQ ------------\n',N,K1D)
-        
-        [rq1D_vol wq1D_vol] = JacobiGL(0,0,N);
-        [rq1D_face wq1D_face] = JacobiGQ(0,0,N);
-        L2err = Euler2D(N, K1D, rq1D_vol, wq1D_vol, rq1D_face, wq1D_face)
-        L2err_GLL_GQ{N,K1D} = L2err;
-        close all
-        
-        fprintf('N = %d, K1D = %d, GQ-GQ ------------\n',N,K1D)
-        
-        [rq1D_vol wq1D_vol] = JacobiGQ(0,0,N);
-        [rq1D_face wq1D_face] = JacobiGQ(0,0,N);
-        L2err = Euler2D(N, K1D, rq1D_vol, wq1D_vol, rq1D_face, wq1D_face)
-        L2err_GQ_GQ{N,K1D} = L2err;
-        
-    end
-end
+%         
+%         close all
+%         
+%         fprintf('N = %d, K1D = %d, GQ-GLL ------------\n',N,K1D)
+%         
+%         [rq1D_vol wq1D_vol] = JacobiGL(0,0,N);
+%         [rq1D_face wq1D_face] = JacobiGQ(0,0,N);
+%         L2err = Euler2D(N, K1D, rq1D_vol, wq1D_vol, rq1D_face, wq1D_face)
+%         L2err_GLL_GQ{N,K1D} = L2err;
+%         close all
+%         
+%         fprintf('N = %d, K1D = %d, GQ-GQ ------------\n',N,K1D)
+%         
+%         [rq1D_vol wq1D_vol] = JacobiGQ(0,0,N);
+%         [rq1D_face wq1D_face] = JacobiGQ(0,0,N);
+%         L2err = Euler2D(N, K1D, rq1D_vol, wq1D_vol, rq1D_face, wq1D_face)
+%         L2err_GQ_GQ{N,K1D} = L2err;
+%         
+%     end
+% end
 
 
 
@@ -66,8 +43,8 @@ clear -globals
 Globals2D
 
 if nargin==0
-    N = 1;
-    K1D = 24; % K1D = multiples of 3
+    N = 3;
+    K1D = 12; % K1D = multiples of 3
     
     [rq1D_quad_vol wq1D_quad_vol] = JacobiGQ(0,0,N);
     [rq1D_face wq1D_face] = JacobiGQ(0,0,N);
@@ -80,7 +57,7 @@ CFL = .75;
 
 plotMesh = 0;
 
-FinalTime = 5.0;
+FinalTime = 1.0;
 global tau
 tau = 1;
 
@@ -178,7 +155,7 @@ e = ones(size(rq1D));
 rfq = [rq1D; e; rq1D; -e];
 sfq = [-e; rq1D; e; rq1D];
 wfq = [wq1D; wq1D; wq1D; wq1D];
-% V1D = Vandermonde1D(N,JacobiGL(0,0,N));
+V1D = Vandermonde1D(N,JacobiGL(0,0,N));
 Vfq = Vandermonde2DQuad(N,rfq,sfq)/V{QUAD};
 Vf{QUAD} = Vfq;
 
@@ -480,6 +457,8 @@ if 1
     end
 end
 
+keyboard
+
 
 %% visualize connectivity
 
@@ -519,7 +498,7 @@ end
 global gamma
 gamma = 1.4;
 
-global V1 V2 V3 V4
+global U1 U2 U3 U4 V1 V2 V3 V4
 rhoe = @(rho,rhou,rhov,E) E - .5*(rhou.^2+rhov.^2)./rho;
 pcons = @(rho,rhou,rhov,E) (gamma-1)*rhoe(rho,rhou,rhov,E);
 s = @(rho,rhou,rhov,E) log((gamma-1)*rhoe(rho,rhou,rhov,E)./(rho.^gamma));
@@ -530,6 +509,7 @@ V4 = @(rho,rhou,rhov,E) (-rho)./(rhoe(rho,rhou,rhov,E));
 
 sV = @(V1,V2,V3,V4) gamma - V1 + (V2.^2+V3.^2)./(2*V4);
 rhoeV  = @(V1,V2,V3,V4) ((gamma-1)./((-V4).^gamma)).^(1/(gamma-1)).*exp(-sV(V1,V2,V3,V4)/(gamma-1));
+
 U1 = @(V1,V2,V3,V4) rhoeV(V1,V2,V3,V4).*(-V4);
 U2 = @(V1,V2,V3,V4) rhoeV(V1,V2,V3,V4).*(V2);
 U3 = @(V1,V2,V3,V4) rhoeV(V1,V2,V3,V4).*(V3);
@@ -608,7 +588,6 @@ CN = (N+1)*(N+2)/2; % trace const for quads (larger than tris)
 dt = CFL * h_estimate/CN; % h = J/Jf
 Nsteps = ceil(FinalTime/dt);
 dt = FinalTime/Nsteps;
-% Nsteps = 20;
 
 entropy = zeros(Nsteps,1);
 rhstest = zeros(Nsteps,1);
@@ -616,8 +595,12 @@ v1 = {};
 v2 = {};
 v3 = {};
 v4 = {};
+v1M = {};
+v2M = {};
+v3M = {};
+v4M = {};
+            
 figure(1)
-% tic
 for i = 1:Nsteps
     for INTRK = 1:5
         
@@ -632,30 +615,23 @@ for i = 1:Nsteps
             v3{TYPE} = q3q;
             v4{TYPE} = q4q;
             
-            q1M = VfPq{TYPE}*q1q;
-            q2M = VfPq{TYPE}*q2q;
-            q3M = VfPq{TYPE}*q3q;
-            q4M = VfPq{TYPE}*q4q;
+            v1M{TYPE} = VfPq{TYPE}*q1q;
+            v2M{TYPE} = VfPq{TYPE}*q2q;
+            v3M{TYPE} = VfPq{TYPE}*q3q;
+            v4M{TYPE} = VfPq{TYPE}*q4q;
             
             rhoq{TYPE}  = U1(q1q,q2q,q3q,q4q);
             rhouq       = U2(q1q,q2q,q3q,q4q);
             rhovq       = U3(q1q,q2q,q3q,q4q);
             Eq{TYPE}    = U4(q1q,q2q,q3q,q4q);
             uq{TYPE} = rhouq./rhoq{TYPE};
-            vq{TYPE} = rhovq./rhoq{TYPE};
-            
-            rhoM{TYPE}  = U1(q1M,q2M,q3M,q4M);
-            rhouM       = U2(q1M,q2M,q3M,q4M);
-            rhovM       = U3(q1M,q2M,q3M,q4M);
-            EM{TYPE}    = U4(q1M,q2M,q3M,q4M);
-            uM{TYPE} = rhouM./rhoM{TYPE};
-            vM{TYPE} = rhovM./rhoM{TYPE};
+            vq{TYPE} = rhovq./rhoq{TYPE};                        
         end
         
         for TYPE = 1:2
             
             [rhs1, rhs2, rhs3, rhs4]  = RHS2Dsimple(rhoq{TYPE},uq{TYPE},vq{TYPE},Eq{TYPE},...
-                rhoM,uM,vM,EM,TYPE);
+                v1M,v2M,v3M,v4M,TYPE);
             
             if (INTRK==5)
                 rhstest(i) = rhstest(i) + sum(sum(wJq_type{TYPE}.*(rhs1.*v1{TYPE} + rhs2.*v2{TYPE} + rhs3.*v3{TYPE} + rhs4.*v4{TYPE})));
@@ -692,7 +668,7 @@ for i = 1:Nsteps
         drawnow
     end
 end
-% toc
+
 figure
 entropy = entropy - min(entropy) + 1;
 semilogy(dt*(1:Nsteps),abs(rhstest),'o--')
@@ -728,7 +704,7 @@ L2err = sqrt(L2err);
 end
 %%
 
-function [rhs1 rhs2 rhs3 rhs4] = RHS2Dsimple(rhoq,uq,vq,Eq,rhoM_type,uM_type,vM_type,EM_type,TYPE)
+function [rhs1 rhs2 rhs3 rhs4] = RHS2Dsimple(rhoq,uq,vq,Eq,v1_type,v2_type,v3_type,v4_type,TYPE) %rhoM_type,uM_type,vM_type,EM_type,TYPE)
 
 % Globals2D;
 
@@ -753,32 +729,47 @@ sJ = sJ_type{TYPE};
 
 K = size(Jq,2); % cols
 
-rhoM = rhoM_type{TYPE};
-uM = uM_type{TYPE};
-vM = vM_type{TYPE};
-EM = EM_type{TYPE};
+v1M = v1_type{TYPE};
+v2M = v2_type{TYPE};
+v3M = v3_type{TYPE};
+v4M = v4_type{TYPE};
 
-rhoP = rhoM(mapP{TYPE});
-uP = uM(mapP{TYPE});
-vP = vM(mapP{TYPE});
-EP = EM(mapP{TYPE});
+v1P = v1M(mapP{TYPE});
+v2P = v2M(mapP{TYPE});
+v3P = v3M(mapP{TYPE});
+v4P = v4M(mapP{TYPE});
 
 % hybrid coupling
 global QUAD TRI
 if 1
     % get nbr info
     if TYPE==QUAD
-        rhoP(mapMQ) = rhoM_type{TRI}(mapPQ);
-        uP(mapMQ) = uM_type{TRI}(mapPQ);
-        vP(mapMQ) = vM_type{TRI}(mapPQ);
-        EP(mapMQ) = EM_type{TRI}(mapPQ);
+        v1P(mapMQ) = v1_type{TRI}(mapPQ);
+        v2P(mapMQ) = v2_type{TRI}(mapPQ);
+        v3P(mapMQ) = v3_type{TRI}(mapPQ);
+        v4P(mapMQ) = v4_type{TRI}(mapPQ);
     elseif TYPE==TRI
-        rhoP(mapMT) = rhoM_type{QUAD}(mapPT);
-        uP(mapMT) = uM_type{QUAD}(mapPT);
-        vP(mapMT) = vM_type{QUAD}(mapPT);
-        EP(mapMT) = EM_type{QUAD}(mapPT);
+        v1P(mapMT) = v1_type{QUAD}(mapPT);
+        v2P(mapMT) = v2_type{QUAD}(mapPT);
+        v3P(mapMT) = v3_type{QUAD}(mapPT);
+        v4P(mapMT) = v4_type{QUAD}(mapPT);
     end
 end
+
+global U1 U2 U3 U4 V1 V2 V3 V4
+rhoM  = U1(v1M,v2M,v3M,v4M);
+rhouM = U2(v1M,v2M,v3M,v4M);
+rhovM = U3(v1M,v2M,v3M,v4M);
+EM    = U4(v1M,v2M,v3M,v4M);
+uM = rhouM./rhoM;
+vM = rhovM./rhoM;
+
+rhoP  = U1(v1P,v2P,v3P,v4P);
+rhouP = U2(v1P,v2P,v3P,v4P);
+rhovP = U3(v1P,v2P,v3P,v4P);
+EP    = U4(v1P,v2P,v3P,v4P);
+uP = rhouP./rhoP;
+vP = rhovP./rhoP;
 
 betaq = beta(rhoq,uq,vq,Eq);
 betaM = beta(rhoM,uM,vM,EM);
@@ -817,6 +808,52 @@ fSf1 = fSf1  - .25*Lf1;
 fSf2 = fSf2  - .25*Lf2;
 fSf3 = fSf3  - .25*Lf3;
 fSf4 = fSf4  - .25*Lf4;
+
+%% mortar 
+
+
+% for ff = 1:length(split_faces)
+%     f = split_faces(ff);
+%     ncids = Nfaces*K + [2*ff-1 2*ff];
+%     
+%     % flux vs mortar points
+%     rhom = reshape(rhoM(:,ncids),2*Nfp,1);
+%     um = reshape(uM(:,ncids),2*Nfp,1);
+%     vm = reshape(vM(:,ncids),2*Nfp,1);
+%     betam = reshape(betaM(:,ncids),2*Nfp,1);
+%     Em = reshape(EM(:,ncids),2*Nfp,1);
+%     
+%     [rhox, rhoy] = meshgrid(rhom,rhoM(:,f));
+%     [ux, uy] = meshgrid(um,uM(:,f));
+%     [vx, vy] = meshgrid(vm,vM(:,f));
+%     [betax, betay] = meshgrid(betam,betaM(:,f));
+%     [Ex, Ey] = meshgrid(Em,EM(:,f));
+%     
+%     [nxJ1, nxJ2] = meshgrid(reshape(nxJ(:,ncids),2*Nfp,1),nxJ(:,f));
+%     [nyJ1, nyJ2] = meshgrid(reshape(nyJ(:,ncids),2*Nfp,1),nyJ(:,f));
+%     nxJa = .5*(nxJ1+nxJ2);
+%     nyJa = .5*(nyJ1+nyJ2);
+%     
+%     % flux correction terms: E
+%     [FxS1 FxS2 FxS3 FxS4 FyS1 FyS2 FyS3 FyS4] = euler_flux(rhox,rhoy,ux,uy,vx,vy,Ex,Ey,betax,betay,gamma);
+%     
+%     fSc1 = nxJa.*FxS1 + nyJa.*FyS1;
+%     fSc2 = nxJa.*FxS2 + nyJa.*FyS2;
+%     fSc3 = nxJa.*FxS3 + nyJa.*FyS3;
+%     fSc4 = nxJa.*FxS4 + nyJa.*FyS4;
+%     
+%     fc1 = sum(Emf.*fSc1,2) - Emf*sum(Efm.*fSc1',2);
+%     fc2 = sum(Emf.*fSc2,2) - Emf*sum(Efm.*fSc2',2);
+%     fc3 = sum(Emf.*fSc3,2) - Emf*sum(Efm.*fSc3',2);
+%     fc4 = sum(Emf.*fSc4,2) - Emf*sum(Efm.*fSc4',2);
+%     
+%     fSf1(:,f) = Emf*reshape(fSf1(:,ncids),2*Nfp,1) + fc1;
+%     fSf2(:,f) = Emf*reshape(fSf2(:,ncids),2*Nfp,1) + fc2;
+%     fSf3(:,f) = Emf*reshape(fSf3(:,ncids),2*Nfp,1) + fc3;
+%     fSf4(:,f) = Emf*reshape(fSf4(:,ncids),2*Nfp,1) + fc4;
+% end
+
+%%
 
 rhoN = [rhoq; rhoM];
 uN = [uq; uM];
