@@ -93,7 +93,7 @@ for i = 1:Nsteps
         u   = u  + rk4b(INTRK)*res;        
     end
     
-    if mod(i,interval)==0
+    if mod(i,interval)==0 || i==Nsteps
         Usnap(:,sk) = u(:);
         sk = sk + 1;
     end

@@ -1,9 +1,9 @@
 clear
-K = 100;
-FinalTime = 4;
-xv = linspace(-1,1,K+1)';
+K = 1000;
+FinalTime = .7;
+xv = linspace(0,1,K+1)';
 x = .5*(xv(1:end-1)+xv(2:end));
-dx = 2/K;
+dx = 1/K;
 
 e = ones(K-1,1);
 S = diag(e,1)-diag(e,-1);
@@ -15,17 +15,6 @@ S(K-1,K) = 1; S(K,K-1) = -1;
 
 S = sparse(S);
 KS = sparse(2*eye(K) - abs(S))/dx;
-SD = abs(S); % defunct?
-
-%% Burgers
-
-fS = @(uL,uR) (uL.^2 + uL.*uR + uR.^2)/6;
-fD = @(uL,uR) max(abs(uL),abs(uR)).*(uR-uL);
-fD = @(uL,uR) (uR-uL);
-% fD = @(uL,uR) 0*max(abs(uL),abs(uR)).*(uR-uL);
-
-% fS = @(uL,uR) (uL + uR)/2;
-% fD = @(uL,uR) (uR-uL);
 
 %% Euler fluxes
 
@@ -57,33 +46,23 @@ fS3 = @(rhoL,rhoR,uL,uR,EL,ER) fS1(rhoL,rhoR,uL,uR,EL,ER)...
 
 %% set initial cond
 
-opt = 0;
+opt = 1;
 
 if opt==0    
     % sine solution
-    t = 0;
-    rhoex = @(x) (2 + sin(pi*(x - t)));
+    t = 0;    
+    rhoex = @(x) (2 + sin(pi*((2*x-1) - t)));
     
     a = .25;
     uex = @(x) ones(size(x));
-    pex = @(x) ones(size(x)) + a*exp(-25*x.^2);    
-        
+    pex = @(x) ones(size(x)) + a*exp(-25*(2*x-1).^2);    
+    
 elseif opt==1
+    % afkam, hesthaven
     
-    % pulse condition    
-    rhoex = @(x) 1+exp(-100*x.^2);
-    pex = @(x) rhoex(x).^gamma;
-    uex = @(x) 0*x;
-    
-elseif opt==2
-            
-    % sod initial condition
-    rhoL = 1; rhoR = .125;
-    pL = 1; pR = .1;
-    rhoex = @(x) (rhoL*(x < 0) + rhoR*(x > 0));
-    pex = @(x) (pL*(x < 0) + pR*(x > 0));
-    uex = @(x) 0*x;    
-    
+    rhoex = @(x) .5 + .2*cos(2*pi*x);
+    uex = @(x) 1.5 + 0*x;
+    pex = @(x) .5 + .2*sin(2*pi*x);
 end
 
 mex = @(x) rhoex(x).*uex(x);
@@ -127,28 +106,23 @@ for i = 1:Nsteps
     for INTRK = 1:5                        
         u = m./rho;        
                 
-        [rhox rhoy] = meshgrid(rho);
-        [ux uy] = meshgrid(u);
-        [Ex Ey] = meshgrid(E);
-        
-        rhs1 = sum(S.*fS1(rhox,rhoy,ux,uy,Ex,Ey),2);
-        rhs2 = sum(S.*fS2(rhox,rhoy,ux,uy,Ex,Ey),2);
-        rhs3 = sum(S.*fS3(rhox,rhoy,ux,uy,Ex,Ey),2);
-        
-%         tau = .5;
-%         cvel = sqrt(gamma*pfun(rho,u,E)./rho);
-%         lm   = (abs(u) + cvel);
-%         Lfc  = .5*(SD*lm); % average wavespeed
-%         rhs1 = sum(S.*fS1(rhox,rhoy,ux,uy,Ex,Ey),2) + tau*KS*(Lfc.*rho);
-%         rhs2 = sum(S.*fS2(rhox,rhoy,ux,uy,Ex,Ey),2) + tau*KS*(Lfc.*m);
-%         rhs3 = sum(S.*fS3(rhox,rhoy,ux,uy,Ex,Ey),2) + tau*KS*(Lfc.*E);
-        
+        rhoL = [rho(end) rho(:)'];
+        rhoR = [rho(:)' rho(1)];        
+        uL = [u(end) u(:)'];
+        uR = [u(:)' u(1)];        
+        EL = [E(end) E(:)'];
+        ER = [E(:)' E(1)];
+                
+        rhs1 = diff(fS1(rhoL,rhoR,uL,uR,EL,ER))';
+        rhs2 = diff(fS2(rhoL,rhoR,uL,uR,EL,ER))';
+        rhs3 = diff(fS3(rhoL,rhoR,uL,uR,EL,ER))';
+                
         if INTRK==5
            rhstest(i) = full(sum(sum(V1(rho,m,E).*rhs1+V2(rho,m,E).*rhs2+V3(rho,m,E).*rhs3)));
         end                
         
         % add dissipation + invert mass
-        tau = .1*dx;
+        tau = .5*dx;
         rhs1 = -(rhs1 + tau*KS*rho)/dx;
         rhs2 = -(rhs2 + tau*KS*m)/dx;
         rhs3 = -(rhs3 + tau*KS*E)/dx;
@@ -167,11 +141,16 @@ for i = 1:Nsteps
     end
     
     if mod(i,10) == 0
-        plot(x,rho,'o--')
-        axis([-1,1,.8,4])  
+        plot(x,rho,'o')
+%         plot(x,pfun(rho,m./rho,E),'o')
+        hold on
+        plot(x,m./rho,'o')
+        plot(x,E,'o')
+        hold off
+%         axis([0,1,.8,4])  
         %plot(x,pfun(rho,m./rho,E),'o--')
         %axis([-1,1,.8,1.25])  
-        title(sprintf('rhstest = %g\n',rhstest(i)));
+        title(sprintf('time = %f, step %d / %d, rhstest = %g\n',dt*i,i,Nsteps,rhstest(i)));
         drawnow
     end
 end

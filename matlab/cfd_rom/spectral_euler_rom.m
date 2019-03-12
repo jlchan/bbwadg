@@ -1,33 +1,27 @@
 % SBP spectral method
 
 clear
-N = 25;
-x = linspace(-1,1,2*N+2)'; % interpolatory
-x = x(1:end-1);
-dx = x(2)-x(1);
 
-Np = (2*N+1)^2;
+N = 100; % must be even
+FinalTime = 4;
 
-sk = 1;
-D = zeros(2*N+1);
-for k = -N:N
-    lamk = 1i*k*pi;
-    Vq(:,sk) = exp(lamk*x)/sqrt(2);        
-    D(sk,sk) = lamk;
-    sk = sk + 1;
-end
-% plot(x,Vq)
+Np1D = N;
 
-W = dx*eye(2*N+1); % "weight" matrix
-M = real(Vq'*W*Vq);
-Pq = M\(Vq'*W);
-D = real(Vq*D*Pq); % imag part = 0
+dx = 2/N;
+x = linspace(-1,1,N+1); x = x(1:end-1)';
 
-K = (D'*W*D); %/dx;
-Q = W*D; 
+h = 2*pi/N; % original h on [-pi,pi]
+column = [0 .5*(-1).^(1:N-1).*cot((1:N-1)*h/2)];
+D = toeplitz(column,column([1 N:-1:2]))*pi;
 
-% make 2D
+W = dx*eye(Np1D);
+Q = W*D;
+K = D'*W*D;
+
+
+%% make 2D
 [x y] = meshgrid(x);
+Np = Np1D^2;
 
 %%
 
@@ -115,7 +109,7 @@ Us = [u1 u2 u3 u4 V1(u1,u2,u3,u4) V2(u1,u2,u3,u4) V3(u1,u2,u3,u4) V4(u1,u2,u3,u4
 [Vr, Sr, ~] = svd(Us,0);
 sig = diag(Sr);
 
-Nmodes = 15;
+Nmodes = 35;
 Vr = Vr(:,1:Nmodes);
 Vrp = Vr;
 
@@ -131,46 +125,47 @@ Kfull = kron(K,W) + kron(W,K); % d2u/dx2 + d2u/dy2
 [Vtest, Stest, ~] = svd([Vr Qxfull*Vr Qyfull*Vr],0);
 sigt = diag(Stest);
 sigerr = sqrt(1-cumsum(sigt.^2)/sum(sigt.^2));
-
-Vtest = Vtest(:,sigerr > .1*tol);
+Vtest = Vtest(:,sigerr > 1e-8);
+% Vtest = Vtest(:,1:25);
 
 % ensure constant in space
 Vtest = orth([ones(Np,1) Vtest]); 
-
-% % full ops
-% Qx = Vtest*(Vtest'*Qxfull*Vtest)*Vtest';
-% Qy = Vtest*(Vtest'*Qyfull*Vtest)*Vtest';
-% K = Vtest*(Vtest'*Kfull*Vtest)*Vtest';
-% invM = Vr'*Vr*(1/dx^2);
-% Pr = invM*(Vr'*dx^2);
 
 rho = Vr'*U0(:,1);
 rhou = Vr'*U0(:,2);
 rhov = Vr'*U0(:,3);
 E = Vr'*U0(:,4);
 
-fprintf('tol = %g, initial err = %g\n',tol,sqrt(sum(dx^2*(Vrp*rhou-U0(:,2)).^2)))
+err0 = sqrt(sum(dx^2*(Vrp*rhou-U0(:,2)).^2))/sqrt(sum(dx^2*(Vrp*rhou).^2));
+fprintf('tol = %g, initial err = %g\n',tol,err0)
 
 % hyperreduc
-if 1    
-    
-    Vtarget = Vtest;
-%     Vtarget = Vr;
-    Vmass = zeros(Np,size(Vtarget,2)*(size(Vtarget,2)+1)/2);
+if 1
+%     Vtarget = Vtest;
+%     Vmass = zeros(Np,size(Vtarget,2)*(size(Vtarget,2)+1)/2);
+%     sk = 1;
+%     for i = 1:size(Vtarget,2)
+%         for j = i:size(Vtarget,2)
+%             Vmass(:,sk) = Vtarget(:,i).*Vtarget(:,j);
+%             sk = sk + 1;
+%         end
+%     end
+%     b = sum(Vmass'*dx^2,2);
+
+    Vmass = zeros(Np,size(Vr,2)*size(Vtest,2));
     sk = 1;
-    for i = 1:size(Vtarget,2)
-        for j = i:size(Vtarget,2)
-            Vmass(:,sk) = Vtarget(:,i).*Vtarget(:,j);
+    for i = 1:size(Vr,2)
+        for j = i:size(Vtest,2)
+            Vmass(:,sk) = Vr(:,i).*Vtest(:,j);
             sk = sk + 1;
         end
     end
-    b = sum(Vmass'*dx^2,2);
+    b = sum(Vmass'*dx^2,2);    
     
-%     Vmass = Vtest;
-%     b = sum(Vmass'*dx^2,2);
-    
-    maxpts = inf; % size(Vtest,2)*10;
-    id = get_empirical_cubature(Vmass,b,10*tol,maxpts);
+    maxpts = Nmodes*10;
+%     id = get_empirical_cubature(Vmass,b,tol,maxpts);
+    id = get_empirical_cubature(Vmass,b,err0,inf);
+%     id = get_empirical_cubature(Vmass,b,tol,inf);
     wr = Vmass(id,:)'\b;    
         
     % make new ops
@@ -186,14 +181,21 @@ if 1
     invMVrT = Mr\(Vr(id,:)');
     Vr = Vr(id,:);
     
+else
+    
+    % full ops
+    Qx = Vtest*(Vtest'*Qxfull*Vtest)*Vtest';
+    Qy = Vtest*(Vtest'*Qyfull*Vtest)*Vtest';
+    K = Vtest*(Vtest'*Kfull*Vtest)*Vtest';
+    invM = Vr'*Vr*(1/dx^2);
+    Pr = invM*(Vr'*dx^2);
+    
 end
 
 
 %%
 
-FinalTime = 4;
-
-dt = .5*dx;
+dt = dx;
 % dt = 2*dt;
 Nsteps = ceil(FinalTime/dt);
 dt = FinalTime/Nsteps;
@@ -271,7 +273,7 @@ for i = 1:Nsteps
         rhs4 = sum(Qx.*FxS4,2) + sum(Qy.*FyS4,2);        
         
         % add diffusion and project down
-        tau = 1e-4;
+        tau = 5e-4;
         rhs1 = -invMVrT*(rhs1 + tau*(K*rhoq));
         rhs2 = -invMVrT*(rhs2 + tau*(K*rhouq));
         rhs3 = -invMVrT*(rhs3 + tau*(K*rhovq));
@@ -290,7 +292,7 @@ for i = 1:Nsteps
         
     
     if (mod(i,5)==0 || i==Nsteps)
-        surf(x,y,reshape(Vrp*rhou,2*N+1,2*N+1))
+        surf(x,y,reshape(Vrp*rhou,Np1D,Np1D))
         view(2)
         colorbar
         shading interp
@@ -299,5 +301,7 @@ for i = 1:Nsteps
     end
 end
 
-fprintf('final err = %g\n',sqrt(sum(dx^2*(Vrp*rhou-Usnap((1:Np)+Np,end)).^2)))
+err = Vrp*rhou-Usnap((1:Np)+Np,end);
+% surf(x,y,reshape(err,2*N+1,2*N+1));shading interp
+fprintf('final err = %g\n',sqrt(sum(dx^2*(err).^2))/sqrt(sum(dx^2*(Vrp*rhou).^2)))
 

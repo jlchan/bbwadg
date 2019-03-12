@@ -1,35 +1,31 @@
 % SBP spectral method
 
 clear
-N = 25;
-x = linspace(-1,1,2*N+2)'; % interpolatory
-x = x(1:end-1);
-dx = x(2)-x(1);
 
-sk = 1;
-D = zeros(2*N+1);
-for k = -N:N
-    lamk = 1i*k*pi;
-    Vq(:,sk) = exp(lamk*x)/sqrt(2);        
-    D(sk,sk) = lamk;
-    sk = sk + 1;
-end
-% plot(x,Vq)
+N = 100; % must be even
+FinalTime = 4;
 
-W = dx*eye(2*N+1);
-M = real(dx*(Vq'*Vq));
-Pq = M\(Vq'*dx);
-D = real(Vq*D*Pq); % imag part = 0
+Np1D = N;
 
-K = (D'*W*D);
+dx = 2/N;
+h = 2*pi/N; % original h on [-pi,pi]
+x = linspace(-1,1,N+1); x = x(1:end-1)';
+column = [0 .5*(-1).^(1:N-1).*cot((1:N-1)*h/2)];
+D = toeplitz(column,column([1 N:-1:2]))*pi;
+W = dx*eye(Np1D);
+
 Q = W*D;
+K = D'*W*D;
+
+% plot(x,D*sin(pi*x),'o'),hold on;plot(x,pi*cos(pi*x),'-')
+% return
 
 %% make 2D
 [x y] = meshgrid(x);
+Np = Np1D^2;
 
-%%
+%% Euler 2D
 
-% Euler
 gamma = 1.4;
 
 rhoe = @(rho,rhou,rhov,E) E - .5*(rhou.^2+rhov.^2)./rho;
@@ -102,14 +98,11 @@ E    = p/(gamma-1) + .5*rho.*(u.^2+v.^2);
 
 %%
 
-FinalTime = 4;
-
-dt = .5*dx;
+dt = dx;
 Nsteps = ceil(FinalTime/dt);
 dt = FinalTime/Nsteps;
 
 interval = 1;
-Np = (2*N+1)^2;
 Usnap = zeros(4*Np,ceil(Nsteps/interval)+1);
 Usnap(:,1) = [rho(:);rhou(:);rhov(:);E(:)];
 
@@ -131,7 +124,7 @@ for i = 1:Nsteps
         b = beta(rho,u,v,E);
         
         % x coordinate
-        for ii = 1:2*N+1                        
+        for ii = 1:Np1D
             [rhox rhoy] = meshgrid(rho(ii,:));
             [ux uy] = meshgrid(u(ii,:));
             [vx vy] = meshgrid(v(ii,:));
@@ -157,7 +150,7 @@ for i = 1:Nsteps
         end
         
         % y coordinate
-        for ii = 1:2*N+1
+        for ii = 1:Np1D
             [rhox rhoy] = meshgrid(rho(:,ii));
             [ux uy] = meshgrid(u(:,ii));
             [vx vy] = meshgrid(v(:,ii));
@@ -182,7 +175,7 @@ for i = 1:Nsteps
             rhs4(:,ii) = rhs4(:,ii) + dx*sum(Q.*FyS4,2);
         end
         
-        tau = 1e-4;
+        tau = 5e-4;
         rhs1 = -(rhs1 + tau*dx*(K*rho + rho*K'))/dx^2;
         rhs2 = -(rhs2 + tau*dx*(K*rhou + rhou*K'))/dx^2;
         rhs3 = -(rhs3 + tau*dx*(K*rhov + rhov*K'))/dx^2;

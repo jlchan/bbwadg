@@ -1,9 +1,9 @@
 clear
-K = 100;
-FinalTime = 4;
-xv = linspace(-1,1,K+1)';
+K = 1000;
+FinalTime = .7;
+xv = linspace(0,1,K+1)';
 x = .5*(xv(1:end-1)+xv(2:end));
-dx = 2/K;
+dx = 1/K;
 
 e = ones(K-1,1);
 S = diag(e,1)-diag(e,-1);
@@ -15,17 +15,6 @@ S(K-1,K) = 1; S(K,K-1) = -1;
 
 S = sparse(S);
 KS = sparse(2*eye(K) - abs(S))/dx;
-SD = abs(S); % defunct?
-
-%% Burgers
-
-fS = @(uL,uR) (uL.^2 + uL.*uR + uR.^2)/6;
-fD = @(uL,uR) max(abs(uL),abs(uR)).*(uR-uL);
-fD = @(uL,uR) (uR-uL);
-% fD = @(uL,uR) 0*max(abs(uL),abs(uR)).*(uR-uL);
-
-% fS = @(uL,uR) (uL + uR)/2;
-% fD = @(uL,uR) (uR-uL);
 
 %% Euler fluxes
 
@@ -57,33 +46,23 @@ fS3 = @(rhoL,rhoR,uL,uR,EL,ER) fS1(rhoL,rhoR,uL,uR,EL,ER)...
 
 %% set initial cond
 
-opt = 0;
+opt = 1;
 
 if opt==0    
     % sine solution
-    t = 0;
-    rhoex = @(x) (2 + sin(pi*(x - t)));
+    t = 0;    
+    rhoex = @(x) (2 + sin(pi*((2*x-1) - t)));
     
     a = .25;
     uex = @(x) ones(size(x));
-    pex = @(x) ones(size(x)) + a*exp(-25*x.^2);    
-        
+    pex = @(x) ones(size(x)) + a*exp(-25*(2*x-1).^2);    
+    
 elseif opt==1
+    % afkam, hesthaven
     
-    % pulse condition    
-    rhoex = @(x) 1+exp(-100*x.^2);
-    pex = @(x) rhoex(x).^gamma;
-    uex = @(x) 0*x;
-    
-elseif opt==2
-            
-    % sod initial condition
-    rhoL = 1; rhoR = .125;
-    pL = 1; pR = .1;
-    rhoex = @(x) (rhoL*(x < 0) + rhoR*(x > 0));
-    pex = @(x) (pL*(x < 0) + pR*(x > 0));
-    uex = @(x) 0*x;    
-    
+    rhoex = @(x) .5 + .2*cos(2*pi*x);
+    uex = @(x) 1.5;
+    pex = @(x) .5 + .2*sin(2*pi*x);
 end
 
 mex = @(x) rhoex(x).*uex(x);
@@ -95,59 +74,78 @@ E = Eex(x);
 
 %% construct ROM
 
-invM = eye(K)/dx;
-Vr = eye(K);
-Pr = eye(K);
-Vrp = eye(K);
-
 if 1
     load Usnap_euler
     
     U0 = reshape(Usnap(:,1),K,3);
-    %     rho = Vr'*rho;
-    %     m = Vr'*m;
-    %     E = Vr'*E;    
+    %  rho = Vr'*rho;
+    %  m = Vr'*m;
+    %  E = Vr'*E;    
 
-    Us1 = Usnap((1:K),:);
-    Us2 = Usnap((1:K)+K,:);
-    Us3 = Usnap((1:K)+2*K,:);
+    Nsample = 5; %ceil(size(Usnap,2)/500); % downsample
+    Us1 = Usnap((1:K),1:Nsample:end);
+    Us2 = Usnap((1:K)+K,1:Nsample:end);
+    Us3 = Usnap((1:K)+2*K,1:Nsample:end);
     
     % add entropy variables to snapshots
     Us = [Us1 Us2 Us3 V1(Us1,Us2,Us3) V2(Us1,Us2,Us3) V3(Us1,Us2,Us3)];
 %     Us = [Us1 Us2 Us3];
     [Vr,Sr,~] = svd(Us,0);
     
-    Nmodes = 20;
+    Nmodes = 50;
     Vr = Vr(:,1:Nmodes);
     Vrp = Vr;
     
+    sig = diag(Sr);
+    tol = sqrt(sum(sig(Nmodes+1:end).^2)/sum(sig.^2))
+    
     % add range + constants to snapshots
-    Vtest = orth([ones(size(x)) Vr S*Vr]);
+    [Vtest Stest, ~] = svd([Vr S*Vr]);
+    sigt = diag(Stest);        
+    Vtest = Vtest(:,sigt > 1e-8);
+    Vtest = orth([ones(size(x)) Vtest]); % ensure 1
     
     Sfull = S;
     Kfull = KS;
-    S = Vtest*(Vtest'*Sfull*Vtest)*Vtest';
-    invM = Vr'*Vr*(1/dx);
-    Pr = invM*(Vr'*dx);
         
     rho = Vr'*U0(:,1);
     m = Vr'*U0(:,2);
-    E = Vr'*U0(:,3);
-        
+    E = Vr'*U0(:,3);        
     
     % empirical cubature
-    if 1
+    if 1        
+%         % target space
+%         sk = 1;
+%         for i = 1:size(Vtest,2)
+%             for j = i:size(Vtest,2)
+%                 Vmass(:,sk) = Vtest(:,i).*Vtest(:,j);
+%                 sk = sk + 1;
+%             end
+%         end
+%         b = sum(Vmass'*dx,2);
         
+        % target space
         sk = 1;
-        for i = 1:size(Vtest,2)
+        for i = 1:size(Vr,2)
             for j = i:size(Vtest,2)
-                Vmass(:,sk) = Vtest(:,i).*Vtest(:,j);
+                Vmass(:,sk) = Vr(:,i).*Vtest(:,j);
                 sk = sk + 1;
             end
         end
         b = sum(Vmass'*dx,2);
         
-        id = get_empirical_cubature(Vmass,b,5e-2,5*Nmodes);
+%         % target space
+%         sk = 1;
+%         for i = 1:size(Vr,2)
+%             for j = i:size(Vr,2)
+%                 Vmass(:,sk) = Vr(:,i).*Vr(:,j);
+%                 sk = sk + 1;
+%             end
+%         end
+%         b = sum(Vmass'*dx,2);
+        
+        id = get_empirical_cubature(Vmass,b,.1*tol,5*Nmodes);
+%         id = get_empirical_cubature(Vmass,b,tol,10*Nmodes);
         wr = Vmass(id,:)'\b;
 
         % make new mass, projection, interp matrices
@@ -160,8 +158,19 @@ if 1
         Ptest = Mtest\(Vtest(id,:)'*diag(wr));        
         S = Ptest'*(Vtest'*Sfull*Vtest)*Ptest;
         KS = Ptest'*(Vtest'*Kfull*Vtest)*Ptest;
+    else
+        S = Vtest*(Vtest'*Sfull*Vtest)*Vtest';
+        invM = Vr'*Vr*(1/dx);
+        Pr = invM*(Vr'*dx);        
     end
 
+else
+    
+    invM = eye(K)/dx;
+    Vr = eye(K);
+    Pr = eye(K);
+    Vrp = eye(K);
+    
 end
 
 
@@ -192,8 +201,7 @@ res1 = zeros(size(rho));
 res2 = zeros(size(rho));
 res3 = zeros(size(rho));
 
-interval = 1;
-
+figure(1)
 sk = 1;
 for i = 1:Nsteps
     for INTRK = 1:5              
@@ -228,7 +236,7 @@ for i = 1:Nsteps
         end                
         
         % add dissipation + invert mass
-        tau = .1*dx;
+        tau = .5*dx;
         rhs1 = -invM*(rhs1 + tau*Vr'*KS*rhoq);
         rhs2 = -invM*(rhs2 + tau*Vr'*KS*mq);
         rhs3 = -invM*(rhs3 + tau*Vr'*KS*Eq);
@@ -240,17 +248,23 @@ for i = 1:Nsteps
         m   = m  + rk4b(INTRK)*res2;
         E   = E  + rk4b(INTRK)*res3;
     end      
-        
     
-    if mod(i,5) == 0
-        plot(x,Vrp*rho,'o--')
+    err(i) = sqrt(sum(sum(dx*(Usnap(:,i+1)-[Vrp*rho;Vrp*m;Vrp*E]).^2)));
+    
+    if mod(i,10) == 0
+        plot(x(id),Vr*rho,'o')
         hold on
         plot(x,Usnap(1:K,i+1),'-')
         hold off
-        axis([-1,1,.5,3.5])  
-        title(sprintf('rhstest = %g\n',rhstest(i)));
+        %         axis([-1,1,.5,3.5])
+        
+        title(sprintf('time = %f, step %d / %d, rhstest = %g, err = %g\n',i*dt,i,Nsteps,rhstest(i),err(i)));
         drawnow
     end
 end
 
-sum(sum(dx*(Usnap(:,end)-[Vrp*rho;Vrp*m;Vrp*E]).^2))
+figure(2)
+hold on
+semilogy((1:Nsteps)*dt,err,'--','linewidth',2)
+
+sqrt(sum(sum(dx*(Usnap(:,end)-[Vrp*rho;Vrp*m;Vrp*E]).^2)))

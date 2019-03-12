@@ -56,37 +56,44 @@ Qyfull = kron(W,Q);
 Kfull = kron(K,W) + kron(W,K); % d2u/dx2 + d2u/dy2
 
 % test space
-[Vtest, Stest, ~] = svd([ones(Np,1) Vr Qxfull*Vr Qyfull*Vr],0);
+[Vtest, Stest, ~] = svd([Vr Qxfull*Vr Qyfull*Vr],0);
+% [Vtest, Stest, ~] = svd([Vr (Qxfull+Qyfull)*Vr],0);
 sigt = diag(Stest);
 sigerr = sqrt(1-cumsum(sigt.^2)/sum(sigt.^2));
-Vtest = Vtest(:,sigerr > tol);
+Vtest = orth([ones(Np,1) Vtest(:,sigerr > 1e-6)]);
+
 
 u = Vr'*U0(:,1);
-fprintf('initial err = %g\n',sqrt(sum(dx^2*(Vrp*u-U0).^2)))
+fprintf('tol = %g, initial err = %g\n',tol, sqrt(sum(dx^2*(Vrp*u-U0).^2)))
 
-% % % full ops
-% Qx = Vtest*(Vtest'*Qxfull*Vtest)*Vtest';
-% Qy = Vtest*(Vtest'*Qyfull*Vtest)*Vtest';
-% K = Vtest*(Vtest'*Kfull*Vtest)*Vtest';
-% invMVrT = (1/dx^2)*Vr'; % orth basis
-% Pr = Vr';
 
-% hyperreduc
+%% hyperreduc
 if 1
-    Vtarget = Vtest;
-%     Vtarget = Vr;
-    Vmass = zeros(Np,size(Vtarget,2)*(size(Vtarget,2)+1)/2);
+    %  Vtarget = Vr;
+%     Vtarget = Vtest;
+%     Vmass = zeros(Np,size(Vtarget,2)*(size(Vtarget,2)+1)/2);
+%     sk = 1;
+%     for i = 1:size(Vtarget,2)
+%         for j = i:size(Vtarget,2)
+%             Vmass(:,sk) = Vtarget(:,i).*Vtarget(:,j);
+%             sk = sk + 1;
+%         end
+%     end
+%     b = sum(Vmass'*dx^2,2);
+    
+    Vmass = zeros(Np,size(Vr,2)*size(Vtest,2));
     sk = 1;
-    for i = 1:size(Vtarget,2)
-        for j = i:size(Vtarget,2)
-            Vmass(:,sk) = Vtarget(:,i).*Vtarget(:,j);
+    for i = 1:size(Vr,2)
+        for j = i:size(Vtest,2)
+            Vmass(:,sk) = Vr(:,i).*Vtest(:,j);
             sk = sk + 1;
         end
     end
     b = sum(Vmass'*dx^2,2);
     
-    maxpts = Nmodes*10;
+    maxpts = 8*Nmodes;
     id = get_empirical_cubature(Vmass,b,tol,maxpts);
+    
     wr = Vmass(id,:)'\b;    
     
     % make new mass, projection, interp matrices
@@ -101,6 +108,13 @@ if 1
     Qx = Ptest'*(Vtest'*Qxfull*Vtest)*Ptest;
     Qy = Ptest'*(Vtest'*Qyfull*Vtest)*Ptest;
     K = Ptest'*(Vtest'*Kfull*Vtest)*Ptest;
+else
+    % % full ops
+    Qx = Vtest*(Vtest'*Qxfull*Vtest)*Vtest';
+    Qy = Vtest*(Vtest'*Qyfull*Vtest)*Vtest';
+    K = Vtest*(Vtest'*Kfull*Vtest)*Vtest';
+    invMVrT = (1/dx^2)*Vr'; % orth basis
+    Pr = Vr';
 end
 
 
@@ -166,6 +180,8 @@ for i = 1:Nsteps
     end
 end
 
-fprintf('final err = %g\n',sqrt(sum(dx^2*(Vrp*u-Usnap(:,end)).^2)))
+err = Vrp*u-Usnap(:,end);
+% surf(x,y,reshape(err,2*N+1,2*N+1));shading interp
+fprintf('final err = %g\n',sqrt(sum(dx^2*(err).^2)))
 
 
