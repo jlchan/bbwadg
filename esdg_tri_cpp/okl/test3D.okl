@@ -1,0 +1,19 @@
+#define dfloat double
+#define gamma 2.0
+
+void VU(dfloat rho, dfloat &V1){
+
+  V1 = pow(rho,gamma);
+}
+
+// initialize surface values from interior
+@kernel void eval_surface(const int K,
+			  const dfloat * Vf1D,
+			  const dfloat * Q,
+			  dfloat * Qf){
+  for (int e = 0; e < K; ++e; @outer(0)){
+    for (int i = 0; i < p_T; ++i; @inner(0)){
+    }
+  }
+}
+
