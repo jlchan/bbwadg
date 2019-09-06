@@ -1,8 +1,8 @@
 % clear
 Globals2D
 
-N = 4;
-K1D = 16;
+N = 5;
+K1D = 32;
 FinalTime = 1.0;
 CFL = .75;
 global tau
@@ -236,6 +236,9 @@ fyS4 = @(rhoL,uL,vL,EL,rhoR,uR,vR,ER) (plogmean(rhoL,uL,vL,EL,rhoR,uR,vR,ER)/(ga
 
 x0 = 0; y0 = 0;
 [rhoq uq vq pq] = vortexSolution(xq,yq,0);
+% vv = rhoq;
+% color_line3(xq,yq,vv,vv,'.')
+% return
 rho  = VqPq*rhoq;
 rhou = VqPq*(rhoq.*uq);
 rhov = VqPq*(rhoq.*vq);

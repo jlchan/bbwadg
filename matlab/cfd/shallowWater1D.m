@@ -137,21 +137,15 @@ g = 1;
 opt = 1;
 if opt==1 % shu's paper - equiv to gassner
     
-    f1 = @(hL,hR,vL,vR) (hL.*vL + hR.*vR)/2;
-    %f2 = @(hL,hR,vL,vR) .25*(hL.*vL.*vL + hR.*vR.*vL + hL.*vL.*vR) + .5*g.*(hL.*hR);
+    f1 = @(hL,hR,vL,vR) (hL.*vL + hR.*vR)/2;    
     f2 = @(hL,hR,vL,vR) .5*(hL.*vL + hR.*vR).*.5.*(vL+vR) + .5*g.*(hL.*hR);
     
-elseif opt==2
-    
-    % % split form in gassner's paper?
-    f1 = @(hL,hR,vL,vR) (hL.*vL + hR.*vR)/2;
-    f2 = @(hL,hR,vL,vR) .5*( .5*(hL.*vL.*vL + hR.*vR.*vL + hL.*vL.*vR) + g*(hL.*hR));
-    
-elseif opt==3    
+elseif opt==2    
     
     % % EC flux function in Gassner's paper
-    f1 = @(hL,hR,vL,vR) (hL + hR)/2.*(vL+vR)/3;
-    f2 = @(hL,hR,vL,vR) .5*((.5*(vL+vR)).^2.*.5*(hL+hR) + .5*g.*(hL.^2 + hR.^2));   
+    avg = @(uL,uR) .5*(uL+uR);
+    f1 = @(hL,hR,vL,vR) avg(hL,hR).*avg(vL,vR);
+    f2 = @(hL,hR,vL,vR) avg(vL,vR).^2.*avg(hL,hR) + .5*g.*avg(hL.^2,hR.^2);   
     
 end
 %%
@@ -190,8 +184,8 @@ for i = 1:Nsteps
         
         % redefine flux variables
         hq = (q1 + q2.^2/2)/g; % 1/g*[(g*hq-P(hv^2/h^2)/2) + P(vq)^2/2]
-        vq = q2;
-                
+        vq = q2;               
+        
         [hx hy] = meshgrid(hq);
         [vx vy] = meshgrid(vq);       
         
@@ -225,7 +219,7 @@ for i = 1:Nsteps
         plot(xp,hp,'o')
         hold on
         plot(xp,hvp./hp,'x')
-        title(sprintf('Time = %f',dt*i))
+        title(sprintf('Time = %f, rhstest = %g',dt*i,rhstest(i)))
         axis([-1,1 -1 3])
         hold off
         drawnow

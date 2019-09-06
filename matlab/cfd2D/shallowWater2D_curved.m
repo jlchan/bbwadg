@@ -1,14 +1,14 @@
 clear
 Globals2D
 
-N = 3;
+N = 4;
 K1D = 8;
-FinalTime = 2.5;
-CFL = .125;
+FinalTime = .5;
+CFL = .25;
 global tau
-tau = 1;
-projectV = 0;
-a = 1/8;
+tau = 0;
+useES = 1;
+a = 0/8;
 
 [Nv, VX, VY, K, EToV] = unif_tri_mesh(K1D);
 % VX = VX/max(abs(VX));  VY = VY/max(abs(VY));
@@ -127,7 +127,7 @@ y = y + a*cos(3*pi/2*x).*cos(pi/2*y);
 
 xq = Vq*x; yq = Vq*y;
 xp = Vp*x; yp = Vp*y;
-plot(x(Fmask(:),:),y(Fmask(:),:),'k-','linewidth',2);return
+% plot(x(Fmask(:),:),y(Fmask(:),:),'k-','linewidth',2);return
 
 rxJ = zeros(Nq,K); sxJ = zeros(Nq,K);
 ryJ = zeros(Nq,K); syJ = zeros(Nq,K);
@@ -176,7 +176,7 @@ g = 1;
 global fxS1 fxS2 fxS3 fyS1 fyS2 fyS3
 global avg
 avg = @(x,y) .5*(x+y);
-if projectV
+if useES
     fxS1 = @(hL,uL,vL,hR,uR,vR) avg(hL,hR).*avg(uL,uR);
     fxS2 = @(hL,uL,vL,hR,uR,vR) avg(hL,hR).*avg(uL,uR).^2 + .5*g*avg(hL.^2,hR.^2);
     fxS3 = @(hL,uL,vL,hR,uR,vR) avg(hL,hR).*avg(uL,uR).*avg(vL,vR);
@@ -214,7 +214,7 @@ figure(1)
 for i = 1:Nsteps
     for INTRK = 1:5
         
-        if projectV
+        if useES
             % project to entropy variables
             hq = Vq*h;
             huq = Vq*hu;
@@ -289,11 +289,11 @@ end
 
 % return
 figure(2)
-semilogy(dt*(1:i),energy,'--','linewidth',2)
-% dS = abs(energy-energy(1));
-% semilogy(dt*(1:Nsteps),dS,'--','linewidth',2)
+% semilogy(dt*(1:i),energy,'--','linewidth',2)
+dS = abs(energy-energy(1));
+semilogy(dt*(1:Nsteps),dS,'--','linewidth',2)
 hold on
-% semilogy(dt*(1:Nsteps),abs(rhstest),'x')
+semilogy(dt*(1:Nsteps),abs(rhstest),'x')
 
 
 function [rhs1 rhs2 rhs3] = RHS2D(hq,uq,vq,hM,uM,vM)

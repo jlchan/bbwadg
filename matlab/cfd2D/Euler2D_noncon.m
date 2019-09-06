@@ -8,7 +8,7 @@
 % [rq wq] = JacobiGQ(0,0,N); 
 % L2err_GQ = Euler2D(N, K1D, rq, wq)
 
-N = 4; K1D = 6;
+N = 2; K1D = 3;
 [rq wq] = JacobiGL(0,0,N); 
 L2err_GLL = Euler2D(N, K1D, rq, wq)
 
@@ -34,24 +34,23 @@ else
     N = Nin;
     
     rq1D_face = rq1D;    wq1D_face = wq1D;
-%     [rq1D_face wq1D_face] = JacobiGQ(0,0,N);    
+    [rq1D_face wq1D_face] = JacobiGQ(0,0,N);    
 end
-plotMesh = 1;
+plotMesh = 0;
 useNoncon = 1;
-% N = 3;
-% K1D = 48;
 CFL = .5;
 FinalTime = 2.5;
 global tau
-tau = 1;
-a = .0;
+tau = 0;
+a = .125;
+a = .05;
 
 % Read in Mesh
 Lx = 7.5; Ly = 5; ratiox = 1; ratioy = Ly/Lx;
 Kx = 4/3*K1D;
 Ky = K1D;
 [Nv, VX, VY, K, EToV] = QuadMesh2D(Kx,Ky);
-VX = VX/max(abs(VX));  VY = VY/max(abs(VY));
+VX = VX/max(abs(VX));  VY = VY/max(abs(VY)); 
 VX = (VX+1)*Lx; VY = VY*Ly;
 
 ids = find(abs(abs(VX)-1) > 1e-8 & abs(abs(VY)-1) > 1e-8);
@@ -70,6 +69,7 @@ BuildPeriodicMaps2D(max(VX)-min(VX),max(VY)-min(VY));
 
 [rp sp] = EquiNodes2D(5); [rp sp] = xytors(rp,sp);
 Vp = Vandermonde2D(N,rp,sp)/V;
+% plot(VX,VY,'o')
 
 %%
 global M Vq Pq Lq Vff Vf Pfqf VqPq VqLq
@@ -157,16 +157,22 @@ global Tm Efm Emf
 Tf = Vandermonde1D(N,rq1D)/Vandermonde1D(N,rq1D_face);
 Tm = Vandermonde1D(N,rq1Dsplit)/Vandermonde1D(N,rq1D_face);
 Mm = Tm'*diag(wq1Dsplit)*Tm;
-Mf = Tf'*diag(wq1D)*Tf;
+% Pm = Mm\(Tm'*diag(wq1Dsplit));
+% Pf = Mm\(Tf'*diag(wq1D));
 
-Pm = Mm\(Tm'*diag(wq1Dsplit));
-Pf = Mm\(Tf'*diag(wq1D));
+Mf = Tf'*diag(wq1D)*Tf; % alternative version
+Pm = Mf\(Tm'*diag(wq1Dsplit));
+Pf = Mf\(Tf'*diag(wq1D));
+
 
 Efm = Tm*Pf; % map from face to mortar nodes
 Emf = Tf*Pm; % map from mortar back to face
 
 % plot(Vf*r,Vf*s,'o')
 % plot(kron(eye(Nfaces),Efm)*Vf*r,kron(eye(Nfaces),Efm)*Vf*s,'o')
+% Emf*Efm
+% L2err = [];
+% return
 
 %% refine elems
 
@@ -186,6 +192,7 @@ end
 
 activeK_ids = find(activeK);
 inactiveK_ids = find(~activeK);
+
 
 %% build non-con maps
 
@@ -329,19 +336,7 @@ for f = 1:(num_faces_total)
     end
 end
 
-if plotMesh
-    %     text(mean(x(:,activeK_ids)),mean(y(:,activeK_ids)),num2str(activeK_ids))
-    hold on
-    for f = 1:size(xf,2)
-        plot(xf(:,f),yf(:,f),'k-','linewidth',2) % [xf xfnc],[yf yfnc],'o')
-    end
-    axis equal
-    L2err = nan;
-    keyboard
-    return
-end
-
-if 0
+if 0 % check connectivities
     for f = 1:(num_faces_total)
         fP = FToF(f);
         if fP~=0
@@ -366,24 +361,25 @@ end
 %% make curvilinear mesh
 
 x0 = Lx; y0 = 0;
-x = x + Lx*a*cos(1/2*pi*(x-x0)/Lx).*cos(3/2*pi*(y-y0)/Ly);
-y = y + Ly*a*sin(pi*(x-x0)/Lx).*cos(1/2*pi*(y-y0)/Ly);
+%x = x + Lx*a*cos(1/2*pi*(x-x0)/Lx).*cos(3/2*pi*(y-y0)/Ly);
+%y = y + Ly*a*sin(pi*(x-x0)/Lx).*cos(1/2*pi*(y-y0)/Ly);
+
+% quadratic perturbation
+scale = 15*25;
+dx = (15-x).*(x).*(5-y).*(5+y)/scale;
+dy = (15-x).*(x).*(5-y).*(5+y)/scale;
+x = x + Lx*a*dx;
+y = y + Ly*a*dy;
+
+xf = reshape(Vf*x,Nfp,Nfaces*K);
+yf = reshape(Vf*y,Nfp,Nfaces*K);
+xfnc = reshape(Tm*xf(:,split_faces),Nfp,num_split_face_list*2);
+yfnc = reshape(Tm*yf(:,split_faces),Nfp,num_split_face_list*2);
+xf = [xf xfnc];
+yf = [yf yfnc];
 
 xq = Vq*x; yq = Vq*y;
 xp = Vp*x; yp = Vp*y;
-
-if 0
-    rp1D = linspace(-1,1,100)';
-    Vp1D = Vandermonde1D(N,rp1D)/Vandermonde1D(N,JacobiGL(0,0,N));
-    Vfp = kron(eye(Nfaces),Vp1D);
-    xfp = Vfp*x(Fmask(:),:);
-    yfp = Vfp*y(Fmask(:),:);
-    plot(xfp,yfp,'k.')
-    hold on
-    plot(x,y,'o')
-    L2err = nan;
-    return
-end
 
 [rx,sx,ry,sy,J] = GeometricFactors2D(x,y,Vq*Dr,Vq*Ds);
 rxJ = rx.*J;    sxJ = sx.*J;
@@ -412,6 +408,49 @@ xf = reshape(Vf*x,Nfp,Nfaces*K);
 yf = reshape(Vf*y,Nfp,Nfaces*K);
 xfnc = reshape(Efm*xf(:,split_faces),Nfp,num_split_face_list*2);
 yfnc = reshape(Efm*yf(:,split_faces),Nfp,num_split_face_list*2);
+xf = [xf xfnc];
+yf = [yf yfnc];
+
+rp1D = linspace(-1,1,100)';
+Vp1D = Vandermonde1D(N,rp1D)/Vandermonde1D(N,rq1D);
+
+if plotMesh
+    
+    plot(xf,yf,'o')        
+    hold on
+    plot(Vp1D*xf,Vp1D*yf,'-')
+%     for ff = 1:length(split_faces)
+%         f = split_faces(ff);
+%         ncids = Nfaces*K + [2*ff-1 2*ff];
+%         
+%         plot(Vp1D*xf(:,f),Vp1D*yf(:,f),'b-','linewidth',1) % [xf xfnc],[yf yfnc],'o')        
+%         plot(Vp1D*xf(:,ncids),Vp1D*yf(:,ncids),'r--','linewidth',2) % [xf xfnc],[yf yfnc],'o')        
+% %         quiver(Tm*xf(:,f),Tm*yf(:,f),Tm*nxJ(:,f),Tm*nyJ(:,f))
+% %         quiver(xf(:,f),yf(:,f),nxJ(:,f),nyJ(:,f))
+% %         quiver(xf(:,ncids),yf(:,ncids),nxJ(:,ncids),nyJ(:,ncids))
+% %         keyboard
+% %         pause
+%     end
+    axis equal
+    
+    
+    L2err = nan;
+    keyboard
+    return
+end
+
+if 0
+    rp1D = linspace(-1,1,100)';
+    Vp1D = Vandermonde1D(N,rp1D)/Vandermonde1D(N,JacobiGL(0,0,N));
+    Vfp = kron(eye(Nfaces),Vp1D);
+    xfp = Vfp*x(Fmask(:),:);
+    yfp = Vfp*y(Fmask(:),:);
+    plot(xfp,yfp,'k.')
+    hold on
+    plot(x,y,'o')
+    L2err = nan;
+    return
+end
 
 %% fluxes
 global gamma
@@ -554,13 +593,13 @@ for i = 1:Nsteps
         color_line3(xp(:,activeK_ids),yp(:,activeK_ids),vv,vv,'.');
         axis equal
         axis tight
-        title(sprintf('time = %f, step %d out of %d, N = %d, K1D = %d',dt*i,i,Nsteps,N,K1D))
+        title(sprintf('time = %f, step %d out of %d, N = %d, K1D = %d, rhstest = %g',dt*i,i,Nsteps,N,K1D,rhstest(i)))
         drawnow
     end
 end
 
 
-[rq2 sq2 wq2] = Cubature2D(Nq+2);
+[rq2 sq2 wq2] = Cubature2D(Nq+4);
 Vq2 = Vandermonde2D(N,rq2,sq2)/V;
 xq2 = Vq2*x; yq2 = Vq2*y;
 wJq2 = diag(wq2)*(Vq2*Pq*J);
@@ -761,68 +800,25 @@ end
 
 function [FxS1 FxS2 FxS3 FxS4 FyS1 FyS2 FyS3 FyS4] = euler_flux(rhox,rhoy,ux,uy,vx,vy,Ex,Ey,betax,betay,gamma)
 
-% global psix psiy V1 V2 V3 V4 f1x f1y f2x f2y f3x f3y f4x f4y
-% 
-% if 1
 
-    rholog = logmean(rhox,rhoy);
-    
-    % arithmetic avgs
-    rhoavg = .5*(rhox+rhoy);
-    uavg = .5*(ux+uy);
-    vavg = .5*(vx+vy);
-    
-    vnavg = 2*(uavg.^2 + vavg.^2) - .5*((ux.^2+uy.^2) + (vx.^2+vy.^2));
-    pa = rhoavg./(betax+betay);
-    
-    FxS1 = rholog.*uavg;      FyS1 = rholog.*vavg;
-    FxS2 = FxS1.*uavg + pa;   FyS2 = FyS1.*uavg;
-    FxS3 = FyS2;              FyS3 = FyS1.*vavg + pa;
-    f4aux = rholog./(2*(gamma-1)*logmean(betax,betay)) + pa + .5*rholog.*vnavg;
-    FxS4 = f4aux.*uavg;
-    FyS4 = f4aux.*vavg;
+rholog = logmean(rhox,rhoy);
 
-% else % Hicken's EC correction        
-%     
-%     dV1 = V1(rhox,rhox.*ux,rhox.*vx,Ex) - V1(rhoy,rhoy.*uy,rhoy.*vy,Ey);
-%     dV2 = V2(rhox,rhox.*ux,rhox.*vx,Ex) - V2(rhoy,rhoy.*uy,rhoy.*vy,Ey);
-%     dV3 = V3(rhox,rhox.*ux,rhox.*vx,Ex) - V3(rhoy,rhoy.*uy,rhoy.*vy,Ey);
-%     dV4 = V4(rhox,rhox.*ux,rhox.*vx,Ex) - V4(rhoy,rhoy.*uy,rhoy.*vy,Ey);
-%     
-%     % f = fbar - (dV'*fbar - dpsi)/(dV'*dV)*dV
-%     fxbar1 = .5*(f1x(rhox,ux,vx,Ex)+f1x(rhoy,uy,vy,Ey));
-%     fxbar2 = .5*(f2x(rhox,ux,vx,Ex)+f2x(rhoy,uy,vy,Ey));
-%     fxbar3 = .5*(f3x(rhox,ux,vx,Ex)+f3x(rhoy,uy,vy,Ey));
-%     fxbar4 = .5*(f4x(rhox,ux,vx,Ex)+f4x(rhoy,uy,vy,Ey));
-%     fybar1 = .5*(f1y(rhox,ux,vx,Ex)+f1y(rhoy,uy,vy,Ey));
-%     fybar2 = .5*(f2y(rhox,ux,vx,Ex)+f2y(rhoy,uy,vy,Ey));
-%     fybar3 = .5*(f3y(rhox,ux,vx,Ex)+f3y(rhoy,uy,vy,Ey));
-%     fybar4 = .5*(f4y(rhox,ux,vx,Ex)+f4y(rhoy,uy,vy,Ey));
-%     
-%     dVfbarx = dV1.*fxbar1 + dV2.*fxbar2 + dV3.*fxbar3 + dV4.*fxbar4;
-%     dVfbary = dV1.*fybar1 + dV2.*fybar2 + dV3.*fybar3 + dV4.*fybar4;
-%     
-%     dpsix = psix(rhox,ux,vx,Ex)-psix(rhoy,uy,vy,Ey);
-%     dpsiy = psiy(rhox,ux,vx,Ex)-psiy(rhoy,uy,vy,Ey);
-%     
-%     dVtdV = dV1.^2 + dV2.^2 + dV3.^2 + dV4.^2;
-%     ids = abs(dVtdV) > 1e-10;
-%     
-%     dfx = zeros(size(dV1));
-%     dfy = zeros(size(dV1));
-%     dfx(ids) = (dVfbarx(ids) - dpsix(ids))./dVtdV(ids);
-%     dfy(ids) = (dVfbary(ids) - dpsiy(ids))./dVtdV(ids);
-%         
-%     FxS1 = fxbar1 - dfx.*dV1;
-%     FyS1 = fybar1 - dfy.*dV1;
-%     FxS2 = fxbar2 - dfx.*dV2;
-%     FyS2 = fybar2 - dfy.*dV2;
-%     FxS3 = fxbar3 - dfx.*dV3;
-%     FyS3 = fybar3 - dfy.*dV3;
-%     FxS4 = fxbar4 - dfx.*dV4;
-%     FyS4 = fybar4 - dfy.*dV4;
-%    
-% end
+% arithmetic avgs
+rhoavg = .5*(rhox+rhoy);
+uavg = .5*(ux+uy);
+vavg = .5*(vx+vy);
+
+vnavg = 2*(uavg.^2 + vavg.^2) - .5*((ux.^2+uy.^2) + (vx.^2+vy.^2));
+pa = rhoavg./(betax+betay);
+
+FxS1 = rholog.*uavg;      FyS1 = rholog.*vavg;
+FxS2 = FxS1.*uavg + pa;   FyS2 = FyS1.*uavg;
+FxS3 = FyS2;              FyS3 = FyS1.*vavg + pa;
+f4aux = rholog./(2*(gamma-1)*logmean(betax,betay)) + pa + .5*rholog.*vnavg;
+FxS4 = f4aux.*uavg;
+FyS4 = f4aux.*vavg;
+
+
 
 end
 
@@ -848,7 +844,7 @@ p = rho.^gamma;
 if 0
     % pulse condition
     x0 = 5;
-    rho = 2 + (abs(x-x0) < 5);
+    rho = 2 + 0*(abs(x-x0) < 5);
     u = rho;
     v = 0*rho;
     p = rho.^gamma;

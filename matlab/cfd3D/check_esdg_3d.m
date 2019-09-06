@@ -206,7 +206,7 @@ psiz = @(rho,rhou,rhov,rhow,E) (gamma-1)*rhow;
 
 %% test 2 point flux condition
 
-if 0
+if 1
     rhoL = 2+rand;
     uL = randn;
     vL = randn;
@@ -254,6 +254,7 @@ if 0
     a = (V1L-V1R).*FzS1 + (V2L-V2R).*FzS2 + (V3L-V3R).*FzS3 + (V4L-V4R).*FzS4 + (V5L-V5R).*FzS5;
     b = psiz(rhoL,rhouL,rhovL,rhowL,EL)-psiz(rhoR,rhouR,rhovR,rhowR,ER);
     abs(a-b)
+    return
 end
 
 

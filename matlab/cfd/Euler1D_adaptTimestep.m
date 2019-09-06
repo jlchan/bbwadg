@@ -5,13 +5,14 @@ projectV = 1;
 CFL = .125;
 % CFL = .125/2.5;
 N = 4;
-K1D = 16;
+K1D = 32;
 
 useSBP = 0;
 
 FinalTime = 1.8;
 FinalTime = .2;
-opt = 2;
+FinalTime = 1;
+opt = 1;
 
 global tau
 tau = 1;
@@ -168,6 +169,7 @@ if opt==0
     vmapP(1) = vmapM(end); vmapP(end) = vmapM(1);
     
 elseif opt==1
+    
     % pulse condition
     x0 = 0;
     rhoq = (2 + (abs(xq-x0) < .5));
@@ -607,8 +609,7 @@ for e = 1:K
     fu = f3(rhoM(:,e),rhoM(:,e),uM(:,e),uM(:,e),EM(:,e),EM(:,e));
     FS = rx(1,e)*sum(DNr.*FS,2);
     fS = nhat.*(f3f(:,e) - fu);
-    rhs3(:,e) = [Pq Lq]*FS + Lq*(.5*Fscale(1,e)*fS);
-    
+    rhs3(:,e) = [Pq Lq]*FS + Lq*(.5*Fscale(1,e)*fS);    
 end
 
 global tau

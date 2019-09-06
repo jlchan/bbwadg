@@ -87,6 +87,7 @@ dfdW13 = matlabFunction(dfdW(1,3),params)
 dfdW22 = matlabFunction(dfdW(2,2),params)
 dfdW23 = matlabFunction(dfdW(2,3),params)
 dfdW33 = matlabFunction(dfdW(3,3),params)
+
 %%
 Nq = 4;
 [rq wq] = JacobiGQ(0,0,Nq);

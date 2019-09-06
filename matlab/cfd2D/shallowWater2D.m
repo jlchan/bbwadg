@@ -1,8 +1,8 @@
 clear
 Globals2D
 
-N = 4;
-K1D = 16;
+N = 3;
+K1D = 2;
 FinalTime = 1.5;
 CFL = .75;
 
@@ -63,7 +63,7 @@ nxJ = (nx.*sJ);
 nyJ = (ny.*sJ);
 Fscale = Vfqf*Fscale;
 
-nrJ = [-zeros(size(rq1D)); ones(size(rq1D)); -ones(size(rq1D)); ];
+nrJ = [zeros(size(rq1D)); ones(size(rq1D)); -ones(size(rq1D)); ];
 nsJ = [-ones(size(rq1D)); ones(size(rq1D)); -zeros(size(rq1D)); ];
 Nq = length(rq);
 nrJq = repmat(nrJ',Nq,1);

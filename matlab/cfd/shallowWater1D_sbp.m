@@ -2,12 +2,12 @@ clear -global
 Globals1D;
 
 projectV = 1;
-CFL = .5;
+CFL = .25;
 % CFL = .125/2.5;
 % CFL = .125/4;
 N = 4;
 K1D = 16;
-FinalTime = 4;
+FinalTime = 2;
 
 useSBP = 0;
 
@@ -17,9 +17,9 @@ tau = 1;
 r = JacobiGL(0,0,N);
 % r = JacobiGQ(0,0,N);
 
-% [rq wq] = JacobiGL(0,0,N); rq = rq*(1-1e-11);
+[rq wq] = JacobiGQ(0,0,N); rq = rq*(1-1e-11);
 % [rq wq] = JacobiGL(0,0,N+4); rq = rq*(1-1e-9);
-[rq wq] = JacobiGL(0,0,N);
+% [rq wq] = JacobiGQ(0,0,N);
 
 % % % include boundary nodes for extraction
 % rq = [-1*.999999999999;rq;1*.999999999999];
@@ -114,18 +114,19 @@ f1 = @(hL,hR,uL,uR) (hL.*uL + hR.*uR)/2;
 f2 = @(hL,hR,uL,uR) .5*(hL.*uL + hR.*uR).*.5.*(uL+uR) + .5*g.*(hL.*hR);
 
 Sfun = @(h,u) .5*(h.*u.^2 + g*h.^2);
+
 %% solution
 
 hex  = @(x) 2+cos(pi*x);
-hex = @(x) 4 + exp(-25*x.^2);
-hvex = @(x) 0*sin(pi*x);
+hex = @(x) .5 + exp(-25*x.^2);
+hvex = @(x) 0*4*exp(-25*x.^2);
 
 % a = .25;
 % hex  = @(x) a + 1*(x > 0);
 % hvex = @(x) zeros(size(x));
 
 h = Pq*hex(xq);
-hu = Pq*hvex(xq);
+hu = Pq*(hvex(xq)./hex(xq));
 
 %%
 res1 = 0;
@@ -167,6 +168,11 @@ for i = 1:Nsteps
         if projectV
             hq = hfun(v1,v2);
             uq = ufun(v1,v2);            
+            
+%             if i == round(Nsteps/2)
+%                 keyboard
+%             end
+            
         end    
         
 %         if mod(i,25)==0
@@ -186,6 +192,8 @@ for i = 1:Nsteps
         
         [rhs1 rhs2] = rhsSWE(hq,uq,i,INTRK);        
            
+        sum(sum(wJq.*(v1(1:size(Vq,1),:).*(Vq*rhs1) + v2(1:size(Vq,1),:).*(Vq*rhs2))))
+        
         res1 = rk4a(INTRK)*res1 + dt*rhs1;
         res2 = rk4a(INTRK)*res2 + dt*rhs2;
         h = h + rk4b(INTRK)*res1;
@@ -197,7 +205,7 @@ for i = 1:Nsteps
     uq = (Vq*hu)./hq;
     S(i) = sum(sum(wJq.*(Sfun(hq,uq))));
                     
-    if mod(i,5)==0 || i==Nsteps
+    if mod(i,25)==0 || i==Nsteps
 
         plot(xq,hq,'b-','linewidth',2)
         hold on
@@ -209,8 +217,10 @@ for i = 1:Nsteps
         drawnow
     end
 end
-semilogy(dt*(1:Nsteps),S,'--','linewidth',2)
-axis([0 FinalTime mean(S)-1 mean(S)+1])
+
+% figure
+% semilogy(dt*(1:Nsteps),S,'--','linewidth',2)
+% axis([0 FinalTime mean(S)-1 mean(S)+1])
 
 function [rhs1 rhs2] = rhsSWE(hq,uq,i,INTRK)
 

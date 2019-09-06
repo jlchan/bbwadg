@@ -3,14 +3,15 @@ clear -globals
 Globals2D
 
 % aVX = .125; % vertex warping factor
-a = .25; % warping factor
+a = 0*.125; % warping factor
 
 N = 3;
-K1D = 20;
+K1D = 2;
 
 Mgeo = 3;
-[rq1D_face wq1D_face] = JacobiGQ(0,0,N); 
-% [rq1D_face wq1D_face] = JacobiGL(0,0,N); 
+% [rq1D_face wq1D_face] = JacobiGQ(0,0,N); 
+[rq1D_face wq1D_face] = JacobiGL(0,0,N); 
+[rq1D wq1D] = JacobiGL(0,0,N); 
 % [rq1D_face wq1D_face] = clenshaw_curtis(N+Mgeo-2); 
 
 FinalTime = .25;
@@ -19,7 +20,7 @@ wadgProjEntropyVars = abs(a)>1e-8;
 CFL = .25;
 global tau
 tau = 0;
-plotMesh = 1;
+plotMesh = 0;
 
 %%
 
@@ -42,13 +43,13 @@ VX = (VX+1)*Lx; VY = VY*Ly;
 StartUp2D;
 BuildPeriodicMaps2D(max(VX)-min(VX),max(VY)-min(VY));
 
-global M Vq Pq Lq Vfqf Vfq Pfqf VqPq VqLq
+global M Vq Pq Lq Vff Vf Pfqf VqPq VqLq
 global rxJ sxJ ryJ syJ rxJf sxJf ryJf syJf
-global nxJ nyJ nrJ nsJ wfq
+global nxJ nyJ nrJ nsJ wf
 global mapPq
+global wq wf
 
 % vol nodes
-[rq1D wq1D] = JacobiGQ(0,0,N); 
 [rq sq] = meshgrid(rq1D);
 rq = rq(:); sq = sq(:);
 [wr ws] = meshgrid(wq1D); 
@@ -69,36 +70,36 @@ wq1D = wq1D_face;
 Nfq = length(rq1D);
 
 e = ones(size(rq1D));
-rfq = [rq1D; e; rq1D; -e]; 
-sfq = [-e; rq1D; e; rq1D]; 
-wfq = [wq1D; wq1D; wq1D; wq1D];
+rf = [rq1D; e; rq1D; -e]; 
+sf = [-e; rq1D; e; rq1D]; 
+wf = [wq1D; wq1D; wq1D; wq1D];
 V1D = Vandermonde1D(N,JacobiGL(0,0,N));
 Vq1D = Vandermonde1D(N,rq1D)/V1D;
-Vfqf = kron(eye(Nfaces),Vq1D);
-Vfq = Vandermonde2D(N,rfq,sfq)/V;
-Mf = Vfq'*diag(wfq)*Vfq;
-Lq = M\(Vfq'*diag(wfq));
+Vff = kron(eye(Nfaces),Vq1D);
+Vf = Vandermonde2D(N,rf,sf)/V;
+Mf = Vf'*diag(wf)*Vf;
+Lq = M\(Vf'*diag(wf));
 
 nrJ = [0*e; e; 0*e; -e]; % sJ = 2 for all faces, 
 nsJ = [-e; 0*e; e; 0*e];
 
 % flux differencing operators
-VfPq = (Vfq*Pq);
+VfPq = (Vf*Pq);
 VqLq = Vq*Lq;
 VqPq = Vq*Pq;
 
 global DNr DNs WN 
-Drq = (Vq*Dr*Pq - .5*Vq*Lq*diag(nrJ)*Vfq*Pq);
-Dsq = (Vq*Ds*Pq - .5*Vq*Lq*diag(nsJ)*Vfq*Pq);
+Drq = (Vq*Dr*Pq - .5*Vq*Lq*diag(nrJ)*Vf*Pq);
+Dsq = (Vq*Ds*Pq - .5*Vq*Lq*diag(nsJ)*Vf*Pq);
 DNr = [Drq .5*VqLq*diag(nrJ);
     -.5*diag(nrJ)*VfPq .5*diag(nrJ)];
 DNs = [Dsq .5*VqLq*diag(nsJ);
     -.5*diag(nsJ)*VfPq .5*diag(nsJ)];
-WN = diag([wq;wfq]);
+WN = diag([wq;wf]);
 
 % weak derivative operators
-Drqw = (Vq*(M\(Dr'*Vq'*diag(wq))) - .5*Vq*Lq*diag(nrJ)*Vfq*Pq);
-Dsqw = (Vq*(M\(Ds'*Vq'*diag(wq))) - .5*Vq*Lq*diag(nsJ)*Vfq*Pq);
+Drqw = (Vq*(M\(Dr'*Vq'*diag(wq))) - .5*Vq*Lq*diag(nrJ)*Vf*Pq);
+Dsqw = (Vq*(M\(Ds'*Vq'*diag(wq))) - .5*Vq*Lq*diag(nsJ)*Vf*Pq);
 
 DNrw = [Drqw -.5*VqLq*diag(nrJ);
     .5*diag(nrJ)*VfPq .5*diag(nrJ)];
@@ -109,8 +110,8 @@ QNrskew = .5*(WN*DNr - (WN*DNr)');
 QNsskew = .5*(WN*DNs - (WN*DNs)');
 
 % make skew symmetric diff matrices
-DNr = diag(1./[wq;wfq])*QNrskew;
-DNs = diag(1./[wq;wfq])*QNsskew;
+DNr = diag(1./[wq;wf])*QNrskew;
+DNs = diag(1./[wq;wf])*QNsskew;
 
 DNr(abs(DNr)<1e-8) = 0;
 DNs(abs(DNs)<1e-8) = 0;
@@ -121,21 +122,21 @@ DNs = sparse(DNs);
 % keyboard
 % return
 
-QNr = WN*[Vq*Dr*Pq - .5*Vq*Lq*diag(nrJ)*Vfq*Pq .5*VqLq*diag(nrJ);
+QNr = WN*[Vq*Dr*Pq - .5*Vq*Lq*diag(nrJ)*Vf*Pq .5*VqLq*diag(nrJ);
     -.5*diag(nrJ)*VfPq .5*diag(nrJ)];
 BNr = [0*Drq 0*VqLq;
-    0*VfPq diag(wfq.*nrJ)];
+    0*VfPq diag(wf.*nrJ)];
 
-rN = [rq;rfq];
-sN = [sq;sfq];
-u = [Vq;Vfq]*randn(Np,1); 
+rN = [rq;rf];
+sN = [sq;sf];
+u = [Vq;Vf]*randn(Np,1); 
 v = sN.^(N-1)+rN.^(N-1);
 
 norm(BNr-(QNr+QNr'))
 norm(v'*QNr*u - v'*(BNr-QNr')*u)
 
 % Qr = diag(wq)*(Vq*Dr*Pq);
-% norm(Qr+Qr' - Vfq'*diag(nrJ.*wfq)*Vfq)
+% norm(Qr+Qr' - Vf'*diag(nrJ.*wf)*Vf)
 
 % plotting nodes
 [rp sp] = EquiNodes2D(15); [rp sp] = xytors(rp,sp);
@@ -145,8 +146,8 @@ xp = Vp*x; yp = Vp*y;
 
 %% make quadrature face maps
 
-xf = Vfq*x;
-yf = Vfq*y;
+xf = Vf*x;
+yf = Vf*y;
 
 % mapMq = reshape(mapM,Nfp*Nfaces,K);
 % mapPq = reshape(mapP,Nfp*Nfaces,K);
@@ -208,16 +209,16 @@ y = F*y;
 
 xq = Vq*x; yq = Vq*y;
 xp = Vp*x; yp = Vp*y;
-xf = Vfq*x;    yf = Vfq*y;
+xf = Vf*x;    yf = Vf*y;
 
 [rx sx ry sy J] = GeometricFactors2D(x,y,Vq*Dr,Vq*Ds);
 rxJ = rx.*J; sxJ = sx.*J;
 ryJ = ry.*J; syJ = sy.*J;
 
-% rxJf = Vfq*rxJ; sxJf = Vfq*sxJ;
-% ryJf = Vfq*ryJ; syJf = Vfq*syJ;
+% rxJf = Vf*rxJ; sxJf = Vf*sxJ;
+% ryJf = Vf*ryJ; syJf = Vf*syJ;
 
-[rxf,sxf,ryf,syf,Jf] = GeometricFactors2D(x,y,Vfq*Dr,Vfq*Ds);
+[rxf,sxf,ryf,syf,Jf] = GeometricFactors2D(x,y,Vf*Dr,Vf*Ds);
 rxJf = rxf.*Jf; sxJf = sxf.*Jf;
 ryJf = ryf.*Jf; syJf = syf.*Jf;
 
@@ -257,9 +258,9 @@ end
 % DNx = .5*(diag([rxJ(:,e); rxJf(:,e)])*DNr + DNr*diag([rxJ(:,e); rxJf(:,e)]) ...
 %      + diag([sxJ(:,e); sxJf(:,e)])*DNs + DNs*diag([sxJ(:,e); sxJf(:,e)]));
 % BNr = [zeros(Nq) zeros(Nq,Nfq*Nfaces);
-%     zeros(Nfq*Nfaces,Nq) diag(wfq.*nrJ)];
+%     zeros(Nfq*Nfaces,Nq) diag(wf.*nrJ)];
 % BNs = [zeros(Nq) zeros(Nq,Nfq*Nfaces);
-%     zeros(Nfq*Nfaces,Nq) diag(wfq.*nsJ)];
+%     zeros(Nfq*Nfaces,Nq) diag(wf.*nsJ)];
 % 
 % BNx = diag([rxJ(:,e); rxJf(:,e)])*BNr + diag([sxJ(:,e); sxJf(:,e)])*BNs;
 % QNx = WN*DNx;
@@ -270,6 +271,27 @@ end
 % e'*(BNx-QNx')*u
 
 % keyboard
+
+%% 
+global VqGauss wqGauss
+[rq1DGauss wq1DGauss] = JacobiGQ(0,0,N);
+
+[rqGauss,sqGauss] = meshgrid(rq1DGauss);
+[wrqGauss,wsqGauss] = meshgrid(rq1DGauss);
+wqGauss = wrqGauss(:).*wsqGauss(:);
+rqGauss = rqGauss(:);
+sqGauss = sqGauss(:);
+VqGauss = Vandermonde2D(N,rqGauss,sqGauss)/V;
+
+A = zeros(Np*K);
+u = zeros(Np,K);
+for i = 1:Np*K
+    u(i) = 1;
+    rhs = deriv(u);
+    A(:,i) = rhs(:);
+    u(i) = 0;
+end
+return
 
 %% fluxes
 global gamma
@@ -484,7 +506,7 @@ function [rhs1 rhs2 rhs3 rhs4] = RHS2Dsimple(rhoq,uq,vq,Eq,rhoM,uM,vM,EM,QM)
 
 Globals2D;
 
-global M Vq Pq Lq Lqf Vfqf Vfq VqPq VqLq
+global M Vq Pq Lq Lqf Vff Vf VqPq VqLq
 global rxJ sxJ ryJ syJ rxJf sxJf ryJf syJf
 global nxJ nyJ nrJ nsJ 
 global mapPq
@@ -639,3 +661,29 @@ if 1
 end
 
 end
+
+
+function rhs = deriv(u)
+
+Globals2D
+global M Vq Pq Lq Lqf Vff Vf VqPq VqLq
+global rxJ sxJ ryJ syJ rxJf sxJf ryJf syJf
+global nxJ nyJ nrJ nsJ 
+global mapPq 
+global wq wf
+global VqGauss wqGauss
+
+
+uf = Vf*u;
+uP = uf(mapPq);
+
+dudx = rxJ.*(VqGauss*Dr*u) + sxJ.*(VqGauss*Ds*u);
+urx = rxJ.*(VqGauss*u);
+usx = sxJ.*(VqGauss*u);
+dudxWeak = Dr'*VqGauss'*(diag(wqGauss)*urx) + Ds'*VqGauss'*(diag(wqGauss)*usx);
+% rhs = VqGauss'*(diag(wqGauss)*dudx) - dudxWeak + Vf'*(wf.*uP.*nxJ); 
+rhs = 2*(VqGauss\dudx) + Vf'*(wf.*(uP-uf).*nxJ); 
+
+
+end
+

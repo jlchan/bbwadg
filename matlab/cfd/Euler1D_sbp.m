@@ -4,17 +4,17 @@ Globals1D;
 
 projectV = 1;
 CFL = .125;
-CFL = .125/2.5;
+% CFL = .125/2.5;
 % CFL = .125/10;
 N = 4;
-K1D = 40;
+K1D = 16;
 
-useSBP = 0;
+useSBP = 1;
 
-FinalTime = 1.8;
-% FinalTime = .2;
+% FinalTime = 1.8;
+FinalTime = .2;
 % FinalTime = .01;
-opt = 3;
+opt = 2;
 
 global tau
 tau = 1;
@@ -22,9 +22,10 @@ tau = 1;
 r = JacobiGL(0,0,N);
 % r = JacobiGQ(0,0,N);
 
-[rq wq] = JacobiGL(0,0,N); rq = rq*(1-1e-11);
+[rq wq] = JacobiGL(0,0,N+3); rq = rq*(1-1e-11); 
 % [rq wq] = JacobiGL(0,0,N+4); rq = rq*(1-1e-11);
-[rq wq] = JacobiGQ(0,0,N+1);
+% [rq wq] = JacobiGQ(0,0,N+1);
+
 
 Nq = length(rq);
 
@@ -317,71 +318,6 @@ for i = 1:Nsteps
         S1avg(i) = sum(J(1,:).*(.5*wq0'*S1));
         S2avg(i) = sum(J(1,:).*(.5*wq0'*S2));
         
-        %         if INTRK==4 && i==4
-        %             keyboard
-        %         end
-        
-        if 0 %INTRK==1 && mod(i-1,5)==0
-            clf
-            %             subplot(2,1,1)
-            hold on
-            plot(xq2,rhoq1,'ro--','linewidth',2)
-            plot(xq2,rhoq2,'b-','linewidth',2)
-            
-            
-            plot(.5*wq0'*xq2,.5*wq0'*rhoq1,'s','linewidth',2)
-            plot(.5*wq0'*xq2,.5*wq0'*rhoq2,'x','linewidth',2)
-            %             plot(xq2,Eq1,'g^--','linewidth',2)
-            %             plot(xq2,Eq2,'k-','linewidth',2)
-            %             plot(.5*wq0'*xq2,.5*wq0'*Eq1,'s','linewidth',2)
-            %             plot(.5*wq0'*xq2,.5*wq0'*Eq2,'x','linewidth',2)
-            plot(xq2,pq1,'g^--','linewidth',2)
-            plot(xq2,pq2,'k-','linewidth',2)
-            plot(.5*wq0'*xq2,.5*wq0'*pq1,'s','linewidth',2)
-            plot(.5*wq0'*xq2,.5*wq0'*pq2,'x','linewidth',2)
-            
-            %             subplot(2,1,2)
-            %             hold on
-            %             plot(xq2,V1(rhoq2,mq2,Eq2),'ro--','linewidth',2)
-            %             plot(xq2,VqPq2*V1(rhoq2,mq2,Eq2),'b-','linewidth',2)
-            %             plot(xq2,V2(rhoq2,mq2,Eq2),'ms--','linewidth',2)
-            %             plot(xq2,VqPq2*V2(rhoq2,mq2,Eq2),'b-','linewidth',2)
-            %             plot(xq2,V3(rhoq2,mq2,Eq2),'g^--','linewidth',2)
-            %             plot(xq2,VqPq2*V3(rhoq2,mq2,Eq2),'k-','linewidth',2)
-            %
-            %
-            %
-            %             %semilogy(xq2,repmat(.5*[wq;0;0]'*max(0,S1-S2),Nq+2,1),'o','linewidth',2)
-            % %             semilogy(xq2,repmat(.5*[wq;0;0]'*abs(S1-S2),Nq+2,1),'o','linewidth',2)
-            %             semilogy(.5*wq0'*xq2,.5*wq0'*max(1e-14,S1-S2),'bx','linewidth',2)
-            %                         semilogy(xq2,abs(S1-S2),'b-','linewidth',2)
-            %             semilogy(xq2,abs(rhoq1-rhoq2).^2 + abs(mq1-mq2).^2 + abs(Eq1-Eq2).^2,'b-','linewidth',2)
-            % %             hold on
-            % %             plot(xq2,abs(Eq1-Eq2),'r-','linewidth',2)
-            %             axis([-.5 .5 1e-11 .25])
-            
-            title(sprintf('timestep %d out of %d, RK step %d,time %f',i,Nsteps,INTRK,dt*i))
-            
-            clf
-            plot(xq2,S1,'o--','linewidth',2)
-            hold on
-            plot(xq2,S2,'x--','linewidth',2)
-            title(sprintf('timestep %d out of %d, S1 = %f, S2 = %f',i,Nsteps,S1avg(i),S2avg(i)))
-            
-            
-            % pause
-            
-            if (i==1 && INTRK==1)
-                pause
-            else
-                drawnow
-            end
-            
-            %             if max(abs(Eq(:)))>1.5*max(abs(E(:)))
-            %                 keyboard
-            %             end
-            
-        end
         
         [rhs1 rhs2 rhs3] = rhsEuler(rhoq,mq,Eq,rho,m,E,i,INTRK);
         rhsmax(INTRK+5*(i-1)) = max([max(abs(rhs1(:))),max(abs(rhs2(:))),max(abs(rhs3(:)))]);
@@ -544,15 +480,12 @@ global tau
 
 % local lax penalty
 if 1
-    cvel = sqrt(gamma*pM./rhoM);
-    lm   = (abs(uM) + cvel);
-    Lfc  = max(lm(mapP),lm);
-    %      lm4 = abs(uM).^4 + cvel.^4;
-    %     Lfc = (.5*(lm4+lm4(mapP))).^(1/4);
+    lm   = (abs(uM) + sqrt(gamma*pM./rhoM));
+    Lfc  = max(lm(mapP),lm);    
     
     d1 = Lfc.*((rhoP-rhoM));
     d2 = Lfc.*((mP-mM));
-    d3 = Lfc.*((EP-EM));
+    d3 = Lfc.*((EP-EM));       
     
 else
     

@@ -1,5 +1,5 @@
 clear
-N = 5;
+N = 7;
 [rq wq] = JacobiGQ(0,0,N+4);
 % [rq wq] = JacobiGL(0,0,N);
 
@@ -101,7 +101,7 @@ uex = @(r) sin(pi*r);
 
 %% make mesh, ops
 
-K1D = 40;
+K1D = 20;
 [Nv, VX, K, EToV] = MeshGen1D(-1,1,K1D);
 
 h = VX(2)-VX(1); % assume unif
@@ -170,7 +170,7 @@ for i = 1:Nsteps
         du = [zeros(1,K); diff(AA*u); zeros(1,K)];
         uL = du(1:end-1,:);
         uR = du(2:end,:);
-        tau = 0*h*w; 
+        tau = h.^2*w; 
         rhs = -((fR-fL)./w - tau.*(uR-uL))./J; 
          
         u = rk3a(INTRK)*uold + rk3b(INTRK)*u + rk3c(INTRK)*dt*rhs;

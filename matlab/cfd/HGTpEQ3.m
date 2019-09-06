@@ -49,7 +49,7 @@ tR(N-5,1) = tL(6,1);
 
 
 %-- the general solution, evaluated to 30 digits of precision, is given below, however, Matlab introduces too
-%much rounding error in evaluating the expressions
+% much rounding error in evaluating the expressions
 % instead, Maple has been used to compute the H and D matrices with 30
 % digits of precision
 h11 = 0.541420144730720019301738366218e0;
