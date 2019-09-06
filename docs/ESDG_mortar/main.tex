@@ -318,8 +318,8 @@ legend style={font=\small}
 \makeatother
 
 %\date{}
-\author{Jesse Chan, David C.\ Del Rey Fernandez}
-\title{Mortar-based entropy stable modal discontinuous Galerkin methods}
+\author{Jesse Chan, Mario Bencomo, David C.\ Del Rey Fernandez}
+\title{On mortar-based entropy stable modal discontinuous Galerkin methods}
 \graphicspath{{./figs/}}
 
 
@@ -328,7 +328,7 @@ legend style={font=\small}
 \maketitle
 
 \begin{abstract}
-Entropy stable schemes provide a semi-discrete statement of stability for nonlinear systems of conservation laws.  Entropy stable nodal discontinuous Galerkin (DG) methods have been constructed using entropy conservative finite volume fluxes \cite{tadmor1987numerical} and a summation-by-parts (SBP) finite difference framework \cite{gassner2013skew, carpenter2014entropy, gassner2016split, chen2017entropy, crean2018entropy, chan2017discretely, chan2018efficient}.  Such DG schemes require evaluating entropy conservative numerical fluxes between combinations of volume and surface quadrature nodes.  
+Entropy stable schemes provide a semi-discrete statement of stability for nonlinear conservation laws.  Entropy stable nodal discontinuous Galerkin (DG) methods have been constructed using entropy conservative finite volume fluxes \cite{tadmor1987numerical} and a summation-by-parts (SBP) finite difference framework \cite{gassner2013skew, carpenter2014entropy, gassner2016split, chen2017entropy, crean2018entropy, chan2017discretely, chan2018efficient}.  Entropy stable DG schemes require evaluating entropy conservative numerical fluxes between combinations of volume and surface quadrature nodes.  On tensor product elements with surface nodes aligned with volume nodes, flux evaluations are required only between ``lines'' of nodes, reducing the number of flux evaluations to $O(N)$ per node.  However, because surface nodes are no longer aligned on non-conforming meshes, each volume node interacts each non-aligned surface node, increasing the number of flux evaluations to $O(N^{d-1})$ per node in $d$ dimensions.  
 \end{abstract}
 
 \section{Introduction}
@@ -411,7 +411,7 @@ We incorporate mortars by modifying this formulation.  Let $\bm{V}_m$ denote the
 \bm{M}_m = \bm{T}_m^T\bm{W}_m\bm{T}_m, \qquad \bm{P}_m = \bm{M}_m^{-1}\bm{T}_m^T\bm{W}_m\\
 \bm{M}_f = \bm{T}_f^T\bm{W}_f\bm{T}_f, \qquad \bm{P}_f = \bm{M}_m^{-1}\bm{T}_f^T\bm{W}_f.
 \end{align*}
-Note that we have used the mortar mass matrix $\bm{M}_m$ in the above definition of the face projection.  This is only necessary if the surface and mortar quadratures do not exactly integrate degree $2N$ polynomials.  If both the surface and mortar quadratures are exact for polynomials of degree $2N$, then $\bm{M}_m = \bm{M}_f$, and no distinction is necessary between the two mass matrices.  
+Note that we have used the mortar mass matrix $\bm{M}_m$ in the above definition of the face projection.  %This is only necessary if the surface and mortar quadratures do not exactly integrate degree $2N$ polynomials.  If both the surface and mortar quadratures are exact for polynomials of degree $2N$, then $\bm{M}_m = \bm{M}_f$, and no distinction is necessary between the two mass matrices.  
 
 \begin{remark}
 In order to show stability, we require that both $\bm{P}_f$ and $\bm{P}_m$ are defined using the same mass matrix.  We have used the mortar mass matrix $\bm{M}_m$ here; however, we could also use the surface mass matrix $\bm{M}_f$ in both $\bm{P}_f$ and $\bm{P}_m$.  We use the mortar mass matrix in this work, as the mortar quadrature is generally more accurate than the surface quadrature for our use cases (e.g.\ hybrid and non-conforming meshes).  

@@ -56,6 +56,8 @@
 \newcommand{\avg}[1] {\ensuremath{\LRc{\!\{#1\}\!}}}
 
 \renewcommand{\note}[1]{{\color{blue}{#1}}}
+\newcommand{\bnote}[1]{{\color{blue}{#1}}}
+\newcommand{\rnote}[1]{{\color{red}{#1}}}
 
 \graphicspath{{./figs/}}
 
@@ -83,7 +85,9 @@ Rice University\\
 \maketitle
 
 \begin{abstract}
-High order entropy stable discontinuous Galerkin (DG) methods for nonlinear conservation laws satisfy an inherent discrete entropy inequality.  The construction of such schemes has relied on the use of carefully chosen nodal points \cite{gassner2013skew, fisher2013high, carpenter2014entropy, crean2018entropy, chan2018efficient} or volume and surface quadrature rules \cite{chan2017discretely, chan2018discretely} to produce operators which satisfy a summation-by-parts (SBP) property.  In this work, we show how to construct ``modal'' skew-symmetric DG formulations which are entropy stable for volume and surface quadratures under which a traditional SBP property does not hold.  These skew-symmetric formulations avoid the use of a ``strong'' matrix-based SBP property, and instead rely on the assumption that discrete operators exactly differentiate constants and satisfy a discrete form of the fundamental theorem of calculus.   We conclude with numerical experiments verifying the accuracy and stability of the proposed formulations, and discuss an application of skew-symmetric formulations for entropy stable DG schemes on mixed quadrilateral-triangle meshes.  
+High order entropy stable discontinuous Galerkin (DG) methods for nonlinear conservation laws satisfy an inherent discrete entropy inequality.  The construction of such schemes has relied on the use of carefully chosen nodal points \cite{gassner2013skew, fisher2013high, carpenter2014entropy, crean2018entropy, chan2018efficient} or volume and surface quadrature rules \cite{chan2017discretely, chan2018discretely} to produce operators which satisfy a summation-by-parts (SBP) property.  In this work, we show how to construct ``modal'' DG formulations which are \bnote{entropy stable for volume and surface quadratures under which the SBP property in \cite{chan2017discretely} does not hold.  These formulations rely on an alternative skew-symmetric construction of operators which automatically satisfy the SBP property.   Entropy stability then follows for choices of volume and surface quadrature which satisfy sufficient accuracy conditions.}   \rnote{The accuracy of these new SBP operators is shown to depend on a separate set of accuracy conditions. }
+%avoid the use of a ``strong'' matrix-based SBP property, and instead rely on the assumption that discrete operators exactly differentiate constants and satisfy a discrete form of the fundamental theorem of calculus.   
+We conclude with numerical experiments verifying the accuracy and stability of the proposed formulations, and discuss an application of these formulations for entropy stable DG schemes on mixed quadrilateral-triangle meshes.  
 \end{abstract}
 
 %\tableofcontents
@@ -98,11 +102,12 @@ These issues have motivated the introduction of high order \textit{entropy stabl
 
 Entropy stable ``modal'' DG discretizations \cite{chan2017discretely, chan2018discretely} are built upon flux differencing and a summation-by-parts (SBP) property, which serves as a discrete analogue of integration by parts for quadrature-based discretization matrices.  However, the SBP property does not hold for certain under-integrated quadrature rules, which arise naturally in some discretization settings.  For example, on hybrid meshes consisting of both quadrilateral and triangular elements, it is convenient to utilize the same quadrature rule on shared faces between different element types.  On degree $N$ quadrilateral elements, a popular choice of quadrature is an $(N+1)$-point Gauss-Legendre-Lobatto (GLL) rule.  When both volume and surface integrals are approximated using $(N+1)$ point GLL quadrature rules, the SBP property holds, despite the fact that GLL quadrature is inexact for the integrands which appear in finite element formulations \cite{fisher2013high}.  However, while GLL quadrature induces an SBP property on quadrilateral elements, it does not guarantee an SBP property if used on triangular elements \cite{chan2017discretely}.  
 
-This work proposes an alternative formulation which utilizes a skew-symmetric form of flux differencing.  Under such a formulation, the proof of entropy stability requires only a weaker ``variational'' form of the SBP property, which holds under a more general class of quadrature rules compared to the decoupled SBP property introduced in \cite{chan2017discretely, chan2018discretely}.  We show that the skew-symmetric formulation is entropy stable, locally conservative, and free-stream preserving on curved elements, and confirm theoretical results with numerical experiments on triangular, quadrilateral, and hybrid triangular-quadrilateral meshes.  
+This work proposes an alternative formulation which utilizes a \note{skew-symmetric construction of the SBP operator}.  Under such a formulation, the proof of entropy stability \note{holds under weaker quadrature rules} compared to the decoupled SBP property introduced in \cite{chan2017discretely, chan2018discretely}.  We show that this skew-symmetric formulation is entropy stable, locally conservative, and free-stream preserving on curved elements, and confirm theoretical results with numerical experiments on triangular, quadrilateral, and hybrid triangular-quadrilateral meshes.  
 
-It should be noted that a similar approach to entropy stable discretizations was introduced within a finite difference framework \cite{chen2017entropy, crean2018entropy} using multidimensional differencing operators which satisfy accuracy conditions and an SBP property \cite{hicken2016multidimensional}.  These operators exist for nodal points corresponding to sufficiently accurate choices of volume and surface quadrature, but do not correspond to any specific basis or approximation space.  The formulations in \cite{chen2017entropy, crean2018entropy} differ from the ones presented in this work in that they are based on SBP finite differences and ``nodal'' (rather than ``modal'') DG formulations, with differentiation operators computed algebraically or through an optimization problem for each specific choice of nodes.  In contrast, ``modal'' formulations induce quadrature-based operators from an explicit approximation space, and accomodate general choices of volume and surface quadrature (e.g.\ volume quadratures without boundary nodes and over-integrated quadrature rules).  
+It should be noted that a similar approach to entropy stable discretizations was introduced within a finite difference framework \cite{chen2017entropy, crean2018entropy} using multidimensional differencing operators which satisfy similar accuracy conditions and an SBP property \cite{hicken2016multidimensional}.  These operators exist for nodal points corresponding to sufficiently accurate choices of volume and surface quadrature, but do not correspond to any specific basis or approximation space.  The formulations in \cite{chen2017entropy, crean2018entropy} differ from the ones presented in this work in that they are based on SBP finite differences and ``nodal'' (rather than ``modal'') DG formulations, with differentiation operators computed algebraically or through an optimization problem for each specific choice of nodes.  In contrast, ``modal'' formulations induce quadrature-based operators from an explicit approximation space, and accomodate general choices of volume and surface quadrature (e.g.\ volume quadratures without boundary nodes and over-integrated quadrature rules).  
 
-The structure of the paper is as follows: Section~\ref{sec:nonlin} describes the continuous entropy inequality which we aim to replicate discretely.  Section~\ref{sec:approx} and Section~\ref{sec:sbp} introduce polynomial approximation spaces and quadrature-based SBP operators on simplicial and tensor product elements.  Section~\ref{sec:skew1} then introduces the variational SBP property and an entropy conservative skew-symmetric formulation.  Section~\ref{sec:skew2} extends the skew-symmetric formulation to curved elements, and Section~\ref{sec:quadacc} provides explicit conditions for entropy stability in terms of quadrature accuracy and the polynomial degree of geometric mappings.  Section~\ref{sec:num} concludes by presenting numerical experiments which verify the theoretical assumptions, stability, and accuracy of the proposed formulations.
+The structure of the paper is as follows: Section~\ref{sec:nonlin} describes the continuous entropy inequality which we aim to replicate discretely.  Section~\ref{sec:approx} and Section~\ref{sec:sbp} introduce polynomial approximation spaces and quadrature-based SBP operators on simplicial and tensor product elements.  
+Section~\ref{sec:skew1} then introduces the variational SBP property and an entropy conservative skew-symmetric formulation.  Section~\ref{sec:skew2} extends the skew-symmetric formulation to curved elements, and Section~\ref{sec:quadacc} provides explicit conditions for entropy stability in terms of quadrature accuracy and the polynomial degree of geometric mappings.  Section~\ref{sec:num} concludes by presenting numerical experiments which verify the theoretical assumptions, stability, and accuracy of the proposed formulations.
 
 %\note{Finish: add Section description.  Talk about situations where the SBP or decoupled SBP property doesn't hold: triangles with reduced surface quadrature, GLL quads with GQ face quadratures, and hybrid couplings.}
 
@@ -163,7 +168,7 @@ For example, on a $d$-dimensional simplex, $V^N \LRp{\partial \hat{D}}$ consists
 %\]
 %For example, on a $d$-dimensional simplex, $V^N \LRp{\partial \hat{D}}$ consists of total degree $N$ polynomials on simplices of dimension $(d-1)$.  On a $d$-dimensional tensor product element, $V^N \LRp{\partial \hat{D}}$ consists of maximum degree $N$ polynomials on a tensor product element of dimension $(d-1)$.  
 
-\section{Quadrature-based matrices and decoupled SBP operators}
+\section{Quadrature-based matrices and ``hybridized'' SBP operators}
 \label{sec:sbp}
 %\note{TODO: Standardize hat notation for operators/normals: can refer to operators on reference element and do $k$ superscript for physical elements, or do hats on reference element.}
 Let $\hat{D} \subset\mathbb{R}^d$ denote a reference element with surface $\partial \hat{D}$.  
@@ -185,7 +190,7 @@ where $\bm{W}, \bm{W}_f$ are diagonal matrices of volume and surface quadrature 
 
 Interpolation, differentiation, and $L^2$ projection matrices can be combined to construct finite difference operators.  For example, the matrix $\bm{D}^i_q = \bm{V}_q\bm{D}^i\bm{P}_q$ maps function values at quadrature points to approximate values of the derivative at quadrature points.  By choosing specific quadrature rules, $\bm{D}^i_q$ recovers high order summation-by-parts finite difference operators in \cite{gassner2013skew, fernandez2014generalized, ranocha2018generalised} and certain operators in \cite{hicken2016multidimensional}.  However, to address difficulties in designing efficient entropy stable interface terms for nonlinear conservation laws, a new ``decoupled'' summation by parts matrix was introduced in \cite{chan2017discretely} which builds interface terms directly into the approximation of the derivative.  
 
-Let $\hat{\bm{n}}$ denote the scaled outward normal vector $\hat{\bm{n}} = \LRc{\hat{n}_1\hat{J}_f,\ldots,\hat{n}_d\hat{J}_f}$, where $\hat{J}_f$ is the determinant of the Jacobian of the mapping of a face of $\partial \hat{D}$ to a reference face.  Let $\hat{\bm{n}}_i$ denote the vector containing values of the $i$th component $\hat{n}_i\hat{J}f$ at all surface quadrature points, and let $\bm{Q}^i = \bm{W}\bm{D}^i_q = \bm{W}\bm{V}_q\bm{D}^i\bm{P}_q$.  The ``decoupled'' summation by parts operator $\bm{D}^i_N$ is defined as the block matrix involving both volume and surface quadratures
+Let $\hat{\bm{n}}$ denote the scaled outward normal vector $\hat{\bm{n}} = \LRc{\hat{n}_1\hat{J}_f,\ldots,\hat{n}_d\hat{J}_f}$, where $\hat{J}_f$ is the determinant of the Jacobian of the mapping of a face of $\partial \hat{D}$ to a reference face.  Let $\hat{\bm{n}}_i$ denote the vector containing values of the $i$th component $\hat{n}_i\hat{J}f$ at all surface quadrature points, and let $\bm{Q}^i = \bm{W}\bm{D}^i_q = \bm{W}\bm{V}_q\bm{D}^i\bm{P}_q$.  The ``hybridized'' (originally referred to as ``decoupled'' in \cite{chan2017discretely}) summation by parts operator $\bm{D}^i_N$ is defined as the block matrix involving both volume and surface quadratures
 \begin{gather}
 \bm{D}^i_N = \bm{W}_N^{-1} \bm{Q}^i_N, \qquad \bm{W}_N = \LRp{\begin{array}{cc}\bm{W}&\\ & \bm{W}_f\end{array}}, \label{eq:QN}\\
 \bm{E} = \bm{V}_f\bm{P}_q, \qquad \bm{B}^i = \bm{W}_f \diag{\hat{\bm{n}}_i}, \qquad \bm{Q}^i_N  = \LRs{
@@ -301,12 +306,24 @@ In this section, we give examples of specific pairings of volume and surface qua
 %\label{fig:noncon}
 %\end{figure}
 
+\subsection{\bnote{An alternative construction of SBP operators}} % variational SBP property}
 
-\subsection{A variational SBP property}
+%\subsection{A variational SBP property}
 
 %The main restriction we wish to overcome 
 
-The property (\ref{eq:dsbp}) (which we will refer to as the ``strong'' SBP property) relates the polynomial exactness of specific quadrature rules to algebraic properties of quadrature-based matrices.  We will relax accuracy conditions on these quadrature rules by utilizing a weaker ``variational'' version of the SBP property variational, which relies on the exactness of volume and surface quadrature rules only for specific polynomials.  
+The property (\ref{eq:dsbp}) relates the polynomial exactness of specific quadrature rules to algebraic properties of quadrature-based matrices.  We will relax accuracy conditions on these quadrature rules by utilizing \note{an alternative construction of $\bm{Q}^i_N$ based the skew-symmetric matrix $\bm{Q}^i - \LRp{\bm{Q}^i}^T$:}
+%a weaker ``variational'' version of the SBP property variational, which relies on the exactness of volume and surface quadrature rules only for specific polynomials.  
+\bnote{\begin{equation}
+\tilde{\bm{Q}}^i_{N} = \begin{bmatrix}
+\bm{Q}^i - \LRp{\bm{Q}^i}^T &  \frac{1}{2}\bm{E}^T\bm{B}^i\\
+-\frac{1}{2}\bm{B}^i\bm{E} & \frac{1}{2} \bm{B}^i
+\end{bmatrix}.
+\label{eq:skewQN} 
+\end{equation}
+It is clear to see that the skew-symmetric construction of $\tilde{\bm{Q}}^i_N$ as defined in (\ref{eq:skewQN}) satisfies the SBP property (\ref{eq:dsbp}) by construction.  However, the accuracy of $\tilde{\bm{Q}}^i_N$ as a differentiation operator becomes slightly more difficult to analyze. }
+
+
 
 On tensor product elements, we restrict ourselves to isotropic volume quadrature rules which are construced from tensor products of one-dimensional quadrature formulas.  For the remainder of this work, the degree of the multi-dimensional quadrature rule on tensor product elements will refer to the degree of exactness of the one-dimensional rule.  For example, we refer to the quadrature rule constructed through a tensor product of one-dimensional $(N+1)$-point GLL quadrature rules as a degree $(2N-1)$ quadrature rule.  This choice of quadrature is sufficient to guarantee that the mass matrix is positive definite \cite{canuto2007spectral}.  
 

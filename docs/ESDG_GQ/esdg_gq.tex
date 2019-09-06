@@ -252,13 +252,14 @@ legend style={font=\small}
 \newcommand{\LRc}[1]{\left\{ #1 \right\}}
 \newcommand{\LRceil}[1]{\left\lceil #1 \right\rceil}
 \newcommand{\LRl}[1]{\left. #1 \right|}
+\newcommand{\note}[1]{{\color{blue}{#1}}}
+
 \newcommand{\pdd}[2]{\frac{\partial^2#1}{\partial#2^2}}
 \newcommand{\pdn}[3]{\frac{\partial^{#3}#1}{\partial#2^{#3}}}
 \newcommand{\mb}[1]{\mathbf{#1}}
 \newcommand{\mbb}[1]{\mathbb{#1}}
 \newcommand{\mc}[1]{\mathcal{#1}}
 \newcommand{\snor}[1]{\left| #1 \right|}
-
 
 %\newcommand{\cond}[1]{\kappa\LRp{#1}}
 \newcommand{\cond}[2]{\nor{#1}_{#2}\nor{{#1}^{-1}}_{#2}}
@@ -282,7 +283,7 @@ legend style={font=\small}
 \def\etal{{\it et al.~}}
 
 
-\newcommand{\note}[1]{{\color{blue}{#1}}}
+%\newcommand{\note}[1]{{\color{blue}{#1}}}
 %\newcommand{\noteOne}[1]{{\color{blue}{#1}}}
 %\newcommand{\noteTwo}[1]{{\color{red}{#1}}}
 %\newcommand{\note}[1]{#1}
@@ -368,7 +369,7 @@ where $\psi_i(\bm{u}) = \bm{v}^T\bm{f}_i(\bm{u}) - F_i(\bm{u})$ denotes the $i$t
 \section{Entropy stable Gauss and Gauss-Legendre-Lobatto collocation methods}
 \label{sec:1}
 
-This focus of this paper is on entropy stable high order collocation methods which satisfy a semi-discrete version of the entropy inequality (\ref{eq:weakentropyineq}).  These methods collocate the solution at some choice of collocation nodes, and are applicable to tensor product meshes consisting of quadrilateral and hexahedral elements.  
+The focus of this paper is on entropy stable high order collocation methods which satisfy a semi-discrete version of the entropy inequality (\ref{eq:weakentropyineq}).  These methods collocate the solution at some choice of collocation nodes, and are applicable to tensor product meshes consisting of quadrilateral and hexahedral elements.  
 
 Entropy stable collocation methods have largely utilized Gauss-Legendre-Lobatto (GLL) nodes \cite{fisher2013high, carpenter2014entropy, gassner2016split, gassner2017br1}, which contain points on the boundary.  The popularity of GLL nodes can be attributed in part to a connection made in \cite{gassner2013skew}, where it was shown by Gassner that collocation DG discretizations based on GLL nodes could be recast in terms of summation-by-parts (SBP) operators.  This equivalence allowed Gassner to leverage existing finite difference formulations to produce stable high order discretizations of the nonlinear Burgers' equation.  
 
@@ -409,7 +410,7 @@ Since $\bm{M} = \bm{W}$ under a collocation assumption, we utilize $\bm{W}$ for 
 %\[
 %\bm{M}_{ij} = \int_{-1}^{1} \ell_j(x)\ell_i(x) = \sum_{k=1}^{N+1}  w_k\ell_j(x_k)\ell_i(x_k)  = \delta_{ij} w_i.  
 %\]
-It can be show that the mass and differentiation matrices for Gauss nodes fall under the class of generalized SBP (GSBP) operators \cite{fernandez2014generalized}.  
+It can be shown that the mass and differentiation matrices for Gauss nodes fall under the class of generalized SBP (GSBP) operators \cite{fernandez2014generalized}.  
 \begin{lemma}
 \label{lemma:sbp}
 $\bm{Q} = \bm{W}\bm{D}$ satisfies the generalized summation by parts property
@@ -627,7 +628,7 @@ where we have used the fact that diagonal matrices commute to simplify expressio
 \[
 \note{\int_{-1}^1u({x})v({x})  = \int_{-1}^1 {I_N f\pd{I_Ng}{x}v} + \LRl{(g-I_Ng)\frac{\LRp{fv + I_N(fv)}}{2}}_{-1}^1,} \qquad \forall v\in P^N([-1,1]),
 \]
-\note{where $I_N$ denotes the degree $N$ polynomial approximation at the $(N+1)$ Gauss points.}
+\note{where $I_N$ denotes the degree $N$ polynomial approximation at the $(N+1)$ Gauss points.  }
 
 
 The approximation (\ref{eq:qn}) can also be applied to Gauss collocation schemes for nonlinear conservation laws. Let $u \in P^N$ be represented by the vector $\bm{u}$ of values at Gauss points, and let $f(x), g(x)$ denote two nonlinear functions.   The operator $\bm{Q}_N$ can be used to approximate the quantity $f(u)\pd{g(u)}{x}$ using (\ref{eq:qn}) if $\bm{f}, \bm{g}$ are defined as
@@ -922,7 +923,7 @@ The proof of Theorem~\ref{thm:consentropy} follows directly from choosing either
  - \frac{1}{2}\bm{B}\bm{V}_f &  & & \frac{1}{2}\bm{e}_R\bm{e}_L^T &&\\ [.2em]
  \hline\\[-1.0em]
 && \bm{S} &  \frac{1}{2}\bm{V}_f^T\bm{B}&& \\
-& -\frac{1}{2}\bm{e}_L\bm{e}_R^T &  - \frac{1}{2}\bm{B}\bm{V}_f &&\frac{1}{2}\bm{e}_R\bm{e}_L^T&\\
+& -\frac{1}{2}\bm{e}_L\bm{e}_R^T &  - \frac{1}{2}\bm{B}\bm{V}_f &&&\frac{1}{2}\bm{e}_R\bm{e}_L^T\\
  \hline\\[-1.0em]
 &&&& \bm{S} &  \frac{1}{2}\bm{V}_f^T\bm{B} \\
 &&& -\frac{1}{2}\bm{e}_L\bm{e}_R^T &  - \frac{1}{2}\bm{B}\bm{V}_f &\\
@@ -945,13 +946,13 @@ The proof of Theorem~\ref{thm:consentropy} follows directly from choosing either
 &&\bm{V}_f\\
 \end{bmatrix}.}
 \end{gather*}
-\note{These global operators again satisfy the SBP property $\bm{Q}_h + \bm{Q}_h^T = \bm{B}_h$, where $\bm{Q}_h = \bm{S}_h + \frac{1}{2}\bm{B}_h$.  Moreover, $\bm{Q}_h$ can be used to produce high order accurate approximations of derivatives, and can be used to construct entropy conservative schemes as in Theorem~\ref{thm:consentropy}.  The extension to a general number of elements is straightforward. }
+\note{These global operators again satisfy $\bm{Q}_h\bm{1} = 0$ and the SBP property $\bm{Q}_h + \bm{Q}_h^T = \bm{B}_h$, where $\bm{Q}_h = \bm{S}_h + \frac{1}{2}\bm{B}_h$.  Moreover, $\bm{Q}_h$ can be used to produce high order accurate approximations of derivatives, and can be used to construct entropy conservative schemes as in Theorem~\ref{thm:consentropy}.  The extension to a general number of elements is done in a similar fashion. }
 
 It is possible to convert the semi-discrete entropy equality in Theorem~\ref{thm:consentropy} to a semi-discrete entropy inequality by adding appropriate interface dissipation terms, such as Lax-Friedrichs or matrix dissipation \cite{winters2017uniquely}.  We note that these terms must be computed in terms of $\tilde{\bm{u}}_f$ in order to ensure a discrete dissipation of entropy \cite{chen2017entropy, chan2017discretely}.  \note{Boundary conditions can also be incorporated into the formulation (\ref{eq:form}) in a weak fashion.  Let $\bm{u}_L, \bm{u}_R$ denote the values of the solution at the left and right domain boundaries of a 1D domain.  Using the SBP property, we can modify (\ref{eq:form}) to }
 \[
 \note{\bm{W}_h\td{\bm{u}_h}{t} + 2\bm{I}_h^T \LRp{\bm{S}_h\circ \bm{F}_S}\bm{1} + \bm{I}_h^T\bm{B}_h \begin{bmatrix}\bm{0}\\ \bm{f}(\bm{u}_L) \\ \vdots \\ \bm{0}\\ \bm{f}(\bm{u}_R)\end{bmatrix}}= 0,
 \]
-\note{where we have used the consistency of $\bm{f}_S$ and the fact that $\bm{B}_h$ is diagonal to simplify the boundary term.  We can now replace $\bm{f}(\bm{u}_L), \bm{f}(\bm{u}_R)$ with numerical fluxes $\bm{f}^*_L, \bm{f}^*_R$ as follows:}
+\note{where we have used the fact that $\bm{B}_h$ is diagonal and the consistency of $\bm{f}_S$ (implying that the diagonal of $\bm{F}_S$ reduces to the evaluation of the flux $\bm{f}(\bm{u})$) to simplify the boundary term $\LRp{\bm{B}_h\circ\bm{F}_S}\bm{1}$.  Boundary conditions are incorporated by replacing $\bm{f}(\bm{u}_L), \bm{f}(\bm{u}_R)$ with numerical fluxes $\bm{f}^*_L, \bm{f}^*_R$ as follows:}
 \begin{equation}
 \note{\bm{W}_h\td{\bm{u}_h}{t} + 2\bm{I}_h^T \LRp{\bm{S}_h\circ \bm{F}_S}\bm{1} + \bm{I}_h^T \bm{B}_h \begin{bmatrix}\bm{0}\\ \bm{f}^*_L \\ \vdots \\ \bm{0}\\ \bm{f}^*_R\end{bmatrix}}= 0.
 \label{eq:bform}
@@ -962,14 +963,16 @@ It is possible to convert the semi-discrete entropy equality in Theorem~\ref{thm
 \]
 \note{then the resulting scheme satisfies a global entropy inequality \cite{chen2017entropy}.  }
 
-\note{Assuming that the ODE system (\ref{eq:form}) exactly integrated in time and that entropy dissipative numerical fluxes and boundary conditions are used, the solution will satisfy a discrete entropy inequality (\ref{eq:weakentropyineq}).  In practice, the system (\ref{eq:form}) is solved using an ODE time-stepper.  For an explicit time-stepper, then all that is necessary is to invert the diagonal matrix $\bm{W}_h$ and evaluate the spatial terms in (\ref{eq:bform}).  We note that the conservation or dissipation of entropy is guaranteed up to time-stepper accuracy.  In practice, we observe that entropy is dissipated for all problems considered, despite the fact that the proof does not hold at the fully discrete level.}
+\note{Assuming that the ODE system (\ref{eq:form}) exactly integrated in time and that entropy dissipative numerical fluxes and boundary conditions are used, the solution will satisfy a discrete entropy inequality (\ref{eq:weakentropyineq}).  In practice, the system (\ref{eq:form}) is solved using an ODE time-stepper.  For an explicit time-stepper, then all that is necessary is to invert the diagonal matrix $\bm{W}_h$ and evaluate the spatial terms in (\ref{eq:bform}).  
+
+We note that the conservation or dissipation of entropy is guaranteed up to time-stepper accuracy.  In practice, we observe that entropy is dissipated for all problems considered, despite the fact that the proof does not hold at the fully discrete level.  A fully discrete entropy inequality can be guaranteed using implicit or space-time discretizations \cite{tadmor2003entropy, friedrich2018entropy}.}
 
 \section{Extension to higher dimensions and non-affine meshes}
 \label{sec:2}
 
 The formulation in Theorem~\ref{thm:consentropy} can be naturally extended to Cartesian meshes in higher dimensions through a tensor product construction.  We first consider the construction of higher dimensional differentiation matrices on a two-dimensional reference element $\hat{\Omega}$, assuming a two dimensional tensor product grid of quadrature nodes (the construction of decoupled SBP operators in three dimensions is straightforward and similar to the two-dimensional case).  We then construct physical differentiation matrices on mapped elements $\Omega^k$, through which we construct an entropy conservative scheme.  
 
-Let $\bm{D}_{\rm 1D}, \bm{W}_{\rm 1D}$ denote the 1D differentiation and mass matrices, respectively, on on the reference interval $[-1,1]$.  Let ${\bm{W}}$ denote the 2D reference mass matrix, and let ${\bm{D}}^i$ denote the differentiation matrices with respect to the $i$th reference coordinate.  These matrices can be expressed in terms of Kronecker products  
+Let $\bm{D}_{\rm 1D}, \bm{W}_{\rm 1D}$ denote the 1D differentiation and mass matrices, respectively, on the reference interval $[-1,1]$.  Let ${\bm{W}}$ denote the 2D reference mass matrix, and let ${\bm{D}}^i$ denote the differentiation matrices with respect to the $i$th reference coordinate.  These matrices can be expressed in terms of Kronecker products  
 \[
 {\bm{D}}^1 \myeq \bm{D}_{\rm 1D} \otimes \bm{I}_{N+1}, \qquad {\bm{D}}^2  \myeq \bm{I}_{N+1} \otimes \bm{D}_{\rm 1D}, \qquad {\bm{W}} \myeq \bm{W}_{\rm 1D} \otimes  \bm{W}_{\rm 1D}, 
 \]
@@ -1079,7 +1082,7 @@ Apart from evaluating the GCL-satisfying geometric terms at separate volume and 
 \note{\pd{\rho {u}_i}{t}} &+ \note{\sum_{j=1}^d \pd{\LRp{\rho u_iu_j + p\delta_{ij} }}{x_j}} = 0, \qquad i = 1,\ldots,d\\
 \pd{E}{t} &+ \note{\sum_{j=1}^d \pd{\LRp{{u}_j(E+p)}}{x_j}} = 0.\nonumber
 \end{align*}
-Here, $\rho$ is density, \note{$\LRp{{u}_1, \ldots,{u}_d}$} is the vector of velocities, and $E$ is the total energy.  The pressure $p$ and specific internal energy $\rho e$ are given by 
+Here, $\rho$ is density, \note{$u_i$ denotes the $i$th component of} velocity, and $E$ is the total energy.  The pressure $p$ and specific internal energy $\rho e$ are given by 
 \[
 \note{p = (\gamma-1)\LRp{E - \frac{1}{2}\rho \LRp{\sum_{j=1}^d u_j^2}}}, \qquad \note{\rho e = E - \frac{1}{2}\rho \LRp{\sum_{j=1}^d u_j^2}}. %\qquad \LRb{\bm{u}}^2 = \LRp{\sum_{j=1}^d u_j^2}.
 \]
@@ -1106,9 +1109,9 @@ where the quantities $\rho e$ and $s$ in terms of the entropy variables are
 \end{equation*}
 \note{Let $f$ denote some piecewise polynomial function, and let $f^+$ denote the exterior value of $f$ across an element face.  We define the average and logarithmic averages as follows:}
 \[
-\note{\avg{f} = \frac{f^+ + f}{2}}, \qquad \note{\avg{f}^{\log} = \frac{f+ - f}{\log\LRp{f^+}-\log\LRp{f}}}.
+\note{\avg{f} = \frac{f^+ + f}{2}}, \qquad \note{\avg{f}^{\log} = \frac{f^+ - f}{\log\LRp{f^+}-\log\LRp{f}}}.
 \]
-\note{The average and logarithmic average are assumed to act component-wise on vector-valued functions.  We evaluate the logarithmic average using the numerically stable approach of \cite{ismail2009affordable}.}
+\note{The average and logarithmic average are assumed to act component-wise on vector-valued functions.  We evaluate the logarithmic average using the numerically stable algorithm of \cite{ismail2009affordable}.}
 Explicit expressions for entropy conservative numerical fluxes in two dimensions  are given by Chandrashekar \cite{chandrashekar2013kinetic}
 \begin{align*}
 &f^1_{1,S}(\bm{u}_L,\bm{u}_R) = \avg{\rho}^{\log} \avg{u_1},& &f^1_{2,S}(\bm{u}_L,\bm{u}_R) = \avg{\rho}^{\log} \avg{u_2},&\\
@@ -1410,7 +1413,7 @@ As in two dimensions, we test the accuracy of the proposed scheme using an isent
 u_i(\bm{x},t) &= \Pi r_i, \\
 E(\bm{x},t) &= \frac{p_0}{\gamma-1}\LRp{1-\frac{\gamma-1}{2}\Pi^2}^{\frac{\gamma}{\gamma-1}} + \frac{\rho}{2}\sum_{i=1}^d u_i^2.
 \end{align*}
-where $(u_1,u_2,u_3)^T$ is the velocity vector and % $\Pi$, $\bm{r}$ are defined as
+where $(u_1,u_2,u_3)^T$ is the three-dimensional velocity vector and % $\Pi$, $\bm{r}$ are defined as
 \[
 \Pi = \Pi_{\max}e^{\frac{1-\sum_{i=1}^dr_i^2}{2}}, \qquad \begin{pmatrix}r_1\\r_2\\r_3\end{pmatrix} = \begin{pmatrix}
 -(x_2-c_2-t)\\
@@ -1592,9 +1595,9 @@ We note that this experiment also verifies that entropy stable decoupled SBP sch
 We conclude by investigating the behavior of entropy stable Gauss collocation schemes for the inviscid Taylor--Green vortex \cite{ae1937mechanism, gassner2016split, crean2018entropy}.  This problem is posed on the periodic box $[-\pi,\pi]^3$, with initial conditions 
 \begin{gather*}
 \rho = 1, \qquad p = \frac{100}{\gamma} + \frac{1}{16} \LRp{\cos(2x_1) + \cos(2x_2)}\LRp{2+\cos(2x_3)},\\
-u_1 = \sin(x_1)\cos(x_2)\cos(x_3), \qquad
-u_2 = -\cos(x_1)\sin(x_2)\cos(x_3),\qquad
-u_3 = 0.
+\note{u_1 = \sin(x_1)\cos(x_2)\cos(x_3),} \qquad
+\note{u_2 = -\cos(x_1)\sin(x_2)\cos(x_3),}\qquad
+\note{u_3 = 0.}
 \end{gather*}
 The Taylor--Green vortex is used to study the transition and decay of turbulence.  In the absence of viscosity, the Taylor--Green vortex develops successively smaller scales as time increases.  As a result, the solution is guaranteed to contain under-resolved features after a sufficiently large time.  We study the evolution of kinetic energy $\kappa(t)$ 
 \[
@@ -1746,7 +1749,7 @@ We note that the number of two-point flux evaluations and matrix operations will
 
 \section{Conclusion}
 
-This work shows how to construct efficient entropy stable high order Gauss collocation DG schemes on quadrilateral and hexahedral meshes.  Key to the construction of efficient methods are decoupled SBP operators, which deliver entropy stability and high order accuracy while maintaining compact inter-element coupling terms.  These operators are also compatible with existing entropy stable methods for applying interface dissipation \cite{winters2017uniquely} or imposing boundary conditions.  Numerical experiments demonstrate both the stability and high order accuracy of the proposed Gauss collocation schemes on both affine and curvilinear meshes.  
+This work shows how to construct efficient entropy stable high order Gauss collocation DG schemes on quadrilateral and hexahedral meshes.  Key to the construction of efficient methods are decoupled SBP operators, which deliver entropy stability and high order accuracy while maintaining compact inter-element coupling terms.  These operators are also compatible with existing entropy stable methods for applying interface dissipation \cite{winters2017uniquely} or imposing boundary conditions.  Numerical experiments demonstrate both the stability and high order accuracy of the proposed Gauss collocation schemes on both affine and curvilinear meshes.  \note{We note that, while the numerical experiments presented here consider only mapped Cartesian domains, the method is also applicable to complex geometries, and future work will focus on studying the performance of such methods on curvilinear quadrilateral and hexahedral unstructured meshes.}
 
 We note that results for Gauss collocation are similar to those attained by entropy stable staggered-grid schemes \cite{parsani2016entropy}, and require a similar number of two-point flux evaluations.  However, Gauss collocation schemes result in a lower number floating point operations from matrix computations compared to staggered-grid methods.  Finally, while a rigorous computational comparison between GLL and Gauss collocation schemes remains to be done, Gauss collocation schemes show significant improvements in accuracy compared to GLL collocation schemes on non-Cartesian meshes.  In particular, for sufficiently warped curvilinear mappings, degree $N$ Gauss collocation schemes achieve an accuracy comparable to degree $(N+1)$ GLL collocation schemes in two and three dimensions.  
 

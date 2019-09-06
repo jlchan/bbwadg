@@ -1234,12 +1234,12 @@ where $\omega = \sqrt{2\mu}$.  Figure~\ref{fig:harmonic_osc} shows $L^2$ errors 
 \begin{tikzpicture}
 \begin{loglogaxis}[
 	legend cell align=left,
+    legend pos=south east,
 	width=.49\textwidth,
     xlabel={Mesh size $h$},
        ylabel={$L^2$ errors}, 
     xmin=.025, xmax=1,
     ymin=1e-12, ymax=1,
-    legend pos=south east,
     xmajorgrids=true,
     ymajorgrids=true,
     grid style=dashed,
@@ -1682,7 +1682,7 @@ In our experiments, we take $t_0 = .025$.  Traction free boundary conditions are
 \label{fig:incl}
 \end{figure}
 
-%We consider both aligned meshes where the inclusion boundary coincides with interior faces and an un-aligned mesh where the inclusion cuts through element interiors.  Both are constructed by dividing each element of a quadrilateral meshes along the diagonal to produce triangular meshes.  The aligned mesh is constructed using $100 \times 50$ quadrilateral elements in the $x$ and $y$ coordinates, respectively, while the un-aligned mesh was constructed using $101 \times 51$ elements.  Figure~\ref{fig:incl} shows values of $\LRb{\bm{\sigma}_{xx} + \bm{\sigma}_{yy}}$ at final time $T=.4$, along with a zoomed-in view along the interface.  The results for the interface-aligned mesh show good agreement with results in the literature \cite{leveque2002finite,kaser2006arbitrary,appelo2015energy}.  %The sub-element resolution of $\mu,\lambda$, an error is still incurred when the mesh is un-aligned with the interface 
+%We consider both aligned meshes where the inclusion boundary coincides with interior faces and an un-aligned mesh where the inclusion cuts through element interiors.  Both are constructed by dividing each element of a quadrilateral meshes along the diagonal to produce triangular meshes.  The aligned mesh is constructed using $100 \times 50$ quadrilateral elements in the $x$ and $y$ coordinates, respectively, while the un-aligned mesh was constructed using $101 \times 51$ elements.  Figure~\ref{fig:incl} shows values of $\LRb{\bm{\sigma}_{xx} + \bm{\sigma}_{yy}}$ at final time $T=.4$, along with a zoomed-in view along the interface.  The results for the interface-aligned mesh show good agreement with results in the literature \cite{leveque2002finite,kaser2006arbitrary,appelo2015energy}.  %The sub-element resolution of $\mu,\lambda$, an error is still incurred when theÂ mesh is un-aligned with the interface 
 %For the un-aligned mesh, the sub-element resolution of material data is clearly visible, though an interface error is still incurred by the under-resolution of the interface \cite{symes2009interface}.
 
 We construct a uniform triangular mesh by dividing each element of a quadrilateral meshes along the diagonal to produce triangular meshes, using $100 \times 50$ quadrilateral elements in the $x$ and $y$ coordinates, respectively.  Penalty parameters of $\tau_v = \tau_\sigma = 1/2$ are chosen.  Figure~\ref{fig:incl} shows values of $\LRb{\bm{\sigma}_{xx} + \bm{\sigma}_{yy}}$ at final time $T=.4$.  Following \cite{leveque2002finite}, a nonlinear color scale is used in order to distinguish small-amplitude waves.  The results show qualitatively good agreement with results in the literature \cite{leveque2002finite,kaser2006arbitrary,appelo2015energy}.  
