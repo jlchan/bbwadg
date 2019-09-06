@@ -1,20 +1,38 @@
 % clear
 
-N = 3;
-K = 64;
+N = 9;
+K = 150;
 
 % plotting points
-Npts = 1000;
-a = -K/2;
-b = -a;
+Npts = 1000; a = -K/2; b = -a;
 rp = linspace(a,b,Npts)';
 
 [Vp VX] = GDVDM(N,K,rp);
 VX = VX';
+i = K/2+1; 
+
 plot(VX,VX*0,'o')
 hold on
-plot(rp,Vp(:,N+2),'linewidth',2);
-% return
+plot(rp,sum(Vp(:,N+2:end-(N+2)),2),'linewidth',2);
+
+
+re = linspace(-1,1,50)';
+rK = [];
+for e = 1:K
+    h = (max(VX)-min(VX))/K;
+    rK = [rK; h*(re+1)/2 + VX(e)];        
+end
+
+R = GDVDM(N,K,rK); phi = R(:,i);
+p = 1+(rK).^2; %(rK-VX(i)).^(2);
+moment = reshape(phi.*p,length(re),K);
+
+mphi = sum(moment(:,end/2+1:end),2);
+clf
+% plot(re,mphi/max(abs(moment(:))),'o')
+plot(re,moment,'o')
+hold on
+% plot(re,-moment(:,K/2+1),'o')
 
 % 1st N+1 basis functions get modified - can orthogonalize w.r.t others?
 % should just be able to modify first p+1 entries
@@ -30,11 +48,9 @@ rq = []; wq = [];
 rqfull = []; wqfull = [];
 for e = 1:K
     off = (N+1)/2-1; % this seems to work for N=1,3,5,7
-    if e==off+1 || e==K-off
+    if e > off+1 && e < K - off % interior
+%         [rqe wqe] = JacobiGL(0,0,1);
         [rqe wqe] = JacobiGQ(0,0,N);
-    elseif e > off+1 && e < K - off
-        [rqe wqe] = JacobiGL(0,0,1);
-%         [rqe wqe] = JacobiGQ(0,0,N);
     else
         [rqe wqe] = JacobiGQ(0,0,N);
     end
@@ -49,49 +65,34 @@ for e = 1:K
     wqfull = [wqfull; h/2*wqe];    
 end
 
-% [H D tL tR X] = HGTpEQ3(K);
-% [H Q X] = CSBPp2(K+1);
-% [H3 Q3 X3] = CSBPp3(K+1);
-% [H Q X] = CSBPp4(K+1);
-% wq = diag(H); rq = X*L;
-% plot(rq,rq*0,'o');return
-
-Vq = GDVDM(N,K,rq);
-M = (Vq'*diag(wq)*Vq);
-Pq = M\(Vq'*diag(wq));
-
 Vqfull = GDVDM(N,K,rqfull);
 Mfull = Vqfull'*diag(wqfull)*Vqfull;
-
 VN = GDVDM(N,K,rqfull);
 DN = kron(eye(K),D1D);
 rx = 2;
 Q = VN'*diag(wqfull)*(rx*DN*VN); % Galerkin first deriv mat
 Q(abs(Q)<1e-8) = 0;
 
-[nm,~] = size(M);
+% possibly reduced quadrature versions
+% [H, ~, X] = CSBPp4(K+1);
+% wq = diag(H)*L; rq = X*L;
+Vq = GDVDM(N,K,rq);
+M = (Vq'*diag(wq)*Vq);
+Pq = M\(Vq'*diag(wq));
+
+[nm,~] = size(Mfull);
 M2 = Mfull;
 pskip = N+2;
 inds = pskip:nm-(pskip)+1;
-MDiag = diag(sum(M,2));
+MDiag = diag(sum(M2,2));
 M2(inds,:) = MDiag(inds,:);
-% M2 = M2';
 
-% M = M-diag(sum(M,2))+diag(sum(Mfull,2));
-
-% offd = sum(M2(1:N+1,pskip:end),2);
-% M2(1:N+1,pskip:end) = 0;
-% M2(1:N+1,1:N+1) = M2(1:N+1,1:N+1) + diag(offd);
-% offd = sum(M2(end-N:end,1:end-N-1),2);
-% M2(end-N:end,1:end-N-1) = 0;
-% M2(end-N:end,end-N:end) = M2(end-N:end,end-N:end) + diag(offd);
-% clf;imagesc(M2);return
 
 f = @(x) exp(sin(pi*x/L));
 df = @(x) (pi*cos((pi*x)/L).*exp(sin((pi*x)/L)))/L;
 
-% f = @(x) 1 + x;
-% df = @(x) 1 + 0*x;
+f = @(x) sin(pi*x/L);
+df = @(x) cos(pi*x/L)*pi/L;
 
 clf
 % plot(rp,df(rp),'--')
@@ -99,10 +100,59 @@ hold on
 plot(VX,(M\Q)*f(VX)-df(VX),'o','linewidth',2,'markersize',16)
 % plot(VX,(diag(1./sum(M,2))*Q)*f(VX),'x--')
 plot(VX,(M2\Q)*f(VX)-df(VX),'x','linewidth',2,'markersize',16)
-return
 
+iids = N+2:K+1-(N+1);
+Msub = M(iids,iids);
+[V D] = eig(M);
+[lam p] = sort(diag(D),'descend');
+V = V(:,p);
+ii = N;
 
-
+% bids = setdiff(1:size(M,2),iids);
+% A = M(bids,bids);
+% B = M(bids,iids);
+% C = M(iids,iids);
+% x = randn(size(M,2),1);
+% u = x(bids);
+% v = x(iids);
+% % V(:,ii)'*M*V(:,ii) - V(:,ii)'*M2*V(:,ii)
+% 
+% return
+% 
+% [V D] = eig(abs(C));
+% [~,id] = max(diag(D));
+% v = VX*0;
+% v(iids) = V(:,id)*sign(V(ceil(K/2),id));
+% v = v/max(v);
+% clf
+% plot(VX,v,'o')
+% hold on
+% plot(VX(bids),0*VX(bids),'x')
+% % plot(reshape(rq,N+1,K),reshape(DN*VN*v,N+1,K),'o-')
+% plot(rp,Vp*v)
+% LL = (K/2);
+% plot(rp,(1+cos(pi*rp/LL))/2)
+% 
+% 
+% return
+% 
+% uu = 1+0*exp(sin(pi*VX(:)/L));
+% uI = uu; uI(bids) = 0;
+% uB = uu; uB(iids) = 0;
+% clf
+% % plot(rp,Vp*uu)
+% hold on
+% plot(rp,(Vp*uI))
+% plot(rp,(Vp*uB))
+% plot(rp,(Vp*uB).*(Vp*uI)*4,'k.-')
+% plot(VX,uB,'o')
+% plot(rp,Vp(:,1:pskip-1))
+% 
+% BC = [B;C];
+% 
+% 
+% return
+% 
 clf
 Vf = GDVDM(N,K,[min(VX); max(VX)]);
 B = diag([-1;1]);
@@ -113,7 +163,7 @@ Bperiodic(1,end) = 1;
 Bperiodic(2,1) = 1;
 Bperiodic(2,end) = -1;
 %.5*Vf'*B*
-lam = eig(M\(Q + .5*Vf'*B*Bperiodic));
+lam = eig(M2\(Q + .5*Vf'*B*Bperiodic));
 plot(lam,'o')
 return
 
@@ -122,63 +172,3 @@ plot(rp,Vp*Pq*f(rq),'o')
 hold on
 plot(rp,f(rp))
 
-function [V VX] = GDVDM(N,K,r)
-
-nGhost = (N-1)/2;
-Ka = (K/2 + nGhost); % half span + ghost point
-VX = -Ka:Ka;
-
-Npts = length(r);
-
-% build ghost VDM
-Np = length(-K/2:K/2);
-V = zeros(Npts,Np);
-for j = VX
-    jid = Ka+1+j;
-    for i = 1:Npts
-        V(i,jid) = phi(r(i)-VX(jid),N);
-    end
-end
-
-% modify extrapolation
-ec = getExtrapCoeffs( N+1 );
-for ig = nGhost:-1:1
-    ileft  = 1+nGhost;
-    iGhost = ileft-ig;
-    for k = 2:length(ec)
-        V(:,iGhost+k-1) = V(:,iGhost+k-1) + ec(k)*V(:,iGhost);
-    end
-end
-for ig = nGhost:-1:1
-    iright = K + nGhost + 1;
-    iGhost = iright+ig;
-    for k = 2:length(ec)
-        V(:,iGhost-k+1) = V(:,iGhost-k+1)+ec(k)*V(:,iGhost);
-    end
-end
-V = V(:,nGhost + (1:Np)); % extract non-ghost columns
-VX = VX(nGhost+(1:Np));
-
-end
-
-
-function z = phi(xi,p)
-
-z = 0;
-a = -(p+1)/2;
-b = -a;
-if( xi >= a & xi < b )
-    ia = p-ceil(xi-a)+1;
-    ib = -(p-ceil(b-xi)+1);
-    lp = [ia:-1:1,-1:-1:ib];
-    
-    den = 1;
-    num = 1;
-    for k = 1:length(lp)
-        num = num*(xi+lp(k));
-        den = den*lp(k);
-    end
-    z = num/den;
-end
-
-end

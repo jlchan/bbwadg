@@ -104,11 +104,10 @@ if( 1 == 1 )
     [nm,~] = size(M);
     MDiag  = diag(sum(M'));
     pskip = p+2;
-    inds = pskip:nm-(pskip)+1;    
-    M(inds,:) = MDiag(inds,:);    
-%     M(:,inds) = MDiag(:,inds);
+    inds = pskip:nm-(pskip)+1;
+    M(inds,:) = MDiag(inds,:);
+    %     M(:,inds) = MDiag(:,inds);
 end
-% keyboard
 
 [L,U] = lu(sparse(M),0);
 
@@ -129,7 +128,7 @@ for step = 1:nt
     
     t = t+dt;
     
-    if( plotOption ~= 0 )
+    if( plotOption ~= 0 && (mod(step,25)==0 || step==nt))
         uex = 0*x;
         vex = 0*x;
         if( icOption <= 4 | icOption >= 6 )
@@ -151,10 +150,10 @@ for step = 1:nt
         
         if( plotOption == 1 )
             %figure(1)
-%             subplot(2,1,1), plot( x(ileft:iright),u(1,ileft:iright),'bx-', x(ileft:iright),uex(ileft:iright),'k-' );
-%             subplot(2,1,2), plot( x(ileft:iright),u(2,ileft:iright),'bx-', x(ileft:iright),vex(ileft:iright),'k-' );
-subplot(2,1,1), plot( x(ileft:iright),u(1,ileft:iright),'bx-');
-subplot(2,1,2), plot( x(ileft:iright),u(2,ileft:iright),'bx-');
+            %             subplot(2,1,1), plot( x(ileft:iright),u(1,ileft:iright),'bx-', x(ileft:iright),uex(ileft:iright),'k-' );
+            %             subplot(2,1,2), plot( x(ileft:iright),u(2,ileft:iright),'bx-', x(ileft:iright),vex(ileft:iright),'k-' );
+            subplot(2,1,1), plot( x(ileft:iright),u(1,ileft:iright),'bx-');
+            subplot(2,1,2), plot( x(ileft:iright),u(2,ileft:iright),'bx-');
         elseif( plotOption == 2 )
             %figure(1)
             %ileft = 1;
@@ -169,7 +168,9 @@ subplot(2,1,2), plot( x(ileft:iright),u(2,ileft:iright),'bx-');
             vem = [vem,max(abs(u(2,ileft:iright)-vex(ileft:iright)))];
             plot( tem,uem,'bx', tem,vem,'rs' );
         end
-        pause(.01);
+        title(sprintf('time = %f\n',step*dt))
+        drawnow
+%           pause(.01);
         %pause
     end
     
