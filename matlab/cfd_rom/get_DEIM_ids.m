@@ -9,5 +9,6 @@ for j = 2:size(V,2)
     p(j) = id;
     VDEIM = [VDEIM r];    
 end
+
 p = sort(p);
 % rq = rqref(p);

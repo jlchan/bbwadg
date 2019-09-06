@@ -2,8 +2,8 @@
 
 clear
 
-N = 100; % must be even
-FinalTime = 4;
+N = 40; % must be even
+FinalTime = 8;
 
 Np1D = N;
 
@@ -14,7 +14,7 @@ h = 2*pi/N; % original h on [-pi,pi]
 column = [0 .5*(-1).^(1:N-1).*cot((1:N-1)*h/2)];
 D = toeplitz(column,column([1 N:-1:2]))*pi;
 
-W = dx*eye(Np1D);
+W = dx*speye(Np1D);
 Q = W*D;
 K = D'*W*D;
 
@@ -109,7 +109,7 @@ Us = [u1 u2 u3 u4 V1(u1,u2,u3,u4) V2(u1,u2,u3,u4) V3(u1,u2,u3,u4) V4(u1,u2,u3,u4
 [Vr, Sr, ~] = svd(Us,0);
 sig = diag(Sr);
 
-Nmodes = 35;
+Nmodes = 50;
 Vr = Vr(:,1:Nmodes);
 Vrp = Vr;
 
@@ -124,9 +124,10 @@ Kfull = kron(K,W) + kron(W,K); % d2u/dx2 + d2u/dy2
 % test space
 [Vtest, Stest, ~] = svd([Vr Qxfull*Vr Qyfull*Vr],0);
 sigt = diag(Stest);
-sigerr = sqrt(1-cumsum(sigt.^2)/sum(sigt.^2));
-Vtest = Vtest(:,sigerr > 1e-8);
-% Vtest = Vtest(:,1:25);
+test_energy = sqrt(1-cumsum(sigt.^2)/sum(sigt.^2));
+Vtest = Vtest(:,test_energy > 1e-10);
+% Vtest = Vtest(:,test_energy > tol);
+% keyboard
 
 % ensure constant in space
 Vtest = orth([ones(Np,1) Vtest]); 
@@ -140,33 +141,26 @@ err0 = sqrt(sum(dx^2*(Vrp*rhou-U0(:,2)).^2))/sqrt(sum(dx^2*(Vrp*rhou).^2));
 fprintf('tol = %g, initial err = %g\n',tol,err0)
 
 % hyperreduc
-if 1
-%     Vtarget = Vtest;
-%     Vmass = zeros(Np,size(Vtarget,2)*(size(Vtarget,2)+1)/2);
-%     sk = 1;
-%     for i = 1:size(Vtarget,2)
-%         for j = i:size(Vtarget,2)
-%             Vmass(:,sk) = Vtarget(:,i).*Vtarget(:,j);
-%             sk = sk + 1;
-%         end
-%     end
-%     b = sum(Vmass'*dx^2,2);
+if 1    
 
     Vmass = zeros(Np,size(Vr,2)*size(Vtest,2));
     sk = 1;
     for i = 1:size(Vr,2)
-        for j = i:size(Vtest,2)
+        for j = 1:size(Vtest,2)
             Vmass(:,sk) = Vr(:,i).*Vtest(:,j);
             sk = sk + 1;
         end
-    end
-    b = sum(Vmass'*dx^2,2);    
+    end    
     
-    maxpts = Nmodes*10;
-%     id = get_empirical_cubature(Vmass,b,tol,maxpts);
-    id = get_empirical_cubature(Vmass,b,err0,inf);
-%     id = get_empirical_cubature(Vmass,b,tol,inf);
-    wr = Vmass(id,:)'\b;    
+    % aux basis for integrals
+    [Vmass,Smass,~] = svd(Vmass,0);
+    smass = diag(Smass);
+    smass_energy = sqrt(1 - (cumsum(smass.^2)./sum(smass.^2)));
+    Vmass = Vmass(:,smass_energy > tol);    
+    
+    maxpts = Nmodes*20;
+    wq = ones(Np,1)*dx^2;
+    [wr id] = get_empirical_cubature(Vmass,wq,tol,maxpts);    
         
     % make new ops
     Mtest = Vtest(id,:)'*diag(wr)*Vtest(id,:);
@@ -195,7 +189,7 @@ end
 
 %%
 
-dt = dx;
+dt = .5*dx;
 % dt = 2*dt;
 Nsteps = ceil(FinalTime/dt);
 dt = FinalTime/Nsteps;
@@ -273,7 +267,7 @@ for i = 1:Nsteps
         rhs4 = sum(Qx.*FxS4,2) + sum(Qy.*FyS4,2);        
         
         % add diffusion and project down
-        tau = 5e-4;
+        tau = .25*dx;
         rhs1 = -invMVrT*(rhs1 + tau*(K*rhoq));
         rhs2 = -invMVrT*(rhs2 + tau*(K*rhouq));
         rhs3 = -invMVrT*(rhs3 + tau*(K*rhovq));
@@ -302,6 +296,8 @@ for i = 1:Nsteps
 end
 
 err = Vrp*rhou-Usnap((1:Np)+Np,end);
-% surf(x,y,reshape(err,2*N+1,2*N+1));shading interp
 fprintf('final err = %g\n',sqrt(sum(dx^2*(err).^2))/sqrt(sum(dx^2*(Vrp*rhou).^2)))
+figure
+surf(x,y,reshape(err,Np1D,Np1D));shading interp
 
+% surf(x,y,reshape(Vrp*Vrp'*Usnap((1:Np)+Np,end),Np1D,Np1D))

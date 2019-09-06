@@ -1,34 +1,25 @@
 % SBP spectral method
 
 clear
-N = 25;
-x = linspace(-1,1,2*N+2)'; % interpolatory
-x = x(1:end-1);
-dx = x(2)-x(1);
+N = 50; % must be even
+FinalTime = 2;
 
-sk = 1;
-D = zeros(2*N+1);
-for k = -N:N
-    lamk = 1i*k*pi;
-    Vq(:,sk) = exp(lamk*x)/sqrt(2);        
-    D(sk,sk) = lamk;
-    sk = sk + 1;
-end
-% plot(x,Vq)
+Np1D = N;
 
-M = real(dx*(Vq'*Vq));
-W = dx*eye(2*N+1);
-Pq = M\(Vq'*dx);
-D = real(Vq*D*Pq); % imag part = 0
+dx = 2/N;
+h = 2*pi/N; % original h on [-pi,pi]
+x = linspace(-1,1,N+1); x = x(1:end-1)';
+column = [0 .5*(-1).^(1:N-1).*cot((1:N-1)*h/2)];
+D = toeplitz(column,column([1 N:-1:2]))*pi;
+W = dx*eye(Np1D);
 
-K = (D'*W*D); %/dx;
 Q = W*D;
+K = D'*W*D;
 
 %% make 2D
 
-Np = (2*N+1)^2;
-
 [x y] = meshgrid(x);
+Np = Np1D^2;
 
 %%
 
@@ -38,7 +29,6 @@ fD = @(uL,uR) max(abs(uL),abs(uR)).*(uR-uL);
 
 %%
 
-FinalTime = 2;
 
 rk4a = [            0.0 ...
     -567301805773.0/1357537059087.0 ...
@@ -73,21 +63,21 @@ for i = 1:Nsteps
     for INTRK = 1:5
         
         % x coordinate
-        for ii = 1:2*N+1
+        for ii = 1:Np1D
             [ux uy] = meshgrid(u(ii,:));
-            r = dx*sum(Q.*fS(ux,uy),2); % (kron(Q,W).*FS)*1
-            rhs(ii,:) = r;
+            r = sum(Q.*fS(ux,uy),2); % (kron(Q,W).*FS)*1
+            rhs(ii,:) = dx*r;
         end
         
         % y coordinate
-        for ii = 1:2*N+1
+        for ii = 1:Np1D
             [ux uy] = meshgrid(u(:,ii));
-            r = dx*sum(Q.*fS(ux,uy),2);
-            rhs(:,ii) = rhs(:,ii) + r;
+            r = sum(Q.*fS(ux,uy),2);
+            rhs(:,ii) = rhs(:,ii) + dx*r;
         end                
         
-        tau = .1*dx;
-        rhs = -(rhs + tau*dx*(K*u + u*K'))/dx^2; % inv(kron(W,W))*rhs
+        tau = .25*dx;
+        rhs = -(rhs + tau*dx*(K*u + u*K))/dx^2; % inv(kron(W,W))*rhs
         
         res = rk4a(INTRK)*res + dt*rhs;
         u   = u  + rk4b(INTRK)*res;        

@@ -1,33 +1,25 @@
 % SBP spectral method
 
 clear
-N = 25;
-x = linspace(-1,1,2*N+2)'; % interpolatory
-x = x(1:end-1);
-dx = x(2)-x(1);
+N = 50; % must be even
 
-sk = 1;
-D = zeros(2*N+1);
-for k = -N:N
-    lamk = 1i*k*pi;
-    Vq(:,sk) = exp(lamk*x)/sqrt(2);        
-    D(sk,sk) = lamk;
-    sk = sk + 1;
-end
-% plot(x,Vq)
+Np1D = N;
 
-W = dx*eye(2*N+1); % "weight" matrix
-M = real(Vq'*W*Vq);
-Pq = M\(Vq'*W);
-D = real(Vq*D*Pq); % imag part = 0
+dx = 2/N;
+h = 2*pi/N; % original h on [-pi,pi]
+x = linspace(-1,1,N+1); x = x(1:end-1)';
+column = [0 .5*(-1).^(1:N-1).*cot((1:N-1)*h/2)];
+D = toeplitz(column,column([1 N:-1:2]))*pi;
+W = dx*eye(Np1D);
 
-K = (D'*W*D); %/dx;
-Q = W*D; 
+Q = W*D;
+K = D'*W*D;
 
 %% make 2D
 
-Np = (2*N+1)^2;
 [x y] = meshgrid(x);
+Np = Np1D^2;
+
 
 %% flux
 
@@ -44,9 +36,10 @@ Us = Usnap;
 [Vs, Ss,~] = svd(Us,0);
 sig = diag(Ss);
 
-Nmodes = 25;
+Nmodes = 18;
 tol = sqrt(sum(sig(Nmodes+1:end).^2)./sum(sig.^2));
-
+tol = max(tol,5e-7); 
+ 
 Vr = Vs(:,1:Nmodes);
 Vrp = Vr;
 
@@ -60,41 +53,50 @@ Kfull = kron(K,W) + kron(W,K); % d2u/dx2 + d2u/dy2
 % [Vtest, Stest, ~] = svd([Vr (Qxfull+Qyfull)*Vr],0);
 sigt = diag(Stest);
 sigerr = sqrt(1-cumsum(sigt.^2)/sum(sigt.^2));
-Vtest = orth([ones(Np,1) Vtest(:,sigerr > 1e-6)]);
+Vtest = orth([ones(Np,1) Vtest(:,sigerr > 1e-12)]);
 
+[Vtestx, Stest, ~] = svd([Vr Qxfull*Vr],0);
+sigt = diag(Stest);
+sigerr = sqrt(1-cumsum(sigt.^2)/sum(sigt.^2));
+Vtestx = orth([ones(Np,1) Vtestx(:,sigerr > 1e-12)]);
+
+[Vtesty, Stest, ~] = svd([Vr Qyfull*Vr],0);
+sigt = diag(Stest);
+sigerr = sqrt(1-cumsum(sigt.^2)/sum(sigt.^2));
+Vtesty = orth([ones(Np,1) Vtesty(:,sigerr > 1e-12)]);
 
 u = Vr'*U0(:,1);
-fprintf('tol = %g, initial err = %g\n',tol, sqrt(sum(dx^2*(Vrp*u-U0).^2)))
+% fprintf('tol = %g, initial err = %g\n',tol, sqrt(sum(dx^2*(Vrp*u-U0).^2)))
 
 
 %% hyperreduc
+
 if 1
-    %  Vtarget = Vr;
-%     Vtarget = Vtest;
-%     Vmass = zeros(Np,size(Vtarget,2)*(size(Vtarget,2)+1)/2);
-%     sk = 1;
-%     for i = 1:size(Vtarget,2)
-%         for j = i:size(Vtarget,2)
-%             Vmass(:,sk) = Vtarget(:,i).*Vtarget(:,j);
-%             sk = sk + 1;
-%         end
-%     end
-%     b = sum(Vmass'*dx^2,2);
     
-    Vmass = zeros(Np,size(Vr,2)*size(Vtest,2));
+%     [Vtest,Stest,~] = svd([Vtestx Vtesty],0);
+%     stest = diag(Stest);
+%     stest_energy = sqrt(1 - (cumsum(stest.^2)./sum(stest.^2)));
+%     %Vtest = Vtest(:,stest_energy > tol);
+%     Vtest = Vtest(:,stest_energy > 1e-8);
+    
+    clear Vmass
     sk = 1;
     for i = 1:size(Vr,2)
-        for j = i:size(Vtest,2)
+        for j = 1:size(Vtest,2)
             Vmass(:,sk) = Vr(:,i).*Vtest(:,j);
             sk = sk + 1;
         end
     end
-    b = sum(Vmass'*dx^2,2);
     
-    maxpts = 8*Nmodes;
-    id = get_empirical_cubature(Vmass,b,tol,maxpts);
+    [Vmass,Smass,~] = svd(Vmass,0);
+    smass = diag(Smass);
+    smass_energy = sqrt(1 - (cumsum(smass.^2)./sum(smass.^2)));
+    Vmass = Vmass(:,smass_energy > 1e-8);
+%     Vmass(:,1:8*Nmodes);
+%     keyboard
     
-    wr = Vmass(id,:)'\b;    
+    maxpts = 10*Nmodes;
+    [wr id] = get_empirical_cubature(Vmass,ones(size(x(:)))*dx^2,tol,maxpts);        
     
     % make new mass, projection, interp matrices
     Mr = (Vr(id,:)'*diag(wr)*Vr(id,:));    
@@ -103,12 +105,23 @@ if 1
     Vr = Vr(id,:);
     
     % make new ops
-    Mtest = Vtest(id,:)'*diag(wr)*Vtest(id,:);
-    Ptest = Mtest\(Vtest(id,:)'*diag(wr));    
+%     Ptestx = (Vtestx(id,:)'*diag(wr)*Vtestx(id,:))\(Vtestx(id,:)'*diag(wr));        
+%     Ptesty = (Vtesty(id,:)'*diag(wr)*Vtesty(id,:))\(Vtesty(id,:)'*diag(wr));    
+%     Qx = Ptestx'*(Vtestx'*Qxfull*Vtestx)*Ptestx;
+%     Qy = Ptesty'*(Vtesty'*Qyfull*Vtesty)*Ptesty;
+    Ptest = (Vtest(id,:)'*diag(wr)*Vtest(id,:))\(Vtest(id,:)'*diag(wr));        
     Qx = Ptest'*(Vtest'*Qxfull*Vtest)*Ptest;
     Qy = Ptest'*(Vtest'*Qyfull*Vtest)*Ptest;
-    K = Ptest'*(Vtest'*Kfull*Vtest)*Ptest;
+    K = Pr'*(Vrp'*Kfull*Vrp)*Pr;
+    
+
+    %     K = Vr'*Kfull*Vr;
 else
+    [Vtest, Stest, ~] = svd([Vr Qxfull*Vr Qyfull*Vr],0);
+    sigt = diag(Stest);
+    sigerr = sqrt(1-cumsum(sigt.^2)/sum(sigt.^2));
+    Vtest = orth([ones(Np,1) Vtest(:,sigerr > 1e-12)]);
+
     % % full ops
     Qx = Vtest*(Vtest'*Qxfull*Vtest)*Vtest';
     Qy = Vtest*(Vtest'*Qyfull*Vtest)*Vtest';
@@ -160,7 +173,7 @@ for i = 1:Nsteps
             rhstest(i) = sum(sum(uq.*rhs));
         end
         
-        tau = .1*dx;
+        tau = .25*dx;
         rhs = -invMVrT*(rhs + tau*K*uq);
         
 %         if INTRK==5
@@ -172,7 +185,7 @@ for i = 1:Nsteps
     end
         
     if mod(i,5)==0        
-        surf(x,y,reshape(Vrp*u,2*N+1,2*N+1))
+        surf(x,y,reshape(Vrp*u,Np1D,Np1D))
         view(2)
         shading interp
         title(sprintf('step = %d / %d, rhstest = %g\n',i,Nsteps,rhstest(i)))
@@ -181,7 +194,8 @@ for i = 1:Nsteps
 end
 
 err = Vrp*u-Usnap(:,end);
-% surf(x,y,reshape(err,2*N+1,2*N+1));shading interp
+figure
+surf(x,y,reshape(err,Np1D,Np1D));shading interp
 fprintf('final err = %g\n',sqrt(sum(dx^2*(err).^2)))
 
 

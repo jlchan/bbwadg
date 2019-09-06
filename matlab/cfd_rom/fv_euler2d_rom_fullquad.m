@@ -1,17 +1,16 @@
 % clear
-K = 150;
-% FinalTime = .1;
+K = 100;
+%FinalTime = .35;
 FinalTime = .25;
-
-CFL = .5;
 
 xv = linspace(-1,1,K+1)';
 x = .5*(xv(1:end-1)+xv(2:end));
 dx = 1/K;
 
-% tau = .1*dx;
-tau = 1e-3;
-% tau = .5*dx;
+CFL = .5;
+tau = .1*dx;
+Nmodes = 20;
+snapshot_file = 'Usnap_euler2d_wall';
 
 e = ones(K-1,1);
 S = diag(e,1)-diag(e,-1);
@@ -69,20 +68,17 @@ fyS4 = @(rhoL,uL,vL,EL,rhoR,uR,vR,ER) (plogmean(rhoL,uL,vL,EL,rhoR,uR,vR,ER)/(ga
 
 %% set initial cond
 
-rho = ones(size(x)) + exp(-50*((x).^2+(y+.5).^2));
-% rho = 1 + (abs(x)<.5).*(abs(y)<.5);
-% xc = x + .5; yc = y + .5;
-% rho = 2*ones(size(x)) + .5*exp(-100*(xc.^2+0*yc.^2)); %.*sin(pi*xc).*sin(pi*yc);
-
-% rho = .5*(ones(size(x)) + 2*(x>0) + (y>0) + (x>0).*(y>0));
-
-u = zeros(size(x));
-v = zeros(size(x));
-p = rho.^(gamma);
-
-rhou = rho.*u;
-rhov = rho.*v;
-E    = p/(gamma-1) + .5*rho.*(u.^2+v.^2);
+% rho = ones(size(x)) + exp(-50*((x).^2+(y+.5).^2));
+% % rho = 1 + (abs(x)<.5).*(abs(y)<.5);
+% % xc = x + .5; yc = y + .5;
+% % rho = 2*ones(size(x)) + .5*exp(-100*(xc.^2+0*yc.^2)); %.*sin(pi*xc).*sin(pi*yc);
+% u = zeros(size(x));
+% v = zeros(size(x));
+% p = rho.^(gamma);
+% 
+% rhou = rho.*u;
+% rhov = rho.*v;
+% E    = p/(gamma-1) + .5*rho.*(u.^2+v.^2);
 
 % % vortex
 % p = ones(size(x));
@@ -109,6 +105,38 @@ E    = p/(gamma-1) + .5*rho.*(u.^2+v.^2);
 % rhov = rho.*v;
 % E    = p/(gamma-1) + .5*rho.*(u.^2+v.^2);
 % % surf(x,y,rho);return
+%%
+
+load(snapshot_file)
+% load Usnap_euler2d_wall_novisc
+
+U0 = reshape(Usnap(:,1),K^2,4);
+u1 = Usnap(1:K^2,:);
+u2 = Usnap((1:K^2) + K^2,:);
+u3 = Usnap((1:K^2) + 2*K^2,:);
+u4 = Usnap((1:K^2) + 3*K^2,:);
+
+[Vr, Sr, ~] = svd([u1 u2 u3 u4 ...
+    V1(u1,u2,u3,u4) V2(u1,u2,u3,u4) V3(u1,u2,u3,u4) V4(u1,u2,u3,u4)],0); 
+sig = diag(Sr); 
+
+% figure(1)
+% semilogy(sig,'--','linewidth',2,'markersize',10)
+% hold on
+% grid on
+% set(gca,'fontsize',16)
+
+Vr = Vr(:,1:Nmodes);
+Vrp = Vr;
+
+Pr = Vr';
+
+tol = sum(sig(Nmodes+1:end).^2)/sum(sig.^2)
+
+rhoN = Vr'*U0(:,1);
+rhouN = Vr'*U0(:,2);
+rhovN = Vr'*U0(:,3);
+EN = Vr'*U0(:,4);
 
 %% 
 
@@ -133,22 +161,39 @@ dt = CFL*dx;
 Nsteps = ceil(FinalTime/dt);
 dt = FinalTime/Nsteps;
 
-res1 = zeros(size(x));
-res2 = zeros(size(x));
-res3 = zeros(size(x));
-res4 = zeros(size(x));
+res1 = zeros(size(rhoN));
+res2 = zeros(size(rhoN));
+res3 = zeros(size(rhoN));
+res4 = zeros(size(rhoN));
 
-rhs1 = zeros(size(x));
-rhs2 = zeros(size(x));
-rhs3 = zeros(size(x));
-rhs4 = zeros(size(x));
+rhs1 = zeros(size(rhoN));
+rhs2 = zeros(size(rhoN));
+rhs3 = zeros(size(rhoN));
+rhs4 = zeros(size(rhoN));
 
-interval = 1;
-Usnap = zeros(4*K*K,ceil(Nsteps/interval));
-Usnap(:,1) = [rho(:);rhou(:);rhov(:);E(:)];
+
 sk = 2;
 for i = 1:Nsteps
     for INTRK = 1:5                        
+        
+        rho  = Vr*rhoN;
+        rhou = Vr*rhouN;
+        rhov = Vr*rhovN;
+        E    = Vr*EN;        
+        
+        v1 = Pr*V1(rho,rhou,rhov,E);
+        v2 = Pr*V2(rho,rhou,rhov,E);
+        v3 = Pr*V3(rho,rhou,rhov,E);
+        v4 = Pr*V4(rho,rhou,rhov,E);        
+        v1N = Vr*v1;
+        v2N = Vr*v2;
+        v3N = Vr*v3;
+        v4N = Vr*v4;
+        
+        rho  = reshape(U1(v1N,v2N,v3N,v4N),K,K);
+        rhou = reshape(U2(v1N,v2N,v3N,v4N),K,K);
+        rhov = reshape(U3(v1N,v2N,v3N,v4N),K,K);
+        E    = reshape(U4(v1N,v2N,v3N,v4N),K,K);        
         
         u = rhou./rho;
         v = rhov./rho;                        
@@ -181,39 +226,42 @@ for i = 1:Nsteps
         rhs3 = rhs3 + dx*diff(fyS3(rhoL,uL,vL,EL,rhoR,uR,vR,ER),[],1);
         rhs4 = rhs4 + dx*diff(fyS4(rhoL,uL,vL,EL,rhoR,uR,vR,ER),[],1);        
         
-        % add dissipation       
+        % add dissipation                             
         rhs1 = rhs1 + tau*dx*(KS*rho + rho*KS);
         rhs2 = rhs2 + tau*dx*(KS*rhou + rhou*KS);
         rhs3 = rhs3 + tau*dx*(KS*rhov + rhov*KS);
         rhs4 = rhs4 + tau*dx*(KS*E + E*KS);
         
-        rhs1 = -rhs1/dx^2;
-        rhs2 = -rhs2/dx^2;
-        rhs3 = -rhs3/dx^2;
-        rhs4 = -rhs4/dx^2;
+        % mass matrix = identity
+        rhs1 = -Pr*rhs1(:)/dx^2;
+        rhs2 = -Pr*rhs2(:)/dx^2;
+        rhs3 = -Pr*rhs3(:)/dx^2;
+        rhs4 = -Pr*rhs4(:)/dx^2;
         
         res1 = rk4a(INTRK)*res1 + dt*rhs1;
         res2 = rk4a(INTRK)*res2 + dt*rhs2;
         res3 = rk4a(INTRK)*res3 + dt*rhs3;
         res4 = rk4a(INTRK)*res4 + dt*rhs4;
         
-        rho  = rho  + rk4b(INTRK)*res1;
-        rhou = rhou  + rk4b(INTRK)*res2;
-        rhov = rhov  + rk4b(INTRK)*res3;
-        E    = E  + rk4b(INTRK)*res4;
+        rhoN  = rhoN   + rk4b(INTRK)*res1;
+        rhouN = rhouN  + rk4b(INTRK)*res2;
+        rhovN = rhovN  + rk4b(INTRK)*res3;
+        EN    = EN     + rk4b(INTRK)*res4;
 
-    end
-    
-    if mod(i,interval)==0
-        Usnap(:,sk) = [rho(:);rhou(:);rhov(:);E(:)];
-        sk = sk + 1;
-    end
+    end       
     
     if mod(i,5) == 0
-        surf(x,y,reshape(rho,K,K))
+        clf
+        surf(x,y,reshape(Vr*rhoN,K,K))
         shading interp
         view(2)
-        title(sprintf('time = %f, step %d / %d\n',dt*i,i,Nsteps));
+        
+        Usnapi = reshape(Usnap(:,i),K*K,4);
+        Uhi = Vrp*[rhoN rhouN rhovN EN];
+        e = Uhi - Usnapi;
+        err = sqrt(sum(sum(dx^2*(e.^2))))/sqrt(sum(sum(dx^2*Uhi.^2)));
+        title(sprintf('time = %f, step %d / %d, err = %g\n',dt*i,i,Nsteps,err));
+        
         drawnow
     end
 end

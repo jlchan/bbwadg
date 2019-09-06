@@ -2,25 +2,56 @@
 
 clear
 
-N = 100; % must be even
-FinalTime = 4;
+N = 40; % must be even
+FinalTime = 5;
 
 Np1D = N;
 
-dx = 2/N;
-h = 2*pi/N; % original h on [-pi,pi]
 x = linspace(-1,1,N+1); x = x(1:end-1)';
+% x = linspace(0,1,N+1); x = x(1:end-1)';
+
+dx = (max(x)-min(x))/N;
+h = 2*pi/N; % original h on [-pi,pi]
+
 column = [0 .5*(-1).^(1:N-1).*cot((1:N-1)*h/2)];
 D = toeplitz(column,column([1 N:-1:2]))*pi;
 W = dx*eye(Np1D);
 
 Q = W*D;
-K = D'*W*D;
+KS = D'*W*D;
 
-% plot(x,D*sin(pi*x),'o'),hold on;plot(x,pi*cos(pi*x),'-')
-% return
+FFT = zeros(N);
+iFFT = zeros(N);
+ei = zeros(N,1);
+for i = 1:N
+    ei(i) = 1;
+    FFT(:,i) = fft(ei);
+    iFFT(:,i) = ifft(ei);
+    ei(i) = 0;
+end
+
+sfilter = ones(N,1);
+kN = [0:N-1]/N;
+Nc = .33;
+alpha = 1;
+p = 4;
+sfilter(kN > Nc) = 0; %exp(-alpha*((kN(kN>Nc)-Nc)./(1-Nc)).^p);
+F = real(iFFT*diag(sfilter)*FFT);
+
+f = abs(x)<.5;
+% f = tanh(10*sin(pi*(x-.5))); 
+% f = exp(sin(pi*x));
+f = exp(-500*x.^2);
+
+plot(x,f,'o');
+hold on
+plot(x,D*f,'s-');
+plot(x,F*D*f,'*--');
+% plot(x,D*f,'o--');
+
 
 %% make 2D
+
 [x y] = meshgrid(x);
 Np = Np1D^2;
 
@@ -80,9 +111,10 @@ rk4c = [             0.0  ...
 
 %%
 
+% Munz IC
 p = ones(size(x));
 width = .1;
-sig = 10000;
+sig = 1000;
 ff = 1-(1./(1+exp(-sig*(y-width))) + 1./(1+exp(sig*(y+width))));
 dv = .1*sin(2*pi*x).*ff;
 du = .5*ff;
@@ -94,15 +126,36 @@ rhou = rho.*u;
 rhov = rho.*v;
 E    = p/(gamma-1) + .5*rho.*(u.^2+v.^2);
 
-% surf(x,y,rhov);shading interp;view(2);return
+% % pulse
+% a = 150;
+% r2 = (x-.5).^2 + (y-.5).^2;
+% rho = 1+exp(-a*r2);
+% rhou = 0*rho;
+% rhov = 0*rho;
+% E = rho.^(gamma);
+
+% KH instab
+a = .1; sig = .1; %5*sqrt(2)*1e-3;
+ff = 1./(1+exp(-(y-.25)./(sig.^2)))-1./(1+exp(-(y-.75)./(sig.^2)));
+rho = ff + 1;
+% sig = 5*sqrt(2)*1e-3;
+v = a*sin(4*pi*x).*(exp(-(y-.25).^2/((sig/2).^2))+exp(-(y-.75).^2/((sig/2).^2)));
+u = ff - .5;
+p = 2.5*ones(size(x));
+
+rhou = rho.*u;
+rhov = rho.*v;
+E    = p/(gamma-1) + .5*rho.*(u.^2+v.^2);
+
+% surf(x,y,v); xlabel('x'); return
 
 %%
 
-dt = dx;
+dt = .5*dx;
 Nsteps = ceil(FinalTime/dt);
 dt = FinalTime/Nsteps;
 
-interval = 1;
+interval = inf;
 Usnap = zeros(4*Np,ceil(Nsteps/interval)+1);
 Usnap(:,1) = [rho(:);rhou(:);rhov(:);E(:)];
 
@@ -110,6 +163,7 @@ res1 = zeros(size(u));
 res2 = zeros(size(u));
 res3 = zeros(size(u));
 res4 = zeros(size(u));
+
 rhs1 = zeros(size(u));
 rhs2 = zeros(size(u));
 rhs3 = zeros(size(u));
@@ -175,11 +229,11 @@ for i = 1:Nsteps
             rhs4(:,ii) = rhs4(:,ii) + dx*sum(Q.*FyS4,2);
         end
         
-        tau = 5e-4;
-        rhs1 = -(rhs1 + tau*dx*(K*rho + rho*K'))/dx^2;
-        rhs2 = -(rhs2 + tau*dx*(K*rhou + rhou*K'))/dx^2;
-        rhs3 = -(rhs3 + tau*dx*(K*rhov + rhov*K'))/dx^2;
-        rhs4 = -(rhs4 + tau*dx*(K*E + E*K'))/dx^2;
+        tau = 1e-4;
+        rhs1 = -(rhs1 + tau*dx*(KS*rho + rho*KS))/dx^2;
+        rhs2 = -(rhs2 + tau*dx*(KS*rhou + rhou*KS))/dx^2;
+        rhs3 = -(rhs3 + tau*dx*(KS*rhov + rhov*KS))/dx^2;
+        rhs4 = -(rhs4 + tau*dx*(KS*E + E*KS))/dx^2;
         
         res1 = rk4a(INTRK)*res1 + dt*rhs1;
         res2 = rk4a(INTRK)*res2 + dt*rhs2;
@@ -198,11 +252,14 @@ for i = 1:Nsteps
     end
     
     if (mod(i,10)==0 || i==Nsteps)
-        surf(x,y,rhou)
+        surf(x,y,rho)
         view(2)
         colorbar
+        xlabel('x')
+        ylabel('y')
+%         axis([-1,1,-1,1,-1,1])
         shading interp
-        title(sprintf('step = %d / %d\n',i,Nsteps))
+        title(sprintf('step = %d / %d, time = %g\n',i,Nsteps,dt*i))
         drawnow
     end
 end

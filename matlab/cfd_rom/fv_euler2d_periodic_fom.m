@@ -1,32 +1,23 @@
-% clear
-K = 150;
-% FinalTime = .1;
-FinalTime = .25;
-
-CFL = .5;
+clear
+K = 200;
+%FinalTime = .35;
+FinalTime = 2.5;
+CFL = 1;
 
 xv = linspace(-1,1,K+1)';
 x = .5*(xv(1:end-1)+xv(2:end));
-dx = 1/K;
+dx = (max(xv(:))-min(xv(:)))/K;
 
-% tau = .1*dx;
-tau = 1e-3;
-% tau = .5*dx;
+tau = .1*dx; 
 
 e = ones(K-1,1);
-S = diag(e,1)-diag(e,-1);
-S(1,:) = 0; S(:,1) = 0;
-S(end,:) = 0; S(:,end) = 0;
-S(1,2) = 1; S(2,1) = -1;
-S(K-1,K) = 1; S(K,K-1) = -1;
-% S(1,end) = -1; S(end,1) = 1;
-S(1,1) = -1; S(end,end) = 1; % for BCs
 
-S = sparse(S);
 % KSx = sparse(2*eye(K) - abs(S))/dx;
 KS = sparse(2*eye(K) - diag(e,1) - diag(e,-1))/dx;
-KS(1,1) = KS(1,1)/2;
-KS(K,K) = KS(K,K)/2;
+KS(1,end) = -1/dx;
+KS(end,1) = -1/dx;
+% KS(1,1) = KS(1,1)/2;
+% KS(K,K) = KS(K,K)/2;
 
 % make 2D
 [x y] = meshgrid(x);
@@ -69,13 +60,10 @@ fyS4 = @(rhoL,uL,vL,EL,rhoR,uR,vR,ER) (plogmean(rhoL,uL,vL,EL,rhoR,uR,vR,ER)/(ga
 
 %% set initial cond
 
-rho = ones(size(x)) + exp(-50*((x).^2+(y+.5).^2));
+rho = ones(size(x)) + exp(-50*((x+.5).^2+(y+.5).^2));
 % rho = 1 + (abs(x)<.5).*(abs(y)<.5);
 % xc = x + .5; yc = y + .5;
 % rho = 2*ones(size(x)) + .5*exp(-100*(xc.^2+0*yc.^2)); %.*sin(pi*xc).*sin(pi*yc);
-
-% rho = .5*(ones(size(x)) + 2*(x>0) + (y>0) + (x>0).*(y>0));
-
 u = zeros(size(x));
 v = zeros(size(x));
 p = rho.^(gamma);
@@ -98,17 +86,18 @@ E    = p/(gamma-1) + .5*rho.*(u.^2+v.^2);
 % rhov = rho.*v;
 % E    = p/(gamma-1) + .5*rho.*(u.^2+v.^2);
 
-% % KH instab
-% a = .1; sig = .1; %5*sqrt(2)*1e-3;
-% ff = 1./(1+exp(-(y+.5)./(sig.^2)))-1./(1+exp(-(y-.5)./(sig.^2)));
-% rho = ff + 1;
-% v = a*sin(4*pi*x).*(exp(-(y-.5).^2/((sig/2).^2))+exp(-(y+.5).^2/((sig/2).^2)));
-% u = ff - .5;
-% p = 2.5*ones(size(x));
-% rhou = rho.*u;
-% rhov = rho.*v;
-% E    = p/(gamma-1) + .5*rho.*(u.^2+v.^2);
-% % surf(x,y,rho);return
+% KH instab
+a = .1; sig = .1; %5*sqrt(2)*1e-3;
+ff = 1./(1+exp(-(y+.5)./(sig.^2)))-1./(1+exp(-(y-.5)./(sig.^2)));
+rho = ff + 1;
+v = a*sin(2*pi*x).*(exp(-(y-.5).^2/((sig/2).^2))+exp(-(y+.5).^2/((sig/2).^2)));
+u = ff - .5;
+p = 2.5*ones(size(x));
+
+rhou = rho.*u;
+rhov = rho.*v;
+E    = p/(gamma-1) + .5*rho.*(u.^2+v.^2);
+% surf(x,y,rho);return
 
 %% 
 
@@ -144,44 +133,47 @@ rhs3 = zeros(size(x));
 rhs4 = zeros(size(x));
 
 interval = 1;
-Usnap = zeros(4*K*K,ceil(Nsteps/interval));
-Usnap(:,1) = [rho(:);rhou(:);rhov(:);E(:)];
+saveU = 1;
+if saveU
+    Usnap = zeros(4*K*K,ceil(Nsteps/interval));
+    Usnap(:,1) = [rho(:);rhou(:);rhov(:);E(:)];
+end
 sk = 2;
 for i = 1:Nsteps
     for INTRK = 1:5                        
         
         u = rhou./rho;
-        v = rhov./rho;                        
-            
-        rhoL = [rho(:,1) rho];
-        rhoR = [rho rho(:,end)];
-        uL = [-u(:,1) u];
-        uR = [u -u(:,end)];
-        vL = [v(:,1) v];
-        vR = [v v(:,end)];
-        EL = [E(:,1) E];
-        ER = [E E(:,end)];
-
+        v = rhov./rho;
+                            
+        rhoL = [rho(:,end) rho];
+        rhoR = [rho rho(:,1)];
+        uL = [u(:,end) u];
+        uR = [u u(:,1)];
+        vL = [v(:,end) v];
+        vR = [v v(:,1)];
+        EL = [E(:,end) E];
+        ER = [E E(:,1)];
+        
         rhs1 = dx*diff(fxS1(rhoL,uL,vL,EL,rhoR,uR,vR,ER),[],2);
         rhs2 = dx*diff(fxS2(rhoL,uL,vL,EL,rhoR,uR,vR,ER),[],2);
         rhs3 = dx*diff(fxS3(rhoL,uL,vL,EL,rhoR,uR,vR,ER),[],2);
         rhs4 = dx*diff(fxS4(rhoL,uL,vL,EL,rhoR,uR,vR,ER),[],2);                        
         
-        rhoL = [rho(1,:); rho];
-        rhoR = [rho; rho(end,:)];
-        uL = [u(1,:); u];
-        uR = [u; u(end,:)];
-        vL = [-v(1,:); v];
-        vR = [v; -v(end,:)];
-        EL = [E(1,:); E];
-        ER = [E; E(end,:)];
+        rhoL = [rho(end,:); rho];
+        rhoR = [rho; rho(1,:)];
+        uL = [u(end,:); u];
+        uR = [u; u(1,:)];
+        vL = [v(end,:); v];
+        vR = [v; v(1,:)];
+        EL = [E(end,:); E];
+        ER = [E; E(1,:)];
         
         rhs1 = rhs1 + dx*diff(fyS1(rhoL,uL,vL,EL,rhoR,uR,vR,ER),[],1);
         rhs2 = rhs2 + dx*diff(fyS2(rhoL,uL,vL,EL,rhoR,uR,vR,ER),[],1);
         rhs3 = rhs3 + dx*diff(fyS3(rhoL,uL,vL,EL,rhoR,uR,vR,ER),[],1);
         rhs4 = rhs4 + dx*diff(fyS4(rhoL,uL,vL,EL,rhoR,uR,vR,ER),[],1);        
         
-        % add dissipation       
+        % add dissipation
         rhs1 = rhs1 + tau*dx*(KS*rho + rho*KS);
         rhs2 = rhs2 + tau*dx*(KS*rhou + rhou*KS);
         rhs3 = rhs3 + tau*dx*(KS*rhov + rhov*KS);
@@ -202,14 +194,14 @@ for i = 1:Nsteps
         rhov = rhov  + rk4b(INTRK)*res3;
         E    = E  + rk4b(INTRK)*res4;
 
-    end
+    end        
     
-    if mod(i,interval)==0
+    if saveU && mod(i,interval)==0
         Usnap(:,sk) = [rho(:);rhou(:);rhov(:);E(:)];
         sk = sk + 1;
     end
     
-    if mod(i,5) == 0
+    if mod(i,25) == 0 || i==Nsteps
         surf(x,y,reshape(rho,K,K))
         shading interp
         view(2)
@@ -217,3 +209,6 @@ for i = 1:Nsteps
         drawnow
     end
 end
+
+% dS = S-S(1);
+% semilogy(dS,'--','linewidth',2)
