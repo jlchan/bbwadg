@@ -1,0 +1,225 @@
+#define USE_DOUBLE 1
+
+#if USE_DOUBLE
+#define dfloat double
+#define dfloat4 double4
+#define LOGDF log
+#define POWDF pow
+#define EXPDF exp
+#define HALF .5
+#define ONE 1.0
+#define TWO 2.0
+#define ZERO 0.0
+#define TOL 1.e-3
+#define C1 .3333333333333
+#define C2 .2
+#define C3 0.142857142857143
+#define C4 .1111111111111111
+
+#else
+#define dfloat float
+#define dfloat4 float4
+#define LOGDF logf
+#define POWDF powf
+#define EXPDF expf
+#define HALF .5f
+#define ONE 1.f
+#define TWO 2.f
+#define ZERO 0.f;
+#define TOL 1.fe-3
+#define C1 .333333333f
+#define C2 .2f
+#define C3 0.142857142857143f
+#define C4 .1111111111111111f
+#endif
+
+// helpful functions
+#define avg(a, b) HALF * (a + b)
+#define pfun(rho, u, v, E) ((p_gamma - ONE) * (E - HALF * rho * (u * u + v * v)))
+#define beta(rho, u, v, E) (HALF * rho / pfun(rho, u, v, E)) // inverse temp
+
+// map conservation to entropy vars
+#define pfun(rho, u, v, E) ((p_gamma - ONE) * (E - HALF * rho * (u * u + v * v)))
+#define rhoeU(rho, rhou, rhov, E) (E - HALF * (rhou * rhou + rhov * rhov) / rho)
+#define sU(rho, rhou, rhov, E)						\
+  (LOGDF((p_gamma - ONE) * rhoeU(rho, rhou, rhov, E) / POWDF(rho, p_gamma)))
+
+// map entropy to conservation vars
+#define sV(V1, V2, V3, V4) (p_gamma - V1 + HALF*(V2 * V2 + V3 * V3) / V4)
+#define rhoeV(V1, V2, V3, V4)						\
+  (POWDF((p_gamma - ONE) / POWDF(-V4, p_gamma), ONE / (p_gamma - ONE)) * \
+   EXPDF(-sV(V1, V2, V3, V4) / (p_gamma - ONE)))
+
+// occa function
+dfloat logmean(dfloat aL, dfloat aR)
+{
+  const dfloat xi = aL / aR;
+  const dfloat f = (xi - ONE) / (xi + ONE);
+  const dfloat u = f * f;
+  const dfloat u2 = u * u;
+  //return xi;
+  
+  dfloat F = HALF * LOGDF(xi) / f;
+  if (fabs(u) < TOL)
+    {
+      F = ONE + u*C1 + u2*C2 + u2*u*C3 + u2*u2*C4;
+    }
+  return HALF * (aL + aR) / F;
+}
+
+// occa function
+dfloat logmean2(dfloat aL, dfloat aR, dfloat log_aL, dfloat log_aR)
+{
+  const dfloat da = aR-aL;
+  const dfloat aavg = HALF*(aR+aL);
+  const dfloat f = da/aavg;
+  const dfloat v = f.^2;
+  const dfloat val = ;
+  if (fabs(v) < 1e-4){
+    % c1 = (gamma-2)/3;
+    % c2 = (gamma+1)*(gamma-2)*(gamma-3)/45;
+    % c3 = (gamma+1)*(gamma-2)*(gamma-3)*(2*gamma*(gamma-2)-9)/945;
+    c1 = -.2;
+    c2 = 0.0512;
+    c3 = -0.026038857142857;
+    return aavg*(1 + v*(c1-v*(c2 + v*c3)));
+  }else{
+    return -da/(log_aL-log_aR);
+  } 
+}
+
+void VU(dfloat rho, dfloat rhou, dfloat rhov, dfloat E, dfloat &V1, dfloat &V2,
+        dfloat &V3, dfloat &V4)
+{
+  const dfloat rhoe = rhoeU(rho, rhou, rhov, E);
+  const dfloat invrhoe = ONE/rhoe;
+  V1 = (-E + rhoe * (p_gamma + ONE - sU(rho, rhou, rhov, E))) * invrhoe;
+  V2 = rhou * invrhoe;
+  V3 = rhov * invrhoe;
+  V4 = (-rho) * invrhoe;
+}
+
+void UV(dfloat V1, dfloat V2, dfloat V3, dfloat V4,
+	dfloat &rho, dfloat &rhou,dfloat &rhov, dfloat &E){
+  
+  const dfloat rhoe = rhoeV(V1, V2, V3, V4);
+  rho = rhoe * (-V4);
+  rhou = rhoe * (V2);
+  rhov = rhoe * (V3);
+  E = rhoe * (ONE - (V2 * V2 + V3 * V3) / (TWO*V4));
+}
+
+void euler3d_flux(dfloat rho_i, dfloat rho_j,
+		  dfloat u_i, dfloat u_j,
+                  dfloat v_i, dfloat v_j,
+		  dfloat w_i, dfloat w_j,
+		  dfloat beta_i, dfloat beta_j,
+		  dfloat &FxS1, dfloat &FyS1, dfloat &FzS1,
+		  dfloat &FxS2, dfloat &FyS2, dfloat &FzS2,
+		  dfloat &FxS3, dfloat &FyS3, dfloat &FzS3,
+		  dfloat &FxS4, dfloat &FyS4, dfloat &FzS4,
+		  dfloat &FxS5, dfloat &FyS5, dfloat &FzS5)
+{
+
+  const dfloat rholog = logmean(rho_i, rho_j);
+  const dfloat rhoavg = avg(rho_i, rho_j);
+  const dfloat uavg = avg(u_i, u_j);
+  const dfloat vavg = avg(v_i, v_j);
+  const dfloat wavg = avg(w_i, w_j);  
+  const dfloat two_beta_avg = beta_i+beta_j;
+  const dfloat vnavg = u_i*u_j + v_i*v_j + w_i*w_j; //TWO * (uavg * uavg + vavg * vavg) -  (avg(u_i * u_i, u_j * u_j) + avg(v_i * v_i, v_j * v_j));  
+
+  const dfloat pa = rhoavg / (two_beta_avg);
+  const dfloat f4aux =
+    rholog / (TWO * (p_gamma - ONE) * logmean(beta_i, beta_j)) + pa +
+    HALF * rholog * vnavg;
+
+  FxS1 = rholog * uavg;  
+  FyS1 = rholog * vavg;
+  FxS2 = FxS1 * uavg + pa;
+  FyS2 = FyS1 * uavg;
+  FxS3 = FyS2;
+  FyS3 = FyS1 * vavg + pa;
+  FxS4 = f4aux * uavg;
+  FyS4 = f4aux * vavg;
+}
+
+// simplified volume kernel
+@kernel void volume(const int K,
+		    const dfloat *  QNr,
+		    const dfloat *  QNs,
+		    const dfloat *  QNt,		    
+		    const dfloat *  Q,
+		    dfloat *  rhs){
+
+  for (int e = 0; e < K; ++e; @outer(0)){
+
+    @shared dfloat s_Q[p_Nfields][p_Nq];
+
+    // assume these are conservative variables
+    for (int i = 0; i < p_Nq; ++i; @inner(0)){
+      
+      // draw from both vol and face values
+      int id = i + p_Nq*p_Nfields*e;
+      for (int fld = 0; fld < p_Nfields; ++fld){
+	s_Q[fld][i] = Q[idv]; id += p_Nq;
+      }
+    }
+    @barrier("localMemFence");           
+
+    // apply flux differencing: sum(Q.*F,2) -> s_rhsv (shared memory)
+    for (int i = 0; i < p_Nq; ++i; @inner(0)){
+      
+      dfloat val[p_Nfields];
+      for (int fld = 0; fld < p_Nfields; ++fld){
+	val[fld] = ZERO; 
+      }
+      
+      const dfloat rho_i = s_Q[0][i];
+      const dfloat inv_rho_i = ONE/rho_i;
+      const dfloat u_i = s_Q[1][i] * inv_rho_i;
+      const dfloat v_i = s_Q[2][i] * inv_rho_i;
+      const dfloat w_i = s_Q[3][i] * inv_rho_i;      
+      const dfloat E_i = s_Q[4][i];
+      const dfloat beta_i = beta(rho_i,u_i,v_i,w_j,E_i);
+      
+      // apply Qr, Qs, Qt
+      for (int j = 0; j < p_Nq; ++j){
+	
+	const dfloat rho_j = s_Q[0][j];
+	const dfloat inv_rho_j = ONE/rho_j;
+	const dfloat u_j = s_Q[1][j] * inv_rho_j;
+	const dfloat v_j = s_Q[2][j] * inv_rho_j;
+	const dfloat w_j = s_Q[3][j] * inv_rho_j;	
+	const dfloat E_j = s_Q[4][j];
+	const dfloat beta_j = beta(rho_j,u_j,v_j,w_j,E_j);
+
+	dfloat FxS1,FxS2,FxS3,FxS4,FxS5,FyS1,FyS2,FyS3,FyS4,FyS5,FzS1,FzS2,FzS3,FzS4,FzS5;
+	euler3d_flux(rho_i, rho_j, u_i, u_j, v_i, v_j, w_i, w_j, beta_i, beta_j,
+		     FxS1, FyS1, FzS1,
+		     FxS2, FyS2, FzS2,
+		     FxS3, FyS3, FzS3,
+		     FxS4, FyS4, FzS4,
+		     FxS5, FyS5, FzS5);
+
+	const int idQ = i + j*p_Nq;
+	const dfloat Qrij = QNr[idQ];
+	const dfloat Qsij = QNs[idQ];
+	const dfloat Qtij = QNt[idQ];	
+	val[0] += Qr * FxS1 + Qs * FyS1 + Qt * FzS1;
+	val[1] += Qr * FxS2 + Qs * FyS2 + Qt * FzS2;
+	val[2] += Qr * FxS3 + Qs * FyS3 + Qt * FzS3;
+	val[3] += Qr * FxS4 + Qs * FyS4 + Qt * FzS4;
+	val[4] += Qr * FxS5 + Qs * FyS5 + Qt * FzS5;	
+      }
+
+      // store output to rhs
+      int id = i + e*p_Nfields*p_Nq;
+      for (int fld = 0; fld < p_Nfields; ++fld){	
+	rhs[id] = val[fld]; id += p_Nq;
+      }
+            
+    }// inner0
+  }
+}
+
