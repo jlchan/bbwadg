@@ -1,6 +1,6 @@
 clear
-K = 150;
-FinalTime = .25;
+K = 200;
+FinalTime = .15;
 xv = linspace(-1,1,K+1)';
 x1D = .5*(xv(1:end-1)+xv(2:end));
 x = x1D;
@@ -10,6 +10,7 @@ CFL = .5;
 Nmodes = 25;
 tau = .1*dx;
 tau = 1e-3;
+
 snapshot_file = 'Usnap_euler2d_wall';
 
 e = ones(K-1,1);

@@ -1,7 +1,7 @@
 % clear
-K = 150;
+K = 250;
 % FinalTime = .1;
-FinalTime = .25;
+FinalTime = .1;
 
 CFL = .5;
 
@@ -69,46 +69,29 @@ fyS4 = @(rhoL,uL,vL,EL,rhoR,uR,vR,ER) (plogmean(rhoL,uL,vL,EL,rhoR,uR,vR,ER)/(ga
 
 %% set initial cond
 
-rho = ones(size(x)) + exp(-50*((x).^2+(y+.5).^2));
-% rho = 1 + (abs(x)<.5).*(abs(y)<.5);
-% xc = x + .5; yc = y + .5;
-% rho = 2*ones(size(x)) + .5*exp(-100*(xc.^2+0*yc.^2)); %.*sin(pi*xc).*sin(pi*yc);
-
-% rho = .5*(ones(size(x)) + 2*(x>0) + (y>0) + (x>0).*(y>0));
-
+% rho = ones(size(x)) + exp(-50*((x).^2+(y+.5).^2));
+% % rho = 1 + (abs(x)<.5).*(abs(y)<.5);
+% % xc = x + .5; yc = y + .5;
+% % rho = 2*ones(size(x)) + .5*exp(-100*(xc.^2+0*yc.^2)); %.*sin(pi*xc).*sin(pi*yc);
+rho = .5*(ones(size(x)) + (x>0) + (y>0) + (x>0).*(y>0));
 u = zeros(size(x));
 v = zeros(size(x));
 p = rho.^(gamma);
+
+% d1 = (x>0)&(x<1)&(y>0)&(y<1);
+% d2 = (x>-1)&(x<0)&(y>0)&(y<1);
+% d3 = (x>-1)&(x<0)&(y>-1)&(y<0);
+% d4 = (x>0)&(x<1)&(y>-1)&(y<0);
+% 
+% rho = .5313*d1 + 1*d2 + .8*d3 + 1*d4;
+% u = .7276*d2;
+% v = .7276*d4;
+% p = (d2+d3+d4)*1 + .4*d1;
 
 rhou = rho.*u;
 rhov = rho.*v;
 E    = p/(gamma-1) + .5*rho.*(u.^2+v.^2);
 
-% % vortex
-% p = ones(size(x));
-% width = .1;
-% sig = 1000;
-% ff = 1-(1./(1+exp(-sig*(y-width))) + 1./(1+exp(sig*(y+width))));
-% dv = .1*sin(2*pi*x).*ff;
-% du = .5*ff;
-% v = zeros(size(x)) + dv;
-% u = -.5*ones(size(x)) + du;
-% rho = ones(size(x));
-% rhou = rho.*u;
-% rhov = rho.*v;
-% E    = p/(gamma-1) + .5*rho.*(u.^2+v.^2);
-
-% % KH instab
-% a = .1; sig = .1; %5*sqrt(2)*1e-3;
-% ff = 1./(1+exp(-(y+.5)./(sig.^2)))-1./(1+exp(-(y-.5)./(sig.^2)));
-% rho = ff + 1;
-% v = a*sin(4*pi*x).*(exp(-(y-.5).^2/((sig/2).^2))+exp(-(y+.5).^2/((sig/2).^2)));
-% u = ff - .5;
-% p = 2.5*ones(size(x));
-% rhou = rho.*u;
-% rhov = rho.*v;
-% E    = p/(gamma-1) + .5*rho.*(u.^2+v.^2);
-% % surf(x,y,rho);return
 
 %% 
 
