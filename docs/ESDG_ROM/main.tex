@@ -87,7 +87,7 @@
 \address[rice]{Department of Computational and Applied Mathematics, Rice University, 6100 Main St, Houston, TX, 77005}
 
 \begin{abstract}
-Reduced order models of nonlinear conservation laws in fluid dynamics do not typically inherit stability properties of the full order model. We introduce projection-based reduced models of nonlinear conservation laws which are globally conservative and inherit a semi-discrete entropy inequality independently of the choice of basis and choice of parameters.  
+Reduced order models of nonlinear conservation laws in fluid dynamics do not typically inherit stability properties of the full order model. We introduce projection-based hyper-reduced models of nonlinear conservation laws which are globally conservative and inherit a semi-discrete entropy inequality independently of the choice of basis and choice of parameters.  
 \end{abstract}
 \end{frontmatter}
 
@@ -101,15 +101,20 @@ Projection-based model reduction constructs low-dimensional surrogate models for
 
 For certain PDEs, ``structure-preserving'' ROMs provide robustness and stability by reproducing energetic properties of the full system at the discrete level.  ROMs which retain either Lagrangian \cite{lall2003structure, carlberg2015preserving} or Hamiltonian structure \cite{benner2012interpolation, gugercin2012structure, peng2016symplectic, chaturantabut2016structure, gong2017structure, afkham2017structure, afkham2018structure} have been constructed by combining Galerkin projection with an appropriate formulation of the full order model, and similar energy-conserving ROMs have been constructed for the incompressible Navier-Stokes equations \cite{farhat2014dimensional, farhat2015structure}.  The construction of structure-preserving ROMs for nonlinear conservation laws in fluid flow, however, remains an open problem.  For example, Galerkin projection yields ROMs which become unstable as the number of reduced basis functions (modes) is increased \cite{bui2007goal, carlberg2013gnat}.  As a result, stabilized discretizations are often employed.  Petrov-Galerkin ROMs, which use an alternative test basis \cite{maday2002blackbox, rozza2007stability, bui2007goal, serre2012reliable, amsallem2012stabilization, rozza2013reduced, ballarin2015supremizer, carlberg2017galerkin}, are a popular alternative, as are additional residual-based stabilization or dissipation terms \cite{wang2012proper, kalashnikova2014stabilization, caiazzo2014numerical, balajewicz2016minimal}.  Such models improve robustness in practice, though they do not provide a theoretical foundation for stability.  
 
-The construction of stable ROMs for the compressible Navier-Stokes equations is further complicated by their non-trivial structure.  Thus, practitioners often develop structure-preserving entropy stable ROMs for simplifications of the underlying PDE (such as the time-dependent \textit{linearized} compressible Navier-Stokes equations \cite{barone2009stable, kalashnikova2010stability, amsallem2012stabilization, kalashnikova2014construction}) and extrapolate such models to the full nonlinear equations.  A promising alternative is to enforce physical conditions such as such as kinetic energy preservation, which are empirically related to stability \cite{maboudi2018conservative}.  These methods significantly improve the robustness of numerical methods in practice, and can guarantee a discrete entropy inequality for systems of nonlinear conservation laws which yield stable split formulations \cite{fisher2013discretely}.  
+The construction of stable ROMs for the compressible Navier-Stokes equations is further complicated by the non-trivial structure of the equations.  In response, practitioners have developed structure-preserving entropy stable ROMs for simplifications of the underlying PDE (such as the time-dependent \textit{linearized} compressible Navier-Stokes equations \cite{barone2009stable, kalashnikova2010stability, amsallem2012stabilization, kalashnikova2014construction}) and extrapolate such models to the full nonlinear equations.  A promising alternative is to enforce physical conditions such as such as kinetic energy preservation, which are empirically related to stability \cite{maboudi2018conservative}.  These methods significantly improve the robustness of numerical methods in practice, and guarantee a discrete entropy inequality for systems of nonlinear conservation laws which yield stable split formulations \cite{fisher2013discretely}.  
 
-The approach taken in this work differs in the treatment of nonlinear terms.  In \cite{maboudi2018conservative}, equations are rewritten such that the nonlinear terms involve only polynomial (quadratic and cubic) nonlinearities, which can be evaluated exactly using precomputed matrices.  In this work, we approximate nonlinear terms using hyper-reduction techniques based on empirically computed quadrature rules \cite{an2008optimizing, hernandez2017dimensional}.  The hyper-reduction approach incurs approximation error and additional computational cost; however, it is allows for the generalization of the split forms in \cite{maboudi2018conservative} to nonlinearly entropy stable formulations.  We directly construct entropy stable ROMs for nonlinear conservation laws by combining hyper-reduction with a modified Galerkin projection of an appropriate full order model.  The approach taken in this paper combines techniques from entropy stable finite volume schemes \cite{tadmor1987numerical, tadmor2003entropy} and entropy stable summation-by-parts (SBP) discretizations \cite{fisher2013high, carpenter2014entropy, chen2017entropy, crean2018entropy, chan2017discretely, chan2019skew} to produce entropy stable reduced order models.  
+The approach taken in this work differs from the existing literature in the treatment of nonlinear terms.  In \cite{maboudi2018conservative}, equations are rewritten such that the nonlinear terms involve only polynomial (quadratic and cubic) nonlinearities, which can be evaluated exactly using precomputed matrices.  In this work, we approximate nonlinear terms using hyper-reduction techniques based on empirically computed quadrature rules \cite{an2008optimizing, hernandez2017dimensional}.  The hyper-reduction approach incurs approximation error and additional computational cost; however, it is allows for the generalization of the split forms in \cite{maboudi2018conservative} to nonlinearly entropy stable formulations.  We directly construct entropy stable ROMs for nonlinear conservation laws by combining hyper-reduction with a modified Galerkin projection of an appropriate full order model.  The approach taken in this paper combines techniques from entropy stable finite volume schemes \cite{tadmor1987numerical, tadmor2003entropy} and entropy stable summation-by-parts (SBP) discretizations \cite{fisher2013high, carpenter2014entropy, chen2017entropy, crean2018entropy, chan2017discretely, chan2019skew} to produce entropy stable reduced order models.  
 
-The paper is organized as follows.  Section~\ref{sec:1} introduces entropy inequalities associated with systems of nonlinear conservation laws.  Section~\ref{sec:2} introduces a full order model on 1D periodic domains based on entropy stable finite volume schemes.  Section~\ref{sec:3} describes how to construct an entropy stable reduced basis approximation, while Section~\ref{sec:4} discusses entropy stable hyper-reduction techniques to reduce costs associated with the evaluation of nonlinear terms.  Section~\ref{sec:6} describes how to extend the aforementioned approaches to non-periodic boundary conditions, and Section~\ref{sec:7} describes the extension to higher dimensions.  We conclude in Section~\ref{sec:8} with numerical experiments verifying theoretical results.
+The paper is organized as follows.  Section~\ref{sec:2} introduces a full order model on 1D periodic domains based on entropy stable finite volume schemes.  Section~\ref{sec:3} describes how to construct an entropy stable reduced basis approximation, while Section~\ref{sec:4} discusses entropy stable hyper-reduction techniques to reduce costs associated with the evaluation of nonlinear terms.  Section~\ref{sec:6} describes how to extend the aforementioned approaches to non-periodic boundary conditions, and Section~\ref{sec:7} describes the extension to higher dimensions.  We conclude in Section~\ref{sec:8} with numerical experiments which verifying the presented theoretical results.
 
-\section{Entropy inequalities for nonlinear conservation laws}
-\label{sec:1}
-Let $\Omega$ denote some domain with boundary $\partial \Omega$.  Nonlinear conservation laws are expressed as a system of partial differential equations (PDEs) 
+%\section{Entropy inequalities for nonlinear conservation laws}
+%\label{sec:1}
+
+
+\section{The full order model: entropy stable finite volume schemes}
+\label{sec:2}
+
+We briefly summarize entropy inequalities associated with systems of nonlinear conservation laws.  Let $\Omega$ denote some domain with boundary $\partial \Omega$.  Nonlinear conservation laws are expressed as a system of partial differential equations (PDEs) 
 \begin{equation}
 \pd{\bm{u}}{t}  + \sum_{i=1}^d\pd{\bm{f}_i(\bm{u})}{x_i} = 0, \qquad 
 S(\bm{u}) \text{ is a convex function}, \qquad
@@ -122,12 +127,9 @@ where $\bm{u}\in \mathbb{R}^n$ are the conservative variables, $\bm{f}_i$ are no
 \end{equation}
 where $n_i$ denotes the $i$th component of the outward normal vector.  
 The entropy inequality (\ref{eq:entropyineq}) is the analogue of energy stability for nonlinear conservation laws \cite{mock1980systems, harten1983symmetric}.  
-However, due to the use of inexact treatment of nonlinear terms (e.g., from collocation approximations or inexact quadrature), most numerical methods for nonlinear conservation laws do not satisfy a discrete analogue of this stability condition. 
+However, due to the use of inexact treatment of nonlinear terms (e.g., from collocation approximations or inexact quadrature), most numerical methods for nonlinear conservation laws do not satisfy a discrete analogue of this stability condition.  
 
-\section{The full order model: entropy stable finite volume schemes}
-\label{sec:2}
-
-The reduced order models in this work are constructed using full order models based on entropy stable finite volume methods \cite{tadmor1987numerical}.  For simplicity, we illustrate the construction of full and reduced order models on a periodic 1D domain.  We note that, while the reduced order model will be constructed from an entropy stable scheme, the solution snapshots do not need to be generated by entropy stable full order model.  Throughout this work, we will assume that the both full and reduced models yield ``physically relevant'' solutions, such that the entropy is a convex function.  For example, for the compressible Euler and Navier-Stokes equations, we will assume that the thermodynamic variables (density and energy/temperature/pressure) are positive.  Guaranteeing both positivity and accuracy of numerical solutions for general discretizations remains challenging \cite{guermond2016invariant, guermond2019invariant}, and will be explored in future work.
+The reduced order models in this work are constructed using full order models based on entropy stable finite volume methods \cite{tadmor1987numerical}, which reproduce a discrete version of the continuous entropy inequality (\ref{eq:entropyineq}).  For simplicity, we illustrate the construction of full and reduced order models on a periodic 1D domain.  We note that, while the reduced order model will be constructed from an entropy stable scheme, the solution snapshots do not need to be generated by entropy stable full order model.  Throughout this work, we will assume that the both full and reduced models yield ``physically relevant'' solutions, such that the entropy is a convex function.  For example, for the compressible Euler and Navier-Stokes equations, we will assume that the thermodynamic variables (density and energy/temperature/pressure) are positive.  Guaranteeing both positivity and accuracy of numerical solutions for general discretizations remains challenging \cite{guermond2016invariant, guermond2019invariant}, and will be explored in future work.
 
 A key ingredient of the full and reduced order models considered in this work are \textit{entropy conservative} finite volume numerical fluxes.  Let $\bm{u}_L, \bm{u}_R$ denote left and right states.  Then, a two-point numerical flux $\bm{f}_S(\bm{u}_L, \bm{u}_R)$ is entropy conservative if it satisfies the following three conditions
 \begin{gather}
@@ -135,7 +137,7 @@ A key ingredient of the full and reduced order models considered in this work ar
 \bm{f}_S(\bm{u}_L,\bm{u}_R) = \bm{f}_S(\bm{u}_R,\bm{u}_R), \qquad \text{(symmetry)} \nonumber\\
 \LRp{\bm{v}_L-\bm{v}_R}^T\bm{f}_S(\bm{u}_L,\bm{u}_R) = \psi(\bm{u}_L) - \psi(\bm{u}_R), \qquad \text{(entropy conservation)}\nonumber,
 \end{gather}
-Let the domain be decomposed into $K$ cells of size $\Delta x$, and let ${\LRp{\bm{u}_h}_i}$ denote the vector containing mean values of the conservation variables over the $i$th cell.  An entropy conservative finite volume method results from discretizing the integral form of the conservation law as follows
+These fluxes are used to construct entropy conservative and entropy stable finite volume schemes \cite{tadmor1987numerical, chandrashekar2013kinetic, ray2016entropy}.  Let the domain be decomposed into $K$ cells of size $\Delta x$, and let ${\LRp{\bm{u}_h}_i}$ denote the vector containing mean values of the vector of conservation variables over the $i$th cell.  An entropy conservative finite volume method results from discretizing the integral form of the conservation law as follows
 \begin{align}
 &\td{{\LRp{\bm{u}_h}_1}}{t} + \frac{\bm{f}_S({\LRp{\bm{u}_h}_2},\LRp{\bm{u}_h}_1)-\bm{f}_S({\LRp{\bm{u}_h}_1},{\LRp{\bm{u}_h}_K})}{\Delta x} = \bm{0}, \label{eq:nonlineqs1d}\\
 &\td{{\LRp{\bm{u}_h}_i}}{t} + \frac{\bm{f}_S({\LRp{\bm{u}_h}_{i+1}},\LRp{\bm{u}_h}_i)-\bm{f}_S({\LRp{\bm{u}_h}_i},{\LRp{\bm{u}_h}_i-1})}{\Delta x} = \bm{0}, \qquad 1 < i < K \nonumber\\
@@ -143,7 +145,7 @@ Let the domain be decomposed into $K$ cells of size $\Delta x$, and let ${\LRp{\
 \end{align}
 where periodicity is imposed through the equations for ${\LRp{\bm{u}_h}_1}, {\LRp{\bm{u}_h}_K}$.  
 
-We first rewrite the system (\ref{eq:nonlineqs1d}) in a matrix form which will be more amenable to model reduction.  We define the skew-symmetric differentiation matrix $\bm{Q}$ and flux matrix $\bm{F}$ such that
+We first rewrite the system (\ref{eq:nonlineqs1d}) in a matrix form which is more amenable to model reduction.  We define the skew-symmetric differentiation matrix $\bm{Q}$ and flux matrix $\bm{F}$ such that
 \begin{equation}
 \bm{Q} = \frac{1}{2}\begin{bmatrix}
 0 & 1 & &\ldots & -1\\
@@ -183,7 +185,7 @@ Let $\bm{u}_h(t)$ be a solution of (\ref{eq:essys}) for which the entropy $S(\bm
 \]
 \end{theorem}
 \begin{proof}
-The proof can be found in the literature \cite{tadmor1987numerical, tadmor2003entropy, tadmor2016entropy}.  We present an alternative proof which utilizes matrix properties of entropy stable summation by parts (SBP) schemes \cite{carpenter2014entropy, gassner2016split, chen2017entropy, crean2018entropy, chan2017discretely}.  We test (\ref{eq:es}) with the vector of entropy variables $\bm{v}_h = \bm{v}(\bm{u}_h)$
+The proof can be found in the literature \cite{tadmor1987numerical, tadmor2003entropy, tadmor2016entropy}.  Inspired by entropy stable summation by parts (SBP) schemes \cite{carpenter2014entropy, gassner2016split, chen2017entropy, crean2018entropy, chan2017discretely}, we present an alternative proof which relies only on matrix properties of $\bm{Q}$.  We test (\ref{eq:es}) with the vector of entropy variables $\bm{v}_h = \bm{v}(\bm{u}_h)$
 \[
 \Delta x \bm{v}_h^T\td{\bm{u}_h}{t} + \bm{v}_h^T2\LRp{{\bm{Q}}\circ \bm{F}}\bm{1} = 0.
 \]
@@ -217,7 +219,7 @@ Theorem~\ref{thm:ecfom} shows that the formulation (\ref{eq:essys}) preserves a 
 \end{bmatrix}
 \label{eq:esvisc}
 \end{equation}
-where $\epsilon$ is the visosity coefficient.  This choice of dissipation simplifies descriptions of how to treat viscous regularizations of the solution in an entropy stable fashion.  Future work will explore both physically relevant viscosities and more nuanced artificial dissipation mechanisms.  
+where $\epsilon$ is the visosity coefficient.  This choice is intended to simplify the presentation of entropy stable treatments of diffusion terms.  Future work will analyze both physically relevant viscosities and more nuanced artificial dissipation mechanisms.  
 
 If $\bm{v}_h^T\bm{K}\bm{u}_h \geq 0$, then the solution satisfies a discrete dissipation of entropy
 \begin{equation}
@@ -258,11 +260,11 @@ where $\LRp{\pd{\bm{u}}{\bm{v}}}_{i,i-1}$ is the Jacobian matrix evaluated at so
 \label{sec:3}
 We can now formulate a reduced basis approximation on periodic domains using the entropy stable full order models described in the previous section.  Boundary conditions will be addressed later in Section~\ref{sec:6}.  We also note that this reduced order model is not practical, since the cost of evaluating nonlinear terms scales with the size of the full order model.  Later sections will discuss how to reduce the cost of nonlinear evaluations using appropriate hyper-reduction techniques.
 
-Let $\LRc{{\phi}_j(x)}_{j=1}^{N}$ denote a reduced basis for each component of the solution, which may be generated using principal orthogonal decomposition (POD) or the reduced basis procedure.  Let $\bm{V}$ denote the generalized Vandermonde matrix whose columns contain evaluations of $\phi_j$ at grid points $x_i$
+Let $\LRc{{\phi}_j(x)}_{j=1}^{N}$ denote a reduced basis for each component of the solution, which may be generated using (for example) principal orthogonal decomposition (POD) or the reduced basis procedure.  Let $\bm{V}$ denote the generalized Vandermonde matrix whose columns contain evaluations of $\phi_j$ at grid points $x_i$
 \[
 \bm{V}_{ij} = {\phi}_j(x_i).
 \]
-We approximate values of the solution by $\bm{u}_h = \bm{V}\bm{u}_N$, where $\bm{u}_N$ denote ``modal'' coefficients  of the solution in the reduced basis.  Ignoring viscosity terms for now, plugging this expression into (\ref{eq:es}) and enforcing that the residual is orthogonal to all columns of $\bm{V}$ (Galerkin projection) yields a reduced order system
+We approximate grid values of the solution by $\bm{u}_h = \bm{V}\bm{u}_N$, where $\bm{u}_N$ denote ``modal'' coefficients  of the solution in the reduced basis.  Ignoring viscosity terms for now, plugging this expression into (\ref{eq:es}) and enforcing that the residual is orthogonal to all columns of $\bm{V}$ (Galerkin projection) yields a reduced system
 \begin{align*}
 \Delta x\bm{V}^T\bm{V}\td{\bm{u}_N}{t} + 2\bm{V}^T\LRp{\bm{Q}\circ \bm{F}}\bm{1} = 0.
 \end{align*}
@@ -286,11 +288,11 @@ We can repeat the steps of the proof of Theorem~\ref{thm:ecfom} up to the point 
 \tilde{\bm{v}}^T\LRp{{\bm{Q}}\circ \bm{F}}\bm{1} &= \frac{1}{2}\sum_{ij} \bm{Q}_{ij} \LRp{\tilde{\bm{v}}_i-\tilde{\bm{v}}_j}^T \bm{f}_{S}\LRp{\LRp{\bm{u}_h}_i, \LRp{\bm{u}_h}_j}\\
 &\neq \frac{1}{2}\sum_{ij} \bm{Q}_{ij} \LRp{ \psi((\bm{u}_h)_i)- \psi((\bm{u}_h)_j)}.
 \end{align*}
-This is not possible due to the fact that the projected entropy variables $\tilde{\bm{v}}$ are no longer mappings of the grid values of the conservative variables $\bm{u}_h = \bm{V}\bm{u}_N$.  To remedy this, we follow approaches taken in \cite{parsani2016entropy, chan2017discretely} and replace the values of ${\bm{u}_h}$ used to evaluate the flux matrix $\bm{F}$ with the \textit{entropy-projected conservative variables} $\tilde{\bm{u}}$
+This is not possible due to the fact that the projected entropy variables $\tilde{\bm{v}}$ are no longer mappings of the grid values of the conservative variables $\bm{u}_h = \bm{V}\bm{u}_N$.  To remedy this, we follow approaches taken in \cite{parsani2016entropy, chan2017discretely} and replace the grid values of ${\bm{u}_h}$ used to evaluate the flux matrix $\bm{F}$ with values of the \textit{entropy-projected conservative variables} $\tilde{\bm{u}}$
 \[
 \tilde{\bm{u}} = \bm{u}\LRp{\bm{V}\bm{V}^{\dagger}\bm{v}\LRp{\bm{V}\bm{u}_N}} = \bm{u}\LRp{\tilde{\bm{v}}}.
 \]
-The entropy projected conservative variables are thus mappings of the projected entropy variables.  We note that $\bm{V}\bm{V}^{\dagger}$ can also be interpreted as a discrete approximation of the $L^2$ projection operator onto the span of the reduced basis $\phi_j$. One can then construct a semi-discretely entropy conservative reduced model.
+The entropy projected conservative variables $\tilde{\bm{u}}$ are thus mappings of the projected entropy variables.  We note that $\bm{V}\bm{V}^{\dagger}$ can also be interpreted as a discrete approximation of the $L^2$ projection operator onto the span of the reduced basis $\phi_j$.  One can then construct a semi-discretely entropy conservative reduced model.  
 \begin{theorem} 
 Let the coefficients $\bm{u}_N$ solve
 \begin{gather}
@@ -301,11 +303,11 @@ Then, the solution satisfies the following semi-discrete conservation of entropy
 \[
 \Delta x\bm{1}^T\td{S(\bm{V}\bm{u}_N)}{t} = 0.
 \]
-Additionally, if the reduced basis $\bm{V}$ exactly represents $\bm{1}$, solutions of (\ref{eq:esrom}) conserve global averages of the conservative variables.
+Additionally, if $\bm{1}$ lies within the range of the reduced basis matrix $\bm{V}$ (e.g., $1$ is in the span of the reduced basis functions $\phi_1, \ldots, \phi_N$), solutions of (\ref{eq:esrom}) conserve global averages of the conservative variables.
 \label{thm:esrom}
 \end{theorem}
 \begin{proof}
-The conservation of entropy follows from testing with $\bm{v}_N$ and applying (\ref{eq:esromtime}).  The remaining steps are identical to those of Theorem~\ref{thm:ecfom}.  The global conservation results from testing with $\bm{1}$.  Let $\bm{V}\bm{e}=\bm{1}$, where $\bm{e}$ denote coefficients of $\bm{1}$ in the reduced basis matrix.  Then, 
+The conservation of entropy follows from testing with $\bm{v}_N$ and applying (\ref{eq:esromtime}).  The remaining steps are identical to those of Theorem~\ref{thm:ecfom}.  The global conservation results from testing with $\bm{1}$.  If $\bm{1}$ is in the range of $\bm{V}$, then the exist coefficients in the reduced basis matrix $\bm{e}$ such that $\bm{V}\bm{e}=\bm{1}$.  Then, 
 \begin{align*}
 \Delta x\bm{e}^T\bm{V}^T\bm{V}\td{\bm{u}_N}{t} + 2\bm{e}^T\bm{V}^T\LRp{\bm{Q}\circ \bm{F}}\bm{1}  = \Delta x\bm{1}^T\td{\LRp{\bm{V}\bm{u}_N}}{t} + 2\bm{1}^T\LRp{\bm{Q}\circ \bm{F}}\bm{1} = 0.
 \end{align*}
@@ -326,7 +328,7 @@ In order for the formulation (\ref{eq:esrom}) to remain accurate, the entropy pr
 \label{sec:4}
 While the Galerkin projected formulation (\ref{eq:esrom}) is entropy stable, the computational cost involved in solving the semi-discrete system scales with the size of the full order model rather than the dimension of the reduced basis.  For example, explicit time-stepping methods require the evaluation of the nonlinear term $\bm{V}^T\LRp{\bm{Q} \circ \bm{F}}\bm{1}$.  Since the matrices $\bm{Q}$ and $\bm{F}$ are the original full order model matrices, the cost of the reduced system is not lower than the cost of the full order model.  
 
-To reduce the cost of evaluating nonlinear terms, we introduce a second \textit{hyper-reduction} step \cite{ryckelynck2009hyper}.  Here, a vector of nonlinear function evaluations is approximated by a vector constructed using nonlinear function evaluations at a subset of points \cite{barrault2004empirical, bui2004aerodynamic, chaturantabut2010nonlinear, farhat2015structure, drmac2016new, hernandez2017dimensional, yano2019lp}.  In this work, we utilize a sampling and weighting hyper-reduction strategy \cite{farhat2015structure, hernandez2017dimensional, yano2019lp} which enables proofs of discrete entropy stability.  These hyper-reduction techniques can be interpreted as reduced quadratures, and produce approximations of the form
+To reduce the cost of evaluating nonlinear terms, we introduce a second \textit{hyper-reduction} step \cite{ryckelynck2009hyper}.  Here, terms involving vectors of nonlinear function evaluations are approximated by terms involving nonlinear function evaluations at a subset of points \cite{barrault2004empirical, bui2004aerodynamic, chaturantabut2010nonlinear, farhat2015structure, drmac2016new, hernandez2017dimensional, yano2019lp}.  In this work, we utilize a sampling and weighting strategy \cite{farhat2015structure, hernandez2017dimensional, yano2019lp} which enables proofs of discrete entropy stability.  These hyper-reduction techniques can be interpreted as reduced quadratures, and produce approximations of the form
 \[
 \bm{V}^Tg(\bm{V}\bm{u}_N) \approx \bm{V}\LRp{\mathcal{I},:}^T \bm{W} g\LRp{\bm{V}\LRp{\mathcal{I},:}}.
 \]
@@ -336,7 +338,7 @@ We will hyper-reduce the nonlinear term $\LRp{\bm{Q}\circ \bm{F}}$ by constructi
 \[
 \bm{Q}_s = -\bm{Q}_s^T, \qquad \bm{Q}_s\bm{1} = 0
 \]
-then the proof of entropy conservation will carry over to the hyper-reduced model.  Unfortunately, common hyper-reduction techniques preserve either skew-symmetry or zero row sums, but not both.  For example, $\bm{Q}$ can be decomposed into the sum of local skew-symmetric matrices.  The hyper-reduction techniques of \cite{farhat2015structure, yano2019discontinuous} approximate $\bm{Q}$ using a sparse linear combination of those local matrices.  This hyper-reduction technique preserves skew-symmetry, but does not necessarily preserve the zero row sum property.  Similarly, techniques such as gappy POD or empirical interpolation \cite{everson1995karhunen, barrault2004empirical, chaturantabut2010nonlinear} may preserve the zero row sum but not skew-symmetry.  
+then the proof of entropy conservation in Theorem~\ref{thm:esrom} will carry over to the hyper-reduced model.  Unfortunately, common hyper-reduction techniques preserve either skew-symmetry or zero row sums, but not both.  For example, $\bm{Q}$ can be decomposed into the sum of local skew-symmetric matrices.  The hyper-reduction techniques of \cite{farhat2015structure, yano2019discontinuous} approximate $\bm{Q}$ using a sparse linear combination of those local matrices.  This hyper-reduction technique preserves skew-symmetry, but does not necessarily preserve the zero row sum property.  Similarly, techniques such as gappy POD or empirical interpolation \cite{everson1995karhunen, barrault2004empirical, chaturantabut2010nonlinear} may preserve the zero row sum property but not skew-symmetry.  
 
 \subsection{Two-step hyper-reduction: compress and project}
 
@@ -375,11 +377,11 @@ The projection matrix $\bm{P}_t$ maps values at hyper-reduced points to coeffici
 \bm{P}_t \bm{f} = \LRp{\bm{V}_t\LRp{\mathcal{I},:}^T\bm{W}\bm{V}_t\LRp{\mathcal{I},:}}^{-1}\bm{V}_t\LRp{\mathcal{I},:}^T\bm{W} \bm{V}_t\LRp{\mathcal{I},:}\bm{c} = \bm{c}.
 \label{eq:preproduce}
 \end{equation}
-In other words, if a vector lies in the range of $\bm{V}_t$, the projection matrix $\bm{P}_t$ recovers the coefficients exactly.  We also note that if the hyper-reduced set $\mathcal{I}$ is taken to include all the points and $\bm{W} = \Delta x\bm{I}$, then $\bm{P}_t$ reduces to the pseudo-inverse $\bm{V}_t^{\dagger} = \LRp{\bm{V}_t\bm{V}_t}^{-1}\bm{V}_t^T$.  
+In other words, if a vector lies in the range of $\bm{V}_t$, the projection matrix $\bm{P}_t$ recovers the coefficients exactly.  We also note that if the hyper-reduced set $\mathcal{I}$ is taken to include all the points and $\bm{W}$ is a multiple of the identity (for example, $\bm{W} = \Delta x \bm{I}$), then $\bm{P}_t$ reduces to the pseudo-inverse $\bm{V}_t^{\dagger} = \LRp{\bm{V}_t\bm{V}_t}^{-1}\bm{V}_t^T$.  
 
 We can now construct a ``nodal'' differentiation operator which satisfies both skew-symmetry and zero row sum properties: 
 \begin{lemma}
-Suppose that $\bm{1}$ is exactly representable in the test basis and that Assumption~\ref{ass:quad} holds.  Define the matrix $\bm{Q}_t$
+Suppose that $\bm{1}$ is exactly representable in the test basis $\bm{V}_t$ and that Assumption~\ref{ass:quad} holds.  Define the matrix $\bm{Q}_t$
 \begin{equation}
 \bm{Q}_t = \bm{P}_t^T\hat{\bm{Q}}_t\bm{P}_t = \bm{P}_t^T\LRp{\bm{V}_t^T\bm{Q}\bm{V}_t}\bm{P}_t.
 \label{eq:nodalQ}
@@ -388,7 +390,7 @@ Then, $\bm{Q}_t$ is skew-symmetric and satisfies $\bm{Q}_t\bm{1} = \bm{0}$.
 \label{thm:Qt}
 \end{lemma}
 \begin{proof}
-Since $\bm{Q}$ is skew-symmetric, the matrix $\bm{Q}_t$ is skew-symmetric by construction as well.  By (\ref{eq:preproduce}), if $\bm{1}$ is exactly representable in the test basis (such that $\bm{1} = \bm{V}_t\LRp{\mathcal{I},:}\bm{e}$ for some coefficient vector $\bm{e}$  ), then $\bm{P}_t\bm{1} = \bm{e}$.  Then, $\bm{Q}_t\bm{1} = \bm{P}_t^T\hat{\bm{Q}}_t\bm{e} = \bm{0}$, since $\hat{\bm{Q}}_t$ exactly differentiates elements of the test basis.
+Since $\bm{Q}$ is skew-symmetric, the matrix $\bm{Q}_t$ is skew-symmetric by construction as well.  By (\ref{eq:preproduce}), if $\bm{1}$ is exactly representable in the test basis (such that $\bm{1} = \bm{V}_t\LRp{\mathcal{I},:}\bm{e}$ for some coefficient vector $\bm{e}$  ), then  $\bm{P}_t\bm{1} = \bm{e}$.  Then, $\bm{Q}_t\bm{1} = \bm{P}_t^T\hat{\bm{Q}}_t\bm{e} = \bm{0}$, since $\hat{\bm{Q}}_t$ exactly differentiates elements of the test basis.
 \end{proof}
 
 \begin{remark}
@@ -401,7 +403,7 @@ We have not yet specified the choice of test basis $\bm{V}_t$.  The span of the 
 \[
 u(x,0) = -\sin(\pi x).
 \]
-The solution $u(x,t)$ is a decaying stationary shock which is anti-symmetric across the origin at all times $t$.  The POD modes are thus also anti-symmetric across the origin; however, their derivatives $\bm{Q}\bm{V}$ are nearly symmetric across the origin, as shown in Figure~\ref{fig:modeQ}.  As a result, since the entries of $\bm{V}^T\bm{Q}\bm{V}$ are inner products of nearly symmetric and anti-symmetric functions, $\bm{V}^T\bm{Q}\bm{V} \approx \bm{0}$.
+The solution $u(x,t)$ is a decaying stationary shock which is anti-symmetric across the origin at all times $t$.  The POD modes are thus also anti-symmetric across the origin; however, their derivatives $\bm{Q}\bm{V}$ are nearly symmetric across the origin, as shown in Figure~\ref{fig:modeQ}.  Since the entries of $\bm{V}^T\bm{Q}\bm{V}$ are inner products of nearly symmetric and anti-symmetric functions, $\bm{V}^T\bm{Q}\bm{V} \approx \bm{0}$, and the resulting hyper-reduced model is highly inaccurate.
 \begin{figure}[!h]
 \centering
 \subfloat[Solution snapshots]{\includegraphics[width=.32\textwidth]{figs/burg_snaps.png}}
@@ -416,7 +418,7 @@ The solution $u(x,t)$ is a decaying stationary shock which is anti-symmetric acr
 This example implies that the reduced basis matrix $\bm{V}$ can do a poor job of sampling the range of $\bm{Q}\bm{V}$, and that the test basis should contain additional vectors.  To remedy this issue, we borrow techniques from least squares Petrov-Galerkin ROMs \cite{carlberg2011efficient, carlberg2017galerkin} and enrich the test basis $\bm{V}_t$ with vectors spanning the range of $\bm{Q}\bm{V}$.  The test basis now spans a space which contains $\bm{1}, \bm{V}$, and $\bm{Q}\bm{V}$, and thus has a dimension of at most $2N+1$.  The dimension of $\bm{V}_t$ may also be smaller if the intersection of the range of the reduced basis matrix $\bm{V}$ and the range of $\bm{Q}\bm{V}$ and $\bm{1}$ is non-empty.  
 
 We comment on why this choice of test basis restores accuracy.  
-In the absence of hyper-reduction (where $\bm{P}_t = \bm{V}_t^{\dagger}$), the matrix $\bm{Q}_t$ should be an accurate approximation to $\bm{Q}$.  The following lemma quantifies the relationship between accuracy and choice of test space.
+In the absence of hyper-reduction (where $\bm{P}_t = \bm{V}_t^{\dagger}$), the matrix $\bm{Q}_t$ should be an accurate approximation to $\bm{Q}$.  The following lemma quantifies the relationship between accuracy in the $2$-norm and choice of test space.  
 %The entropy conservative flux for Burgers' equation corresponds to the discretization of the split form \cite{canuto2006spectral, chan2017discretely, maboudi2018conservative}
 %\[
 %\pd{u}{t} + \frac{1}{3}\LRp{\pd{u^2}{x}  + u\pd{u}{x}} = 0.
@@ -474,7 +476,7 @@ Since $\mathcal{R}\LRp{\bm{Q}\bm{V}} \subset \mathcal{R}\LRp{\bm{V}_t}$, $\bm{e}
 %\end{align*}
 %where we have used that $\nor{\bm{V}^{\dagger}} \leq 1$ since $\bm{V}$ is orthonormal and $\nor{\bm{V}_t \bm{V}_t^{\dagger}} \leq 1$ since the normed quantity is an orthogonal projection.  Dividing through by $\nor{\bm{V}\bm{e}}$ and an $\ell_2$ inequality complete the proof.  We note that if $\bm{V}$ is orthonormal, then $\nor{\bm{V}^{\dagger}}\leq 1$.
  \end{proof}
- 
+ In other words, if $\bm{Q}\bm{V}$ is contained within the range of $\bm{V}_t$, the error in approximating $\bm{Q}\bm{f}$ using the compress-and-projected matrix $\LRp{\bm{V}_t\bm{V}_t^{\dagger}}^T\bm{Q}\bm{V}_t\bm{V}_t^{\dagger}$ scales with the best approximation error $\nor{\bm{f}-\bm{V}_t\bm{V}_t^{\dagger}\bm{f}}$.
 
 %Lemma~\ref{thm:acc} does not account for hyper-reduction; however, it motivates what quantities hyper-reduction should aim to approximate accurately.  
 
@@ -531,19 +533,19 @@ Note that $E_1 \geq E_2 \geq \ldots \geq E_{N_t}$.  We replace the matrix $\bm{V
 
 \subsection{Conditioning of the test mass matrix}
 \label{sec:condtest}
-We note that the target space is designed to accurately approximate the mass matrix $\Delta x \bm{V}^T\bm{V}$, and does not take the test basis matrix $\bm{V}_{t}$ into account.  This is because incorporating the test basis by approximating either $\Delta x \bm{V}^T\bm{V}_{t}$ or $\Delta x \bm{V}_{t}^T\bm{V}_{t}$ produces a significantly larger number of hyper-reduced points without a noticable increase in accuracy.  
+We note that the choice of target space is designed to accurately approximate the mass matrix $\Delta x \bm{V}^T\bm{V}$, and does not take the test basis matrix $\bm{V}_{t}$ into account.  This choice is motivated by the empirical observation that incorporating the test basis by approximating either $\Delta x \bm{V}^T\bm{V}_{t}$ or $\Delta x \bm{V}_{t}^T\bm{V}_{t}$ produces a significantly larger number of hyper-reduced points without any significant improvement in accuracy.  
 However, because the hyper-reduction strategy does not account for $\bm{V}_{t}$, it is possible to construct a hyper-reduced quadrature which accurately integrates the mass matrix but violates Assumption~\ref{ass:quad} by producing a singular test mass matrix $\bm{V}_t\LRp{\mathcal{I},:}^T\bm{W}\bm{V}_t\LRp{\mathcal{I},:}$.  
-The challenge is then to construct a hyper-reduced volume quadrature which 1) accurately approximates the reduced basis mass matrix $\Delta x \bm{V}^T\bm{V}$ while 2) ensuring that the hyper-reduced test mass matrix is non-singular.  We address this challenge by computing the spectra of the test mass matrix  and adding additional ``stabilizing'' points if the condition number is larger than a specified tolerance.  
+The challenge is then to construct a hyper-reduced volume quadrature which accurately approximates the reduced basis mass matrix $\Delta x \bm{V}^T\bm{V}$ while ensuring that the hyper-reduced test mass matrix is non-singular.  We address this challenge by computing the spectra of the test mass matrix  and adding additional ``stabilizing'' points if the condition number is larger than a specified tolerance.  
 
-Let $\bm{z}_j$ denote the $N_z$ eigenvectors corresponding to zero (small) eigenvalues of the hyper-reduced test mass matrix.  The entries of $\bm{z}_j$ correspond to vectors of coefficients in the test basis $\bm{V}_t$.  Let $\bm{Z}$ denote the matrix whose columns are point values of each eigenvector
+Let $\bm{z}_j$ denote the $N_z$ eigenvectors corresponding to small eigenvalues of the hyper-reduced test mass matrix.  The entries of $\bm{z}_j$ correspond to vectors of coefficients in the test basis $\bm{V}_t$.  Let $\bm{Z}$ denote the matrix whose columns are point values of each eigenvector
 \[
 \bm{Z} = \begin{bmatrix}
 \bm{V}_t\bm{z}_1 & \ldots & \bm{V}_t\bm{z}_{N_z}
 \end{bmatrix}.
 \]
-To ensure that the hyper-reduced test mass matrix is non-singular, we will employ a greedy heuristic based on adding additional points to approximate $\Delta x\bm{Z}^T\bm{Z}$.  Suppose that we have already computed hyper-reduced points and weights to approximate the reduced mass matrix $\Delta x\bm{V}^T\bm{V}$.   Let $\mathcal{I}_{\bm{V}}$ denote the index set of these stabilizing points.  We compute a second group of hyper-reduced points with index set $\mathcal{I}_{\bm{Z}}$  using the greedy hyper-reduction algorithm applied to the target space $\bm{Z}_{\rm target}$, which we define analogously to $\bm{V}_{\rm target}$ in (\ref{eq:Vtarget}).  We note that, unlike the hyper-reduced points computed previously, we do not perform a dimensionality reduction on $\bm{Z}_{\rm target}$.
+To ensure that the hyper-reduced test mass matrix is non-singular, we will employ a greedy heuristic based on adding additional points to approximate $\Delta x\bm{Z}^T\bm{Z}$.  Suppose that we have already computed hyper-reduced points and weights to approximate the reduced mass matrix $\Delta x\bm{V}^T\bm{V}$.   Let $\mathcal{I}_{\bm{V}}$ denote the index set of these stabilizing points.  We compute a second group of hyper-reduced points with index set $\mathcal{I}_{\bm{Z}}$  using the greedy hyper-reduction algorithm applied to the target space $\bm{Z}_{\rm target}$, which we define analogously to $\bm{V}_{\rm target}$ in (\ref{eq:Vtarget}).  We note that, unlike the hyper-reduced points computed previously, we do not perform a dimensionality reduction on $\bm{Z}_{\rm target}$ when computing this set of stabilizing points.
 
-Given $\mathcal{I}_{\bm{Z}}$, we then update the hyper-reduced index set as the union $\mathcal{I} = \mathcal{I}_{\bm{V}} \cup \mathcal{I}_{\bm{Z}}$, and compute a new set of hyper-reduced weights through the non-negative least squares solve
+Given $\mathcal{I}_{\bm{Z}}$, we update the hyper-reduced index set as the union $\mathcal{I} = \mathcal{I}_{\bm{V}} \cup \mathcal{I}_{\bm{Z}}$, and compute a new set of hyper-reduced weights through the non-negative least squares solve
 \[
 \bm{w} = \argmin_{\bm{c} \geq 0} \frac{1}{2} \LRp{\nor{\bm{V}_{\rm target}\LRp{\mathcal{I},:}^T\bm{c} - \bm{b}}^2 + \alpha_Z\nor{\bm{Z}_{\rm target}\LRp{\mathcal{I},:}^T\bm{c} - \bm{d}}^2}, \qquad \bm{d} = \bm{Z}_{\rm target}^T\bm{w}_{\rm target},
 \]  
@@ -567,7 +569,7 @@ To summarize, an entropy conservative reduced order model on periodic domains r
 \item Compute a hyper-reduced quadrature using Algorithm~\ref{alg:hr}, adding stabilizing points as necessary to ensure that the test mass matrix $\bm{V}_t\LRp{\mathcal{I},:}^T\bm{W}\bm{V}_t\LRp{\mathcal{I},:}$ is non-singular.  
 \item Construct the hyper-reduced nodal differentiation matrix $\bm{Q}_t = \bm{P}_t^T\hat{\bm{Q}}_t\bm{P}_t$ using the projection matrix $\bm{P}_t = \LRp{\bm{V}_t\LRp{\mathcal{I},:}^T\bm{W}\bm{V}_t\LRp{\mathcal{I},:}}^{-1}\bm{V}_t\LRp{\mathcal{I},:}^T\bm{W}$ onto the test basis.
 \end{enumerate}
-Then, an entropy conservative reduced order model is given by the following theorem:
+Then, we have the following theorem:
 \begin{theorem}
 Suppose that the hyper-reduced quadrature satisfies Assumption~\ref{ass:quad}.  Then, the semi-discrete formulation 
 \begin{gather}
@@ -576,7 +578,7 @@ Suppose that the hyper-reduced quadrature satisfies Assumption~\ref{ass:quad}.  
 \bm{v}_N = \bm{P}\bm{v}\LRp{\bm{V}\LRp{\mathcal{I},:}\bm{u}_N}, \qquad \tilde{\bm{v}} = \bm{V}\LRp{\mathcal{I},:}\bm{v}_N, \nonumber\\
 \tilde{\bm{u}} = \bm{u}\LRp{\tilde{\bm{v}}}, \qquad \bm{F}_{ij} = \bm{f}_S\LRp{\tilde{\bm{u}}_i,\tilde{\bm{u}}_j},\nonumber
 \end{gather}
-semi-discretely conserves the average entropy 
+semi-discretely conserves the sampled and weighted average entropy  
 \[
 \bm{1}^T\bm{W}\td{S\LRp{\bm{V}\LRp{\mathcal{I},:}\bm{u}_N}}{t} = 0.  
 \]
@@ -602,25 +604,25 @@ It is not strictly necessary to use the hyper-reduced mass matrix
  to construct an entropy conservative ROM.  For example, we can use the exact mass matrix $\bm{M}_N = \Delta x \bm{V}^T\bm{V}$ rather than the hyper-reduced mass matrix.  If the projection matrix $\bm{P}$ is defined accordingly, the resulting ROM remains entropy conservative.  However, we observe significantly larger errors when using the exact mass matrix instead of the hyper-reduced mass matrix.  
 \end{remark}
 
-\subsection{Online cost estimates for hyper-reduction}
+\subsection{Online cost estimates for the hyper-reduced system}
 \label{sec:cost}
-In practice, the flux matrix $\bm{F}$ is not computed explicitly, but instead is usually formed on the fly by evaluating the entropy stable flux $\bm{f}_S$.  Due to the complexity of the formulas for $\bm{f}_S$, the computation of $\bm{F}$ constitutes a significant portion of the computational cost.  For the full order model, this cost is typically ameliorated by exploiting the sparsity of $\bm{Q}$.  However, since the hyper-reduced matrix $\bm{Q}_t$ is fully dense, the nonlinear convective term $\bm{Q}\circ\bm{F}$ in (\ref{eq:hrrom}) requires $O(N_s^2)$ nonlinear flux evaluations.  In contrast, typical hyper-reduction approaches target a nonlinear \textit{vector}, which requires only $O(N_s)$ nonlinear function evaluations.  We emphasize that this $O(N_s^2)$ online cost is specific only to the convective nonlinearity, and not to the hyper-reduced treatment of other nonlinear terms such as viscosity.
+In practice, the flux matrix $\bm{F}$ is not computed explicitly, but is instead formed on the fly by evaluating the entropy stable flux $\bm{f}_S$.  Due to the complexity of the formulas for $\bm{f}_S$, the computation of $\bm{F}$ constitutes a significant portion of the computational cost.  For the full order model, this cost is typically ameliorated by exploiting the sparsity of $\bm{Q}$.  However, since the hyper-reduced matrix $\bm{Q}_t$ is fully dense, the nonlinear convective term $\bm{Q}\circ\bm{F}$ in (\ref{eq:hrrom}) requires $O(N_s^2)$ nonlinear flux evaluations.  In contrast, typical hyper-reduction approaches target a nonlinear \textit{vector}, which requires only $O(N_s)$ nonlinear function evaluations.  We emphasize that this $O(N_s^2)$ online cost is specific only to the convective nonlinearity, and not to the hyper-reduced treatment of other nonlinear terms such as viscosity.
 
-While this cost is trivially parallelizable, it is a significant increase in online costs compared to traditional hyper-reduction procedures.  However, we note that the cost can be comparable to techniques for exactly treating higher order polynomial nonlinearities for a large number of modes \cite{maboudi2018conservative}.  For example, suppose one wishes to compute $\bm{V}^T f\LRp{\bm{V}\bm{u}_N}$, where $f(x) = x^m$ for $m \geq 1$ and $m$ integer.  We can rewrite this as
+While the $O(N_s^2)$ nonlinear flux evaluations are trivially parallelizable, they constitute a significant increase in online costs compared to traditional hyper-reduction procedures.  However, we note that the cost can be comparable to techniques for exactly treating higher order polynomial nonlinearities for a large number of modes \cite{maboudi2018conservative}.  For example, suppose one wishes to compute $\bm{V}^T g\LRp{\bm{V}\bm{u}_N}$, where $g(x) = x^m$ for $m \geq 1$ and $m$ integer.  We can rewrite this as
 \[
-\bm{V}^T f(\bm{u}) = \bm{V}^T \diag{\bm{V}\bm{u}_N}^{m-1} \bm{V}\bm{u}_N.
+\bm{V}^T g(\bm{u}) = \bm{V}^T \diag{\bm{V}\bm{u}_N}^{m-1} \bm{V}\bm{u}_N.
 \]
 Suppose first that $m = 2$, such that the nonlinearity is quadratic.  Define $\bm{V}_j = \diag{\bm{V}\LRp{:,j}}$ as the diagonal matrix with the $j$th column of $\bm{V}$ on the diagonal.  Then, $\diag{\bm{V}\bm{u}_N} = \sum_{j=1}^N\bm{V}_j (\bm{u}_N)_j$, and 
 \[
-\bm{V}^T f\LRp{\bm{V}\bm{u}_N} = \sum_{j=1}^N (\bm{u}_N)_j \bm{V}^T \bm{V}_j \bm{V}\bm{u}_N.
+\bm{V}^T g\LRp{\bm{V}\bm{u}_N} = \sum_{j=1}^N (\bm{u}_N)_j \bm{V}^T \bm{V}_j \bm{V}\bm{u}_N.
 \]
 The matrices $\bm{V}^T \bm{V}_j \bm{V}$ can be precomputed, such that the cost of evaluating the above expression is $N$ matrix-vector multiplications, or $O(N^3)$ operations.  For $m = 3$, repeating the same steps yields
 \[
-\bm{V}^T f\LRp{\bm{V}\bm{u}_N} = \sum_{j=1}^N \sum_{k=1}^M (\bm{u}_N)_j  (\bm{u}_N)_k \bm{V}^T \bm{V}_j \bm{V}_k \bm{V}\bm{u}_N.
+\bm{V}^T g\LRp{\bm{V}\bm{u}_N} = \sum_{j=1}^N \sum_{k=1}^M (\bm{u}_N)_j  (\bm{u}_N)_k \bm{V}^T \bm{V}_j \bm{V}_k \bm{V}\bm{u}_N.
 \]
 which requires $N^2$ matrix-vector multiplications, or $O(N^4)$ operations.  Generalizing this procedure to $m > 3$ yields that a degree $m$ polynomial nonlinearity can be evaluated in $O(N^{m+1})$ operations.  
 
-Experimental results suggest that the number of hyper-reduced points $N_s$ scales as $O(N)$, though the constant increases with the spatial dimension (numerical experiments suggest the constant is approximately 2 in 1D and around 10 in 2D).  Define constants $\alpha = N_s/ N$ and $\beta$, where $\beta$ denotes the number of operations required to evaluate the flux $\bm{f}_S$.  We note that different choices of entropy stable flux functions (see, for example, \cite{ismail2009affordable, chandrashekar2013kinetic, hicken2018family}) produce significantly different values of $\beta$.  Then, the hyper-reduced treatment of the convective nonlinearity requires $N_s^2$ flux evaluations.  Assuming flux evaluations dominate costs, entropy stable schemes require $\alpha^2 \beta N^2$ operations.  Thus, rather than increasing the asymptotic computational complexity, entropy stable hyper-reduction increases the associated constant.  
+Experimental results suggest that the number of hyper-reduced points $N_s$ scales as $O(N)$, though the constant increases with the spatial dimension (numerical experiments suggest the constant is approximately 2 in 1D and around 10 in 2D).  Define constants $\alpha = N_s/ N$ and $\beta$, where $\beta$ denotes the number of operations required to evaluate the flux $\bm{f}_S$.  We note that different choices of entropy stable flux functions (see, for example, \cite{ismail2009affordable, chandrashekar2013kinetic, hicken2018family}) produce significantly different values of $\beta$.  Then, the hyper-reduced treatment of the convective nonlinearity requires $N_s^2$ flux evaluations.  Assuming flux evaluations dominate costs, entropy stable schemes require $\alpha^2 \beta N^2$ operations.  Thus, rather than increasing the asymptotic computational complexity, the entropy stable hyper-reduction presented here increases the associated constant.  
 
 %\note{Compare to pre-computed matrices.  For a nonlinearity $u^m$, the cost is $O(N^{m-1})$ $N\times N$ matrix multiplies, which scales as $O(N^{m+1})$.  Assuming that the number of hyper-reduced points $N_s = O(N)$, then the cost scaling of $O(N_s^2) = O(N^2)$, where the constants depend on the ratio of $N_s/N$ and probably dimension. }
 
@@ -635,7 +637,7 @@ This section introduces hyper-reduction procedures for $\bm{K}$ which provide a 
 \]
 where $\bm{d}(\bm{u})$ is some hyper-reduced approximation to the viscous terms.  Theorem~\ref{thm:hrromes} gives that the entropy balance of the reduced order model is
 \[
-\Delta x \bm{1}^T\td{S\LRp{\bm{V}\bm{u}_N}}{t} = -\bm{v}_N^T\bm{d}(\bm{u}_N).
+\Delta x \bm{1}^T\td{S\LRp{\bm{V}\bm{u}_N}}{t} = -\bm{v}_N^T\bm{d}(\bm{u}_N), \qquad \bm{v}_N = \bm{P}\bm{v}\LRp{\bm{V}\LRp{\mathcal{I},:}\bm{u}_N}.
 \]
 We will design hyper-reduced treatments of the viscous terms such that $\bm{v}_N^T\bm{d}(\bm{u}_N) \geq 0$, which implies that the reduced model is entropy stable.  
 
@@ -692,7 +694,7 @@ This implies that the dissipation of entropy produced by the hyper-reduced appro
 The difference between the hyper-reduction treatments of viscosity (\ref{eq:visc1}) and (\ref{eq:visc2}) are that (\ref{eq:visc1}) relies explicitly on the fact that $\bm{D}$ is a two-point finite volume difference matrix, which enables the use of the mean value theorem in deriving a statement of entropy dissipation.   The first approach (\ref{eq:visc1}) results in a simpler online phase, though it involves larger matrices compared to the second approach.  The second approach (\ref{eq:visc2}) is not limited to finite volume methods, and is entropy dissipative for any choice of differentiation matrix $\bm{D}$.  Both approaches require computing an additional set of hyper-reduced points during the offline phase.  
 
 \begin{remark}
-The hyper-reduction treatments of viscosity described in this section can also be applied to nonlinear interface dissipation models, such as local Lax-Friedrichs penalization.  We do not focus on such approximations for this paper, as the amount of dissipation applied is typically proportional to $\Delta x$ and thus depends on the dimension of the full order model.
+The hyper-reduction treatments of viscosity described in this section can also be applied to nonlinear interface dissipation models, such as local Lax-Friedrichs penalization.  We do not focus on such approximations for this paper, as the amount of dissipation applied is typically proportional to $\Delta x$ and thus changes based on the dimension of the full order model.
 \end{remark}
 
 We note that, in practice, a naive approximation of diffusive terms $\bm{K}\bm{u}$ by
@@ -746,9 +748,9 @@ where the matrices $\bm{B}$ and $\bm{E}$ encode scaling by normals and evaluatio
 \[
 \bm{B} = \begin{bmatrix}-1 & \\ & 1\end{bmatrix}, \qquad \bm{E} = \bm{V}_{bt}\bm{P}_t, \qquad \bm{V}_{bt} = \begin{bmatrix}\bm{V}_t(1,:) \\ \bm{V}_t(N,:)\end{bmatrix}.
 \]
-where $\bm{V}_t(:,1), \bm{V}_t(:,K)$ denote the first and last columns (corresponding to points on the boundary) of the test basis matrix $\bm{V}_t$.  
+where $\bm{V}_{bt}$ interpolates test basis functions to boundary points, and $\bm{V}_t(:,1), \bm{V}_t(:,K)$ denote the first and last columns (corresponding to points on the boundary) of the test basis matrix $\bm{V}_t$.  
 
-For linear problems, it is possible to impose energy stable boundary conditions by combining generalized SBP operators with appropriate simultaneous approximation terms (SATs) \cite{fernandez2018simultaneous}.  However, due to the presence of $\bm{E}$ within the boundary term $\bm{E}^T\bm{B}\bm{E}$, the accurate and entropy stable imposition of nonlinear boundary conditions using generalized SBP-SATs remains an open problem \cite{crean2018entropy, chan2018efficient, chenreview}. We address this issue by constructing a \textit{hybridized} SBP operator (also referred to as a decoupled SBP operator) \cite{chan2017discretely, chan2019skew}
+For linear problems, it is possible to impose energy stable boundary conditions by combining generalized SBP operators with appropriate simultaneous approximation terms (SATs) \cite{fernandez2018simultaneous}.  However, due to the presence of $\bm{E}$ within the boundary term $\bm{E}^T\bm{B}\bm{E}$, the accurate and entropy stable imposition of nonlinear boundary conditions using generalized SBP-SATs remains an open problem \cite{crean2018entropy, chan2018efficient, chenreview}. We address this issue by constructing a \textit{hybridized} SBP operator \cite{chan2017discretely, chan2019skew} (also referred to as a decoupled SBP operator in \cite{chan2017discretely})
 \[
 \bm{Q}_{h} = \frac{1}{2}\begin{bmatrix}
 \bm{Q}_t - \bm{Q}_t^T & \bm{E}^T\bm{B} \\
@@ -763,7 +765,7 @@ Note that $\bm{Q}_h$ satisfies a block version of the standard summation by part
 \]
 where $\bm{B}_h$ is diagonal and does not involve the boundary evaluation matrix $\bm{E}$.  
 
-A more subtle property is that $\bm{Q}_h\bm{1} = \bm{0}$ \cite{chan2019skew}.  Note that the full order matrix $\bm{Q}$ in (\ref{eq:fomsbp}) satisfies $\bm{Q}\bm{1} = \bm{0}$.  Then, since $\bm{1}$ is exactly representable in the test basis $\bm{V}_t$, $\bm{V}_t\bm{P}_t\bm{1} = \bm{1}$, and
+It is less straightforward to show that $\bm{Q}_h\bm{1} = \bm{0}$, which is also necessary for the proof of entropy stability \cite{chan2019skew}.  Note that the full order matrix $\bm{Q}$ in (\ref{eq:fomsbp}) satisfies $\bm{Q}\bm{1} = \bm{0}$.  Then, since $\bm{1}$ is exactly representable in the test basis $\bm{V}_t$, $\bm{V}_t\bm{P}_t\bm{1} = \bm{1}$, and
 \[
 \bm{Q}_t = \bm{P}_t^T\bm{V}_t^T\bm{Q}\bm{V}_t\bm{P}_t\bm{1} = \bm{P}_t^T\bm{V}_t^T\bm{Q}\bm{1} = \bm{0}.
 \]
@@ -777,7 +779,7 @@ This implies that $\bm{Q}_h\bm{1}$ simplifies to
 \bm{0}
 \end{bmatrix},
 \]
-where we have used that $\bm{Q}_t\bm{1} = \bm{0}$ and that (\ref{eq:preproduce}) implies $\bm{E}\bm{1} = \bm{1}$.   Here, we abuse notation by letting $\bm{1}$ denote any arbitrary length vector of all ones.  Furthermore, since $\bm{Q}_t$ satisfies a generalized SBP property,
+where we have used that $\bm{Q}_t\bm{1} = \bm{0}$ and that (\ref{eq:preproduce}) implies $\bm{E}\bm{1} = \bm{1}$.   Here, we abuse notation by letting $\bm{1}$ denote the vector of ones with appropriate dimension.  Furthermore, since $\bm{Q}_t$ satisfies a generalized SBP property,
 \[
 - \bm{Q}_t^T \bm{1} + \bm{E}^T\bm{B} \bm{1} = \LRp{-\bm{Q}_t^T + \bm{E}^T\bm{B}\bm{E}} \bm{1} = \bm{Q}_t \bm{1} = \bm{0}.
 \]
@@ -879,23 +881,20 @@ An hyper-reduction of $\bm{K}$ analogous to the one described in Section~\ref{se
 
 \subsection{Non-periodic domains in higher dimensions}
 
-Non-periodic domains and boundary conditions can be treated by combining hybridized SBP operators and a weak imposition of boundary conditions as was done in the 1D hyper-reduced formulation (\ref{eq:esbchr}).  Without loss of generality, we assume a square domain with $4$ boundary faces, each of which is discretized by $K_{\rm 1D}$ intervals of size $\Delta x$.  We assume we are given values of the outward normal vector $\bm{n} = \LRs{n_1, \ldots, n_d}^T$ on the domain boundary.  We enforce non-periodic boundary conditions through introducing numerical fluxes at boundary points.  However, the number of boundary points scales with $K_{\rm 1D}$.  To ensure that the cost of the reduced order model scales with the number of modes $N$ rather than the dimension of the full order model, we approximate boundary terms by a hyper-reduced weighted combination of sampled boundary points.  
+Non-periodic domains and boundary conditions can be treated by combining hybridized SBP operators and a weak imposition of boundary conditions as was done for the 1D hyper-reduced formulation (\ref{eq:esbchr}).  Without loss of generality, we assume a square domain with $4$ boundary faces, each of which is discretized by $K_{\rm 1D}$ intervals of size $\Delta x$.  Denote values of the outward normal vector on the domain boundary by $\bm{n} = \LRs{n_1, \ldots, n_d}^T$.  We enforce non-periodic boundary conditions through numerical fluxes at boundary points.  However, the number of boundary points scales with $K_{\rm 1D}$.  To ensure that the cost of the reduced order model scales with the number of modes $N$ rather than the dimension of the full order model, we approximate boundary terms by a hyper-reduced weighted combination of sampled boundary points.  
 
 Let $\bm{V}_b$ denote the matrix whose columns correspond to values of the reduced basis at boundary points.  Let $\mathcal{I}_b$ denote a sub-sampled set of $N_b$ boundary points, and let $g$ denote a nonlinear function.  We then approximate the boundary inner product 
 \[
 \bm{V}_b^Tg(\bm{V}_b\bm{u}_N) \approx \bm{V}_b\LRp{\mathcal{I}_b,:}^T \bm{W}_b g\LRp{\bm{V}_b\LRp{\mathcal{I}_b,:}}.
 \]
-where $\bm{W}_b$ is a diagonal matrix whose entries consist of positive weights
-\[
-\bm{W}_b = {\rm diag}\LRp{\bm{w}_b}.
-\]
-We can now define the $N_b\times N_b$ operators $\bm{B}^1, \bm{B}^2$ as the diagonal matrices whose entries consist of weighted component values of outward normals on the boundary 
+where $\bm{W}_b = {\rm diag}\LRp{\bm{w}_b}$ is a diagonal matrix whose entries consist of positive weights.  
+We also define $N_b\times N_b$ operators $\bm{B}^1, \bm{B}^2$ as the diagonal matrices whose entries consist of weighted component values of outward normals on the boundary 
 \[
 \bm{B}^i = {\rm diag}\LRp{\bm{n}^i} \bm{W}_b,
 \]
 where $\bm{n}^i$ is a vector containing the values of the component $n_i$ at boundary points.  
 
-We can now construct hybridized SBP operators under both volume and boundary hyper-reduction.  Let $\bm{V}_{bt}$ be the matrix which evaluates the $i$th test basis at face points.  Then, we can define $\bm{E}_i$ as the matrix which extrapolates from hyper-reduced volume points to boundary points through projection onto the $i$th test basis
+We can now construct hybridized SBP operators using hyper-reduced points on both the volume and boundary of the domain.  Let $\bm{V}_{bt}$ be the matrix which evaluates the $i$th test basis at all points on the boundary.  Then, we can define $\bm{E}_i$ as the matrix which extrapolates from hyper-reduced volume points to hyper-reduced boundary points through projection onto the $i$th test basis
 \[
 \bm{E}_i = \bm{V}_{bt}^i\LRp{\mathcal{I}_b,:}\bm{P}^i_t.  
 \]
@@ -912,7 +911,7 @@ These operators can be used to construct a hyper-reduced formulation in higher d
 \end{gather}
 where $\bm{M}_N$ and $\bm{F}^i$ are as defined in (\ref{eq:hrromd}), and $\bm{f}_i(\bm{u}), \bm{f}_i^*$ are the $i$th components of the flux function and boundary numerical flux, respectively.  
 
-In contrast to the 1D case, additional steps are necessary to ensure that entropy stability is preserved under this boundary hyper-reduction.  Recall that the proof of entropy stability for 1D non-periodic domains in Theorem~\ref{thm:esbchr} requires that $\bm{Q}_h\bm{1} = \bm{0}$.  The analogous proof of entropy stability in multiple dimensions requires that $\bm{Q}^i_h\bm{1} = \bm{0}$ for $i = 1,\ldots, d$.  However, this is not automatically satisfied.  Expanding out $\bm{Q}^i_h\bm{1}$ yields
+In contrast to the 1D case, additional steps are necessary to ensure that entropy stability is preserved under this boundary hyper-reduction.  Recall that the proof of entropy stability for 1D non-periodic domains in Theorem~\ref{thm:esbchr} requires that $\bm{Q}_h\bm{1} = \bm{0}$.  The analogous proof of entropy stability in multiple dimensions requires that $\bm{Q}^i_h\bm{1} = \bm{0}$ for $i = 1,\ldots, d$.  However, this is not automatically satisfied under an arbitrary hyper-reduction of the boundary points.  Expanding out $\bm{Q}^i_h\bm{1}$ yields
 \[
 \bm{Q}^i_h\bm{1} = \begin{bmatrix}
 \bm{Q}^i_t\bm{1} - \LRp{\bm{Q}^i_t}^T\bm{1} + \bm{E}_i^T\bm{B}^i \bm{1}\\
@@ -932,7 +931,7 @@ where we have used that $\bm{V}^i_t\bm{P}^i_t\bm{1} = \bm{1}$.  Thus, to ensure 
 \LRp{\bm{V}^i_{bt}}\LRp{\mathcal{I}_b,:}^T{\rm diag}\LRp{\bm{n}^i}\bm{w}_b = \LRp{\bm{V}^i_t}^T\bm{Q}\bm{1}, \qquad i = 1,\ldots, d.
 \label{eq:sbpconstraints}
 \end{equation}
-The $dN$ constraints encoded in (\ref{eq:sbpconstraints}) can be interpreted as enforcing a discrete version of the fundamental theorem of calculus relating integrals of function derivatives to boundary integrals of function values.  We enforce these constraints on the boundary weights $\bm{w}_b$ (\ref{eq:sbpconstraints}) directly into a hyper-reduction approach based on the solution of a linear programming problem using the dual simplex method, and refer the reader to \cite{yano2019lp} for details.  We note that it may also be possible to enforce these constraints, for example, by augmenting the non-negative least squares solve in Algorithm~\ref{alg:hr} with equality constraints, and will explore these directions in future work.  
+The $dN$ constraints encoded in (\ref{eq:sbpconstraints}) can be interpreted as enforcing a discrete version of the fundamental theorem of calculus relating approximate integrals of reduced basis derivatives to boundary integrals of reduced basis values.  We enforce these constraints on the boundary weights $\bm{w}_b$ (\ref{eq:sbpconstraints}) directly into a hyper-reduction approach based on the solution of a linear programming problem using the dual simplex method, and refer the reader to \cite{yano2019lp} for details.  We note that it may also be possible to enforce these constraints, for example, by augmenting the non-negative least squares solve in Algorithm~\ref{alg:hr} with equality constraints, and will explore these directions in future work.  
 
 %\subsection{Entropy dissipation}
 %\note{Discuss how to produce entropy dissipative hyper-reduced operators in 2D}.
@@ -1006,7 +1005,10 @@ The viscous terms are treated as described in Section~\ref{sec:entropydissipatio
 
 \subsection{1D Euler equations}
 
-We begin by examining the 1D Euler equations with reflective wall boundary conditions.  We utilize a full order finite volume model with $2500$ cells on $[-1,1]$ with a CFL of $.75$, and set the artificial viscosity parameter to $\epsilon = 2\times 10^{-4}$.  Entropy stable reflective wall boundary conditions are imposed using ``mirror states'' at both endpoints, and the initial condition is set to be 
+We begin by examining the 1D Euler equations with reflective wall boundary conditions.  We utilize a full order finite volume model with $2500$ cells on $[-1,1]$ with a CFL of $.75$, and set the artificial viscosity parameter to $\epsilon = 2\times 10^{-4}$.   It was shown in \cite{svard2014entropy, chen2017entropy} that wall boundary conditions can be imposed using a ``mirror state''.  We use a boundary numerical flux $\bm{f}^* = \bm{f}_S\LRp{\bm{u}^+,\bm{u}}$ augmented with local Lax-Friedrichs penalization, where the exterior state $\bm{u}^+$ is defined by
+\[
+\rho^+ = \rho, \qquad {u}^+ = -u, \qquad p^+ = p.  
+\]  The initial condition is set to be 
 \[
 \rho = 2 + \frac{1}{2}e^{-100\LRp{x-\frac{1}{2}}^2}, \qquad 
     u = \frac{1}{10}e^{-100\LRp{x-\frac{1}{2}}^2}, \qquad p = \rho^{\gamma}.
@@ -1017,7 +1019,7 @@ The solution exhibits a viscous shock some time after $T=.25$.
 %\[
 %\rho = \frac{1}{2} + \frac{1}{5}\cos\LRp{2\pi x}, \qquad u = 1.5, \qquad p = \frac{1}{2} + \frac{1}{5}\sin\LRp{2 \pi x}.
 %\]
-We first examine the impact of enriching solution snapshots with snapshots of the entropy variables.  We run the full order model until final time $T=.7$ and store the solution at $2801$ time-steps.  We compute a reduced basis using SVD by subsampling every $10$ snapshots.  Figure~\ref{subfig:a} shows the decay of the singular values with and without entropy variable enrichment.  In both cases, the decay is similar, with entropy variable enrichment resulting in a slightly slower decay for singular values smaller than $10^{-8}$.  The difference becomes more pronounced for a coarser subsampling.  We note that the enrichment does affect the form of the resulting singular vectors (Figure~\ref{subfig:c}).  We also compute projection errors for each solution snapshot using $25$ modes in Figure~\ref{subfig:b}, along with differences between the projected solutions with and without entropy variable enrichment.  The projection errors are nearly indistinguishable.  %For this problem setup, the remaining singular vectors show little difference; however, for other settings, we have observed larger differences with and without enrichment for higher modes.
+We first examine the impact of enriching solution snapshots with snapshots of the entropy variables.  We run the full order model until final time $T=.7$ and store the solution at $2801$ time-steps.  We compute a reduced basis using SVD by subsampling every $10$ snapshots.  Figure~\ref{subfig:a} shows the decay of the singular values with and without entropy variable enrichment.  In both cases, the decay is similar, with entropy variable enrichment resulting in a slightly slower decay for singular values smaller than $10^{-8}$.  The difference becomes more pronounced for a coarser subsampling of the snapshots.  We note that the enrichment does affect the form of the resulting singular vectors (Figure~\ref{subfig:c}).  We also compute projection errors for each solution snapshot using $25$ modes in Figure~\ref{subfig:b}, along with differences between the projected solutions with and without entropy variable enrichment.  The projection errors are nearly indistinguishable.  %For this problem setup, the remaining singular vectors show little difference; however, for other settings, we have observed larger differences with and without enrichment for higher modes.
 
 \begin{figure}
 \centering
@@ -1030,7 +1032,7 @@ We first examine the impact of enriching solution snapshots with snapshots of th
 \label{fig:svd}
 \end{figure}
 
-We next examine solutions produced by the reduced order models.  It is known that reduced models can typically utilize a larger CFL \cite{lucia2004reduced, knezevic2011reduced}; however, to ensure that temporal errors are small, all solutions are computed using the same CFL as the full order model.  Figure~\ref{fig:romsols} shows density computed using 25, 75, and 125 modes and the hyper-reduced treatment of viscosity in (\ref{eq:visc2}).  For all resolutions, the shock is under-resolved and the solution possesses Gibbs-type oscillations.  However, despite this under-resolution, the ROM remains stable and does not blow up.  
+We next examine solutions produced by the reduced order models.  It is known that reduced models can sometimes utilize a larger CFL compared the full order model \cite{lucia2004reduced, knezevic2011reduced}; however, to ensure that temporal errors are small, all solutions are computed using the same CFL used to generate the solution snapshots.  Figure~\ref{fig:romsols} shows density computed using 25, 75, and 125 modes and the hyper-reduced treatment of viscosity in (\ref{eq:visc2}).  For all resolutions, the shock is under-resolved and the solution possesses Gibbs-type oscillations.  However, despite this under-resolution, the ROM remains stable and does not blow up.  Moreover, the reduced order solution converges uniformly to the full order solution as the number of modes increases.  
 
 \begin{figure}[!h]
 \centering
@@ -1093,7 +1095,7 @@ Next, we examine the difference in the hyper-reduced treatments of entropy dissi
 \label{fig:entropydiss}
 \end{figure}
 
-We now compare the evolution of errors and entropy, and examine the effect of hyper-reduction on the discrete solution in Figure~\ref{fig:entropyevo}.  Both entropy and error are computed on the original grid of the full order model (e.g., without hyper-reduction).  The error is computed as the discrete relative $L^2$ error over all the conservative variables.  We observe that the evolution of the ROM average discrete entropy converges to the average discrete entropy for the full order model as the number of modes increases from 25 to 75.  For 125 modes, the average entropies for the ROM and FOM are indistinguishable and are not shown.  The errors behave similarly, decreasing as the number of modes increases.  For reference, we also include errors computed without hyper-reduction using (\ref{eq:esrom}).  We observe that the hyper-reduced errors are virtually identical to errors without hyper-reduction in all cases.
+We now compare the evolution of both the $L^2$ error and discrete entropy, and examine the effect of hyper-reduction on the discrete solution in Figure~\ref{fig:entropyevo}.  Both error and entropy are computed on the original grid of the full order model (e.g., without hyper-reduction), and the error is computed as the discrete relative $L^2$ error over all the conservative variables.  We observe that the evolution of the average discrete entropy for the reduced model rapidly approaches the average discrete entropy for the full order model as the number of modes increases from 25 to 75.  For 125 modes, the average entropies for the ROM and FOM are indistinguishable and are not shown.  The errors behave similarly, decreasing as the number of modes increases.  For reference, we also include errors computed without hyper-reduction using (\ref{eq:esrom}).  We observe that the hyper-reduced errors are virtually identical to errors without hyper-reduction in all cases.
 
 \begin{figure}[!h]
 \centering
@@ -1127,14 +1129,14 @@ We now study the Euler equations in 2D.  We begin by considering periodic bounda
 \rho = 1 + \frac{1}{1+e^{-(y+1/2)/\sigma^2}} - \frac{1}{1+e^{-(y-1/2)/\sigma^2}}, \qquad
 u =  \frac{1}{1+e^{-(y+1/2)/\sigma^2}} - \frac{1}{1+e^{-(y-1/2)/\sigma^2}} - \frac{1}{2}, \\
 v = \alpha\sin(2\pi x) \LRp{e^{-(y+1/2)/\sigma^2} - e^{-(y-1/2)/\sigma^2}},\qquad
-p = 2.5
+p = 2.5.
 \end{gather*}
-where $\alpha = .1$ and $\sigma = .1$.  
+In the following experiments, we set $\alpha = .1$ and $\sigma = .1$.  
 
 \begin{figure}
 \centering
 \includegraphics[width=.4\textwidth]{figs/khsvd.png}
-\caption{Decay of singular values for the 2D smoothed Kelvin-Helmholtz instability.}
+\caption{Decay of singular values for snapshots of the 2D smoothed Kelvin-Helmholtz instability.}
 \label{fig:khsvd}
 \end{figure}
 We utilize a full order model with $200\times 200$ grid ($40000$ cells), which is run until time $T = 3$.  We generate 301 solution snapshots with which to compute POD modes.  The decay of the singular values of the solution snapshots with and without enrichment by the entropy variables is shown in Figure~\ref{fig:khsvd}.  We observe that, compared to the 1D case, the singular values decay more slowly when enriched with snapshots of the entropy variables.  However, as in 1D, the differences between the singular values with and without entropy variable enrichment are significantly larger for lower energy modes as compared to higher energy modes.  
@@ -1147,14 +1149,14 @@ We utilize a full order model with $200\times 200$ grid ($40000$ cells), which i
 \subfloat[Reduced order model, 75 modes]{\includegraphics[width=.32\textwidth]{figs/khrom75.png}}
 \hspace{.1em}
 \subfloat[Hyper-reduced points]{\includegraphics[width=.32\textwidth]{figs/khrom75_hrpts.png}}
-\caption{Comparison of results from the full and reduced order models (75 modes) of the 2D smoothed Kelvin-Helmholtz instability.}
+\caption{Full and reduced order density for the 2D smoothed Kelvin-Helmholtz instability at $T = 3$ with $\epsilon = 1e-3$.  The reduced order model uses 75 modes and $884$ hyper-reduced points (in \textcolor{red}{red}).  The relative $L^2$ error is $.0102$.}
 \label{fig:khrom}
 \end{figure}
 The reduced order model utilizes $75$ POD modes to achieves a $1.02\%$ relative $L^2$ error.  We note that the difference between the 75th singular value of the snapshot matrix with entropy variable enrichment is only about $6\%$ larger than the 75th singular value without entropy variable enrichment.  This suggests that entropy variable enrichment does not significantly impact the accuracy of the 75-mode POD approximation.  
 
 Since little difference is observed between the hyper-reducted treatments of viscosity, the naive treatment (\ref{eq:visc3}) is used.  No additional stabilizing points were necessary for this setting, as the condition numbers of the hyper-reduced $x$ and $y$ test mass matrices were both $O(1)$.  Figure~\ref{fig:khrom} compares results for the full and reduced order models, and shows the hyper-reduced points selected by the greedy empirical cubature algorithm.  
 
-We now consider a 2D domain with wall boundary conditions.  It was shown in \cite{svard2014entropy, chen2017entropy} that wall boundary conditions can be imposed using a ``mirror state''.  Let $\bm{n}$ denote the outward normal at a wall, and let $\bm{u}_{\bm{n}} = un_x + vn_y$ and $\bm{u}_{\bm{n}^\perp} = un_y - vn_x$ denote the normal and tangential components of the velocity at the wall.  We use a boundary numerical flux $\bm{f}^* = \bm{f}_S\LRp{\bm{u}^+,\bm{u}}$ augmented with local Lax-Friedrichs penalization, where the exterior state $\bm{u}^+$ is defined by
+We next consider a 2D domain with wall boundary conditions.  Entropy stable reflective wall boundary conditions are again imposed using ``mirror states''.   Let $\bm{n}$ denote the outward normal at a wall, and let $\bm{u}_{\bm{n}} = un_x + vn_y$ and $\bm{u}_{\bm{n}^\perp} = un_y - vn_x$ denote the normal and tangential components of the velocity at the wall.  We use a boundary numerical flux $\bm{f}^* = \bm{f}_S\LRp{\bm{u}^+,\bm{u}}$ augmented with local Lax-Friedrichs penalization, where the exterior state $\bm{u}^+$ is defined by
 \[
 \rho^+ = \rho, \qquad \bm{u}_{\bm{n}}^+ = -\bm{u}_{\bm{n}}, \qquad \bm{u}_{\bm{n}^\perp}^+ = \bm{u}_{\bm{n}^\perp}, \qquad p^+ = p.  
 \]
@@ -1167,7 +1169,7 @@ The full order model is computed on a $150\times 150$ grid with viscosity coeffi
 \begin{figure}
 \centering
 \includegraphics[width=.4\textwidth]{figs/pulse2dsvd.png}
-\caption{Decay of singular values for the 2D Gaussian pulse problem.}
+\caption{Decay of singular values for snapshots of the 2D Gaussian pulse problem.}
 \label{fig:pulse2dsvd}
 \end{figure}
 
@@ -1186,7 +1188,7 @@ A 25-mode reduced order solution is shown in Figures~\ref{fig:pulse2d}.  The hyp
 \subfloat[Reduced order model]{\includegraphics[width=.32\textwidth]{pulse2d_ROM.png}}
 \hspace{.1em}
 \subfloat[Hyper-reduction points]{\includegraphics[width=.32\textwidth]{pulse2d_ROM_pts.png}}
-\caption{Density computed for $\epsilon = 1e-3$ using 25 modes, 300 hyper-reduced points (in \textcolor{red}{red}), and 66 hyper-reduced boundary points (in \textcolor{blue}{blue}).  The relative $L^2$ error is $.0071$.}
+\caption{Full and reduced order density at time $T = .25$ computed with $\epsilon = 1e-3$.  The reduced order model uses 25 modes, 300 hyper-reduced points (in \textcolor{red}{red}), and 66 hyper-reduced boundary points (in \textcolor{blue}{blue}).  The relative $L^2$ error is $.0071$.}
 \label{fig:pulse2d}
 \end{figure}
 
@@ -1205,9 +1207,9 @@ A 25-mode reduced order solution is shown in Figures~\ref{fig:pulse2d}.  The hyp
 %\end{figure}
 
 
-\section{Conclusion}  We have presented a methodology for constructing projection-based reduced order models for nonlinear conservation laws from a reduced basis, modified Galerkin projection, and tailored hyper-reduction techniques.  The main novelty of these new models is the approximation of the nonlinear convective term, which combines a ``flux differencing'' approach with a hyper-reduced approximation of the differentiation matrix.  
+\section{Conclusion}  We have presented a methodology for constructing projection-based reduced order models for nonlinear conservation laws by combining a reduced basis, a modified Galerkin projection, and tailored hyper-reduction techniques.  The main novelty of these new reduced models is the approximation of the nonlinear convective term, which combines a ``flux differencing'' approach with an appropriate hyper-reduced approximation of the differentiation matrix.  
 
-Future work will aim to address computational costs associated with entropy stable reduced models.  Unlike standard hyper-reduction techniques, the number of nonlinear evaluations necessary scales with $O(N_s^2)$ rather than $O(N_s)$, where $N_s$ is the number of hyper-reduced sampling points.  This discrepancy is due to the fact that the hyper-reduction presented here approximates a nonlinear matrix, rather than a nonlinear vector.  These costs can be reduced by combining domain decomposition \cite{lucia2003reduced} and a discontinuous Galerkin-type discretization \cite{chan2017discretely} to increase the sparsity of the resulting hyper-reduced matrices.  We will also investigate implicit time-stepping for entropy stable reduced models, as the additional costs associated with the spatial formulation may be offset by the smaller matrix systems which must be solved in the linearization process.
+Future work will aim to address computational costs associated with entropy stable reduced models.  Unlike standard hyper-reduction techniques, the number of nonlinear evaluations necessary scales with $O(N_s^2)$ rather than $O(N_s)$, where $N_s$ is the number of hyper-reduced sampling points.  This discrepancy is due to the fact that the hyper-reduction presented here approximates a nonlinear matrix, rather than a nonlinear vector.  These costs can be reduced by combining domain decomposition \cite{lucia2003reduced} and a discontinuous Galerkin-type discretization \cite{chan2017discretely} to produce multi-domain reduced order models.  Suppose there are $k = 1,\ldots, K$ subdomains.  Then, this sort of multi-domain model is expected to reduce costs if the sum of the squares of the number of subdomain sampling points $\sum_k (N_s^k)^2$ is significantly smaller than the global number of sampling points $N_s^2$.  Future work will also investigate implicit time-stepping for entropy stable reduced models, as additional costs associated with the spatial formulation may be offset by the reduction in cost for solving smaller matrix systems during the linearization process.
 
 \section{Acknowledgments}
 
