@@ -82,12 +82,12 @@
 \begin{frontmatter}
 \title{Entropy stable reduced order modeling of nonlinear conservation laws}
 
-\author[rice]{Jesse Chan\corref{cor1}}
-\ead{Jesse.Chan@caam.rice.edu}
+\author[rice]{Jesse Chan}
+\ead{Jesse.Chan@rice.edu}
 \address[rice]{Department of Computational and Applied Mathematics, Rice University, 6100 Main St, Houston, TX, 77005}
 
 \begin{abstract}
-Reduced order models of nonlinear conservation laws in fluid dynamics do not typically inherit stability properties of the full order model. We introduced projection-based reduced models of nonlinear conservation laws based on flux differencing which retain accuracy while inheriting a semi-discrete entropy inequality independently of the choice of basis, parameters, and discretization resolution. 
+Reduced order models of nonlinear conservation laws in fluid dynamics do not typically inherit stability properties of the full order model. We introduce projection-based reduced models of nonlinear conservation laws which are globally conservative and inherit a semi-discrete entropy inequality independently of the choice of basis and choice of parameters.  
 \end{abstract}
 \end{frontmatter}
 
@@ -99,7 +99,7 @@ Reduced order models of nonlinear conservation laws in fluid dynamics do not typ
 
 Projection-based model reduction constructs low-dimensional surrogate models for many-query scenarios (e.g., simulations over multiple parameter values) that can be evaluated over a range of parameters at a low \textit{online} cost in exchange for a more expensive \textit{offline} pre-computation step \cite{benner2015survey}.  The development of reduced order models (ROMs) is relatively mature for several classes of problems (e.g., linear time-invariant systems, coercive elliptic PDEs).  However, the construction of robust and stable ROMs for transient and convection-dominated problems remains an active area of research \cite{cagniart2019model}.  
 
-For certain PDEs, ``structure-preserving'' ROMs provide robustness and stability by reproducing energetic properties of the full system at the discrete level.  ROMs which retain either Lagrangian \cite{lall2003structure, carlberg2015preserving} or Hamiltonian structure \cite{benner2012interpolation, gugercin2012structure, peng2016symplectic, chaturantabut2016structure, gong2017structure, afkham2017structure, afkham2018structure} have been constructed by combining Galerkin projection with an appropriate formulation of the full order model, and similar energy-conserving ROMs have been constructed for the incompressible Navier-Stokes equations \cite{farhat2014dimensional, farhat2015structure}.  The construction of structure-preserving ROMs to nonlinear conservation laws in fluid flow, however, remains an open problem.  For example, Galerkin projection yields ROMs which become unstable as the number of reduced basis functions (modes) is increased \cite{bui2007goal, carlberg2013gnat}.  As a result, stabilized discretizations are often employed.  Petrov-Galerkin ROMs, which use an alternative test basis \cite{maday2002blackbox, rozza2007stability, bui2007goal, serre2012reliable, amsallem2012stabilization, rozza2013reduced, ballarin2015supremizer, carlberg2017galerkin}, are a popular alternative, as are additional residual-based stabilization or dissipation terms \cite{wang2012proper, kalashnikova2014stabilization, caiazzo2014numerical, balajewicz2016minimal}.  Such models improve robustness in practice, though they do not provide a theoretical foundation for stability.  
+For certain PDEs, ``structure-preserving'' ROMs provide robustness and stability by reproducing energetic properties of the full system at the discrete level.  ROMs which retain either Lagrangian \cite{lall2003structure, carlberg2015preserving} or Hamiltonian structure \cite{benner2012interpolation, gugercin2012structure, peng2016symplectic, chaturantabut2016structure, gong2017structure, afkham2017structure, afkham2018structure} have been constructed by combining Galerkin projection with an appropriate formulation of the full order model, and similar energy-conserving ROMs have been constructed for the incompressible Navier-Stokes equations \cite{farhat2014dimensional, farhat2015structure}.  The construction of structure-preserving ROMs for nonlinear conservation laws in fluid flow, however, remains an open problem.  For example, Galerkin projection yields ROMs which become unstable as the number of reduced basis functions (modes) is increased \cite{bui2007goal, carlberg2013gnat}.  As a result, stabilized discretizations are often employed.  Petrov-Galerkin ROMs, which use an alternative test basis \cite{maday2002blackbox, rozza2007stability, bui2007goal, serre2012reliable, amsallem2012stabilization, rozza2013reduced, ballarin2015supremizer, carlberg2017galerkin}, are a popular alternative, as are additional residual-based stabilization or dissipation terms \cite{wang2012proper, kalashnikova2014stabilization, caiazzo2014numerical, balajewicz2016minimal}.  Such models improve robustness in practice, though they do not provide a theoretical foundation for stability.  
 
 The construction of stable ROMs for the compressible Navier-Stokes equations is further complicated by their non-trivial structure.  Thus, practitioners often develop structure-preserving entropy stable ROMs for simplifications of the underlying PDE (such as the time-dependent \textit{linearized} compressible Navier-Stokes equations \cite{barone2009stable, kalashnikova2010stability, amsallem2012stabilization, kalashnikova2014construction}) and extrapolate such models to the full nonlinear equations.  A promising alternative is to enforce physical conditions such as such as kinetic energy preservation, which are empirically related to stability \cite{maboudi2018conservative}.  These methods significantly improve the robustness of numerical methods in practice, and can guarantee a discrete entropy inequality for systems of nonlinear conservation laws which yield stable split formulations \cite{fisher2013discretely}.  
 
@@ -871,6 +871,12 @@ which are used to construct an entropy conservative reduced order model in $d$ d
 \end{gather}
 Here, $\bm{f}^i_S\LRp{\bm{u}_L,\bm{u}_R}$ is the entropy conservative flux in the $i$th coordinate direction and $\bm{M}_N$ is the mass matrix as defined in (\ref{eq:hrrom}).  We can show that (\ref{eq:hrromd}) is entropy conservative by repeating steps in the proof of Theorem~\ref{thm:hrromes} for each coordinate direction.  
 
+The diffusive matrices $\bm{K}$ can be similarly extended to higher dimensions via Kronecker products
+\[
+\bm{K} = \bm{K}_{\rm 1D}\otimes \bm{I} + \bm{I}\otimes \bm{K}_{\rm 1D}.  
+\]
+An hyper-reduction of $\bm{K}$ analogous to the one described in Section~\ref{sec:diss} can be used to guarantee a discrete dissipation of entropy.  
+
 \subsection{Non-periodic domains in higher dimensions}
 
 Non-periodic domains and boundary conditions can be treated by combining hybridized SBP operators and a weak imposition of boundary conditions as was done in the 1D hyper-reduced formulation (\ref{eq:esbchr}).  Without loss of generality, we assume a square domain with $4$ boundary faces, each of which is discretized by $K_{\rm 1D}$ intervals of size $\Delta x$.  We assume we are given values of the outward normal vector $\bm{n} = \LRs{n_1, \ldots, n_d}^T$ on the domain boundary.  We enforce non-periodic boundary conditions through introducing numerical fluxes at boundary points.  However, the number of boundary points scales with $K_{\rm 1D}$.  To ensure that the cost of the reduced order model scales with the number of modes $N$ rather than the dimension of the full order model, we approximate boundary terms by a hyper-reduced weighted combination of sampled boundary points.  
@@ -926,7 +932,7 @@ where we have used that $\bm{V}^i_t\bm{P}^i_t\bm{1} = \bm{1}$.  Thus, to ensure 
 \LRp{\bm{V}^i_{bt}}\LRp{\mathcal{I}_b,:}^T{\rm diag}\LRp{\bm{n}^i}\bm{w}_b = \LRp{\bm{V}^i_t}^T\bm{Q}\bm{1}, \qquad i = 1,\ldots, d.
 \label{eq:sbpconstraints}
 \end{equation}
-The $dN$ constraints encoded in (\ref{eq:sbpconstraints}) can be interpreted as enforcing a discrete version of the fundamental theorem of calculus relating integrals of function derivatives to boundary integrals of function values.  These constraints on the boundary weights $\bm{w}_b$ can be enforced, for example, by augmenting the non-negative least squares solve in Algorithm~\ref{alg:hr} with equality constraints.  We take an alternative approach in this paper, and incorporate the constraints (\ref{eq:sbpconstraints}) directly into a hyper-reduction approach based on the solution of a linear programming problem using the dual simplex method.  We refer the reader to \cite{yano2019lp} for details.  %\note{Expand}
+The $dN$ constraints encoded in (\ref{eq:sbpconstraints}) can be interpreted as enforcing a discrete version of the fundamental theorem of calculus relating integrals of function derivatives to boundary integrals of function values.  We enforce these constraints on the boundary weights $\bm{w}_b$ (\ref{eq:sbpconstraints}) directly into a hyper-reduction approach based on the solution of a linear programming problem using the dual simplex method, and refer the reader to \cite{yano2019lp} for details.  We note that it may also be possible to enforce these constraints, for example, by augmenting the non-negative least squares solve in Algorithm~\ref{alg:hr} with equality constraints, and will explore these directions in future work.  
 
 %\subsection{Entropy dissipation}
 %\note{Discuss how to produce entropy dissipative hyper-reduced operators in 2D}.
@@ -1112,9 +1118,43 @@ We now compare the evolution of errors and entropy, and examine the effect of hy
 
 %\subsection{2D periodic Euler equations}
 
-\subsection{2D Euler equations}% with wall boundary conditions}
+\subsection{2D Euler equations}
 
-We now study the Euler equations in 2D with wall boundary conditions.  It was shown in \cite{svard2014entropy, chen2017entropy} that wall boundary conditions can be imposed using a ``mirror state''.  Let $\bm{n}$ denote the outward normal at a wall, and let $\bm{u}_{\bm{n}} = un_x + vn_y$ and $\bm{u}_{\bm{n}^\perp} = un_y - vn_x$ denote the normal and tangential components of the velocity at the wall.  We use a boundary numerical flux $\bm{f}^* = \bm{f}_S\LRp{\bm{u}^+,\bm{u}}$ augmented with local Lax-Friedrichs penalization, where the exterior state $\bm{u}^+$ is defined by
+We now study the Euler equations in 2D.  We begin by considering periodic boundary conditions on the domain $[-1,1]^2$ and a smoothed version of the Kelvin-Helmholtz instability.  The initial condition is adapted from \cite{munz1989numerical, maboudi2018conservative}
+\begin{gather*}
+%a = .1; sig = .1; %5*sqrt(2)*1e-3;
+%ff = 1./(1+exp(-(y+.5)./(sig.^2)))-1./(1+exp(-(y-.5)./(sig.^2)));
+\rho = 1 + \frac{1}{1+e^{-(y+1/2)/\sigma^2}} - \frac{1}{1+e^{-(y-1/2)/\sigma^2}}, \qquad
+u =  \frac{1}{1+e^{-(y+1/2)/\sigma^2}} - \frac{1}{1+e^{-(y-1/2)/\sigma^2}} - \frac{1}{2}, \\
+v = \alpha\sin(2\pi x) \LRp{e^{-(y+1/2)/\sigma^2} - e^{-(y-1/2)/\sigma^2}},\qquad
+p = 2.5
+\end{gather*}
+where $\alpha = .1$ and $\sigma = .1$.  
+
+\begin{figure}
+\centering
+\includegraphics[width=.4\textwidth]{figs/khsvd.png}
+\caption{Decay of singular values for the 2D smoothed Kelvin-Helmholtz instability.}
+\label{fig:khsvd}
+\end{figure}
+We utilize a full order model with $200\times 200$ grid ($40000$ cells), which is run until time $T = 3$.  We generate 301 solution snapshots with which to compute POD modes.  The decay of the singular values of the solution snapshots with and without enrichment by the entropy variables is shown in Figure~\ref{fig:khsvd}.  We observe that, compared to the 1D case, the singular values decay more slowly when enriched with snapshots of the entropy variables.  However, as in 1D, the differences between the singular values with and without entropy variable enrichment are significantly larger for lower energy modes as compared to higher energy modes.  
+
+%\note{Plot singular value decay, etc}
+\begin{figure}
+\centering
+\subfloat[Full order model]{\includegraphics[width=.32\textwidth]{figs/khfom.png}}
+\hspace{.175em}
+\subfloat[Reduced order model, 75 modes]{\includegraphics[width=.32\textwidth]{figs/khrom75.png}}
+\hspace{.1em}
+\subfloat[Hyper-reduced points]{\includegraphics[width=.32\textwidth]{figs/khrom75_hrpts.png}}
+\caption{Comparison of results from the full and reduced order models (75 modes) of the 2D smoothed Kelvin-Helmholtz instability.}
+\label{fig:khrom}
+\end{figure}
+The reduced order model utilizes $75$ POD modes to achieves a $1.02\%$ relative $L^2$ error.  We note that the difference between the 75th singular value of the snapshot matrix with entropy variable enrichment is only about $6\%$ larger than the 75th singular value without entropy variable enrichment.  This suggests that entropy variable enrichment does not significantly impact the accuracy of the 75-mode POD approximation.  
+
+Since little difference is observed between the hyper-reducted treatments of viscosity, the naive treatment (\ref{eq:visc3}) is used.  No additional stabilizing points were necessary for this setting, as the condition numbers of the hyper-reduced $x$ and $y$ test mass matrices were both $O(1)$.  Figure~\ref{fig:khrom} compares results for the full and reduced order models, and shows the hyper-reduced points selected by the greedy empirical cubature algorithm.  
+
+We now consider a 2D domain with wall boundary conditions.  It was shown in \cite{svard2014entropy, chen2017entropy} that wall boundary conditions can be imposed using a ``mirror state''.  Let $\bm{n}$ denote the outward normal at a wall, and let $\bm{u}_{\bm{n}} = un_x + vn_y$ and $\bm{u}_{\bm{n}^\perp} = un_y - vn_x$ denote the normal and tangential components of the velocity at the wall.  We use a boundary numerical flux $\bm{f}^* = \bm{f}_S\LRp{\bm{u}^+,\bm{u}}$ augmented with local Lax-Friedrichs penalization, where the exterior state $\bm{u}^+$ is defined by
 \[
 \rho^+ = \rho, \qquad \bm{u}_{\bm{n}}^+ = -\bm{u}_{\bm{n}}, \qquad \bm{u}_{\bm{n}^\perp}^+ = \bm{u}_{\bm{n}^\perp}, \qquad p^+ = p.  
 \]
@@ -1122,9 +1162,16 @@ We set a Gaussian pulse initial condition
 \[
 \rho = 1 + e^{-50\LRp{x^2+(y+1/2)^2}}, \qquad \bm{u} = \bm{0}, \qquad p = \rho^{\gamma}.  
 \]
-The full order model is computed on a $150\times 150$ grid with viscosity coefficient $\epsilon = 1e-3$.  The POD basis is computed from 75 solution snapshots with a CFL of $.5$.  The reduced order solutions are shown in Figures~\ref{fig:pulse2d}.  Since little difference is observed between the hyper-reducted treatments of viscosity, the naive treatment (\ref{eq:visc3}) is used.  The hyper-reduction algorithm adds one single stabilizing point to reduce the condition number of the $x$-coordinate test mass matrix from $O(10^{8})$ to approximately $5.71$.  
+The full order model is computed on a $150\times 150$ grid with viscosity coefficient $\epsilon = 1e-3$.  The POD basis is computed from 75 solution snapshots with a CFL of $.5$.  Figure~\ref{fig:pulse2dsvd} shows the decay of the singular values with and without entropy variable enrichment.  As before, we observe that the singular values decay more slowly under entropy variable enrichment, but that the difference in the singular values with and without enrichment is more evident for low energy modes.  The 25th singular value with entropy variable enrichment is less than $5\%$ larger than the 25th singular value without entropy variable enrichment, suggesting that entropy variable enrichment does not significantly affect the accuracy of the 25-mode POD approximation.  
 
-The solution does not form shock discontinuities, and is chosen instead to test the imposition of boundary conditions.  We note that, due to the nature of the linear programming software used to compute the boundary weights, the constraints (\ref{eq:sbpconstraints}) on the boundary weights $\bm{w}_b$ are imposed to a tolerance of $5e-8$.  Despite this inexact enforcement of constraints, the computed entropy RHS remained small, oscillating around $10^{-11}$ in the absence of entropy dissipative terms.  
+\begin{figure}
+\centering
+\includegraphics[width=.4\textwidth]{figs/pulse2dsvd.png}
+\caption{Decay of singular values for the 2D Gaussian pulse problem.}
+\label{fig:pulse2dsvd}
+\end{figure}
+
+A 25-mode reduced order solution is shown in Figures~\ref{fig:pulse2d}.  The hyper-reduction algorithm adds one single stabilizing point to reduce the condition number of the $x$-coordinate test mass matrix from $O(10^{8})$ to approximately $5.71$.  The solution does not form shock discontinuities, and is chosen instead to test the imposition of boundary conditions.  We note that, due to the nature of the linear programming software used to compute the boundary weights, the constraints (\ref{eq:sbpconstraints}) on the boundary weights $\bm{w}_b$ are imposed to a tolerance of $5e-8$.  Despite this inexact enforcement of constraints, the computed entropy RHS remained small, oscillating around $10^{-11}$ in the absence of entropy dissipative terms.  
 
 \begin{figure}
 \centering
@@ -1143,7 +1190,7 @@ The solution does not form shock discontinuities, and is chosen instead to test 
 \label{fig:pulse2d}
 \end{figure}
 
-\note{We conclude by examining a 2D problem with a non-trivial shock structure.  }
+%\note{We conclude by examining a 2D problem with a non-trivial shock structure.  }
 
 %Figures~\ref{fig:pulse2d_novisc} also shows reduced order solutions for 25 modes and $\epsilon = 0$.  The number of hyper-reduced points does not change significantly; however, the results are noticably worse.  
 %\begin{figure}
