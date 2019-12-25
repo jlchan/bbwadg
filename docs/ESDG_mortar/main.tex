@@ -95,7 +95,7 @@ citecolor=blue
 \begin{abstract}
 High order entropy stable discontinuous Galerkin (DG) methods for nonlinear conservation laws reproduce a discrete entropy inequality by combining entropy conservative finite volume fluxes with summation-by-parts (SBP) discretization matrices.  On tensor product (quadrilateral and hexahedral) elements, SBP matrices are typically constructed by collocating at Lobatto quadrature points.  Recent work has extended the construction of entropy stable DG schemes to collocation at more accurate Gauss quadrature points \cite{chan2018efficient}.  
 
-In this work, we extend entropy stable Gauss collocation schemes to non-conforming meshes.  Entropy stable DG schemes require computing entropy conservative numerical fluxes between volume and surface quadrature nodes.  On conforming tensor product meshes where volume and surface nodes are aligned, flux evaluations are required only between ``lines'' of nodes.  However, on non-conforming meshes, volume and surface nodes are no longer aligned, resulting in a larger number of flux evaluations.  We reduce this expense by introducing an entropy stable mortar-based treatment of non-conforming interfaces via a face-local correction term, and provide truncation error estimates for the resulting discretizations.  Numerical experiments confirm the stability and accuracy of this approach, and we conclude by discussing an extension of this mortar treatment of non-conforming interfaces to general elements and arbitrary quadrature rules \cite{chan2017discretely}.  
+In this work, we extend entropy stable Gauss collocation schemes to non-conforming meshes.  Entropy stable DG schemes require computing entropy conservative numerical fluxes between volume and surface quadrature nodes.  On conforming tensor product meshes where volume and surface nodes are aligned, flux evaluations are required only between ``lines'' of nodes.  However, on non-conforming meshes, volume and surface nodes are no longer aligned, resulting in a larger number of flux evaluations.  We reduce this expense by introducing an entropy stable mortar-based treatment of non-conforming interfaces via a face-local correction term, and provide truncation error estimates for the resulting discretizations.  Numerical experiments confirm the stability and accuracy of this approach, and we conclude by discussing how to extend mortar treatments of non-conforming interfaces to general elements and arbitrary quadrature rules \cite{chan2017discretely}.  
 \end{abstract}
 
 
@@ -141,9 +141,9 @@ where $F_i$ denotes the $i$th scalar entropy flux function, $\psi_i(\bm{u}) = \b
 
 In this section, we summarize the work of \cite{chan2018efficient} on the construction of entropy stable collocation DG methods based on generalized summation by parts (GSBP) operators.  These constructions are applicable to collocation schemes based on either Lobatto and Gauss nodes.  
 
-\subsection{Entropy conservative schemes in 1D}
+\subsection{Hybridized SBP operators in 1D}
 
-We begin by introducing collocation discretization matrices on the reference interval $[-1,1]$.  We assume the solution is collocated at $(N+1)$ quadrature points $x_i$ with associated quadrature weights $w_i$, and consider primarily Lobatto or Gauss quadrature points.  The collocation assumption is equivalent to approximating the solution using a degree $N$ Lagrange basis $\ell_j(x)$ defined on the $(N+1)$ quadrature points.  
+We begin by introducing collocation discretization matrices on the reference interval $[-1,1]$.  We assume the solution is collocated at $(N+1)$ quadrature points $x_i$ with associated quadrature weights $w_i$, and consider primarily Lobatto or Gauss quadrature points.  The collocation assumption is equivalent to approximating the solution using a degree $N$ Lagrange basis $\ell_j(x)$ at the $(N+1)$ quadrature points.  
 
 We define mass and integrated differentiation matrices $\bm{M}, \bm{Q}$
 \[
@@ -174,111 +174,42 @@ The GSBP property holds for both Lobatto and Gauss nodes, and switching between 
 \end{bmatrix}.
 \]
 
-It is possible to construct energy stable discretizations of linear hyperbolic systems using GSBP operators based on Gauss nodes \cite{fernandez2014generalized}.  However, for nonlinear conservation laws, the presence of the dense $\bm{E}$ matrix in the GSBP property (\ref{eq:gsbp}) complicates the imposition of boundary conditions and computation of inter-element numerical fluxes \cite{crean2018entropy, chan2017discretely, chan2018efficient}.  
-
-We can avoid this issue by introducing ``hybridized'' (or decoupled) SBP operators \cite{chan2017discretely, chenreview}, which are defined as the block matrix $\bm{Q}_h$ \cite{chan2019skew}
+It is possible to construct energy stable high order discretizations of linear hyperbolic systems using GSBP operators based on Gauss nodes \cite{fernandez2014generalized}.  However, for nonlinear conservation laws, the presence of the dense $\bm{E}$ matrix in the GSBP property (\ref{eq:gsbp}) complicates the imposition of boundary conditions and computation of inter-element numerical fluxes \cite{crean2018entropy, chan2017discretely, chan2018efficient}.  This can be avoided by using ``hybridized'' (or decoupled) SBP operators \cite{chan2017discretely, chenreview, chan2019skew}, which are defined as the block matrix 
 \[
 \bm{Q}_h = \frac{1}{2}\begin{bmatrix}
 \bm{Q}-\bm{Q}^T & \bm{E}^T\bm{B}\\
 -\bm{B}\bm{E} & \bm{B}
 \end{bmatrix}.
 \]
-Note that the hybridized SBP operator satisfies a block form of the SBP property
+The hybridized SBP operator satisfies a block form of the SBP property
 \begin{equation}
 \bm{Q}_h + \bm{Q}_h^T = \bm{B}_h, \qquad \bm{B}_h =  \begin{bmatrix}
 \bm{0} & \\
 & \bm{B}\end{bmatrix}.
 \label{eq:hsbp}
 \end{equation}
-where $\bm{E}$ does not appear in the block boundary matrix on the right hand side.  Here, we have used $\bm{0}$ to denote a matrix or vector of zeros, where the size is inferred from context.  We will adopt a similar convention for the vector of ones $\bm{1}$.  
-
-The matrix $\bm{Q}_h$ also satisfies
-\[
+where $\bm{E}$ does not appear in the block boundary matrix on the right hand side.  Here, we have used $\bm{0}, \bm{1}$ to denote a matrix or vector of zeros or ones, where the size is inferred from context.  Note that the matrix $\bm{Q}_h$ also satisfies
+\begin{equation}
 \bm{Q}_h\bm{1} = 
 \frac{1}{2}\begin{bmatrix}
 \bm{Q}\bm{1}-\bm{Q}^T\bm{1} + \bm{E}^T\bm{B}\bm{1}\\
 -\bm{B}\bm{E}\bm{1} - \bm{B}\bm{1}
 \end{bmatrix}= 
 \frac{1}{2}\begin{bmatrix}
--\bm{Q}^T\bm{1} + \bm{E}^T\bm{B}\bm{1}\\
+\LRp{-\bm{Q}^T + \bm{E}^T\bm{B}}\bm{1}\\
 \bm{0}
-\end{bmatrix}
-\]
-where we have used that $\bm{E}\bm{1} = \bm{1}$ (since $\bm{E}$ is a high order accurate boundary interpolation matrix) and $\bm{Q}\bm{1} = \bm{0}$ (since $\bm{Q}$ is a differentiation matrix).  Combining the GSBP property $-\bm{Q}^T + \bm{E}^T\bm{B}\bm{E} = \bm{Q}$ and $\bm{E}\bm{1} = \bm{1}$ then yields that 
-\begin{equation}
-\bm{Q}_h\bm{1} = 
-\frac{1}{2}\begin{bmatrix}
--\bm{Q}^T\bm{1} + \bm{E}^T\bm{B}\bm{1}\\
-\bm{0}
-\end{bmatrix} = 
+\end{bmatrix}=
 \frac{1}{2}\begin{bmatrix}
 \bm{Q}\bm{1}\\
 \bm{0}
-\end{bmatrix} 
-= \frac{1}{2}\begin{bmatrix}
-\bm{0}\\
-\bm{0}
-\end{bmatrix} = \bm{0}.
+\end{bmatrix} = \bm{0}
 \label{eq:Qh1}
 \end{equation}
+where we have used that $\bm{E}\bm{1} = \bm{1}$ (since $\bm{E}$ is a high order accurate boundary interpolation matrix), $\bm{Q}\bm{1} = \bm{0}$ (since $\bm{Q}$ is a differentiation matrix), and the GSBP property $-\bm{Q}^T + \bm{E}^T\bm{B}\bm{E} = \bm{Q}$
 
-The aforementioned matrices can now be used to construct high order accurate entropy stable and entropy conservative schemes.  We first introduce an entropy conservative numerical flux \cite{tadmor1987numerical}.  Let $\bm{u}_L, \bm{u}_R$ denote left and right states in the conservative variables.  Then, an entropy conservative numerical flux is a vector-valued function $\bm{f}_S$ which satisfies the following three properties
-\begin{gather*}
-\bm{f}_S\LRp{\bm{u},\bm{u}} = \bm{f}(\bm{u}), \qquad \text{(consistency)}\\
-\bm{f}_S\LRp{\bm{u}_L,\bm{u}_R} = \bm{f}_S(\bm{u}_R,\bm{u}_L), \qquad \text{(symmetry)}\\
-\LRp{\bm{v}_L-\bm{v}_R}^T\bm{f}_S\LRp{\bm{u}_L,\bm{u}_R} = \psi(\bm{u}_L) - \psi(\bm{u}_R), \qquad \text{(conservation)}.
-\end{gather*}
-Here, $\bm{v}_L, \bm{v}_R$ are the entropy variables evaluated at $\bm{u}_L, \bm{u}_R$, and $\psi$ is the entropy potential which appears in (\ref{eq:weakentropyineq}).  Then, an entropy conservative scheme on the reference interval is given as
-\begin{gather}
-\bm{M}\td{\bm{u}_h}{t} + \begin{bmatrix} \bm{I} \\ \bm{E} \end{bmatrix}^T
-\LRp{2\bm{Q}_h \circ \bm{F}}\bm{1} + \bm{E}^T\bm{B}\LRp{\bm{f}^*-\bm{f}(\tilde{\bm{u}}_f)} = 0 \label{eq:esdg1D}\\ 
-\tilde{\bm{u}} = \begin{bmatrix}
-\bm{u}_h\\
-\tilde{\bm{u}}_f
-\end{bmatrix}, \qquad \tilde{\bm{u}}_f = \bm{u}\LRp{\bm{E}\bm{v}(\bm{u}_h)}, \qquad \bm{f}^* = \bm{f}_S\LRp{\tilde{\bm{u}}_f^+,\tilde{\bm{u}}_f}.
-\nonumber
-\end{gather}
-Here, $\tilde{\bm{u}}_f^+$ denotes some exterior state which can be used to enforce boundary conditions or coupling between different elements, and $\circ$ denotes the matrix Hadamard product.  
+\subsection{Hybridized SBP operators in higher dimensions}
 
-\begin{theorem}
-Assuming continuity in time, the formulation (\ref{eq:esdg1D}) is entropy conservative in the sense that
-\[
-\bm{1}^T\bm{M}\td{S(\bm{u}_h)}{t} + \bm{1}^T\bm{B}\LRp{\bm{v}_f^T\bm{f}^* - \psi(\tilde{\bm{u}}_f)} = 0, \qquad \bm{v}_f =\bm{E}\bm{v}(\bm{u}_h).
-\]
-\end{theorem}
-\begin{proof}
-The proof uses similar techniques as proofs in other papers \cite{chen2017entropy, crean2018entropy, chan2017discretely, chan2019skew}, and we repeat it for completeness.  We begin by testing (\ref{eq:esdg1D}) with the vector of entropy variables evaluated at nodal points $\bm{v}(\bm{u}_h)$.  We apply the chain rule in time and use that $\bm{M}$ is diagonal to show that 
-\[
-\bm{v}(\bm{u}_h)^T\bm{M}\td{\bm{u}}{t} = \bm{1}^T\bm{M}\LRp{\bm{v}(\bm{u}_h)\circ \td{\bm{u}_h}{t}} =  \bm{1}^T\bm{M}\td{S(\bm{u}_h)}{t}.
-\]
-For the volume term, we use the SBP property to arrive at
-\begin{align*}
-\bm{v}(\bm{u}_h)^T\begin{bmatrix} \bm{I} \\ \bm{E} \end{bmatrix}^T\LRp{2\bm{Q}_h \circ \bm{F}}\bm{1} &= \tilde{\bm{v}}^T\LRp{\LRp{\bm{Q}_h-\bm{Q}_h^T} \circ \bm{F}}\bm{1}  + \LRp{\bm{E}\bm{v}(\bm{u}_h)}^T\LRp{\bm{B}_h \circ\bm{F}}\bm{1},
-\end{align*}
-where we have introduced $\tilde{\bm{v}} = \LRp{\begin{bmatrix} \bm{I} \\ \bm{E} \end{bmatrix}\bm{v}(\bm{u}_h)}$.  
-Note that, by the consistency of the entropy conservative flux $\bm{f}_S$, the diagonal of $\bm{F}$ is the vector $\bm{f}(\tilde{\bm{u}}_f)$.  Using that $\bm{B}$ is diagonal, the latter term reduces to 
-\[
-\LRp{\bm{E}\bm{v}(\bm{u}_h)}^T\LRp{\bm{B}_h \circ\bm{F}}\bm{1} = \bm{v}_f^T \bm{B}\bm{f}(\tilde{\bm{u}}_f) =  \bm{1}^T \bm{B}\LRp{\bm{v}_f^T\bm{f}(\tilde{\bm{u}}_f)}.
-\]
-The final part of the proof uses that 
-\begin{align*}
-\tilde{\bm{v}}^T\LRp{\LRp{\bm{Q}_h-\bm{Q}_h^T} \circ \bm{F}}\bm{1} &= \sum_j {\tilde{\bm{v}}}_j \LRp{\bm{Q}_h-\bm{Q}_h^T}_{ij} \bm{F}_{ij}\\
-&= \sum_j \LRp{\bm{Q}_h}_{ij} \LRp{{\tilde{\bm{v}}}_i-{\tilde{\bm{v}}}_j}^T\bm{f}_{S}\LRp{\tilde{\bm{u}}_i,\tilde{\bm{u}}_j}\\
-&= \sum_j \LRp{\bm{Q}_h}_{ij} \LRp{\psi(\tilde{\bm{u}}_i)-\psi(\tilde{\bm{u}}_j)} = \tilde{\bm{u}}^T\bm{Q}_h\bm{1}- \bm{1}^T\bm{Q}_h\tilde{\bm{u}}
-\end{align*}
-The term $\bm{Q}_h\bm{1} = \bm{0}$ by (\ref{eq:Qh1}).  The proof is completed by applying the SBP property (\ref{eq:hsbp}) to the remaining term, which reduces to $-\bm{1}^T\bm{B}_h\tilde{\bm{u}}=-\bm{1}^T\bm{B}\tilde{\bm{u}_f}$.
-\qed\end{proof}
-
-Note that the proof of entropy conservation for (\ref{eq:esdg1D}) relies mainly on the fact that $\bm{Q}_h$ is conservative (e.g., exact for constants) (\ref{eq:Qh1}) and that $\bm{Q}_h$ satisfies the SBP property (\ref{eq:hsbp}).  Extensions to the multi-element, multi-dimensional, and non-conforming setting will utilize the same properties.  
-
-%\note{Maybe add proof here and show how rest of proofs just rely on SBP and $\bm{Q}_h\bm{1} = \bm{0}$?}.  For proofs of high order accuracy and entropy conservation, we refer the reader to \cite{chan2018efficient}.  
-
-%The matrix $\bm{F}$ is formed by computing ${\bm{F}}_{ij} = \bm{f}_S\LRp{\tilde{\bm{u}}_i,\tilde{\bm{u}}_j}$ on the fly.  Each entry requires evaluating the entropy conservative numerical flux $\bm{f}_S$, resulting in a large number of floating point operations \cite{wintermeyer2018entropy}.  However, due to properties of the Hadamard product in (\ref{eq:esdg1D}), flux evaluations are only necessary between pairs of nodes corresponding to non-zero entries of $\bm{Q}_h$.  We will revisit this point later in the construction of entropy stable schemes on non-conforming meshes.  
-
-
-\subsection{Entropy conservation formulations in higher dimensions}
-
-The formulation (\ref{eq:weakentropyineq}) can be extended to higher dimensions through a tensor product construction.  For simplicity, we illustrate this in 2D (the extension to 3D is straightforward).  Let $\bm{M}_{\rm 1D}, \bm{Q}_{\rm 1D}$ denote one-dimensional generalized SBP norm (mass) and differentiation matrices, and let $\bm{E}_{\rm 1D}$ denote the 1D face interpolation matrix.  We define multi-dimensional  mass and differentiation matrices in terms of Kronecker products  
+The formulation (\ref{eq:weakentropyineq}) can be extended to higher dimensions through a tensor product construction.  For simplicity, we illustrate this for 2D quadrilateral elements (the extension to 3D hexahedral elements is straightforward).  Let $\bm{M}_{\rm 1D}, \bm{Q}_{\rm 1D}$ denote one-dimensional generalized SBP norm (mass) and differentiation matrices, and let $\bm{E}_{\rm 1D}$ denote the 1D face interpolation matrix.  We define multi-dimensional  mass and differentiation matrices in terms of Kronecker products  
 \begin{equation}
 \hat{\bm{Q}}_1 = \bm{Q}_{\rm 1D} \otimes \bm{M}_{\rm 1D}, \qquad \hat{\bm{Q}}_2  = \bm{M}_{\rm 1D} \otimes \bm{Q}_{\rm 1D}, \qquad \hat{\bm{M}} = \bm{M}_{\rm 1D} \otimes  \bm{M}_{\rm 1D}.
 \label{eq:kron}
@@ -301,6 +232,8 @@ We also construct 2D face interpolation matrices from Kronecker products.  Let $
 \end{equation}
 where $\bm{I}_2$ is the $2\times 2$ identity matrix.  Recall that $\bm{M}_{\rm 1D}$ is the diagonal matrix of quadrature weights, so $\hat{\bm{B}}_i$ are diagonal.  
 
+The construction of operators in (\ref{eq:kron}) and (\ref{eq:EBdefs}) correspond to the use of tensor product points quadrature points and \emph{aligned} surface points.  For example, if Gauss points are used for volume quadrature, we assume that Gauss points are also used for surface quadrature.  This ensures that the operators $\hat{\bm{Q}}_i, \hat{\bm{B}}_i, \bm{E}$ satisfy the analogous higher dimensional generalized SBP property $\hat{\bm{Q}}_i = \bm{E}^T\hat{\bm{B}}_i\bm{E} - \hat{\bm{Q}}_i^T$.
+
 The 2D differentiation and interpolation matrices $\hat{\bm{Q}}_i, \bm{E}$ can now be used to construct 2D hybridized SBP operators.  Let $\hat{\bm{Q}}_{i,h}$ denote the hybridized SBP operator for the $i$th coordinate on the reference element, where $\hat{\bm{Q}}_{i,h}$ is defined as
 \begin{align}
 \hat{\bm{Q}}_{i,h} = \frac{1}{2}\begin{bmatrix}
@@ -320,17 +253,19 @@ Let $\hat{\bm{Q}}_{i}$ be defined as in (\ref{eq:kron}) and let $\hat{\bm{Q}}_{i
 \end{bmatrix}, \qquad \hat{\bm{Q}}_{i,h}\bm{1} = \bm{0}.
 \end{align}
 \end{lemma}
-The SBP property follows by construction of $\hat{\bm{Q}}_{i,h}$.  The property $\hat{\bm{Q}}_{i,h}\bm{1} = \bm{0}$ is a consequence of the Kronecker product and the same arguments used to derive (\ref{eq:Qh1}).  The construction of 3D differentiation and interpolation matrices proceeds similarly, and the matrices satisfy the same properties as described in Lemma~\ref{lemma:hsbprefprops}.  
+The proof is contained in \cite{chan2018efficient}.  The SBP property follows from the construction of $\hat{\bm{Q}}_{i,h}$, and $\hat{\bm{Q}}_{i,h}\bm{1} = \bm{0}$ is a consequence of the Kronecker product and the same arguments used to derive (\ref{eq:Qh1}).  The construction of 3D differentiation and interpolation matrices proceeds similarly, and the matrices satisfy the same properties as described in Lemma~\ref{lemma:hsbprefprops}.  
 
-Then, a $d$-dimensional entropy conservative formulation on the reference element $[-1,1]^d$ is given as 
-\begin{gather}
-\hat{\bm{M}}\td{\bm{u}_h}{t} + \begin{bmatrix} \bm{I} \\ \bm{E} \end{bmatrix}^T
-\sum_{i=1}^d \LRp{2\hat{\bm{Q}}_{i,h} \circ \bm{F}_i}\bm{1} + \bm{E}^T\hat{\bm{B}}_i\LRp{\bm{f}_i^*-\bm{f}_i(\tilde{\bm{u}}_f)} = 0 \label{eq:esdgref}\\
-\LRp{\bm{F}_i}_{jk} = \bm{f}^i_S\LRp{\tilde{\bm{u}}_j,\tilde{\bm{u}}_k}
-\end{gather}
-where $\bm{f}^i_S$ is the numerical flux for the $i$th coordinate direction, and $\tilde{\bm{u}},\tilde{\bm{u}}_f$ are defined as in (\ref{eq:esdg1D}).  
+%Then, a $d$-dimensional entropy conservative formulation on the reference element $[-1,1]^d$ is given as 
+%\begin{gather}
+%\hat{\bm{M}}\td{\bm{u}_h}{t} + \begin{bmatrix} \bm{I} \\ \bm{E} \end{bmatrix}^T
+%\sum_{i=1}^d \LRp{2\hat{\bm{Q}}_{i,h} \circ \bm{F}_i}\bm{1} + \bm{E}^T\hat{\bm{B}}_i\LRp{\bm{f}_i^*-\bm{f}_i(\tilde{\bm{u}}_f)} = 0 \label{eq:esdgref}\\
+%\LRp{\bm{F}_i}_{jk} = \bm{f}^i_S\LRp{\tilde{\bm{u}}_j,\tilde{\bm{u}}_k}
+%\end{gather}
+%where $\bm{f}^i_S$ is the numerical flux for the $i$th coordinate direction, and $\tilde{\bm{u}},\tilde{\bm{u}}_f$ are defined as in (\ref{eq:esdg1D}).  The proof is given in \cite{chan2017discretely, chan2018efficient}, and follows by applying the proof of Theorem~\ref{thm:esdg1D} to each coordinate direction.
 
-Finally, we can extend this formulation to the multi-element case.  Suppose the domain $\Omega$ is decomposed into non-overlapping elements $D^k$ which are images of the reference mapping, such that $D^k$ is a differentiable mapping of the reference element $\hat{D} = [-1,1]^d$.  Let $\bm{x}_i$ denote the $i$th physical coordinate on $D^k$ and let $\hat{\bm{x}}_j$ denote the $j$th reference coordinate.  The mapping between reference and physical element induces scaled geometric terms 
+%Finally, we can extend this formulation to the multi-element case.  
+We now construct an entropy conservative formulation on an unstructured curved mesh.  
+Suppose the domain $\Omega$ is decomposed into non-overlapping elements $D^k$ which are images of the reference mapping, such that $D^k$ is a differentiable mapping of the reference element $\hat{D} = [-1,1]^d$.  Let $\bm{x}_i$ denote the $i$th physical coordinate on $D^k$ and let $\hat{\bm{x}}_j$ denote the $j$th reference coordinate.  The mapping between reference and physical element induces scaled geometric terms 
 \[
 G_{ij} = J\pd{\hat{\bm{x}}_j}{\bm{x}_i},
 \]
@@ -343,7 +278,6 @@ These geometric terms also relate the normal vectors on reference and physical e
 We assume that the mesh is watertight, such that the scaled normal vectors are equal and opposite across shared faces between two elements.  We also assume that the geometric terms ${G}_{ij}$ are constructed such that they are polynomials of degree less than or equal to $N$ and satisfy a discrete geometric conservation law (GCL)
 \begin{equation}
 \sum_{j=1}^d \pd{}{\hat{x}_j} G_{ij} = 0.
-%\sum_{j=1}^d \hat{\bm{Q}}_{j,h} \bm{G}_{ij} = \bm{0}.
 \label{eq:dgcl}
 \end{equation}
 The discrete GCL is satisfied automatically for isoparametric mappings in 2D, and there exist several techniques to enforce the satisfaction of a discrete GCL on various three-dimensional domains \cite{thomas1979geometric, kopriva2006metric, crean2018entropy, chan2018discretely, kozdon2018energy, kopriva2019free}.  
@@ -355,53 +289,113 @@ We can now assemble physical mass and differentiation matrices on $D^k$ from ref
 \end{equation}
 where $\bm{G}_{ij}$ denotes the vector of values of $G_{ij} = J\pd{\hat{\bm{x}}_j}{\bm{x}_i}$ at both volume and surface points.  Since $G_{ij}$ is assumed to be a polynomial of degree less than or equal to $N$, $\bm{G}_{ij}$ is constructed using polynomial interpolation.
 
-Because the reference matrices $\hat{\bm{Q}}_{j,h}$ satisfy the reference SBP properties (\ref{eq:hsbp}), one can show \cite{chan2018discretely} that the physical matrices $\bm{Q}_{i,h}$ satisfy analogous physical SBP properties.  
+Because the reference matrices $\hat{\bm{Q}}_{j,h}$ satisfy the reference SBP properties (\ref{eq:hsbp}), one can show \cite{chan2018discretely} that the physical matrices $\bm{Q}_{i,h}$ satisfy analogous SBP properties.  
 \begin{lemma}
 \label{lemma:Qhprops}
-Suppose the geometric terms $\bm{G}_{ij}$ satisfy the discrete GCL (\ref{eq:dgcl}), the normals are constructed via (\ref{eq:nJ_Gnhat}), and that $\bm{Q}_{i,h}$ is constructed using (\ref{eq:curvedQ}).  Then, %the conditions for Lemma~\ref{lemma:hsbprefprops} hold.  Then, %$\hat{\bm{Q}}_j$ satisfies the properties %a generalized SBP property% \note{finish here}
+Suppose the geometric terms $\bm{G}_{ij}$ satisfy the discrete GCL (\ref{eq:dgcl}), the normals are constructed via (\ref{eq:nJ_Gnhat}), and that $\bm{Q}_{i,h}$ is constructed using (\ref{eq:curvedQ}).  Then, 
 \[
 \bm{Q}_{i,h} + \bm{Q}_{i,h}^T = \begin{bmatrix}
 \bm{0} &\\
 & \bm{B}_i \end{bmatrix}, \qquad \bm{Q}_{i,h}\bm{1} = \bm{0},
 \]
-where $\bm{n}_i$ is a vector whose entries consist of values of the $i$th component of the scaled normals $n_iJ_f$ at face points, $\bm{w}_f$ is the vector of face quadrature weights $w_i$, and $\bm{B}_i = \diag{\bm{n}_i \circ \bm{w}_f}$.
+where $\bm{n}_i$ is a vector whose entries are values of the $i$th component of the scaled normals $n_iJ_f$ at face points, $\bm{w}_f$ is the vector of face quadrature weights $w_i$, and $\bm{B}_i = \diag{\bm{n}_i \circ \bm{w}_f}$.
 \end{lemma}
-%\begin{proof}
+\begin{proof}
 The proof is identical to that of \cite{chan2018discretely}.  
-%We review it here for completeness.  Expanding out $\bm{Q}_{i,h} + \bm{Q}_{i,h}^T$ yields
-%\[
-%\frac{1}{2}\sum_{j=1}^d \diag{\bm{G}_{ij}}\hat{\bm{Q}}_{j,h} + \hat{\bm{Q}}_{j,h}^T\diag{\bm{G}_{ij}} + \hat{\bm{Q}}_{j,h} \diag{\bm{G}_{ij}} +  \diag{\bm{G}_{ij}}\hat{\bm{Q}}_{j,h}^T.
-%\]
-%For each term in the sum, we apply the SBP property of $\hat{\bm{Q}}_{j,h}$.  The volume terms cancel, leaving only surface terms
-%\[
-%\frac{1}{2}\sum_{j=1}^d {\hat{\bm{B}}_{j,h}\diag{\bm{G}_{ij}} +  \diag{\bm{G}_{ij}}\hat{\bm{B}}_{j,h}} = \begin{bmatrix}
-%\bm{0} &\\
-%& \bm{B}_i \end{bmatrix}.
-%\]
-%where the last step uses (\ref{eq:nJ_Gnhat}) and that $\hat{\bm{B}}_{j,h}$ and $\diag{\bm{G}_{ij}}$ are diagonal.  
-%
-%To show $\bm{Q}_{i,h}\bm{1} = \bm{0}$, we note that
-%\[
-%\bm{Q}_{i,h}\bm{1} = \frac{1}{2}\sum_{j=1}^d \diag{\bm{G}_{ij}}\hat{\bm{Q}}_{j,h}\bm{1} + \hat{\bm{Q}}_{j,h} \diag{\bm{G}_{ij}}\bm{1} = \frac{1}{2}\sum_{j=1}^d \hat{\bm{Q}}_{j,h} \bm{G}_{ij}
-%\]
-%since $\hat{\bm{Q}}_{j,h}\bm{1} = \bm{0}$ by Lemma~\ref{lemma:hsbprefprops}.  Note that, since $\bm{G}_{ij}$ is constructed using polynomial interpolation, $\bm{G}_{ij} = \LRs{\bm{g}_{ij}, \quad \bm{E}\bm{g}_{ij}}^T$, where $\bm{g}_{ij}$ denotes the values of $G_{ij}$ at volume points.  The remaining term can be expanded out
-%\[
-%\sum_{j=1}^d \hat{\bm{Q}}_{j,h} \bm{G}_{ij} = \sum_{j=1}^d \begin{bmatrix} \hat{\bm{Q}}_j\bm{g}_{ij} - \hat{\bm{g}}_j^T\bm{G}_{ij} + \bm{E}^T\bm{B}\bm{E}\bm{g}_{ij}\\
-%\bm{B}\bm{E}\bm{g}_{ij} - \bm{B}\bm{E}\bm{g}_{ij}
-%\end{bmatrix} =
-%\sum_{j=1}^d \begin{bmatrix} - \hat{\bm{g}}_j^T\bm{G}_{ij} + \bm{E}^T\bm{B}\bm{E}\bm{g}_{ij}\\
-%\bm{0}
-%\end{bmatrix} 
-%\]
-%where we have used that $\sum_{j=1}^d\hat{\bm{Q}}_j\bm{g}_{ij} = \bm{0}$, since $G_{ij}$ satisfies the discrete GCL (\ref{eq:dgcl}), $\bm{g}_{ij}$ is a polynomial of degree less than or equal to $N$, and $\hat{\bm{Q}}_j$ exactly differentiates polynomials of degree $N$.  The remaining terms vanish after an application of the SBP property and the GCL (\ref{eq:dgcl}).  
-%\qed\end{proof}
+We review it here for completeness.  Expanding out $\bm{Q}_{i,h} + \bm{Q}_{i,h}^T$ yields
+\[
+\frac{1}{2}\sum_{j=1}^d \diag{\bm{G}_{ij}}\hat{\bm{Q}}_{j,h} + \hat{\bm{Q}}_{j,h}^T\diag{\bm{G}_{ij}} + \hat{\bm{Q}}_{j,h} \diag{\bm{G}_{ij}} +  \diag{\bm{G}_{ij}}\hat{\bm{Q}}_{j,h}^T.
+\]
+For each term in the sum, we apply the SBP property of $\hat{\bm{Q}}_{j,h}$.  The volume terms cancel, leaving only surface terms
+\[
+\frac{1}{2}\sum_{j=1}^d \LRp{\hat{\bm{B}}_{j,h}\diag{\bm{G}_{ij}} +  \diag{\bm{G}_{ij}}\hat{\bm{B}}_{j,h}} = \begin{bmatrix}
+\bm{0} &\\
+& \bm{B}_i \end{bmatrix}.
+\]
+where we have used (\ref{eq:nJ_Gnhat}) and that $\hat{\bm{B}}_{j,h}$ and $\diag{\bm{G}_{ij}}$ are diagonal matrices.  
 
-Then, an entropy conservative scheme is given by
+To show $\bm{Q}_{i,h}\bm{1} = \bm{0}$, we note that
+\[
+\bm{Q}_{i,h}\bm{1} = \frac{1}{2}\sum_{j=1}^d \diag{\bm{G}_{ij}}\hat{\bm{Q}}_{j,h}\bm{1} + \hat{\bm{Q}}_{j,h} \diag{\bm{G}_{ij}}\bm{1} = \frac{1}{2}\sum_{j=1}^d \hat{\bm{Q}}_{j,h} \bm{G}_{ij}
+\]
+since $\hat{\bm{Q}}_{j,h}\bm{1} = \bm{0}$ by Lemma~\ref{lemma:hsbprefprops}.  Note that, since $\bm{G}_{ij}$ is constructed using polynomial interpolation, $\bm{G}_{ij} = \LRs{G_{ij}(\hat{\bm{x}}), \quad \bm{E}G_{ij}(\hat{\bm{x}})}^T$, where $G_{ij}(\hat{\bm{x}})$ denotes the values of $G_{ij}$ at volume points.  The remaining term can be expanded out
+\begin{align*}
+\sum_{j=1}^d \hat{\bm{Q}}_{j,h} \bm{G}_{ij} &= \sum_{j=1}^d \begin{bmatrix} \hat{\bm{Q}}_jG_{ij}(\hat{\bm{x}}) - \hat{\bm{Q}}_j^TG_{ij}(\hat{\bm{x}}) + \bm{E}^T\bm{B}\bm{E}G_{ij}(\hat{\bm{x}})\\
+\bm{B}\bm{E}G_{ij}(\hat{\bm{x}}) - \bm{B}\bm{E}G_{ij}(\hat{\bm{x}})
+\end{bmatrix} \\
+&=
+\sum_{j=1}^d \begin{bmatrix} \LRp{- \hat{\bm{Q}}_j^T + \bm{E}^T\bm{B}\bm{E}}G_{ij}(\hat{\bm{x}})\\
+\bm{0}
+\end{bmatrix} = 
+\sum_{j=1}^d \begin{bmatrix} \hat{\bm{Q}}_jG_{ij}(\hat{\bm{x}})\\
+\bm{0}
+\end{bmatrix}  = \bm{0},
+\end{align*}
+where we have used  the generalized SBP property and that $\sum_{j=1}^d\hat{\bm{Q}}_jG_{ij}(\hat{\bm{x}}) = \bm{0}$, since $G_{ij}$ satisfies the discrete GCL (\ref{eq:dgcl}), $G_{ij}(\hat{\bm{x}})$ is a polynomial of degree less than or equal to $N$, and $\hat{\bm{Q}}_j$ exactly differentiates polynomials of degree $N$.  
+\qed\end{proof}
+
+\subsection{Entropy conservative formulations on conforming meshes of mapped elements}
+
+The aforementioned matrices can now be used to construct high order accurate entropy stable and entropy conservative schemes.  We first introduce an entropy conservative numerical flux \cite{tadmor1987numerical}.  Let $\bm{u}_L, \bm{u}_R$ denote left and right states in the conservative variables.  Then, an entropy conservative numerical flux is a vector-valued function $\bm{f}_{i,S}$ for $i = 1,\ldots,d$ which satisfies the following three properties
+\begin{gather*}
+\bm{f}_{i,S}\LRp{\bm{u},\bm{u}} = \bm{f}_i(\bm{u}), \qquad \text{(consistency)}\\
+\bm{f}_{i,S}\LRp{\bm{u}_L,\bm{u}_R} = \bm{f}_{i,S}(\bm{u}_R,\bm{u}_L), \qquad \text{(symmetry)}\\
+\LRp{\bm{v}_L-\bm{v}_R}^T\bm{f}_{i,S}\LRp{\bm{u}_L,\bm{u}_R} = \psi_i(\bm{u}_L) - \psi_i(\bm{u}_R), \qquad \text{(conservation)}.
+\end{gather*}
+Here, $\bm{v}_L, \bm{v}_R$ are the entropy variables evaluated at $\bm{u}_L, \bm{u}_R$, and $\psi_i$ is the $i$th entropy potential which appears in (\ref{eq:weakentropyineq}).  
+Then, an entropy conservative scheme on a mapped element is given by
 \begin{gather}
 {\bm{M}}\td{\bm{u}_h}{t} + \begin{bmatrix} \bm{I} \\ \bm{E} \end{bmatrix}^T
-\sum_{i=1}^d \LRp{2{\bm{Q}}_{i,h} \circ \bm{F}_i}\bm{1} + \bm{E}^T{\bm{B}}_i\LRp{\bm{f}_i^*-\bm{f}_i(\tilde{\bm{u}}_f)} = 0 \label{eq:esdg}
+\sum_{i=1}^d \LRp{2{\bm{Q}}_{i,h} \circ \bm{F}_i}\bm{1} + \bm{E}^T{\bm{B}}_i\LRp{\bm{f}_i^*-\bm{f}_i(\tilde{\bm{u}}_f)} = 0 \label{eq:esdg}\\
+\LRp{\bm{F}_i}_{jk} = \bm{f}_S\LRp{\tilde{\bm{u}}_j,\tilde{\bm{u}}_k} \nonumber
 \end{gather}
-where $\bm{F}_i$ is defined as in (\ref{eq:esdgref}).  Here, the exterior state $\tilde{\bm{u}}_f$ used to evaluate the numerical flux $\bm{f}_i^*$ corresponds either to interface values on a neighboring element or an exterior state used to enforce boundary conditions.
+Here, the exterior state $\tilde{\bm{u}}_f$ used to evaluate the numerical flux $\bm{f}_i^*$ corresponds either to interface values on a neighboring element or an exterior state used to enforce boundary conditions, and $\circ$ denotes the matrix Hadamard product.  
+
+%\note{Mention proof}
+%Then, an entropy conservative scheme on the reference interval is given as
+%\begin{gather}
+%\bm{M}\td{\bm{u}_h}{t} + \begin{bmatrix} \bm{I} \\ \bm{E} \end{bmatrix}^T
+%\LRp{2\bm{Q}_h \circ \bm{F}}\bm{1} + \bm{E}^T\bm{B}\LRp{\bm{f}^*-\bm{f}(\tilde{\bm{u}}_f)} = 0 \label{eq:esdg1D}\\ 
+%\tilde{\bm{u}} = \begin{bmatrix}
+%\bm{u}_h\\
+%\tilde{\bm{u}}_f
+%\end{bmatrix}, \qquad \tilde{\bm{u}}_f = \bm{u}\LRp{\bm{E}\bm{v}(\bm{u}_h)},\nonumber \\ 
+%\LRp{\bm{F}}_{jk} = \bm{f}_S\LRp{\tilde{\bm{u}}_j,\tilde{\bm{u}}_k}, \qquad \bm{f}^* = \bm{f}_S\LRp{\tilde{\bm{u}}_f^+,\tilde{\bm{u}}_f}.\nonumber
+%\end{gather}
+%Here, $\tilde{\bm{u}}_f^+$ denotes some exterior state which can be used to enforce boundary conditions or coupling between different elements
+
+\begin{theorem}
+\label{thm:esdg}
+Assuming continuity in time, the formulation (\ref{eq:esdg}) is entropy conservative in the sense that
+\[
+\bm{1}^T\bm{M}\td{S(\bm{u}_h)}{t} + \bm{1}^T\bm{B}_i\LRp{\bm{v}_f^T\bm{f}_i^* - \psi_i(\tilde{\bm{u}}_f)} = 0, \qquad \bm{v}_f =\bm{E}\bm{v}(\bm{u}_h).
+\]
+\end{theorem}
+\begin{proof}
+The proof uses similar techniques as proofs in other papers \cite{chen2017entropy, crean2018entropy, chan2017discretely, chan2019skew}, and we repeat it for completeness.  We begin by testing (\ref{eq:esdg}) with the vector of entropy variables evaluated at nodal points $\bm{v}(\bm{u}_h)$.  We apply the chain rule in time and use that $\bm{M}$ is diagonal to show that 
+\[
+\bm{v}(\bm{u}_h)^T\bm{M}\td{\bm{u}}{t} = \bm{1}^T\bm{M}\LRp{\bm{v}(\bm{u}_h)\circ \td{\bm{u}_h}{t}} =  \bm{1}^T\bm{M}\td{S(\bm{u}_h)}{t}.
+\]
+For the volume term, we use the SBP property to arrive at
+\begin{align*}
+&\bm{v}(\bm{u}_h)^T\begin{bmatrix} \bm{I} \\ \bm{E} \end{bmatrix}^T\LRp{2\bm{Q}_{i,h} \circ \bm{F}_i}\bm{1} = \\
+&\tilde{\bm{v}}^T\LRp{\LRp{\bm{Q}_{i,h}-\bm{Q}_{i,h}^T} \circ \bm{F}_i}\bm{1}  + \LRp{\bm{E}\bm{v}(\bm{u}_h)}^T\LRp{\bm{B}_{i,h} \circ\bm{F}_i}\bm{1},
+\end{align*}
+where we have introduced $\tilde{\bm{v}} = \LRp{\begin{bmatrix} \bm{I} \\ \bm{E} \end{bmatrix}\bm{v}(\bm{u}_h)}$.  
+Note that, by the consistency of the entropy conservative flux $\bm{f}_{i,S}$, the diagonal of $\bm{F}_i$ is the vector $\bm{f}_i(\tilde{\bm{u}}_f)$.  Using that $\bm{B}_{i,h}$ is diagonal (with non-zero diagonal sub-block $\bm{B}_i$), the latter term reduces to 
+\[
+\LRp{\bm{E}\bm{v}(\bm{u}_h)}^T\LRp{\bm{B}_{i,h} \circ\bm{F}_i}\bm{1} = \bm{v}_f^T \bm{B}_i\bm{f}_i(\tilde{\bm{u}}_f) =  \bm{1}^T \bm{B}_i\LRp{\bm{v}_f^T\bm{f}_i(\tilde{\bm{u}}_f)}.
+\]
+The final part of the proof uses that 
+\begin{align*}
+\tilde{\bm{v}}^T\LRp{\LRp{\bm{Q}_{i,h}-\bm{Q}_{i,h}^T} \circ \bm{F}_i}\bm{1} &= \sum_j {\tilde{\bm{v}}}_j \LRp{\bm{Q}_{i,h}-\bm{Q}_{i,h}^T}_{jk} \LRp{\bm{F}_{i}}_{jk}\\
+&= \sum_j \LRp{\bm{Q}_h}_{jk} \LRp{{\tilde{\bm{v}}}_j-{\tilde{\bm{v}}}_k}^T\bm{f}_{i,S}\LRp{\tilde{\bm{u}}_j,\tilde{\bm{u}}_k}\\
+&= \sum_j \LRp{\bm{Q}_h}_{jk} \LRp{\psi(\tilde{\bm{u}}_j)-\psi(\tilde{\bm{u}}_k)} = \tilde{\bm{u}}^T\bm{Q}_{i,h}\bm{1}- \bm{1}^T\bm{Q}_{i,h}\tilde{\bm{u}}
+\end{align*}
+The term $\bm{Q}_{i,h}\bm{1} = \bm{0}$ by (\ref{eq:Qh1}).  The proof is completed by applying the SBP property (\ref{eq:hsbp}) to the remaining term, which reduces to $-\bm{1}^T\bm{B}_{i,h}\tilde{\bm{u}}=-\bm{1}^T\bm{B}_i\tilde{\bm{u}_f}$.
+\qed\end{proof}
+
+Note that the proof of entropy conservation relies mainly on Lemma~\ref{lemma:Qhprops}, which states that $\bm{Q}_{i,h}$ is conservative (e.g., exact for constants) and satisfies the SBP property.  Extensions to the non-conforming setting will utilize the same properties.  
 
 All entropy conservative schemes described here can be made entropy stable by introducing entropy dissipation through mechanisms such as physical or artificial viscosity \cite{tadmor2006entropy,upperman2019entropy}.  We introduce dissipation by incorporating a penalization term into the interface flux \cite{winters2017uniquely}.  For example, Lax-Friedrichs dissipation can be added by modifying the interface flux $\bm{f}^*_i$ 
 \[
@@ -501,7 +495,7 @@ Let $u(\bm{x})$ be a polynomial of degree $\min(N,N_f,N_m)$ or less, and let $\b
 \]
 The entries of $\bm{E}_{mf}^T\bm{M}_m\bm{E}_{mf}$ are integrals of products of Lagrange basis functions with $u(\bm{x})$, where all integrals are approximated using mortar quadrature.  
 
-Since $u$ is degree $\min(N,N_f,N_m)$ and each Lagrange basis function is degree $N$, the integrand is computed exactly under the mortar quadrature.  Moreover, since $u$ is degree $\min(N,N_f,N_m)$, it is also computed exactly using the face (surface) quadrature.  Thus, $\bm{E}_{mf}^T\bm{M}_m\bm{E}_{mf} = \bm{M}_f \bm{u}_f$ by exactness of the face and mortar quadratures, and $\bm{E}_{fm}\bm{u}_m = \bm{u}_f$.
+Since $u$ is degree $\min(N,N_f,N_m)$ and each Lagrange basis function is degree $N$, the integrand is computed exactly under the mortar quadrature.  Moreover, since $u$ is degree $\min(N,N_f,N_m)$, it is also computed exactly using the face (surface) quadrature.  Thus, $\bm{E}_{mf}^T\bm{M}_m\bm{E}_{mf} \bm{u}_f = \bm{M}_f \bm{u}_f$ by exactness of the face and mortar quadratures, and $\bm{E}_{fm}\bm{u}_m = \bm{u}_f$.
 \qed\end{proof}
 
 \subsection{Mortar-based hybridized SBP operators}
@@ -516,7 +510,9 @@ The matrices $\bm{E}_{mf}, \bm{E}_{fm}, \hat{\bm{B}}_{i,f}, \hat{\bm{B}}_{i,m}$ 
 \label{eq:mhsbp}
 \end{align}
 
-Since it is not clear at first glance how the hybridized operator $\hat{\bm{Q}}_{i,h}$ or its mortar-based variant $\hat{\bm{Q}}_{i,m}$ can be used to perform differentiation, we review intuitive explanations of each operator.  Let $\bm{u}$ denote basis coefficients for some function $u(\bm{x})$, and let $f, g$ denote two functions on the reference element.  Suppose $\bm{u}$ satisfies the following matrix system involving the hybridized operator $\hat{\bm{Q}}_{i,h}$
+Since it is not clear at first glance how the hybridized operator $\hat{\bm{Q}}_{i,h}$ or its mortar-based variant $\hat{\bm{Q}}_{i,m}$ can be used to perform differentiation, we review intuitive explanations of each operator.  
+
+Let $\bm{u}$ denote basis coefficients for some function $u(\bm{x})$, and let $f, g$ denote two functions on the reference element.  Suppose $\bm{u}$ satisfies the following matrix system involving the standard hybridized operator $\hat{\bm{Q}}_{i,h}$
 \begin{align}
 \hat{\bm{M}}\bm{u} = \begin{bmatrix}
 \bm{I}\\
@@ -524,10 +520,10 @@ Since it is not clear at first glance how the hybridized operator $\hat{\bm{Q}}_
 \end{bmatrix}^T \diag{\bm{f}}\hat{\bm{Q}}_{i,h} \diag{\bm{g}}, \qquad \bm{f} = \begin{bmatrix} f(\hat{\bm{x}}) \\ f(\hat{\bm{x}}_f)\end{bmatrix}, \qquad \bm{g} = \begin{bmatrix} g(\hat{\bm{x}}) \\ g(\hat{\bm{x}}_f)\end{bmatrix}.
 \label{eq:Qh}
 \end{align}
-It was shown in \cite{chan2017discretely, chan2019skew} that this corresponds to a high order accurate approximation of $f\pd{g}{x_i}$.  Let $\bm{v}$ denote basis coefficients for some arbitrary degree $N$ polynomial test function.  Multiplying (\ref{eq:Qh}) by $\bm{v}^T$, expanding out the different blocks of $\hat{\bm{Q}}_{i,h}$, and using summation by parts yields
+It was shown in \cite{chan2017discretely, chan2019skew} that this corresponds to a high order accurate approximation of $f\pd{g}{x_i}$.  Let $\bm{v}$ denote basis coefficients for some arbitrary degree $N$ polynomial test function.  Expanding out the different blocks of (\ref{eq:Qh}) and using generalized summation by parts for $\hat{\bm{Q}}_i$ yields
 \begin{align*}
 \hat{\bm{M}}\bm{u} &= 
-\diag{\bm{f}}\hat{\bm{Q}}_i\bm{g} + \frac{1}{2}\LRp{\diag{f(\hat{\bm{x}})}\bm{E}^T + \bm{E}^T f(\hat{\bm{x}}_f)}\hat{\bm{B}}_i \LRp{g(\hat{\bm{x}}_f) - \bm{E} g(\hat{\bm{x}})}.
+\diag{f(\hat{\bm{x}})}\hat{\bm{Q}}_i g(\hat{\bm{x}}) + \frac{1}{2}\LRp{\diag{f(\hat{\bm{x}})}\bm{E}^T + \bm{E}^T f(\hat{\bm{x}}_f)}\hat{\bm{B}}_i \LRp{g(\hat{\bm{x}}_f) - \bm{E} g(\hat{\bm{x}})}.
 \end{align*}
 The latter expression can be interpreted as a boundary correction term.  Since $\bm{E}$ is a high order accurate boundary interpolation operator, this correction term vanishes if $g$ is a degree $N$ polynomial.  
 %Replacing quadrature rules by the corresponding integrals, we can re-interpret (\ref{eq:Qh}) as the following variational problem: find a degree $N$ polynomial $u(\bm{x})$ such that, for all polynomials $v(\bm{x})$ of degree $N$,
@@ -541,7 +537,7 @@ The latter expression can be interpreted as a boundary correction term.  Since $
 %\end{align*}
 %Thus, we can interpret $u(\bm{x})$ as the $L^2$ projection of $f\pd{\Pi_N (g)}{x_i}$ with additional boundary correction terms.  These boundary correction terms vanish if $g$ is a polynomial of degree $N$.  
 
-The mortar-based hybridized SBP operator can be interpreted similarly.  Recall that $\bm{E}_{mf}$ interpolates from face nodes to mortar nodes, and that $\bm{E}$ interpolates from volume nodes to face nodes.  Thus, the matrix $\bm{E}_{mf}\bm{E}$ interpolates from volume nodes to mortar nodes.  We can use this matrix to replicate (\ref{eq:Qh}) for the mortar-based operator $\hat{\bm{Q}}_{i,m}$.  Let $\bm{u}$ solve the following system
+The mortar-based hybridized SBP operator can be similarly interpreted as a high order differentiation operator.  Recall that $\bm{E}_{mf}$ interpolates from face nodes to mortar nodes, and that $\bm{E}$ interpolates from volume nodes to face nodes.  Thus, the matrix $\bm{E}_{mf}\bm{E}$ interpolates from volume nodes to mortar nodes.  We can use this matrix to replicate (\ref{eq:Qh}) for the mortar-based operator $\hat{\bm{Q}}_{i,m}$.  Let $\bm{u}$ solve the following system
 \begin{align}
 \hat{\bm{M}}\bm{u} = \begin{bmatrix}
 \bm{I}\\
@@ -552,7 +548,7 @@ The mortar-based hybridized SBP operator can be interpreted similarly.  Recall t
 \end{align}
 Expanding out terms yields a similar expression involving multiple correction terms
 \begin{align}
-\hat{\bm{M}}\bm{u} &= \diag{\bm{f}}\hat{\bm{Q}}_i\bm{g} \label{eq:mhsbp_correction}\\
+\hat{\bm{M}}\bm{u} &= \diag{f(\hat{\bm{x}})}\hat{\bm{Q}}_i{g}(\hat{\bm{x}}) \label{eq:mhsbp_correction}\\
 &+ \frac{1}{2} \diag{f(\hat{\bm{x}})}\bm{E}^T\hat{\bm{B}}_{i,f}\LRp{g(\hat{\bm{x}}_f) - \bm{E}g(\hat{\bm{x}})} \nonumber\\
 &+ \frac{1}{2} \bm{E}^T\diag{f(\hat{\bm{x}}_f)}\hat{\bm{B}}_{i,f}\LRp{\bm{E}_{fm}g(\hat{\bm{x}}_m) - \bm{E}g(\hat{\bm{x}})} \nonumber\\
 &+ \frac{1}{2} \bm{E}^T\bm{E}_{mf}^T\diag{f(\hat{\bm{x}}_m)}\hat{\bm{B}}_{i,m}\LRp{g(\hat{\bm{x}}_m) - \bm{E}_{mf}g(\hat{\bm{x}}_f)} \nonumber
@@ -595,17 +591,19 @@ where we have used that $\bm{M}_m$ is diagonal.  Then, since the scaled outward 
 \]  
 \qed\end{proof}
 
-We can now construct an entropy stable formulation on the reference element using the mortar-based hybridized SBP operator
-\begin{gather}
-\hat{\bm{M}}\td{\bm{u}_h}{t} + \begin{bmatrix} \bm{I} \\ \bm{E} \\ \bm{E}_{mf}\bm{E} \end{bmatrix}^T
-\sum_{i=1}^d \LRp{2\hat{\bm{Q}}_{i,m} \circ \bm{F}_i}\bm{1} + \bm{E}_{mf}^T\hat{\bm{B}}_{i,m}\LRp{\bm{f}_i^*-\bm{f}_i(\tilde{\bm{u}}_m)} = 0 \label{eq:esdgmref}\\
-\tilde{\bm{u}} = \begin{bmatrix}
-\bm{u}_h\\
-\tilde{\bm{u}}_f\\
-\tilde{\bm{u}}_m
-\end{bmatrix}, \qquad \tilde{\bm{u}}_m = \bm{u}\LRp{\bm{E}_{mf}\bm{E}\bm{v}(\bm{u}_h)}, \qquad \bm{f}^* = \bm{f}_S\LRp{\tilde{\bm{u}}_m^+,\tilde{\bm{u}}_m},
-\end{gather}
-where $\LRp{\bm{F}_i}_{jk} = \bm{f}^i_S\LRp{\tilde{\bm{u}}_j,\tilde{\bm{u}}_k}$ for all indices $j,k$ of $\tilde{\bm{u}}$.  
+%We can now construct an entropy conservative formulation on the reference element using the mortar-based hybridized SBP operator
+%\begin{gather}
+%\hat{\bm{M}}\td{\bm{u}_h}{t} + \begin{bmatrix} \bm{I} \\ \bm{E} \\ \bm{E}_{mf}\bm{E} \end{bmatrix}^T
+%\sum_{i=1}^d \LRp{2\hat{\bm{Q}}_{i,m} \circ \bm{F}_i}\bm{1} + \bm{E}_{mf}^T\hat{\bm{B}}_{i,m}\LRp{\bm{f}_i^*-\bm{f}_i(\tilde{\bm{u}}_m)} = 0 \label{eq:esdgmref}\\
+%\tilde{\bm{u}} = \begin{bmatrix}
+%\bm{u}_h\\
+%\tilde{\bm{u}}_f\\
+%\tilde{\bm{u}}_m
+%\end{bmatrix}, \qquad \tilde{\bm{u}}_m = \bm{u}\LRp{\bm{E}_{mf}\bm{E}\bm{v}(\bm{u}_h)}%, \qquad \bm{f}^* = \bm{f}_S\LRp{\tilde{\bm{u}}_m^+,\tilde{\bm{u}}_m},
+%\end{gather}
+%where $\LRp{\bm{F}_i}_{jk} = \bm{f}^i_S\LRp{\tilde{\bm{u}}_j,\tilde{\bm{u}}_k}$ for all indices $j,k$ of $\tilde{\bm{u}}$, and $\bm{f}_i^*$ is a numerical flux used to impose boundary conditions.
+%
+%\note{Add statement of entropy conservation}
 
 
 \subsection{Mortar-based formulations on mapped elements}
@@ -615,65 +613,63 @@ We can extend the above scheme to mapped curvilinear elements by constructing ph
 \bm{Q}_{i,m} = \frac{1}{2}\sum_{j=1}^d \diag{\bm{G}_{ij}}\hat{\bm{Q}}_{j,m} + \hat{\bm{Q}}_{j,m} \diag{\bm{G}_{ij}}.
 \label{eq:curvedQ_mortar}
 \end{equation}
-Proofs of entropy stability for formulations (\ref{eq:esdg1D}), (\ref{eq:esdg}), and (\ref{eq:esdgmref}) require that the hybridized SBP operators are conservative (e.g., they are exact for constants) and satisfy the SBP property.  Entropy conservation for mortar-based formulations on mapped elements will require similar properties.  However, in contrast to hybridized SBP operators, conservation for mapped mortar-based operators requires additional constraints on the accuracy of surface and mortar quadratures relative to the polynomial degree of the geometric mapping.  
+Proofs of entropy conservation (e.g., for the formulation (\ref{eq:esdg})) require that the hybridized SBP operators are conservative (e.g., exact for constants) and satisfy the SBP property.  Entropy conservation for mortar-based formulations on mapped elements will require similar properties.  However, in contrast to hybridized SBP operators, conservation for mapped mortar-based operators requires additional constraints on the accuracy of surface and mortar quadratures relative to the polynomial degree of the geometric mapping.  
 
 We assume now that each geometric mapping from reference element $\hat{D}$ to physical element $D^k$ is a polynomial of degree $N_{\rm geo}$.  We also introduce the space of tensor product polynomials in $d$ dimensions $Q^{N_1,\ldots, N_d}$ as
 \[
 Q^{N_1,\ldots, N_d} = \LRc{ \hat{x}_1^{i_1}\hat{x}_2^{i_2}\ldots\hat{x}_d^{i_d}, \qquad 0\leq i_k \leq N_k, \quad k = 1,\ldots,d.}
 \]
-We denote $Q^{N,\ldots,N} = Q^N$ for conciseness.  
+We denote the isotropic tensor product space $Q^N= Q^{N,\ldots,N}$ for conciseness.  
 
 In \cite{chan2019skew}, it was shown that the geometric terms $G_{ij}$ are tensor product polynomials of specific degrees.  For mapped quadrilateral elements, $G_{ij}$ satisfy
 \begin{align*}
 &G_{i1} \in Q^{N_{\rm geo},N_{\rm geo}-1}\\
 &G_{i2} \in Q^{N_{\rm geo}-1,N_{\rm geo}}.
 \end{align*}
-for $i = 1,2$.  Moreover, the geometric terms naturally satisfy the GCL condition (\ref{eq:dgcl}).  We then have the following lemma:
-\begin{lemma}
-\label{lemma:Qmprops_2d}
-Suppose $D^k$ is a quadrilateral element, and suppose that the surface quadrature is exact for $Q^{N+N_f}$ and mortar quadratures are exact for degree $Q^{N+N_m}$ polynomials.  Then, if $\bm{Q}_{i,m}$ is constructed using (\ref{eq:curvedQ_mortar}) and if $N_{\rm geo} \leq \min(N,N_f+1,N_m+1)$,
-\begin{align*}
-\bm{Q}_{i,m} + \bm{Q}_{i,m}^T &= \bm{B}_{i,m}, \quad \text{(SBP property)}\\
-\bm{Q}_{i,m}\bm{1} &= \bm{0}, \quad \text{(conservation)}.
-\end{align*}
-\end{lemma}
-\begin{proof}
-%The proof mimicks that of Lemma~\ref{lemma:Qhprops}.  
-The SBP property is straightforward to show using the SBP property of $\hat{\bm{Q}}_{i,m}$.  To show conservation, expanding out $\bm{Q}_{i,m}\bm{1} $ yields
-\[
-\bm{Q}_{i,m}\bm{1} = \frac{1}{2}\sum_{j=1}^d \diag{\bm{G}_{ij}}\hat{\bm{Q}}_{j,m}\bm{1} + \hat{\bm{Q}}_{j,m} \diag{\bm{G}_{ij}}\bm{1} = \frac{1}{2}\sum_{j=1}^d\hat{\bm{Q}}_{j,m} \bm{G}_{ij}
-\]
-since $\hat{\bm{Q}}_{j,m}\bm{1} = \bm{0}$ by Lemma~\ref{lemma:mhsbp}.  We can expand out the remaining terms using (\ref{eq:mhsbp_correction}).  However, since $\bm{G}_{ij}$ is constructed by interpolating the values of the polynomial $G_{ij}$, the boundary correction terms in (\ref{eq:mhsbp_correction}) vanish, reducing the expression to 
-\[
-\sum_{j=1}^d\hat{\bm{Q}}_{j,m} \bm{G}_{ij} = \sum_{j=1}^d\hat{\bm{Q}}_{j} \bm{g}_{ij} = \bm{0},
-\]
-where $\bm{g}_{ij}$ denotes the values of the $G_{ij}$ at volume nodes, and the final sum vanishes due to the GCL (\ref{eq:dgcl}) and the fact that $\hat{\bm{Q}}_j$ is exact for degree $N$ polynomials.  
-\note{Fix to add in tensor product quadrature.}
-\qed\end{proof}
-
+for $i = 1,2$, and the geometric terms naturally satisfy the GCL condition (\ref{eq:dgcl}).  
+%We then have the following lemma:
+%\begin{lemma}
+%\label{lemma:Qmprops_2d}
+%Suppose $D^k$ is a quadrilateral element, and suppose that the surface quadrature is exact for degree ${N+N_f}$ polynomials and mortar quadratures are exact for degree ${N+N_m}$ polynomials.  Then, if $\bm{Q}_{i,m}$ is constructed using (\ref{eq:curvedQ_mortar}) and if $N_{\rm geo} \leq \min(N,N_f+1,N_m+1)$,
+%\begin{align*}
+%\bm{Q}_{i,m} + \bm{Q}_{i,m}^T &= \bm{B}_{i,m}, \quad \text{(SBP property)}\\
+%\bm{Q}_{i,m}\bm{1} &= \bm{0}, \quad \text{(conservation)}.
+%\end{align*}
+%\end{lemma}
+%\begin{proof}
+%%The proof mimicks that of Lemma~\ref{lemma:Qhprops}.  
+%The SBP property is straightforward to show using the SBP property of $\hat{\bm{Q}}_{i,m}$.  To show conservation, expanding out $\bm{Q}_{i,m}\bm{1} $ yields
+%\[
+%\bm{Q}_{i,m}\bm{1} = \frac{1}{2}\sum_{j=1}^d \diag{\bm{G}_{ij}}\hat{\bm{Q}}_{j,m}\bm{1} + \hat{\bm{Q}}_{j,m} \diag{\bm{G}_{ij}}\bm{1} = \frac{1}{2}\sum_{j=1}^d\hat{\bm{Q}}_{j,m} \bm{G}_{ij}
+%\]
+%since $\hat{\bm{Q}}_{j,m}\bm{1} = \bm{0}$ by Lemma~\ref{lemma:mhsbp}.  We can expand out the remaining terms using (\ref{eq:mhsbp_correction}).  However, since $\bm{G}_{ij}$ is constructed by interpolating the values of the polynomial $G_{ij}$, the boundary correction terms in (\ref{eq:mhsbp_correction}) vanish, reducing the expression to 
+%\[
+%\sum_{j=1}^d\hat{\bm{Q}}_{j,m} \bm{G}_{ij} = \sum_{j=1}^d\hat{\bm{Q}}_{j} G_{ij}(\hat{\bm{x}}) = \bm{0},
+%\]
+%where $G_{ij}(\hat{\bm{x}})$ denotes the values of the geometric terms at volume nodes $\hat{\bm{x}}$, and the final sum vanishes due to the GCL (\ref{eq:dgcl}) and the fact that $\hat{\bm{Q}}_j$ is exact for degree $N$ polynomials.  
+%\qed\end{proof}
 
 For hexahedral elements, it is more challenging to construct geometric terms $G_{ij}$ which satisfy the GCL while retaining high order accuracy.  This is further complicated by the fact that we must take into account the polynomial degrees of $G_{ij}$ when proving conservation for mortar-based SBP operators.  We consider two approaches for computing hexahedral geometric terms in this work:
 \begin{enumerate}
-\item Approach 1: the construction of $G_{ij}$ from \cite{kopriva2006metric, chan2018efficient}, which yields for $i = 1,2,3$
+\item Approach 1: the construction of $G_{ij}$ from \cite{kopriva2006metric, chan2018efficient}, which yields 
 \begin{align*}
-&G_{i1} \in Q^{N_{\rm geo}-1,N_{\rm geo},N_{\rm geo}}\\
-&G_{i2} \in Q^{N_{\rm geo},N_{\rm geo}-1,N_{\rm geo}}\\
-&G_{i3} \in Q^{N_{\rm geo},N_{\rm geo},N_{\rm geo}-1}.
+&G_{ij} \in Q^{N_{\rm geo}}, \qquad i,j = 1,2,3.
 \end{align*}
-\item Approach 2: the construction of $G_{ij}$ from \cite{kozdon2018energy} (Appendix C.3), which yields for $i = 1,2,3$
+\item Approach 2: the construction of $G_{ij}$ from \cite{kozdon2018energy} (Appendix C.3), which yields
 \begin{align*}
 &G_{i1} \in Q^{N_{\rm geo},N_{\rm geo}-1,N_{\rm geo}-1}\\
 &G_{i2} \in Q^{N_{\rm geo}-1,N_{\rm geo},N_{\rm geo}-1}\\
-&G_{i3} \in Q^{N_{\rm geo}-1,N_{\rm geo}-1,N_{\rm geo}}.
+&G_{i3} \in Q^{N_{\rm geo}-1,N_{\rm geo}-1,N_{\rm geo}}, \qquad i = 1,2,3.
 \end{align*}
 \end{enumerate}
 These approaches are described in more detail in Appendix~\ref{app:A}.  
 \begin{lemma}
 \label{lemma:Qmprops_3d}
-Suppose $D^k$ is a hexahedral element, and suppose that the surface quadrature is exact for $Q^{N+N_f}$, mortar quadratures are exact for degree $Q^{N+N_m}$ polynomials, and that $\bm{Q}_{i,m}$ is constructed using (\ref{eq:curvedQ_mortar}).  If either
+Suppose $D^k$ is a tensor product element element with tensor product surface quadratures and that $\bm{Q}_{i,m}$ is constructed using (\ref{eq:curvedQ_mortar}).  Suppose also that the surface quadrature is exact for $Q^{N+N_f}$,  the mortar quadrature is exact for $Q^{N+N_m}$.  If 
 \begin{enumerate}
-\item $G_{ij}$ is constructed using Approach 1 \cite{kopriva2006metric, chan2018efficient} and $N_{\rm geo} \leq \min(N,N_f,N_m)$, or
-\item $G_{ij}$ is constructed using Approach 2 \cite{kozdon2018energy} and $N_{\rm geo} \leq \min(N,N_f-1,N_m-1)$, 
+\item $D^k$ is a quadrilateral element and $N_{\rm geo} \leq \min(N,N_f+1,N_m+1)$, or
+\item $D^k$ is a hexahedral element, $G_{ij}$ is constructed via Approach 1 \cite{kopriva2006metric}, and $N_{\rm geo} \leq \min(N,N_f,N_m)$, or
+\item $D^k$ is hexahedral element, $G_{ij}$ is constructed via Approach 2 \cite{kozdon2018energy}, and $N_{\rm geo} \leq \min(N,N_f+1,N_m+1)$, 
 \end{enumerate}
 then 
 \begin{align*}
@@ -682,14 +678,36 @@ then
 \end{align*}
 \end{lemma}
 \begin{proof}
-\note{Finish} The proof of Lemma~\ref{lemma:Qmprops_3d} is identical to that of Lemma~\ref{lemma:Qmprops_2d}
+Using the SBP property of $\hat{\bm{Q}}_{i,m}$, proving the SBP property follows the same steps as the proof of Lemma~\ref{lemma:Qhprops}.  To show conservation, expanding out $\bm{Q}_{i,m}\bm{1} $ yields
+\[
+\bm{Q}_{i,m}\bm{1} = \frac{1}{2}\sum_{j=1}^d \diag{\bm{G}_{ij}}\hat{\bm{Q}}_{j,m}\bm{1} + \hat{\bm{Q}}_{j,m} \diag{\bm{G}_{ij}}\bm{1} = \frac{1}{2}\sum_{j=1}^d\hat{\bm{Q}}_{j,m} \bm{G}_{ij}
+\]
+since $\hat{\bm{Q}}_{j,m}\bm{1} = \bm{0}$ by Lemma~\ref{lemma:mhsbp}.  Expanding out remaining terms using (\ref{eq:mhsbp_correction}) yields
+\begin{align*}
+\sum_{j=1}^d \hat{\bm{Q}}_j G_{ij}(\hat{\bm{x}}) &+ \frac{1}{2} \bm{E}^T\hat{\bm{B}}_{j,f}\LRp{G_{ij}(\hat{\bm{x}}_f) - \bm{E}G_{ij}(\hat{\bm{x}})} \\
+&+ \frac{1}{2} \bm{E}^T\hat{\bm{B}}_{j,f}\LRp{\bm{E}_{fm}G_{ij}(\hat{\bm{x}}_m) - \bm{E}G_{ij}(\hat{\bm{x}})} \\
+&+ \frac{1}{2} \bm{E}^T\bm{E}_{mf}^T\hat{\bm{B}}_{j,m}\LRp{G_{ij}(\hat{\bm{x}}_m) - \bm{E}_{mf}G_{ij}(\hat{\bm{x}}_f)}.
+\end{align*}
+where $G_{ij}(\hat{\bm{x}}), G_{ij}(\hat{\bm{x}}_f), G_{ij}(\hat{\bm{x}}_m)$ denote the values of $G_{ij}$ at volume, surface, and mortar points.  By the fact that $G_{ij} \in Q^N$ and $\bm{E}, \bm{E}_{mf}$ are degree $N$ interpolation operators, the first and third correction terms vanish.  The remaining boundary correction terms are
+\begin{equation}
+\bm{E}^T\hat{\bm{B}}_{j,f}\LRp{\bm{E}_{fm}G_{ij}(\hat{\bm{x}}_m) - \bm{E}G_{ij}(\hat{\bm{x}})}.  
+\label{eq:bcor}
+\end{equation}
+Recall that $\hat{\bm{B}}_{i,f}$ is a diagonal matrix whose entries are $\hat{\bm{n}}_{i,m}$ scaled by the mortar quadrature weights.  On tensor product elements, $\hat{\bm{n}}_{i,m}=\pm 1$ on faces where $\hat{x}_i = \pm 1$ and zero otherwise.  Thus, restricting $\hat{x}_1 = \pm 1$ yields the boundary values of $G_{11}$ on faces where the correction term (\ref{eq:bcor}) is non-zero.  We can now show that (\ref{eq:bcor}) vanishes for $i = j = 1$ (the cases of $i = 2,\ldots,d$ are similar).  
+\begin{enumerate}
+\item If $D^k$ is a quadrilateral element, $G_{11} \in Q^{N_{\rm geo},N_{\rm geo}-1}$, and the surface traces of $G_{11}$ are in the 1D trace space $P^{N_{\rm geo}-1}$.  
+\item If $D^k$ is a hexahedral element and $G_{ij}$ is constructed using Approach 1 \cite{kozdon2018energy}, $G_{11} \in Q^{N_{\rm geo}, N_{\rm geo}-1,N_{\rm geo}-1}$, and the surface traces of $G_{11}$ are in the quadrilateral trace space $Q^{N_{\rm geo}-1,N_{\rm geo}-1}$.  
+\end{enumerate}
+Since $N_{\rm geo} \leq N_m+1$, by Lemma~\ref{lemma:Efm} and assumptions on $N_{\rm geo}, N_f, N_m$, $\bm{E}_{fm}G_{ij}(\hat{\bm{x}}_m) = \bm{E}G_{ij}(\hat{\bm{x}}$ and (\ref{eq:bcor}) vanishes.  
+
+If Approach 1 \cite{kopriva2006metric} is used, then surface traces of $G_{11}$ are contained in $Q^{N_{\rm geo},N_{\rm geo}}$.  Then, (\ref{eq:bcor}) vanishes since $N_{\rm geo} \leq \min(N,N_f,N_m)$.  In both cases, the remaining terms vanish assuming that $G_{ij}$ satisfies the discrete GCL (\ref{eq:dgcl}).
 \qed\end{proof}
 
 
-An entropy conservative mortar-based formulation on mapped elements is then
+An entropy conservative mortar-based formulation on mapped elements is then 
 \begin{gather}
 {\bm{M}}\td{\bm{u}_h}{t} + \begin{bmatrix} \bm{I} \\ \bm{E} \\ \bm{E}_{mf}\bm{E} \end{bmatrix}^T
-\sum_{i=1}^d \LRp{2{\bm{Q}}_{i,m} \circ \bm{F}_i}\bm{1} + \bm{E}_{mf}^T{\bm{B}}_{i,m}\LRp{\bm{f}_i^*-\bm{f}_i(\tilde{\bm{u}}_m)} = 0 \label{eq:esdgm}\\
+\sum_{i=1}^d \LRp{2{\bm{Q}}_{i,m} \circ \bm{F}_i}\bm{1} + \bm{E}^T\bm{E}_{mf}^T{\bm{B}}_{i,m}\LRp{\bm{f}_i^*-\bm{f}_i(\tilde{\bm{u}}_m)} = 0 \label{eq:esdgm}\\
 \tilde{\bm{u}} = \begin{bmatrix}
 \bm{u}_h\\
 \tilde{\bm{u}}_f\\
@@ -699,6 +717,9 @@ An entropy conservative mortar-based formulation on mapped elements is then
 where $\bm{B}_{i,m} = \diag{\bm{n}_{i,m}\circ \bm{w}_m}$ is the diagonal matrix whose entries consist of the scaled physical normals.  Again, we assume geometric terms on curved elements are approximated using polynomials, and that the normals are constructed via (\ref{eq:nJ_Gnhat}) and polynomial interpolation.  
 
 
+The proof of entropy conservation is algebraically identical to previous proofs, with Lemma~\ref{lemma:Qmprops_3d} used in place of Lemma~\ref{lemma:Qhprops}.
+
+
 
 
 %\note{Note: line DG approach can work, but it's flipped: we increase quadrature strength in the direction \emph{orthogonal} to derivative instead.  May improve accuracy over Lobatto by giving equivalence w/skew form.}
@@ -706,32 +727,26 @@ where $\bm{B}_{i,m} = \diag{\bm{n}_{i,m}\circ \bm{w}_m}$ is the diagonal matrix 
 
 \section{A mortar-based implementation}
 
-While the formulation presented above is convenient for analysis, it is computationally expensive to implement.  However, using properties of the mortar matrices $\bm{E}_m, \tilde{\bm{E}}_m$, we can rewrite the above formulation in a way which reflects a traditional mortar-based finite element implementation.  In other words, we wish to implement (\ref{eq:mortar}) such that the only modification from the implementations in \cite{chan2017discretely} is an intermediate step on mortar faces.  
+While the formulation (\ref{eq:esdgm}) is convenient for analysis, it is less convenient to implement.  However, using properties of the mortar matrices, we can show that the mortar-based formulation (\ref{eq:esdgm}) is equivalent to a conforming formulation (\ref{eq:esdg}) with a modified numerical flux involving face-local correction terms.  
 
-We first note that, since $\bm{E}_m$ maps from surface nodes to mortar nodes, $\bm{V}_m = \bm{E}_m \bm{E}$.  Thus, we can rewrite the numerical flux contribution as
-\begin{align*}
- \bm{V}_m^T\tilde{\bm{B}}_i\bm{f}_i^* &= \bm{E}^T \bm{E}_m^T \bm{M}_m\diag{\hat{\bm{n}}_i} \bm{f}_i^* = \bm{E}^T  \bm{P}_f^T\bm{T}_m^T\bm{M}_m\diag{\hat{\bm{n}}_i} \bm{f}_i^*\\
- &= \bm{E}^T \bm{W}_f \diag{\hat{\bm{n}}_i} \bm{T}_m\bm{M}_m^{-1}\bm{T}_m^T\bm{M}_m \bm{f}_i^* =  \bm{E}^T \bm{B}_i \tilde{\bm{E}}_m\bm{f}_i^*.
-\end{align*}
-
-We can similarly reformulate the remaining mortar contributions within (\ref{eq:mortar}).  We decompose $\bm{F}_S$ into interactions between volume nodes, surface nodes, and mortar nodes
+We can reformulate the remaining mortar contributions within (\ref{eq:mortar}).  We decompose $\bm{F}_S$ into interactions between volume nodes, surface nodes, and mortar nodes
 \[
 \bm{F}_S = \begin{bmatrix}
-\bm{F}_S^{vv} & \bm{F}_S^{vs} & \bm{F}_S^{vm}\\
-\bm{F}_S^{sv} & \bm{F}_S^{ss} & \bm{F}_S^{sm}\\
-\bm{F}_S^{mv} & \bm{F}_S^{ms} & \bm{F}_S^{mm}
+\bm{F}_S^{vv} & \bm{F}_S^{vf} & \bm{F}_S^{vm}\\
+\bm{F}_S^{fv} & \bm{F}_S^{ff} & \bm{F}_S^{fm}\\
+\bm{F}_S^{mv} & \bm{F}_S^{mf} & \bm{F}_S^{mm}
 \end{bmatrix}
 \]
 Then, the on-element contributions to (\ref{eq:mortar}) can be expanded as follows
 \begin{align*}
-&\begin{bmatrix} \bm{V}_q \\ \bm{E} \\ \bm{V}_m \end{bmatrix}^T
+&\begin{bmatrix} \bm{I} \\ \bm{E} \\ \bm{E}_m \end{bmatrix}^T
 \LRp{\begin{bmatrix}
 \bm{Q}_i-\bm{Q}_i^T & \bm{E}^T\bm{B}_i &\\
--\bm{B}_i\bm{E} &  & \bm{B}_i\tilde{\bm{E}}_m \\
-& -\tilde{\bm{B}}_i{\bm{E}}_m & 
+-\bm{B}_i\bm{E} &  & \bm{B}_{i}{\bm{E}}_m \\
+& -\bm{B}_{i,m}{\bm{E}}_m & {\bm{B}}_{i,m}
 \end{bmatrix} \circ \bm{F}_S}\bm{1} \\
 &= 
-\begin{bmatrix} \bm{V}_q \\ \bm{E} \end{bmatrix}^T
+\begin{bmatrix} \bm{I}_q \\ \bm{E} \end{bmatrix}^T
 \LRp{\begin{bmatrix}
 \bm{Q}_i-\bm{Q}_i^T & \bm{E}^T\bm{B}_i\\
 -\bm{B}_i\bm{E} & \\
@@ -774,13 +789,23 @@ Note that in (\ref{eq:mortar2}), the only interactions between surface and morta
 \end{figure}
 
 
-\subsection{Extensions to $p$ non-conformity, general quadratures, and non-hexahedral elements}
+\subsection{Extensions of the mortar-based approach}
+
+\begin{figure}
+\centering
+\includegraphics[width=.5\textwidth]{noncon3D.png}
+\caption{Two-layer mortars for reduced $O(N^3)$ computational cost on non-conforming hexahedral interfaces.}
+\end{figure}
+
+\note{Extensions to 3D meshes: double anisotropic mortar for $O(N^3)$ operations vs $O(N^4)$.}
 
 \note{Extension to $p$ non-conforming meshes is straightforward.  Simply replace the definition of a mortar.}
 
 \note{Extension to general quadratures just requires replacing $\bm{I}$ with $\bm{V}_q, \bm{P}_q$, and redefining $\bm{E}$ matrices.}
 
-\note{Explain why this isn't as much of an issue - Shadpey \cite{shadpey2019energy} use this for simplicial elements.  The interpolation operators are dense, and using the mortar-based approach wouldn't actually decrease the number of operations.}
+\note{Explain why non-hexahedral elements isn't as much of an issue - Shadpey \cite{shadpey2019energy} use this for simplicial elements.  The interpolation operators are dense, and using the mortar-based approach wouldn't actually decrease the number of operations.}
+
+
 
 \section{Numerical experiments}
 
@@ -914,14 +939,15 @@ coordinates{(1.66667,0.330743)(0.833333,0.0204084)(0.416667,0.000691875)};
 
 
 
-\subsection{Gauss Lobatto quadrature}
+\textbf{Gauss Lobatto quadrature}
 
-\subsection{Gauss quadrature}
+\textbf{Gauss quadrature}
+
 
 \subsection{3D results}
-\subsection{Gauss Lobatto quadrature}
+\textbf{Gauss Lobatto quadrature}
 
-\subsection{Gauss quadrature}
+\textbf{Gauss quadrature}
 
 
 \appendix
