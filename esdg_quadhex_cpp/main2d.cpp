@@ -198,8 +198,8 @@ int main(int argc, char **argv){
   App *app = new App;
   //app->device.setup("mode: 'Serial'");
   app->device.setup("mode: 'CUDA', device_id: 0");
-  //  app->props["compiler_flags"] = "-ftz=false -prec-div=true -prec-sqrt=true -arch=sm_30";
-  app->props["compiler_flags"] = "-arch=sm_30";
+  // app->props["compiler_flags"] = "-ftz=false -prec-div=true -prec-sqrt=true -arch=sm_30";
+  // app->props["compiler_flags"] = "-arch=sm_30";
   
   setupOccaMesh2d(mesh,app); // build mesh geofacs
 
@@ -232,9 +232,9 @@ int main(int argc, char **argv){
   string path = "okl/Euler2D.okl";
 
   //testing
-  app->volume = app->device.buildKernel(path.c_str(),"volume",app->props);
+  app->volume  = app->device.buildKernel(path.c_str(),"volume",app->props);  
   app->surface = app->device.buildKernel(path.c_str(),"surface",app->props);
-  app->update = app->device.buildKernel(path.c_str(),"update",app->props);
+  app->update  = app->device.buildKernel(path.c_str(),"update",app->props);
   app->eval_surface = app->device.buildKernel(path.c_str(),"eval_surface",app->props);
 
   // set initial condition

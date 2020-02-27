@@ -6,11 +6,8 @@ Globals2D
 N = 7;
 K1D = 8;
 c_flag = 0;
-FinalTime = .5;
+FinalTime = .50;
 CFL = .5;
-cfun = @(x,y) ones(size(x));
-cfun = @(x,y) 1 + .5*sin(pi*x).*sin(pi*y); % smooth velocity
-cfun = @(x,y) (1 + .5*sin(2*pi*x).*sin(2*pi*y) + (y > 0)); % piecewise smooth velocity
 
 [Nv, VX, VY, K, EToV] = unif_tri_mesh(K1D);
 StartUp2D;
@@ -20,17 +17,15 @@ StartUp2D;
 Vp = Vandermonde2D(N,rp,sp)/V;
 xp = Vp*x; yp = Vp*y;
 
-Nq = 2*N+1;
+global Pq Vq
+Nq = 2*N;
 [rq sq wq] = Cubature2D(Nq); % integrate u*v*c
 Vq = Vandermonde2D(N,rq,sq)/V;
-Pq = V*V'*Vq'*diag(wq); % J's cancel out
+M = Vq'*diag(wq)*Vq; % I prefer this approach since M != inv(V*V) if quadrature is inexact
+Pq = M\(Vq'*diag(wq)); % J's cancel out
 Mref = inv(V*V');
 xq = Vq*x; yq = Vq*y;
 Jq = Vq*J;
-
-%%
-global Pq cq Vq
-cq = cfun(xq,yq);
 
 %%
 
@@ -51,13 +46,17 @@ vmapBx = vmapP(mapBx);
 %% params setup
 
 global t0
-t0 = .1;
+t0 = .0;
 
 k = 1; % frequency of solution
 W = (2*k-1)/2*pi;
 p = cos(W*x).*cos(W*y);
 x0 = 0; y0 = .1;
 p = exp(-200*((x-x0).^2 + (y-y0).^2));
+
+x0 = 0;
+y0 = .25;
+p = exp(-10^2*((x-x0).^2 + (y-y0).^2));
 % p = zeros(Np, K); 
 u = zeros(Np, K); 
 v = zeros(Np, K);
@@ -164,6 +163,7 @@ while (time<FinalTime)
     time = time+dt; tstep = tstep+1;
 end
 
+keyboard
 % axis off
 % view(0,0)
 
@@ -203,7 +203,7 @@ end
 % fluxu(mapB) = p(vmapM(mapB)).*nx(mapB);
 % fluxv(mapB) = p(vmapM(mapB)).*ny(mapB);
 
-tau = 0;
+tau = 1;
 fluxp =  tau*dp - ndotdU;
 fluxu =  (tau*ndotdU - dp).*nx;
 fluxv =  (tau*ndotdU - dp).*ny;

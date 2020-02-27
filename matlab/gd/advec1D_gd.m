@@ -1,6 +1,6 @@
 % clear
 
-N = 5;
+N = 3;
 K = 64;
 
 tau = 1;
@@ -34,22 +34,15 @@ DN = kron(eye(K),D1D);
 rx = 2;
 Q = VN'*diag(wq)*(rx*DN*VN); % Galerkin first deriv mat
 Q(abs(Q)<1e-8) = 0;
+D = M\Q;
 
-% possibly reduced quadrature versions
+% % possibly reduced quadrature versions
 % [H, ~, X] = CSBPp4(K+1);
-% wq = diag(H)*L; rq = X*L;
+% L = max(VX)-min(VX);
+% wq = diag(H)*L/2; rq = X*L/2;
 % Vq = GDVDM(N,K,rq);
 % M = (Vq'*diag(wq)*Vq);
-% Pq = M\(Vq'*diag(wq));
-
-[nm,~] = size(M);
-M2 = M;
-pskip = N+2;
-inds = pskip:nm-(pskip)+1;
-MDiag = diag(sum(M2,2));
-M2(inds,:) = MDiag(inds,:);
-
-M = M2;
+% Q = M*D;
 
 h = 2/K;
 VX = VX*h;
@@ -57,7 +50,8 @@ rp = rp*h;
 
 %%
 
-% norm((M\Q)*VX.^N-N*VX.^(N-1))
+% scaling
+M = h*M;
 
 B = zeros(K+1,2);
 B(1,1) = 1;
@@ -67,15 +61,41 @@ D = M\Q;
 L = M\B;
 nx = [-1;1];
 
+M1 = M;
+m1 = M1(:,1);
+M1(1,:) = 0;
+M1(:,1) = 0;
+M1(1,1) = 1;
+
+[nm,~] = size(M1);
+% M2 = M;
+% pskip = N+2;
+% inds = pskip:nm-(pskip)+1;
+inds = 1:nm-(N+1); % only inflow
+% inds = N+2:nm; % only outflow
+MDiag = diag(sum(M1,2));
+% M1(inds,:) = MDiag(inds,:);
+
+Q1 = Q;
+q1 = Q(:,1);
+Q1(1,:) = 0;
+Q1(:,1) = 0;
+Q1(1,1) = 1;
+D1 = M1\Q1;
+
 dt = CFL*h;
 Nsteps = ceil(FinalTime/dt);
 dt = FinalTime/Nsteps;
 
-u0 = @(x) exp(-5^2*x.^2);
+u0 = @(x) sin(pi*x); %exp(-5^2*x.^2);
 u = u0(VX);
 
-% plot(rp,Vp*u,'o--'); return
-
+% % plot(rp,Vp*u,'o--'); return
+% for t = 0:.01:2
+%     plot(rp,sin(pi*(rp-t)));
+%     ylim([-1,1])
+%     drawnow
+% end
 
 %% rk coeffs
 
@@ -100,22 +120,37 @@ for i = 1:Nsteps
     
     for INTRK = 1:5               
                 
-        uM = u([1;K+1]);
-        uP = u([K+1;1]);
+        t = (i-1)*dt + rk4c(INTRK)*dt;
+        
+        u1 = sin(pi*(VX(1)-t));
+%         du1 = -pi*cos(pi*(VX(1)-t));
+% 
+%         u(1) = u1;
+%         rhs = D1*u + M1\(m1*du1 + u1*q1);
+%         rhs(1) = du1;
+        
+        uM = u([1;K+1]);        
+        uP = u([K+1;1]);        
+        uP(1) = u1;
+        uP(end) = uM(end);
         f = .5*(uP-uM).*nx - .5*tau*(uP-uM);
-        rhs = (D*u) + .5*L*f;
-        rhs = -rhs/h;
-           
+        rhs = (D*u) + .5*L*f;        
+        
+        rhs = -rhs;           
         res = rk4a(INTRK)*res + dt*rhs;
-        u = u + rk4b(INTRK)*res;
+        u   = u + rk4b(INTRK)*res;
+%         u(1) = u1;
         
     end
     
-    if mod(i,10)==0
+    if mod(i,10)==0 || i==Nsteps
         plot(rp,Vp*u,'o--')
+%         hold on
+%         plot(-1,sin(pi*(VX(1)-t)),'x')
+%         hold off
         title(sprintf('time = %f\n',i*dt))
         drawnow
     end        
 end
 
-norm(u - u0(VX),'inf')
+title(sprintf('err = %g',norm(u - sin(pi*(VX-FinalTime)),'inf')))

@@ -6,20 +6,19 @@ clear -global *
 Globals2D
 
 K1D = 8;
-N = 3;
+N = 5;
 c_flag = 0;
-FinalTime = .4;
+FinalTime = 2.0;
 
 [Nv, VX, VY, K, EToV] = unif_tri_mesh(K1D);
 
 StartUp2D;
 
-
 [rp sp] = EquiNodes2D(25); [rp sp] = xytors(rp,sp);
 Vp = Vandermonde2D(N,rp,sp)/V;
 xp = Vp*x; yp = Vp*y;
 
-Nq = 2*N+1;
+Nq = 2*N;
 [rq sq wq] = Cubature2D(Nq); % integrate u*v*c
 Vq = Vandermonde2D(N,rq,sq)/V;
 Pq = V*V'*Vq'*diag(wq); % J's cancel out
@@ -46,8 +45,8 @@ lambda0 = lambda(1);
 % lambda = 1 + .5*sin(2*pi*x).*sin(2*pi*y);
 
 % ids =  mean(y) > .375 & mean(y) < .625 & mean(x) > .5 & mean(x) < .75;
-ids = mean(y) > 0;
-mu(:,ids) = 0*mu(:,ids);
+% ids = mean(y) > 0;
+% mu(:,ids) = 0*mu(:,ids);
 % lambda(:,ids) = lambda(:,ids);
 
 
@@ -74,16 +73,16 @@ end
 %% params setup
 
 x0 = 0;
-y0 = .25;
+y0 = 0;
 p = exp(-10^2*((x-x0).^2 + (y-y0).^2));
 % p = exp(-50^2*((x-x0).^2));
 u = zeros(Np, K);
 
 % p = (1-x).*(1+x).*y.*(1-y).*(y>0);
 U{1} = u;
-U{2} = u;
-U{3} = p;
-U{4} = p;
+U{2} = p;
+U{3} = u;
+U{4} = u;
 U{5} = u;
 
 %%
@@ -169,10 +168,10 @@ while (time<FinalTime)
         axis tight        
         title(sprintf('time = %f',time));
         colorbar;
+        caxis([-.1,.1])
 
         drawnow
-        
-        
+                
     end
     
     % Increment time
@@ -190,6 +189,8 @@ color_line3(xp,yp,vv,vv,'.');
 axis tight
 title(sprintf('time = %f',time));
 colorbar;
+
+pelas = p;
 
 keyboard
 
@@ -229,7 +230,7 @@ du12dxy = Ux{2} + Uy{1}; % du2dx + du1dy
 nSx = nx.*dU{3} + ny.*dU{5};
 nSy = nx.*dU{5} + ny.*dU{4};
  
-opt=1;
+opt=2;
 if opt==1 % traction BCs
     %     global mapBL vmapBL t0
     %     if time < t0
@@ -240,10 +241,12 @@ if opt==1 % traction BCs
     nSy(mapB) = -2*(nx(mapB).*U{5}(vmapB) + ny(mapB).*U{4}(vmapB));
     %     end    
 elseif opt==2 % basic ABCs
+    
     nSx(mapB) = -(nx(mapB).*U{3}(vmapB) + ny(mapB).*U{5}(vmapB));
     nSy(mapB) = -(nx(mapB).*U{5}(vmapB) + ny(mapB).*U{4}(vmapB));
     dU{1}(mapB) = -U{1}(vmapB);
     dU{2}(mapB) = -U{2}(vmapB);    
+    
 elseif opt==3 % zero velocity
     dU{1}(mapB) = -2*U{1}(vmapB);
     dU{2}(mapB) = -2*U{2}(vmapB);    

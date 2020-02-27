@@ -15,14 +15,13 @@ b = [Vtest'*wq0 + delta*max(abs(Vtest'*wq0));
 
 % convergence doesn't improve monotonically as constraint tolerance increases?
 %options = optimoptions('linprog','Algorithm','dual-simplex','TolCon',5e-8);
-options = optimoptions('linprog','Algorithm','dual-simplex','TolCon',1e-7);
+options = optimoptions('linprog','Algorithm','dual-simplex','TolCon',5e-7);
 options.Preprocess = 'none'; % from https://www.mathworks.com/matlabcentral/answers/440944-linprog-stopped-because-it-exceeded-its-allocated-memory-with-the-dual-simplex-algorithm
 
 % exact enforcement as Joey recommended
-C = [C;Vtest']; d = [d;Vtest'*wq0]; [wq,~,flag] = linprog(f,[],[],C,d,zeros(size(wq0)),inf(size(wq0)),[],options); % accuracy constraints as hard constraints, lb/ub
+% C = [C;Vtest']; d = [d;Vtest'*wq0]; [wq,~,flag] = linprog(f,[],[],C,d,zeros(size(wq0)),inf(size(wq0)),[],options); % accuracy constraints as hard constraints, lb/ub
 
-% [wq,~,flag] = linprog(f,A,b,C,d,zeros(size(wq0)),inf(size(wq0)),[],options); % f, ineq constraints, hard constraints, lb/ub
-% [wq,~,flag]  = linprog(f,A,b,C,d,zeros(size(wq0)),inf(size(wq0))); % f, ineq constraints, hard constraints, lb/ub
+[wq,~,flag] = linprog(f,A,b,C,d,zeros(size(wq0)),inf(size(wq0)),[],options); % f, ineq constraints, hard constraints, lb/ub
 
 id = find(abs(wq)>1e-12);
 wq = wq(id);

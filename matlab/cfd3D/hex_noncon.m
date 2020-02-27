@@ -1,8 +1,8 @@
 %% set up reference hex
 clear
-N = 1;
+N = 7;
 CFL = .25;
-FinalTime = .33;
+FinalTime = .01;
 
 % interpolation nodes for geometric factors
 [r1D w1D] = JacobiGL(0,0,N);
@@ -13,7 +13,7 @@ w = wr(:).*ws(:).*wt(:);
 
 % quadrature nodes for collocation
 [rq1D wq1D] = JacobiGQ(0,0,N);
-% rq1D = rq1D*(1-1e-10);
+% [rq1D wq1D] = JacobiGL(0,0,N); rq1D = rq1D*(1-1e-11);
 [rq sq tq] = meshgrid(rq1D);
 rq = rq(:); sq = sq(:); tq = tq(:);
 [wr ws wt] = meshgrid(wq1D);
@@ -34,10 +34,11 @@ E1D = Vf1D;
 B1D = diag([-1,1]);
 QN = [Q1D-Q1D' E1D'*B1D;
     -B1D*E1D 0*B1D];
-VN = [eye(N+1);Vf1D];
+VN = [eye(N+1); Vf1D];
 invWVNT = diag(1./wq1D)*VN';
 
-% 3D matrices
+%% 3D matrices
+
 V = kron(kron(V1D,V1D),V1D);
 Vq = kron(kron(Vq1D,Vq1D),Vq1D);
 M = Vq'*diag(wq)*Vq;
@@ -74,6 +75,7 @@ ntJ = ntJ(:);
 
 %% compute face indices for face points on "lines" of nodes
 
+tol = 1e-12;
 fidr = zeros(2,(N+1)^2);
 fids = zeros(2,(N+1)^2);
 fidt = zeros(2,(N+1)^2);
@@ -89,22 +91,22 @@ for ii = 1:(N+1)^2
     [sf1 sf2] = meshgrid(sf,sfr);
     [tf1 tf2] = meshgrid(tf,tfr);
     D = abs(rf1 - rf2) + abs(sf1 - sf2) + abs(tf1 - tf2);
-    fidr(1,ii) = find(D(1,:) < 1e-10);
-    fidr(2,ii) = find(D(2,:) < 1e-10);
+    fidr(1,ii) = find(D(1,:) < tol);
+    fidr(2,ii) = find(D(2,:) < tol);
     
     [rf1 rf2] = meshgrid(rf,rfs);
     [sf1 sf2] = meshgrid(sf,sfs);
     [tf1 tf2] = meshgrid(tf,tfs);
     D = abs(rf1 - rf2) + abs(sf1 - sf2) + abs(tf1 - tf2);
-    fids(1,ii) = find(D(1,:) < 1e-10);
-    fids(2,ii) = find(D(2,:) < 1e-10);
+    fids(1,ii) = find(D(1,:) < tol);
+    fids(2,ii) = find(D(2,:) < tol);
     
     [rf1 rf2] = meshgrid(rf,rft);
     [sf1 sf2] = meshgrid(sf,sft);
     [tf1 tf2] = meshgrid(tf,tft);
     D = abs(rf1 - rf2) + abs(sf1 - sf2) + abs(tf1 - tf2);
-    fidt(1,ii) = find(D(1,:) < 1e-10);
-    fidt(2,ii) = find(D(2,:) < 1e-10);
+    fidt(1,ii) = find(D(1,:) < tol);
+    fidt(2,ii) = find(D(2,:) < tol);
     
     %     clf
     %     plot3(rq,sq,tq,'o')
@@ -145,12 +147,17 @@ QNs = [Qs-Qs' Ef'*Bs;
 QNt = [Qt-Qt' Ef'*Bt;
     -Bt*Ef 0*Bt];
 
+BNr = diag([0*rq; wfq.*nrJ]);
+BNs = diag([0*rq; wfq.*nsJ]);
+BNt = diag([0*rq; wfq.*ntJ]);
+
 % used for surface flux computations
 Vfq = Vandermonde3DHex(N,rf,sf,tf)/Vandermonde3DHex(N,rq,sq,tq); % quadrature nodes -> face nodes
-Vfq(abs(Vfq)<1e-8) = 0;
-invWVfTW = diag(1./wq)*sparse(Vfq)'*diag(wfq);
+Vfq(abs(Vfq)<1e-12) = 0;
+Vfq = sparse(Vfq);
 
 VN = [eye((N+1)^3); Vfq];
+invWVfTW = diag(1./wq)*Vfq'*diag(wfq);
 invWVNTr = diag(1./wq)*VN';
 
 % norm(QNr+QNr' - 2*blkdiag(0*Qr,Br),'fro')
@@ -291,24 +298,33 @@ U3 = @(V1,V2,V3,V4,V5) rhoeV(V1,V2,V3,V4,V5).*(V3);
 U4 = @(V1,V2,V3,V4,V5) rhoeV(V1,V2,V3,V4,V5).*(V4);
 U5 = @(V1,V2,V3,V4,V5) rhoeV(V1,V2,V3,V4,V5).*(1-(V2.^2+V3.^2+V4.^2)./(2*V5));
 
-% entropy potentials
-psix = @(rho,rhou,rhov,rhow,E) (gamma-1)*rhou;
-psiy = @(rho,rhou,rhov,rhow,E) (gamma-1)*rhov;
-psiz = @(rho,rhou,rhov,rhow,E) (gamma-1)*rhow;
+% % entropy potentials
+% psix = @(rho,rhou,rhov,rhow,E) (gamma-1)*rhou;
+% psiy = @(rho,rhou,rhov,rhow,E) (gamma-1)*rhov;
+% psiz = @(rho,rhou,rhov,rhow,E) (gamma-1)*rhow;
 
 %% initial conditions
 
 time = 0;
-rho = 2 + sin(pi*xq - time); 
+rhoexfun = @(x,y,z,t) 2 + sin(pi*(x - t));
+
+rho = rhoexfun(xq,yq,zq,time);
 u = ones(size(xq));
 v = zeros(size(xq));
 w = zeros(size(xq));
 p = ones(size(xq));
 
+% rho = ones(size(rho));
 rhou = rho.*u;
 rhov = rho.*v;
 rhow = rho.*w;
 E    = p/(gamma-1) + .5*rho.*(u.^2+v.^2);
+
+% rho = Pq*rho;
+% rhou = Pq*rhou;
+% rhov = Pq*rhov;
+% rhow = Pq*rhow;
+% E = Pq*E;
 
 %% code to run solver
 
@@ -414,116 +430,116 @@ for i = 1:Nsteps
                 rhs4(:,e) = rhs4(:,e) + invWVNTr*r4;
                 rhs5(:,e) = rhs5(:,e) + invWVNTr*r5;
             end
-        end
-        
-        % compute volume terms
-        for e = 1:K
+        else
             
-            % indices for lines of nodes
-            idrv = (1:(N+1):(N+1)^2)';
-            idsv = (1:N+1)';
-            idtv = (1:(N+1)^2:(N+1)^3)';
-            
-            for ii = 1:(N+1)^2
+            % compute volume terms
+            for e = 1:K
                 
-                idrf = fidr(:,ii);
-                idsf = fids(:,ii);
-                idtf = fidt(:,ii);
+                % indices for lines of nodes
+                idrv = (1:(N+1):(N+1)^2)';
+                idsv = (1:N+1)';
+                idtv = (1:(N+1)^2:(N+1)^3)';
                 
-                % ========= differentiate along r-lines
-                
-                rho_l  = [rho(idrv,e);  rhof(idrf,e)];
-                u_l    = [u(idrv,e);    uf(idrf,e)];
-                v_l    = [v(idrv,e);    vf(idrf,e)];
-                w_l    = [w(idrv,e);    wf(idrf,e)];
-                beta_l = [beta(idrv,e); betaf(idrf,e)];
-                
-                [rhox rhoy] = meshgrid(rho_l);
-                [ux uy] = meshgrid(u_l);
-                [vx vy] = meshgrid(v_l);
-                [wx wy] = meshgrid(w_l);
-                [betax betay] = meshgrid(beta_l);
-                [FxS FyS FzS] = fluxes(rhox,rhoy,ux,uy,vx,vy,wx,wy,betax,betay);
-                
-                % affine case
-                Fr1 = FxS{1}*rxJ(1,e) + FyS{1}*ryJ(1,e) + FzS{1}*rzJ(1,e);
-                Fr2 = FxS{2}*rxJ(1,e) + FyS{2}*ryJ(1,e) + FzS{2}*rzJ(1,e);
-                Fr3 = FxS{3}*rxJ(1,e) + FyS{3}*ryJ(1,e) + FzS{3}*rzJ(1,e);
-                Fr4 = FxS{4}*rxJ(1,e) + FyS{4}*ryJ(1,e) + FzS{4}*rzJ(1,e);
-                Fr5 = FxS{5}*rxJ(1,e) + FyS{5}*ryJ(1,e) + FzS{5}*rzJ(1,e);
-                
-                rhs1(idrv,e) = rhs1(idrv,e) + invWVNT*sum(QN.*Fr1,2);
-                rhs2(idrv,e) = rhs2(idrv,e) + invWVNT*sum(QN.*Fr2,2);
-                rhs3(idrv,e) = rhs3(idrv,e) + invWVNT*sum(QN.*Fr3,2);
-                rhs4(idrv,e) = rhs4(idrv,e) + invWVNT*sum(QN.*Fr4,2);
-                rhs5(idrv,e) = rhs5(idrv,e) + invWVNT*sum(QN.*Fr5,2);
-                
-                % ========= differentiate along s-lines
-                
-                rho_l  = [rho(idsv,e);  rhof(idsf,e)];
-                u_l    = [u(idsv,e);    uf(idsf,e)];
-                v_l    = [v(idsv,e);    vf(idsf,e)];
-                w_l    = [w(idsv,e);    wf(idsf,e)];
-                beta_l = [beta(idsv,e); betaf(idsf,e)];
-                
-                [rhox rhoy] = meshgrid(rho_l);
-                [ux uy] = meshgrid(u_l);
-                [vx vy] = meshgrid(v_l);
-                [wx wy] = meshgrid(w_l);
-                [betax betay] = meshgrid(beta_l);
-                [FxS FyS FzS] = fluxes(rhox,rhoy,ux,uy,vx,vy,wx,wy,betax,betay);
-                
-                % affine case
-                Fs1 = FxS{1}*sxJ(1,e) + FyS{1}*syJ(1,e) + FzS{1}*szJ(1,e);
-                Fs2 = FxS{2}*sxJ(1,e) + FyS{2}*syJ(1,e) + FzS{2}*szJ(1,e);
-                Fs3 = FxS{3}*sxJ(1,e) + FyS{3}*syJ(1,e) + FzS{3}*szJ(1,e);
-                Fs4 = FxS{4}*sxJ(1,e) + FyS{4}*syJ(1,e) + FzS{4}*szJ(1,e);
-                Fs5 = FxS{5}*sxJ(1,e) + FyS{5}*syJ(1,e) + FzS{5}*szJ(1,e);
-                rhs1(idsv,e) = rhs1(idsv,e) + invWVNT*sum(QN.*Fs1,2);
-                rhs2(idsv,e) = rhs2(idsv,e) + invWVNT*sum(QN.*Fs2,2);
-                rhs3(idsv,e) = rhs3(idsv,e) + invWVNT*sum(QN.*Fs3,2);
-                rhs4(idsv,e) = rhs4(idsv,e) + invWVNT*sum(QN.*Fs4,2);
-                rhs5(idsv,e) = rhs5(idsv,e) + invWVNT*sum(QN.*Fs5,2);
-                
-                % ========= differentiate along t-lines
-                
-                rho_l  = [rho(idtv,e);  rhof(idtf,e)];
-                u_l    = [u(idtv,e);    uf(idtf,e)];
-                v_l    = [v(idtv,e);    vf(idtf,e)];
-                w_l    = [w(idtv,e);    wf(idtf,e)];
-                beta_l = [beta(idtv,e); betaf(idtf,e)];
-                
-                [rhox rhoy] = meshgrid(rho_l);
-                [ux uy] = meshgrid(u_l);
-                [vx vy] = meshgrid(v_l);
-                [wx wy] = meshgrid(w_l);
-                [betax betay] = meshgrid(beta_l);
-                [FxS FyS FzS] = fluxes(rhox,rhoy,ux,uy,vx,vy,wx,wy,betax,betay);
-                
-                % affine case
-                Ft1 = FxS{1}*txJ(1,e) + FyS{1}*tyJ(1,e) + FzS{1}*tzJ(1,e);
-                Ft2 = FxS{2}*txJ(1,e) + FyS{2}*tyJ(1,e) + FzS{2}*tzJ(1,e);
-                Ft3 = FxS{3}*txJ(1,e) + FyS{3}*tyJ(1,e) + FzS{3}*tzJ(1,e);
-                Ft4 = FxS{4}*txJ(1,e) + FyS{4}*tyJ(1,e) + FzS{4}*tzJ(1,e);
-                Ft5 = FxS{5}*txJ(1,e) + FyS{5}*tyJ(1,e) + FzS{5}*tzJ(1,e);
-                rhs1(idtv,e) = rhs1(idtv,e) + invWVNT*sum(QN.*Ft1,2);
-                rhs2(idtv,e) = rhs2(idtv,e) + invWVNT*sum(QN.*Ft2,2);
-                rhs3(idtv,e) = rhs3(idtv,e) + invWVNT*sum(QN.*Ft3,2);
-                rhs4(idtv,e) = rhs4(idtv,e) + invWVNT*sum(QN.*Ft4,2);
-                rhs5(idtv,e) = rhs5(idtv,e) + invWVNT*sum(QN.*Ft5,2);
-                
-                % move onto next "line" of nodes
-                idrv = idrv + 1;
-                if mod(ii,N+1)==0
-                    idrv = idrv + (N+1)^2-(N+1);
+                for ii = 1:(N+1)^2
+                    
+                    idrf = fidr(:,ii);
+                    idsf = fids(:,ii);
+                    idtf = fidt(:,ii);
+                    
+                    % ========= differentiate along r-lines
+                    
+                    rho_l  = [rho(idrv,e);  rhof(idrf,e)];
+                    u_l    = [u(idrv,e);    uf(idrf,e)];
+                    v_l    = [v(idrv,e);    vf(idrf,e)];
+                    w_l    = [w(idrv,e);    wf(idrf,e)];
+                    beta_l = [beta(idrv,e); betaf(idrf,e)];
+                    
+                    [rhox rhoy] = meshgrid(rho_l);
+                    [ux uy] = meshgrid(u_l);
+                    [vx vy] = meshgrid(v_l);
+                    [wx wy] = meshgrid(w_l);
+                    [betax betay] = meshgrid(beta_l);
+                    [FxS FyS FzS] = fluxes(rhox,rhoy,ux,uy,vx,vy,wx,wy,betax,betay);
+                    
+                    % affine case
+                    Fr1 = FxS{1}*rxJ(1,e) + FyS{1}*ryJ(1,e) + FzS{1}*rzJ(1,e);
+                    Fr2 = FxS{2}*rxJ(1,e) + FyS{2}*ryJ(1,e) + FzS{2}*rzJ(1,e);
+                    Fr3 = FxS{3}*rxJ(1,e) + FyS{3}*ryJ(1,e) + FzS{3}*rzJ(1,e);
+                    Fr4 = FxS{4}*rxJ(1,e) + FyS{4}*ryJ(1,e) + FzS{4}*rzJ(1,e);
+                    Fr5 = FxS{5}*rxJ(1,e) + FyS{5}*ryJ(1,e) + FzS{5}*rzJ(1,e);
+                    
+                    rhs1(idrv,e) = rhs1(idrv,e) + invWVNT*sum(QN.*Fr1,2);
+                    rhs2(idrv,e) = rhs2(idrv,e) + invWVNT*sum(QN.*Fr2,2);
+                    rhs3(idrv,e) = rhs3(idrv,e) + invWVNT*sum(QN.*Fr3,2);
+                    rhs4(idrv,e) = rhs4(idrv,e) + invWVNT*sum(QN.*Fr4,2);
+                    rhs5(idrv,e) = rhs5(idrv,e) + invWVNT*sum(QN.*Fr5,2);
+                    
+                    % ========= differentiate along s-lines
+                    
+                    rho_l  = [rho(idsv,e);  rhof(idsf,e)];
+                    u_l    = [u(idsv,e);    uf(idsf,e)];
+                    v_l    = [v(idsv,e);    vf(idsf,e)];
+                    w_l    = [w(idsv,e);    wf(idsf,e)];
+                    beta_l = [beta(idsv,e); betaf(idsf,e)];
+                    
+                    [rhox rhoy] = meshgrid(rho_l);
+                    [ux uy] = meshgrid(u_l);
+                    [vx vy] = meshgrid(v_l);
+                    [wx wy] = meshgrid(w_l);
+                    [betax betay] = meshgrid(beta_l);
+                    [FxS FyS FzS] = fluxes(rhox,rhoy,ux,uy,vx,vy,wx,wy,betax,betay);
+                    
+                    % affine case
+                    Fs1 = FxS{1}*sxJ(1,e) + FyS{1}*syJ(1,e) + FzS{1}*szJ(1,e);
+                    Fs2 = FxS{2}*sxJ(1,e) + FyS{2}*syJ(1,e) + FzS{2}*szJ(1,e);
+                    Fs3 = FxS{3}*sxJ(1,e) + FyS{3}*syJ(1,e) + FzS{3}*szJ(1,e);
+                    Fs4 = FxS{4}*sxJ(1,e) + FyS{4}*syJ(1,e) + FzS{4}*szJ(1,e);
+                    Fs5 = FxS{5}*sxJ(1,e) + FyS{5}*syJ(1,e) + FzS{5}*szJ(1,e);
+                    rhs1(idsv,e) = rhs1(idsv,e) + invWVNT*sum(QN.*Fs1,2);
+                    rhs2(idsv,e) = rhs2(idsv,e) + invWVNT*sum(QN.*Fs2,2);
+                    rhs3(idsv,e) = rhs3(idsv,e) + invWVNT*sum(QN.*Fs3,2);
+                    rhs4(idsv,e) = rhs4(idsv,e) + invWVNT*sum(QN.*Fs4,2);
+                    rhs5(idsv,e) = rhs5(idsv,e) + invWVNT*sum(QN.*Fs5,2);
+                    
+                    % ========= differentiate along t-lines
+                    
+                    rho_l  = [rho(idtv,e);  rhof(idtf,e)];
+                    u_l    = [u(idtv,e);    uf(idtf,e)];
+                    v_l    = [v(idtv,e);    vf(idtf,e)];
+                    w_l    = [w(idtv,e);    wf(idtf,e)];
+                    beta_l = [beta(idtv,e); betaf(idtf,e)];
+                    
+                    [rhox rhoy] = meshgrid(rho_l);
+                    [ux uy] = meshgrid(u_l);
+                    [vx vy] = meshgrid(v_l);
+                    [wx wy] = meshgrid(w_l);
+                    [betax betay] = meshgrid(beta_l);
+                    [FxS FyS FzS] = fluxes(rhox,rhoy,ux,uy,vx,vy,wx,wy,betax,betay);
+                    
+                    % affine case
+                    Ft1 = FxS{1}*txJ(1,e) + FyS{1}*tyJ(1,e) + FzS{1}*tzJ(1,e);
+                    Ft2 = FxS{2}*txJ(1,e) + FyS{2}*tyJ(1,e) + FzS{2}*tzJ(1,e);
+                    Ft3 = FxS{3}*txJ(1,e) + FyS{3}*tyJ(1,e) + FzS{3}*tzJ(1,e);
+                    Ft4 = FxS{4}*txJ(1,e) + FyS{4}*tyJ(1,e) + FzS{4}*tzJ(1,e);
+                    Ft5 = FxS{5}*txJ(1,e) + FyS{5}*tyJ(1,e) + FzS{5}*tzJ(1,e);
+                    rhs1(idtv,e) = rhs1(idtv,e) + invWVNT*sum(QN.*Ft1,2);
+                    rhs2(idtv,e) = rhs2(idtv,e) + invWVNT*sum(QN.*Ft2,2);
+                    rhs3(idtv,e) = rhs3(idtv,e) + invWVNT*sum(QN.*Ft3,2);
+                    rhs4(idtv,e) = rhs4(idtv,e) + invWVNT*sum(QN.*Ft4,2);
+                    rhs5(idtv,e) = rhs5(idtv,e) + invWVNT*sum(QN.*Ft5,2);
+                    
+                    % move onto next "line" of nodes
+                    idrv = idrv + 1;
+                    if mod(ii,N+1)==0
+                        idrv = idrv + (N+1)^2-(N+1);
+                    end
+                    idsv = idsv + (N+1);
+                    idtv = idtv + 1;
+                    
                 end
-                idsv = idsv + (N+1);
-                idtv = idtv + 1;
-                
             end
+            
         end
-        
-        
         if (INTRK==5)
             % rhstest
             r1 = diag(wq)*rhs1;
@@ -555,7 +571,7 @@ for i = 1:Nsteps
         rhou = rhou + rk4b(INTRK)*res2;
         rhov = rhov + rk4b(INTRK)*res3;
         rhow = rhow + rk4b(INTRK)*res4;
-        E    = E    + rk4b(INTRK)*res5;
+        E    = E    + rk4b(INTRK)*res5;        
     end
     
     if mod(i,25)==0 || i==Nsteps
@@ -570,7 +586,26 @@ for i = 1:Nsteps
     end
 end
 
-rhoex = 2 + sin(pi*(xq - FinalTime));
+[rq1D2 wq1D2] = JacobiGQ(0,0,N+2);
+[rq2 sq2 tq2] = meshgrid(rq1D2);
+rq2 = rq2(:); 
+sq2 = sq2(:); 
+tq2 = tq2(:);
+[wr ws wt] = meshgrid(wq1D2);
+wq2 = wr(:).*ws(:).*wt(:);
+Vq2 = Vandermonde3DHex(N,rq2,sq2,tq2)/Vandermonde3DHex(N,rq,sq,tq);
+
+xq2 = Vq2*xq;
+yq2 = Vq2*yq;
+zq2 = Vq2*zq;
+
+rhoex = rhoexfun(xq2,yq2,zq2,FinalTime);
+wJq = diag(wq2)*(Vq2*J);
+err = sqrt(sum(sum(wJq.*(Vq2*rho-rhoex).^2)))
+
+clf
+h = color_line3(xq2,yq2,zq2,abs(Vq2*rho-rhoex),'.');
+set(h,'markersize',64)
 
 % figure
 % subplot(1,2,1)
@@ -589,7 +624,7 @@ rhoex = 2 + sin(pi*(xq - FinalTime));
 % title(sprintf('at tstep = %d / %d, time = %f\n',i,Nsteps,dt*i))
 % colorbar
 % set(gca,'fontsize',15)
-max(max(abs(rho - rhoex)))
+% max(max(abs(rho - rhoex)))
 
 %%
 

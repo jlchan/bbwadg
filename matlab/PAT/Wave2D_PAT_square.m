@@ -2,7 +2,7 @@ clear
 
 Globals2D
 
-N = 6;
+N = 4;
 K1D = 16;
 tau0 = 1;
 
@@ -43,7 +43,7 @@ tau(mapB) = 1;
 
 x0 = .1; y0 = 0;
 
-opt=2;
+opt=3;
 if opt==1
     % gaussian pulse
     pex = @(x,y) exp(-10^2*((x-x0).^2 + (y-y0).^2));
@@ -122,13 +122,13 @@ for i = 1:Nstep
         Ubc{2}(:,NstepRK - id0) = UbcI{2};
     end;
     
-%     if mod(i,10)==0
-%         vv = Vp*p;
-%         clf; color_line3(xp,yp,vv,vv,'.');
-%         axis equal; axis tight; colorbar
-%         title(sprintf('time = %f, max solution val = %f',time,max(abs(vv(:)))))
-%         drawnow
-%     end
+    if mod(i,10)==0
+        vv = Vp*p;
+        clf; color_line3(xp,yp,vv,vv,'.');
+        axis equal; axis tight; colorbar
+        title(sprintf('time = %f, max solution val = %f',time,max(abs(vv(:)))))
+        drawnow
+    end
     
     time = i * dt;
     if (mod(i,ceil(Nstep/10))==0)
@@ -211,13 +211,13 @@ for i = 1:Nstep
     if (mod(i,ceil(Nstep/5))==0)
         disp(sprintf('first backwards prop: tstep %d out of %d',i,Nstep))
     end
-    %     if mod(i,10)==0
-    %         vv = Vp*p;
-    %         clf; color_line3(xp,yp,vv,vv,'.');
-    %         axis equal; axis tight; colorbar
-    %         title(sprintf('first reversal time = %f, max solution val = %f',time,max(abs(vv(:)))))
-    %         drawnow
-    %     end
+        if mod(i,10)==0
+            vv = Vp*p;
+            clf; color_line3(xp,yp,vv,vv,'.');
+            axis equal; axis tight; colorbar
+            title(sprintf('first reversal time = %f, max solution val = %f',time,max(abs(vv(:)))))
+            drawnow
+        end
 end
 
 % save reversed data
@@ -229,7 +229,7 @@ Rm = p;
 % initalize pressure condition
 p0 = Rm;
 
-for iter = 1:25
+for iter = 1:5
     
     p = p0; u = zeros(Np,K); v = zeros(Np,K);
     resp = zeros(Np,K); resu = resp; resv = resp;
@@ -250,13 +250,13 @@ for iter = 1:25
         if (mod(i,ceil(Nstep/5))==0)
             disp(sprintf('fwd prop: tstep %d out of %d',i,Nstep))
         end
-        %         if mod(i,10)==0
-        %             vv = Vp*p;
-        %             clf; color_line3(xp,yp,vv,vv,'.');
-        %             title(sprintf('forwards time = %f, max solution val = %f',time,max(abs(vv(:)))))
-        %             axis equal; axis tight; colorbar
-        %             drawnow
-        %         end
+                if mod(i,10)==0
+                    vv = Vp*p;
+                    clf; color_line3(xp,yp,vv,vv,'.');
+                    title(sprintf('forwards time = %f, max solution val = %f',time,max(abs(vv(:)))))
+                    axis equal; axis tight; colorbar
+                    drawnow
+                end
     end
     
     %     % compute new auxiliary initial conditions

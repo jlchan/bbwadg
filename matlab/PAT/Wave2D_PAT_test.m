@@ -14,9 +14,9 @@ clear -global *
 
 Globals2D
 
-N = 3;
+N = 5;
 K1D = 8;
-FinalTime = 2.1;
+FinalTime = .75;
 
 plotFlag = 0;
 useTraces = 1;

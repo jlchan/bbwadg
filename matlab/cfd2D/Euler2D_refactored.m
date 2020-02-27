@@ -5,7 +5,7 @@ FinalTime = 1;
 
 N = 6;
 K1D = 10;
-CFL = .75;
+CFL = .5;
 plotMesh = 0;
 
 global tau
@@ -13,13 +13,9 @@ tau = .5;
 
 %% set up physical domain 
 
-% Lx = 7.5; Ly = 5; ratiox = 3/4; ratioy = .5;
 Lx = 10; Ly = 5; ratiox = 1; ratioy = Ly/Lx;
 [Nv, VX, VY, K, EToV] = unif_tri_mesh(round(ratiox*K1D),round(K1D*ratioy));
-% [Nv, VX, VY, K, EToV] = unif_tri_mesh(2,1);
-% VX = VX/max(abs(VX));  VY = VY/max(abs(VY));
 VX = (VX+1)*Lx; VY = VY*Ly;
-% [Nv, VX, VY, K, EToV] = unif_tri_mesh(2);
 
 StartUp2D;
 BuildPeriodicMaps2D(max(VX)-min(VX),max(VY)-min(VY));
@@ -83,6 +79,12 @@ WN = diag([wq;wf]);
 DNr = WN\QNr;
 DNs = WN\QNs;
 
+%% apply curved warping
+
+a = 0/8;
+x0 = Lx; y0 = 0;
+x = x + Lx*a*cos(1/2*pi*(x-x0)/Lx).*cos(3/2*pi*(y-y0)/Ly);
+y = y + Ly*a*sin(pi*(x-x0)/Lx).*cos(1/2*pi*(y-y0)/Ly);
 
 %% make geometric terms
 
@@ -94,13 +96,9 @@ xp = Vp*x; yp = Vp*y;
 rxJ = rx.*J;    sxJ = sx.*J;
 ryJ = ry.*J;    syJ = sy.*J;
 
-[rx,sx,ry,sy,Jf] = GeometricFactors2D(x,y,Vf*Dr,Vf*Ds);
-rxJf = rx.*Jf;    sxJf = sx.*Jf;
-ryJf = ry.*Jf;    syJf = sy.*Jf;
-
 % compute scaled physical normals
-nxJ = rxJf.*nrJ + sxJf.*nsJ;
-nyJ = ryJf.*nrJ + syJf.*nsJ;
+nxJ = (Vf*rxJ).*nrJ + (Vf*sxJ).*nsJ;
+nyJ = (Vf*ryJ).*nrJ + (Vf*syJ).*nsJ;
 sJ = sqrt(nxJ.^2 + nyJ.^2);
 nx = nxJ./sJ; ny = nyJ./sJ;
 
@@ -130,10 +128,6 @@ V1 = @(rho,rhou,rhov,E) (-E + rhoe(rho,rhou,rhov,E).*(gamma + 1 - s(rho,rhou,rho
 V2 = @(rho,rhou,rhov,E) rhou./(rhoe(rho,rhou,rhov,E));
 V3 = @(rho,rhou,rhov,E) rhov./(rhoe(rho,rhou,rhov,E));
 V4 = @(rho,rhou,rhov,E) (-rho)./(rhoe(rho,rhou,rhov,E));
-% V1 = @(rho,rhou,rhov,E) (gamma-s(rho,rhou,rhov,E))/(gamma-1) - (rhou.^2+rhov.^2)./(rho.*2.*pcons(rho,rhou,rhov,E));
-% V2 = @(rho,rhou,rhov,E) rhou./(pcons(rho,rhou,rhov,E));
-% V3 = @(rho,rhou,rhov,E) rhov./(pcons(rho,rhou,rhov,E));
-% V4 = @(rho,rhou,rhov,E) (-rho)./(pcons(rho,rhou,rhov,E));
 
 sV = @(V1,V2,V3,V4) gamma - V1 + (V2.^2+V3.^2)./(2*V4);
 rhoeV  = @(V1,V2,V3,V4) ((gamma-1)./((-V4).^gamma)).^(1/(gamma-1)).*exp(-sV(V1,V2,V3,V4)/(gamma-1));
@@ -149,23 +143,11 @@ pavg     = @(rhoL,uL,vL,EL,rhoR,uR,vR,ER)     avg(rhoL,rhoR)./(2*avg(beta(rhoL,u
 plogmean = @(rhoL,uL,vL,EL,rhoR,uR,vR,ER) logmean(rhoL,rhoR)./(2*logmean(beta(rhoL,uL,vL,EL),beta(rhoR,uR,vR,ER)));
 vnormavg = @(uL,vL,uR,vR) 2*(avg(uL,uR).^2 + avg(vL,vR).^2) - (avg(uL.^2,uR.^2) + avg(vL.^2,vR.^2));
 
-fxS1 = @(rhoL,uL,vL,EL,rhoR,uR,vR,ER) logmean(rhoL,rhoR).*avg(uL,uR);
-fxS2 = @(rhoL,uL,vL,EL,rhoR,uR,vR,ER) logmean(rhoL,rhoR).*avg(uL,uR).^2 + pavg(rhoL,uL,vL,EL,rhoR,uR,vR,ER);
-fxS3 = @(rhoL,uL,vL,EL,rhoR,uR,vR,ER) logmean(rhoL,rhoR).*avg(uL,uR).*avg(vL,vR);
-fxS4 = @(rhoL,uL,vL,EL,rhoR,uR,vR,ER) (plogmean(rhoL,uL,vL,EL,rhoR,uR,vR,ER)/(gamma-1) + pavg(rhoL,uL,vL,EL,rhoR,uR,vR,ER) + .5*logmean(rhoL,rhoR).*vnormavg(uL,vL,uR,vR)).*avg(uL,uR);
-
-fyS1 = @(rhoL,uL,vL,EL,rhoR,uR,vR,ER) logmean(rhoL,rhoR).*avg(vL,vR);
-fyS2 = @(rhoL,uL,vL,EL,rhoR,uR,vR,ER) logmean(rhoL,rhoR).*avg(uL,uR).*avg(vL,vR);
-fyS3 = @(rhoL,uL,vL,EL,rhoR,uR,vR,ER) logmean(rhoL,rhoR).*avg(vL,vR).^2 + pavg(rhoL,uL,vL,EL,rhoR,uR,vR,ER);
-fyS4 = @(rhoL,uL,vL,EL,rhoR,uR,vR,ER) (plogmean(rhoL,uL,vL,EL,rhoR,uR,vR,ER)/(gamma-1) + pavg(rhoL,uL,vL,EL,rhoR,uR,vR,ER) + .5*logmean(rhoL,rhoR).*vnormavg(uL,vL,uR,vR)).*avg(vL,vR);
-
 % entropy potentials
 psix = @(rho,rhou,rhov,E) (gamma-1)*rhou;
 psiy = @(rho,rhou,rhov,E) (gamma-1)*rhov;
 
 %% define initial condition using L2 projection
-
-x0 = 0; y0 = 0;
 
 [rho u v p] = vortexSolution(x,y,0);
 rhou = rho.*u;
@@ -180,6 +162,7 @@ res4 = zeros(size(x));
 
 % compute time step size
 CN = (N+1)*(N+2)/2; % based on trace constant
+Jf = Vf*J;
 CNh = max(CN*max(sJ(:)./Jf(:)));
 dt = CFL*2/CNh;
 
@@ -310,7 +293,7 @@ rhovM  = U3(q1M,q2M,q3M,q4M);
 EM     = U4(q1M,q2M,q3M,q4M);
 uM     = rhouM./rhoM;
 vM     = rhovM./rhoM;
-betafq = beta(rhoM,uM,vM,EM);
+betaM = beta(rhoM,uM,vM,EM);
 
 rhoP  = U1(q1P,q2P,q3P,q4P);
 rhouP = U2(q1P,q2P,q3P,q4P);
@@ -318,6 +301,7 @@ rhovP = U3(q1P,q2P,q3P,q4P);
 EP    = U4(q1P,q2P,q3P,q4P);
 uP    = rhouP./rhoP;
 vP    = rhovP./rhoP;
+betaP = beta(rhoP,uP,vP,EP);
 
 % Lax-Friedrichs penalization
 global gamma tau
@@ -333,10 +317,11 @@ Lf2 = tau*LFc.*(rhoP.*uP-rhoM.*uM);
 Lf3 = tau*LFc.*(rhoP.*vP-rhoM.*vM);
 Lf4 = tau*LFc.*(EP-EM);
 
-fSf1 = nxJ.*fxS1(rhoM,uM,vM,EM,rhoP,uP,vP,EP) + nyJ.*fyS1(rhoM,uM,vM,EM,rhoP,uP,vP,EP);
-fSf2 = nxJ.*fxS2(rhoM,uM,vM,EM,rhoP,uP,vP,EP) + nyJ.*fyS2(rhoM,uM,vM,EM,rhoP,uP,vP,EP);
-fSf3 = nxJ.*fxS3(rhoM,uM,vM,EM,rhoP,uP,vP,EP) + nyJ.*fyS3(rhoM,uM,vM,EM,rhoP,uP,vP,EP);
-fSf4 = nxJ.*fxS4(rhoM,uM,vM,EM,rhoP,uP,vP,EP) + nyJ.*fyS4(rhoM,uM,vM,EM,rhoP,uP,vP,EP);
+[FxS1 FxS2 FxS3 FxS4 FyS1 FyS2 FyS3 FyS4] = euler_flux_2d(rhoM,rhoP,uM,uP,vM,vP,betaM,betaP);
+fSf1 = nxJ.*FxS1 + nyJ.*FyS1;
+fSf2 = nxJ.*FxS2 + nyJ.*FyS2;
+fSf3 = nxJ.*FxS3 + nyJ.*FyS3;
+fSf4 = nxJ.*FxS4 + nyJ.*FyS4;
 fSf1 = fSf1  - .5*Lf1;
 fSf2 = fSf2  - .5*Lf2;
 fSf3 = fSf3  - .5*Lf3;
@@ -348,7 +333,7 @@ fSf4 = fSf4  - .5*Lf4;
 rhoN  = [rhoq; rhoM];
 uN    = [uq; uM];
 vN    = [vq; vM];
-betaN = [betaq;betafq];
+betaN = [betaq;betaM];
 
 divF1 = zeros(size(DNr,1),K);
 divF2 = zeros(size(DNr,1),K);
@@ -361,21 +346,9 @@ for e = 1:K
     [vx, vy]       = meshgrid(vN(:,e));    
     [betax, betay] = meshgrid(betaN(:,e)); % no need to compute E 
     
-    % optimized flux evaluations for compressible Euler
-    rholog = logmean(rhox,rhoy);
-    rhoavg = avg(rhox,rhoy);
-    uavg = avg(ux,uy);
-    vavg = avg(vx,vy);
-    vnavg = 2*(uavg.^2 + vavg.^2) - (avg(ux.^2,uy.^2) + avg(vx.^2,vy.^2));
-    pa = rhoavg./(2*avg(betax,betay));
-    
-    FxS1 = rholog.*uavg;      FyS1 = rholog.*vavg;
-    FxS2 = FxS1.*uavg + pa;   FyS2 = FyS1.*uavg;
-    FxS3 = FyS2;              FyS3 = FyS1.*vavg + pa;
-    f4aux = rholog./(2*(gamma-1)*logmean(betax,betay)) + pa + .5*rholog.*vnavg;
-    FxS4 = f4aux.*uavg;
-    FyS4 = f4aux.*vavg;
+    [FxS1 FxS2 FxS3 FxS4 FyS1 FyS2 FyS3 FyS4] = euler_flux_2d(rhox,rhoy,ux,uy,vx,vy,betax,betay);
         
+    % assume constant geofacs - doesn't work properly if rxJ not constant!
     Qx = DNr.*rxJ(1,e) + DNs.*sxJ(1,e);
     Qy = DNr.*ryJ(1,e) + DNs.*syJ(1,e);       
    
@@ -412,11 +385,6 @@ rho = 1 - (1/(8*gamma*pi^2))*(gamma-1)/2*(beta*exp(1-r2)).^2;
 rho = rho.^(1/(gamma-1));
 p = rho.^gamma;
 
-% rho = (2 + sin(pi*(x - t)));
-% u = ones(size(x));
-% v = zeros(size(x));
-% p = ones(size(x));
-
 if 0
     % pulse condition
     x0 = 5;
@@ -426,5 +394,30 @@ if 0
     p = rho.^gamma;    
 end
 
+end
+
+function [FxS1 FxS2 FxS3 FxS4 FyS1 FyS2 FyS3 FyS4] = euler_flux_2d(rhoL,rhoR,uL,uR,vL,vR,betaL,betaR)
+
+gamma = 1.4;
+
+% optimized evaluations
+rholog = logmean(rhoL,rhoR);
+rhoavg = .5*(rhoL+rhoR);
+uavg = .5*(uL+uR);
+vavg = .5*(vL+vR);
+vnavg = uL.*uR + vL.*vR; 
+pa = rhoavg./(betaL+betaR);
+
+EavgPavg = rholog./(2*(gamma-1)*logmean(betaL,betaR)) + pa + .5*rholog.*vnavg;
+
+FxS1 = rholog.*uavg;      
+FxS2 = FxS1.*uavg + pa;   
+FxS3 = FxS1.*vavg;              
+FxS4 = EavgPavg.*uavg;
+
+FyS1 = rholog.*vavg;
+FyS2 = FxS3;
+FyS3 = FyS1.*vavg + pa;
+FyS4 = EavgPavg.*vavg;
 
 end

@@ -334,7 +334,6 @@ dfloat testlog(dfloat aL, dfloat aR)
   }
 }
 
-
 @kernel void surface(const int K,
 		     const dfloat * fgeo,		     
 		     const int    * mapPq, // face index into volume nodes

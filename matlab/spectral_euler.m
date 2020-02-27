@@ -2,18 +2,17 @@
 
 clear
 
-N = 40; % must be even
-FinalTime = 5.0;
+N = 20; % must be even
+FinalTime = 1.;% 5.0;
 
 CFL = .25;
 
-Lx = 20;
+Lx = 1;
 x = linspace(0,Lx,N+1); x = x(1:end-1)';
 y = x; %linspace(0,10,N+1); y = y(1:end-1)';
 
 dx = x(2)-x(1);
 h = 2*pi/N; % original h on [-pi,pi]
-
 
 column = [0 .5*(-1).^(1:N-1).*cot((1:N-1)*h/2)]*2*pi/Lx;
 D = toeplitz(column,column([1 N:-1:2]));
@@ -281,14 +280,16 @@ rho = rho.^(1/(gamma-1));
 p = rho.^gamma;
 
 % sine sol
-%k = [1 .5];
-%rho = (2 + sin(pi*(1*(x-k(1)*t)+2*(y-k(2)*t))*2/20));
-%u = ones(size(x))*k(1);
-%v = ones(size(x))*k(2);
-rho = 2 + sin(pi*(x-t)*2/20);
-u = ones(size(x));
-v = zeros(size(x));
+k = [1 1];
+rho = 2 + sin(2*pi*((x-t)+(y-t)));
+u = ones(size(x))*k(1);
+v = ones(size(x))*k(2);
 p = ones(size(x));
+
+% rho = 2 + sin(pi*(x-t)*2/20);
+% u = ones(size(x));
+% v = zeros(size(x));
+% p = ones(size(x));
 
 % if 1
 %     % pulse condition

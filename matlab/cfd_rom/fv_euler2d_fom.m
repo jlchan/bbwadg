@@ -1,7 +1,7 @@
 % clear
-K = 250;
+K = 150;
 % FinalTime = .1;
-FinalTime = .1;
+FinalTime = .25;
 
 CFL = .5;
 
@@ -10,7 +10,7 @@ x = .5*(xv(1:end-1)+xv(2:end));
 dx = 1/K;
 
 % tau = .1*dx;
-tau = 1e-3;
+tau = 2e-3;
 % tau = .5*dx;
 
 e = ones(K-1,1);
@@ -52,9 +52,9 @@ U4 = @(V1,V2,V3,V4) rhoeV(V1,V2,V3,V4).*(1-(V2.^2+V3.^2)./(2*V4));
 
 avg = @(x,y) .5*(x+y);
 pfun = @(rho,u,v,E) (gamma-1)*(E-.5*rho.*(u.^2+v.^2));
-beta = @(rho,u,v,E) rho./(2*pfun(rho,u,v,E));
-pavg     = @(rhoL,uL,vL,EL,rhoR,uR,vR,ER)     avg(rhoL,rhoR)./(2*avg(beta(rhoL,uL,vL,EL),beta(rhoR,uR,vR,ER)));
-plogmean = @(rhoL,uL,vL,EL,rhoR,uR,vR,ER) logmean(rhoL,rhoR)./(2*logmean(beta(rhoL,uL,vL,EL),beta(rhoR,uR,vR,ER)));
+betafun = @(rho,u,v,E) rho./(2*pfun(rho,u,v,E));
+pavg     = @(rhoL,uL,vL,EL,rhoR,uR,vR,ER)     avg(rhoL,rhoR)./(2*avg(betafun(rhoL,uL,vL,EL),betafun(rhoR,uR,vR,ER)));
+plogmean = @(rhoL,uL,vL,EL,rhoR,uR,vR,ER) logmean(rhoL,rhoR)./(2*logmean(betafun(rhoL,uL,vL,EL),betafun(rhoR,uR,vR,ER)));
 vnormavg = @(uL,vL,uR,vR) 2*(avg(uL,uR).^2 + avg(vL,vR).^2) - (avg(uL.^2,uR.^2) + avg(vL.^2,vR.^2));
 
 fxS1 = @(rhoL,uL,vL,EL,rhoR,uR,vR,ER) logmean(rhoL,rhoR).*avg(uL,uR);
@@ -69,11 +69,11 @@ fyS4 = @(rhoL,uL,vL,EL,rhoR,uR,vR,ER) (plogmean(rhoL,uL,vL,EL,rhoR,uR,vR,ER)/(ga
 
 %% set initial cond
 
-% rho = ones(size(x)) + exp(-50*((x).^2+(y+.5).^2));
+rho = ones(size(x)) + exp(-50*((x).^2+(y+.5).^2));
 % % rho = 1 + (abs(x)<.5).*(abs(y)<.5);
 % % xc = x + .5; yc = y + .5;
-% % rho = 2*ones(size(x)) + .5*exp(-100*(xc.^2+0*yc.^2)); %.*sin(pi*xc).*sin(pi*yc);
-rho = .5*(ones(size(x)) + (x>0) + (y>0) + (x>0).*(y>0));
+% rho = 2*ones(size(x)) + .5*exp(-100*(xc.^2+0*yc.^2)); %.*sin(pi*xc).*sin(pi*yc);
+% rho = .5*(ones(size(x)) + (x>0) + (y>0) + (x>0).*(y>0));
 u = zeros(size(x));
 v = zeros(size(x));
 p = rho.^(gamma);
@@ -134,7 +134,9 @@ for i = 1:Nsteps
     for INTRK = 1:5                        
         
         u = rhou./rho;
-        v = rhov./rho;                        
+        v = rhov./rho;    
+        
+        beta = betafun(rho,u,v,E);
             
         rhoL = [rho(:,1) rho];
         rhoR = [rho rho(:,end)];
@@ -142,13 +144,17 @@ for i = 1:Nsteps
         uR = [u -u(:,end)];
         vL = [v(:,1) v];
         vR = [v v(:,end)];
-        EL = [E(:,1) E];
-        ER = [E E(:,end)];
+%         EL = [E(:,1) E];
+%         ER = [E E(:,end)];        
+        betaL = [beta(:,1) beta];
+        betaR = [beta beta(:,end)];
+        [FxS1 FxS2 FxS3 FxS4] = ...
+            euler_flux_x(rhoL,rhoR,uL,uR,vL,vR,betaL,betaR);
 
-        rhs1 = dx*diff(fxS1(rhoL,uL,vL,EL,rhoR,uR,vR,ER),[],2);
-        rhs2 = dx*diff(fxS2(rhoL,uL,vL,EL,rhoR,uR,vR,ER),[],2);
-        rhs3 = dx*diff(fxS3(rhoL,uL,vL,EL,rhoR,uR,vR,ER),[],2);
-        rhs4 = dx*diff(fxS4(rhoL,uL,vL,EL,rhoR,uR,vR,ER),[],2);                        
+        rhs1 = dx*diff(FxS1,[],2); %fxS1(rhoL,uL,vL,EL,rhoR,uR,vR,ER),[],2);
+        rhs2 = dx*diff(FxS2,[],2); %fxS2(rhoL,uL,vL,EL,rhoR,uR,vR,ER),[],2);
+        rhs3 = dx*diff(FxS3,[],2); %fxS3(rhoL,uL,vL,EL,rhoR,uR,vR,ER),[],2);
+        rhs4 = dx*diff(FxS4,[],2); %fxS4(rhoL,uL,vL,EL,rhoR,uR,vR,ER),[],2);                        
         
         rhoL = [rho(1,:); rho];
         rhoR = [rho; rho(end,:)];
@@ -156,13 +162,16 @@ for i = 1:Nsteps
         uR = [u; u(end,:)];
         vL = [-v(1,:); v];
         vR = [v; -v(end,:)];
-        EL = [E(1,:); E];
-        ER = [E; E(end,:)];
+%         EL = [E(1,:); E];
+%         ER = [E; E(end,:)];
+        betaL = [beta(1,:); beta];
+        betaR = [beta; beta(end,:)];
+        [FyS1 FyS2 FyS3 FyS4] = euler_flux_y(rhoL,rhoR,uL,uR,vL,vR,betaL,betaR);
         
-        rhs1 = rhs1 + dx*diff(fyS1(rhoL,uL,vL,EL,rhoR,uR,vR,ER),[],1);
-        rhs2 = rhs2 + dx*diff(fyS2(rhoL,uL,vL,EL,rhoR,uR,vR,ER),[],1);
-        rhs3 = rhs3 + dx*diff(fyS3(rhoL,uL,vL,EL,rhoR,uR,vR,ER),[],1);
-        rhs4 = rhs4 + dx*diff(fyS4(rhoL,uL,vL,EL,rhoR,uR,vR,ER),[],1);        
+        rhs1 = rhs1 + dx*diff(FyS1,[],1); %fyS1(rhoL,uL,vL,EL,rhoR,uR,vR,ER),[],1);
+        rhs2 = rhs2 + dx*diff(FyS2,[],1); %fyS2(rhoL,uL,vL,EL,rhoR,uR,vR,ER),[],1);
+        rhs3 = rhs3 + dx*diff(FyS3,[],1); %fyS3(rhoL,uL,vL,EL,rhoR,uR,vR,ER),[],1);
+        rhs4 = rhs4 + dx*diff(FyS4,[],1); %fyS4(rhoL,uL,vL,EL,rhoR,uR,vR,ER),[],1);        
         
         % add dissipation       
         rhs1 = rhs1 + tau*dx*(KS*rho + rho*KS);
@@ -187,6 +196,8 @@ for i = 1:Nsteps
 
     end
     
+    entropy(i) = sum(sum(-rho.*sfun(rho,rhou,rhov,E)))*dx^2;
+    
     if mod(i,interval)==0
         Usnap(:,sk) = [rho(:);rhou(:);rhov(:);E(:)];
         sk = sk + 1;
@@ -200,3 +211,5 @@ for i = 1:Nsteps
         drawnow
     end
 end
+
+% semilogy(entropy,'--','linewidth',2)

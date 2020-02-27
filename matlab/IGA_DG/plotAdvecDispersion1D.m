@@ -12,7 +12,7 @@ for Ksub = [1 4 8 16]
     
     ndofs = (N+1)*K1D;
     
-    r = JacobiGL(0,0,N);
+    r = JacobiGQ(0,0,N);
     rp = linspace(-1,1,500)';
     Vp = bsplineVDM(NB,Ksub,rp,smoothKnots);
     [BVDM M Dr] = bsplineVDM(NB,Ksub,r,smoothKnots); % VDM for interp, mass, M\S
@@ -79,6 +79,7 @@ for Ksub = [1 4 8 16]
     end
     
 end
+
 figure(1)
 axis on; grid on
 set(gca,'fontsize',14)
@@ -94,10 +95,10 @@ hold on;
 loglog(Lvec,.1*Lvec.^(2*NB+3),'k--','DisplayName','h^{11}')
 legend(gca,'show','Location','Best')
 
-if smoothKnots == 0
-    figure(1); print(gcf,'-dpng','~/Desktop/IGA-DG/docs/multipatch/figs/dispersionUnif.png')
-    figure(2); print(gcf,'-dpng','~/Desktop/IGA-DG/docs/multipatch/figs/dispersionErrUnif.png')
-else
-    figure(1); print(gcf,'-dpng','~/Desktop/IGA-DG/docs/multipatch/figs/dispersionSmooth.png')
-    figure(2); print(gcf,'-dpng','~/Desktop/IGA-DG/docs/multipatch/figs/dispersionErrSmooth.png')
-end
+% if smoothKnots == 0
+%     figure(1); print(gcf,'-dpng','~/Desktop/IGA-DG/docs/multipatch/figs/dispersionUnif.png')
+%     figure(2); print(gcf,'-dpng','~/Desktop/IGA-DG/docs/multipatch/figs/dispersionErrUnif.png')
+% else
+%     figure(1); print(gcf,'-dpng','~/Desktop/IGA-DG/docs/multipatch/figs/dispersionSmooth.png')
+%     figure(2); print(gcf,'-dpng','~/Desktop/IGA-DG/docs/multipatch/figs/dispersionErrSmooth.png')
+% end

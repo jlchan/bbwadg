@@ -41,5 +41,6 @@ end
 
 % reshape vmapM and vmapP to be vectors and create boundary node list
 vmapP = vmapP(:); vmapM = vmapM(:); mapP = mapP(:);
+
 mapB = find(vmapP==vmapM); vmapB = vmapM(mapB);
 return

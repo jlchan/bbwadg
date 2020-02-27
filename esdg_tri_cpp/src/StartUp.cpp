@@ -8,12 +8,13 @@ void InitRefTri(Mesh *mesh, int N){
   int Nfp = (N+1);
 
   // nodal points 
-  VectorXd r,s,t;
-  Nodes3D(N,r,s,t); // get 3D nodes
+  VectorXd r3,s3,t3;
+  Nodes3D(N,r3,s3,t3); // get 3D nodes
 
   // take triangle interpolation points as face points of tet
-  r = r.head(Np);
-  s = s.head(Np);
+  VectorXd r,s;
+  r = r3.head(Np);
+  s = s3.head(Np);
 
   // 1D quadrature points 
   VectorXd rq1D, wq1D;

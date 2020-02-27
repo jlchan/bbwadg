@@ -5,11 +5,11 @@ if nargin==0
     filename = 'cube';
 end
 if nargin<2
-    surface_mesh = 'Grid/Maxwell2D/Maxwell2.neu';
+    surface_mesh = 'Grid/Maxwell2D/Maxwell0125.neu';
 end
 if nargin<3
     usurf = @(x,y) zeros(size(x)); % assumes wavy layer is centered around z = 0.
-%     usurf = @(x,y) .25*sin(2*x+2.5).*sin(3*y+3.5);
+    usurf = @(x,y) .25*sin(2*x+2.5).*sin(3*y+3.5);
 end
 if nargin<4
     nlevel = 1;
@@ -163,6 +163,7 @@ end
 % ue = [u;uold]; plot3(xe(ids,:),ye(ids,:),ue(ids,:),'ko-','linewidth',2);hold on
 % trisurf(tri,x,y,u)
 % axis equal
+return
 
 num_surface_verts = length(VX);
 EToV2D = EToV; 

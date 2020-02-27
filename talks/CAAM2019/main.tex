@@ -117,9 +117,9 @@ title style={font=\footnotesize}
 
 
 \title[Entropy stable schemes]{Entropy stable schemes for nonlinear conservation laws: high order discontinuous Galerkin methods\\and reduced order modeling}
-\date[9/4/19]{Oak Ridge National Lab, Oak Ridge, TN\\September 4, 2019}
+\date[9/16/19]{CAAM Colloquium\\September 16, 2019}
 \author[J.\ Chan]{Jesse Chan}
-\institute[Rice CAAM]{\inst{1}Department of Computational and Applied Mathematics}
+%\institute[Rice CAAM]{\inst{1}Department of Computational and Applied Mathematics}
 
 \begin{document}
 \makeatletter
@@ -148,7 +148,7 @@ title style={font=\footnotesize}
 %}
 
 \frame{
-\frametitle{Accurate numerical methods for hyperbolic PDEs}
+\frametitle{Numerical methods for hyperbolic PDEs}
 \setcounter{subfigure}{0}
 \vspace{-.5em}
 \begin{columns}
@@ -192,6 +192,30 @@ title style={font=\footnotesize}
 %\visible<1>{\let\thefootnote\relax\footnotetext[1]{\tiny Figures courtesy of T.\ Warburton, A.\ Modave.}}
 %\visible<5>{\let\thefootnote\relax\footnotetext[5]{\tiny Figure courtesy of T.\ Warburton, Nvidia.}}
 }
+
+\frame{
+\frametitle{Projection-based reduced order models (ROMs)}
+\vspace{-.5em}
+\begin{figure}
+\centering
+\includegraphics[width=.65\textwidth]{figs/POD_illustration.png}
+\end{figure}
+\vspace{-.5em}
+\begin{itemize}
+\item Reduce costs for many-query scenarios (uncertainty quantification).
+\item Main steps: \note{offline} training phase with full order model (FOM), cheap \note{online} phase with reduced order model (ROM).
+\end{itemize} 
+
+\uncover<2>{
+\begin{center}
+\minibox[frame]{Challenge: ROMs inherit stability of FOM for elliptic PDEs,\\
+but not for nonlinear hyperbolic problems!}
+\end{center}
+}
+
+\let\thefootnote\relax\footnotetext{\tiny Figure adapted from Brunton, Proctor, Kutz (2016), \textit{Discovering governing equations from data \ldots}.}
+}
+
 
 %\frame{
 %\frametitle{Why high order discontinuous Galerkin methods?}
@@ -306,20 +330,26 @@ title style={font=\footnotesize}
 \setcounter{subfigure}{0}
 \vspace{-1em}
 \begin{figure}
+\only<1-4>{
 \begin{overprint}
 \centering
 \foreach \id in {1,2,3,4}{%
 \only<\id>{
 \captionsetup[subfloat]{width=.45\textwidth, justification=centering}
-\subfloat[Exact solution]{%[$N = 7, K = 8$ (aligned mesh)]{
+\subfloat[Exact solution]{
 \makebox[.425\textwidth]{\includegraphics[width=.4\textwidth]{figs/burgersStable_\id.png}}}%
 \hspace{1em}%
-\subfloat[8th order method]{ %[$N = 7, K = 9$ (non-aligned mesh)]{
-\makebox[.425\textwidth]{\includegraphics[width=.4\textwidth]{figs/burgersUnstable_\id.png}}}
+\subfloat[High order DG method]{\makebox[.425\textwidth]{\includegraphics[width=.4\textwidth]{figs/burgersUnstable_\id.png}}}
 } % only
 } % foreach 
 \end{overprint}
+}
+\only<5>{
+\subfloat[Blowup of ROM from Carlberg, Barone, Antil (2017)]{\includegraphics[width=.7\textwidth]{figs/ROM_blowup.png}}
+}
 \end{figure}
+
+
 %\vspace{-.5em}
 \begin{itemize}
 \item Advanced numerical methods blow up for under-resolved solutions of \note{nonlinear conservation laws} (e.g., shocks and turbulence).   
@@ -384,36 +414,12 @@ title style={font=\footnotesize}
 }
 
 \frame{
-\frametitle{Scope of this talk, related work}
-
-\begin{itemize}
-\item Semi-discrete entropy inequality + retaining ROM accuracy.  
-\vspace{1em}
-\item Combinations of ideas from:
-\vspace{.5em}
-\begin{itemize}
-\item<1-> entropy stable finite volume schemes,
-\vspace{.5em}
-\item<2-> high order entropy stable summation-by-parts (SBP) finite differences and nodal discontinuous Galerkin methods,
-\vspace{.5em}
-\item<3-> reduced order modeling and hyper-reduction.
-\end{itemize}
-\vspace{1em}
-\item<4-> Does not address \textit{approximation issues} for transport problems!  
-\end{itemize}
-
-\let\thefootnote\relax\footnotetext{\tiny Finite volumes: Tadmor, Chandrashekar, Ray, Svard, Fjordholm, Mishra, LeFloch, Rohde, \ldots}
-\let\thefootnote\relax\footnotetext{\tiny SBP: Fisher, Carpenter, Gassner, Winters, Kopriva, Hindenlang, Chen and Shu, Crean and Hicken, DCDR Fernandez, Zingg, Yamaleev, Parsani, Svard, Pazner and Persson, Wintermeyer, Bohm, Friedrich, Schnuke, \ldots.}
-\let\thefootnote\relax\footnotetext{\tiny ROMs: Afkham, Ripamonti, Wang, Hesthaven (2018), Serre, Lafon, Gloerfelt, Bailly (2012), Kalashnikova, Barone, et al.\ (2014), Carlberg, Choi, Sargsyan (2018), Farhat, Chapman, Avery (2015), \ldots. }
-}
-
-\frame{
 \frametitle{Discretely entropy stable schemes: main ideas}
 
 \begin{itemize}
-\item<1-> Continuous and semi-discrete systems
+\item<1-> Continuous and semi-discrete systems, $\epsilon \geq 0$
 \[
-\boxed{\pd{\bm{u}}{t} + \pd{\bm{f}(\bm{u})}{x} - \epsilon \pdn{u}{x}{2}= 0} \quad \Longrightarrow \quad
+\boxed{\pd{\bm{u}}{t} + \pd{\bm{f}(\bm{u})}{x} - \epsilon \pdn{\bm{u}}{x}{2}= 0} \quad \Longrightarrow \quad
 \boxed{\bm{M}\td{\bm{u}}{t} + \bm{f}_x(\bm{u}) + \epsilon \bm{K}\bm{u} = \bm{0}}
 %\boxed{\td{\bm{u}}{t} + \bm{D}\bm{f}(\bm{u}) + \epsilon \bm{K}\bm{u} = \bm{0}}
 \]
@@ -441,14 +447,14 @@ title style={font=\footnotesize}
 \centering
 \begin{overlayarea}{\textwidth}{.45\textheight}
 \only<1>{
-\subfloat[Entropy conservative flux, $T = .3$]{\includegraphics[width=.49\textwidth]{figs/shockVortexTp3_EC.png}}
+\subfloat[No dissipation, $T = .3$]{\includegraphics[width=.49\textwidth]{figs/shockVortexTp3_EC.png}}
 \hspace{.05em}
-\subfloat[Entropy conservative flux, $T = .7$]{\includegraphics[width=.49\textwidth]{figs/shockVortexTp7_EC.png}}
+\subfloat[No dissipation, $T = .7$]{\includegraphics[width=.49\textwidth]{figs/shockVortexTp7_EC.png}}
 }
 \only<2>{
-\subfloat[Lax-Friedrichs flux, $T = .3$]{\includegraphics[width=.49\textwidth]{figs/shockVortexTp3_LF.png}}
+\subfloat[Lax-Friedrichs dissipation, $T = .3$]{\includegraphics[width=.49\textwidth]{figs/shockVortexTp3_LF.png}}
 \hspace{.05em}
-\subfloat[Lax-Friedrichs flux, $T = .7$]{\includegraphics[width=.49\textwidth]{figs/shockVortexTp7_LF.png}}\
+\subfloat[Lax-Friedrichs dissipation, $T = .7$]{\includegraphics[width=.49\textwidth]{figs/shockVortexTp7_LF.png}}\
 }
 \only<3>{
 \subfloat[Matrix dissipation flux, $T = .3$]{\includegraphics[width=.49\textwidth]{figs/shockVortexTp3.png}}
@@ -461,7 +467,7 @@ title style={font=\footnotesize}
 \subfloat[Matrix dissipation flux, $T = .7$]{\includegraphics[width=.49\textwidth]{figs/shockVortexT7.png}}
 }
 \end{overlayarea}
-\caption{Shock vortex interaction problem using high order entropy stable Gauss collocation schemes with $N=4, h = 1/100$.  }
+\caption{Shock vortex interaction problem using high order entropy stable Gauss collocation DG schemes with degree $N=4, h = 1/100$.  }
 \label{fig:shockvort}
 \end{figure}
 
@@ -484,7 +490,31 @@ title style={font=\footnotesize}
 \let\thefootnote\relax\footnotetext{\tiny Dalcin et al.\ (2019).  \textit{Conservative and entropy stable solid wall BCs for the compressible NS equations}.}
 }
 
-\section{Starting point: an entropy stable full order model}
+\frame{
+\frametitle{Scope of this talk, related work}
+
+\begin{itemize}
+\item Goal: semi-discrete entropy inequality + retaining ROM accuracy.  
+\vspace{1em}
+\item Combines ideas from:
+\vspace{.5em}
+\begin{itemize}
+\item<2-> entropy stable finite volume schemes,
+\vspace{.5em}
+\item<2-> summation-by-parts (SBP) finite differences,
+\vspace{.5em}
+\item<2-> reduced order modeling and hyper-reduction techniques.
+\end{itemize}
+\vspace{1em}
+\item<3-> \textit{Accuracy} of reduced bases is an open problem for hyperbolic PDEs!  
+\end{itemize}
+
+\let\thefootnote\relax\footnotetext{\tiny Finite volumes: Tadmor, Chandrashekar, Ray, Svard, Fjordholm, Mishra, LeFloch, Rohde, \ldots}
+\let\thefootnote\relax\footnotetext{\tiny SBP: Fisher, Carpenter, Gassner, Winters, Kopriva, Hindenlang, Chen and Shu, Crean and Hicken, DCDR Fernandez, Zingg, Yamaleev, Parsani, Svard, Pazner and Persson, Wintermeyer, Bohm, Friedrich, Schnuke, \ldots.}
+\let\thefootnote\relax\footnotetext{\tiny ROMs: Afkham, Ripamonti, Wang, Hesthaven (2018), Serre, Lafon, Gloerfelt, Bailly (2012), Kalashnikova, Barone, et al.\ (2014), Carlberg, Choi, Sargsyan (2018), Farhat, Chapman, Avery (2015), \ldots. }
+}
+
+\section{An entropy stable full order model}
 
 \frame[noframenumbering]{
 \frametitle{Talk outline}
@@ -507,10 +537,10 @@ title style={font=\footnotesize}
 \item Integrate conservation law over cell $[x_i,x_{i+1}]$
 \[
 \only<1>{ \int_{x_i}^{x_{i+1}} \LRp{\pd{\bm{u}}{t} + \pd{\bm{f}(\bm{u})}{x}}\diff{x} = \bm{0}.}
-\only<2>{ \pd{}{t}\int_{x_i}^{x_{i+1}} \bm{u} + \int_{x_i}^{x_{i+1}}\pd{\bm{f}(\bm{u})}{x} = \bm{0}.}
-\only<3->{ \pd{}{t}\int_{x_i}^{x_{i+1}} \bm{u} + \LRu{\bm{f}(\bm{u})}_{x_i}^{x_{i+1}} = \bm{0}.}
+%\only<2>{ \pd{}{t}\int_{x_i}^{x_{i+1}} \bm{u} + \int_{x_i}^{x_{i+1}}\pd{\bm{f}(\bm{u})}{x} = \bm{0}.}
+\only<2->{ \pd{}{t}\LRp{\int_{x_i}^{x_{i+1}} \bm{u}} + \LRu{\bm{f}(\bm{u})}_{x_i}^{x_{i+1}} = \bm{0}.}
 \]
-\item<4> Introduce numerical flux $\bm{f}_S(\bm{u}_L,\bm{u}_R)$ at cell interfaces% Discretize integrated form of nonlinear conservation law
+\item<3> Introduce numerical flux $\bm{f}_S(\bm{u}_L,\bm{u}_R)$ at cell interfaces% Discretize integrated form of nonlinear conservation law
 \[
 \Delta x \td{\bm{u}_i}{t} + {\bm{f}_{S}(\bm{u}_{i+1},\bm{u}_i) - \bm{f}_{S}(\bm{u}_{i},\bm{u}_{i-1})} = 0, \qquad \text{interior } i. 
 \]
@@ -530,7 +560,7 @@ title style={font=\footnotesize}
 \vspace{.01em}
 \item Model problem: compressible Euler equations
 \begin{align*}
-\bm{u} = \begin{bmatrix}\rho\\ u\\ E \end{bmatrix}, \qquad
+\bm{u} = \begin{bmatrix}\rho\\ \rho  u\\ E \end{bmatrix}, \qquad
 \pd{\bm{f}(\bm{u})}{x} = \pd{}{x}\begin{bmatrix}
 \rho u\\
 \rho u^2 + p\\
@@ -538,10 +568,12 @@ title style={font=\footnotesize}
 \end{bmatrix}
 \end{align*}
 \end{itemize}
+
+\let\thefootnote\relax\footnotetext{\tiny Tadmor, Eitan (1987). \textit{The numerical viscosity of entropy stable schemes for systems of conservation laws. I.}}
 }
 
 \frame{
-\frametitle{Example of EC fluxes (compressible Euler equations)}
+\frametitle{EC fluxes for the compressible Euler equations}
 \begin{itemize}
 \item Define average $\avg{u} = \frac{1}{2}(u_L+u_R)$.  In one dimension: 
 \begin{align*}
@@ -568,13 +600,13 @@ p_{\rm avg} = \frac{\avg{\rho}}{2\avg{\beta}}, \qquad E_{\rm avg} = \frac{\avg{\
 \begin{itemize}
 \item Finite volume scheme
 \[
-\Delta x \td{\bm{u}_i}{t} + {\bm{f}_{S}(\bm{u}_{i+1},\bm{u}_i) - \bm{f}_{S}(\bm{u}_{i},\bm{u}_{i-1})} = 0, \qquad \text{interior } i. 
+\Delta x \td{\bm{u}_i}{t} + {\bm{f}_{S}(\bm{u}_{i+1},\bm{u}_i) - \bm{f}_{S}(\bm{u}_{i},\bm{u}_{i-1})} = \text{viscosity}, \qquad \text{interior } i. 
 \]
-\item Matrix formulation: let $\bm{M} = (\Delta x) \bm{I}$, and (assuming periodicity)
+\item Matrix formulation: assuming periodicity
 \[
-\bm{M}\td{\bm{u}}{t} + 2\LRp{\bm{Q}\circ \bm{F}}\bm{1} + \underbrace{\epsilon\bm{K}\bm{u}}_{\text{viscosity}} = 0.
+\bm{F}_{ij} = \bm{f}_S\LRp{\bm{u}_i,\bm{u}_j}, \qquad \Delta x \td{\bm{u}}{t} + 2\LRp{\bm{Q}\circ \bm{F}}\bm{1} + \underbrace{\epsilon\bm{K}\bm{u}}_{\text{viscosity}} = 0.
 \]
-\item<2-> Note the matrix $\bm{Q}$ satisfies $\note{\bm{Q}=-\bm{Q}^T}$ and $\note{\bm{Q}\bm{1} = \bm{0}}$.
+\item<2-> The differentiation matrix $\bm{Q}$ satisfies $\note{\bm{Q}=-\bm{Q}^T}$ and $\note{\bm{Q}\bm{1} = \bm{0}}$.
 \[
 \bm{Q} =\frac{1}{2} \begin{bmatrix}
 0 & 1 & & -1\\
@@ -583,7 +615,7 @@ p_{\rm avg} = \frac{\avg{\rho}}{2\avg{\beta}}, \qquad E_{\rm avg} = \frac{\avg{\
 1 & & -1  & 0
 \end{bmatrix}, \qquad
 \bm{K} = \frac{1}{\Delta x^2}\begin{bmatrix}
-1 & -1 & & 0\\
+1 & -1 & & \\
 -1 & 2 & -1 &\\
 & \ddots & \ddots & -1 \\
  & & -1  & 1
@@ -645,8 +677,8 @@ p_{\rm avg} = \frac{\avg{\rho}}{2\avg{\beta}}, \qquad E_{\rm avg} = \frac{\avg{\
 \begin{overlayarea}{\textwidth}{.425\textheight}
 \vspace{-1em}
 \begin{align*}
-2\bm{v}^T\LRp{\bm{Q}\circ \bm{F}}\bm{1} &= \sum_{ij} {\bm{Q}_{ij}} \bm{v}_i^T \bm{f}_S\LRp{\bm{u}_i,\bm{u}_j}\\
-&= \only<1>{\sum_{ij} \note{\LRp{\bm{Q}_{ij} - \bm{Q}_{ji}}} \bm{v}_i^T \bm{f}_S\LRp{\bm{u}_i,\bm{u}_j}}
+2\bm{v}^T\LRp{\bm{Q}\circ \bm{F}}\bm{1} &= \sum_{ij} {2\bm{Q}_{ij}} \bm{v}_i^T \bm{f}_S\LRp{\bm{u}_i,\bm{u}_j}\\
+&= \only<1>{\sum_{ij} \note{\LRp{\bm{Q}_{ij} - \bm{Q}_{ji}}} \bm{v}_i^T \bm{f}_S\LRp{\bm{u}_i,\bm{u}_j}\\}
 \only<2->{\sum_{ij} \bm{Q}_{ij} \textcolor{red}{\LRp{\bm{v}_i - \bm{v}_j}^T \bm{f}_S\LRp{\bm{u}_i,\bm{u}_j}}\\}
 \uncover<3->{&= \sum_{ij} \bm{Q}_{ij} \note{\LRp{\psi(\bm{u}_i) - \psi(\bm{u}_j)}}} \uncover<4>{= \underbrace{\bm{\psi}^T\note{\bm{Q}\bm{1}} - \note{\bm{1}^T\bm{Q}}\bm{\psi}}_{=\bm{0}}}
 \end{align*}
@@ -656,27 +688,27 @@ p_{\rm avg} = \frac{\avg{\rho}}{2\avg{\beta}}, \qquad E_{\rm avg} = \frac{\avg{\
 }
 
 
-\frame{
-\frametitle{Entropy stability for the full order model}
-\vspace{-.5em}
-\begin{itemize}
-\item Add appropriate \note{entropy dissipation} terms 
-\begin{gather*}
-\bm{v}^T\LRp{\Delta x\td{\bm{u}}{t} + \LRp{\bm{Q}\circ \bm{F}}\bm{1}  - \LRp{\text{viscous terms}}} = 0\\
-\Longrightarrow \quad \Delta x \bm{1}^T \td{\bm{S}}{t} = \bm{v}^T \LRp{\text{viscous terms}} \overset{?}{\leq} 0.
-\end{gather*}
-\vspace{.0em}
-\item Entropy is convex $\Longrightarrow$ Hessian inverse $\pd{\bm{u}}{\bm{v}}$ is SPD
-\[
--\epsilon\pdn{\bm{u}}{x}{2} = -\epsilon\pd{}{x} \LRp{\pd{\bm{u}}{x}} = -\epsilon\pd{}{x}\LRp{{\pd{\bm{u}}{\bm{v}}}   \pd{\bm{v}}{x}}.
-\]
-Standard FEM/ROM treatment of diffusion tensor dissipates entropy.
-\end{itemize}
-
-\let\thefootnote\relax\footnotetext{\tiny Hughes, Mallet, Franca (1986). \textit{A new FE formulation for CFD: I. Sym.\ forms of the comp.\ Euler and NS equations \ldots}}
-%\let\thefootnote\relax\footnotetext{\tiny Carpenter et al.\ (2014). \textit{Entropy stable spectral collocation schemes for the NS equations: discontinuous interfaces.}}
-%\let\thefootnote\relax\footnotetext{\tiny Riviere and Wheeler (2000).  \textit{A discontinuous Galerkin method applied to nonlinear parabolic equations}}
-}
+%\frame{
+%\frametitle{Entropy stability for the full order model}
+%\vspace{-.5em}
+%\begin{itemize}
+%\item Add appropriate \note{entropy dissipation} terms 
+%\begin{gather*}
+%\bm{v}^T\LRp{\Delta x\td{\bm{u}}{t} + \LRp{\bm{Q}\circ \bm{F}}\bm{1}  - \LRp{\text{viscous terms}}} = 0\\
+%\Longrightarrow \quad \Delta x \bm{1}^T \td{\bm{S}}{t} = \bm{v}^T \LRp{\text{viscous terms}} \overset{?}{\leq} 0.
+%\end{gather*}
+%\vspace{.0em}
+%\item Entropy is convex $\Longrightarrow$ inverse Hessian  $\pd{\bm{u}}{\bm{v}}$ is SPD
+%\[
+%\underbrace{-\epsilon\pdn{\bm{u}}{x}{2}}_{\text{viscous terms}} = -\epsilon\pd{}{x} \LRp{\pd{\bm{u}}{x}} = -\epsilon\pd{}{x}\LRp{{\pd{\bm{u}}{\bm{v}}}  \pd{\bm{v}}{x}}.
+%\]
+%Standard symmetric treatment of diffusion tensor dissipates entropy.
+%\end{itemize}
+%
+%\let\thefootnote\relax\footnotetext{\tiny Hughes, Mallet, Franca (1986). \textit{A new FE formulation for CFD: I. Sym.\ forms of the comp.\ Euler and NS equations \ldots}}
+%%\let\thefootnote\relax\footnotetext{\tiny Carpenter et al.\ (2014). \textit{Entropy stable spectral collocation schemes for the NS equations: discontinuous interfaces.}}
+%%\let\thefootnote\relax\footnotetext{\tiny Riviere and Wheeler (2000).  \textit{A discontinuous Galerkin method applied to nonlinear parabolic equations}}
+%}
 
 
 \section{Entropy stable reduced order modeling}
@@ -688,699 +720,102 @@ Standard FEM/ROM treatment of diffusion tensor dissipates entropy.
 
 \frame{
 \frametitle{Naive POD-Galerkin procedure}
-\begin{itemize}
-\item (Offline) compute POD basis from solution component snapshots.
+
+\begin{overlayarea}{\textwidth}{\textheight}
+\vspace{-.5em}
+\begin{figure}
+\centering
+\includegraphics[width=.7\textwidth]{POD.png}
+\end{figure}
+\vspace{-.25em}
+\only<1>{
+Step 1 (offline): compute ``modes'' from solution component snapshots.
 \[
 \bm{V} = {\begin{bmatrix} \vertbar & & \vertbar \\
 \phi_1 & \ldots & \phi_N\\
 \vertbar & & \vertbar
-\end{bmatrix}}, \qquad \phi_i^T\phi_j = \delta_{ij}, \qquad \bm{u} \approx \bm{V} \bm{u}_N.
+\end{bmatrix}}, \qquad \qquad \bm{u} \approx \bm{V} \bm{u}_N.
 \]
-\item (Online) Galerkin projection of the matrix system 
+}
+\only<2->{
+Step 2 (online): Galerkin projection - does not conserve entropy!
 \[
-%{\bm{V}^T\bm{M}\bm{V}} 
-\Delta x\td{\bm{u}_N}{t} + 2\bm{V}^T \LRp{{\bm{Q}}\circ \bm{F}}\bm{1} = 0.
+\only<2>{\bm{V}^T\LRp{\Delta x\td{(\bm{V}\bm{u}_N)}{t} + 2 \LRp{{\bm{Q}}\circ \bm{F}}\bm{1}} = 0.}
+\only<3>{\Delta x\bm{V}^T\bm{V}\td{\bm{u}_N}{t} + 2\bm{V}^T \LRp{{\bm{Q}}\circ \bm{F}}\bm{1} = 0.}
 \]
-\item<2-> Reduced system does not preserve conservation of entropy!  
-\end{itemize}
 }
-
-\frame{
-\frametitle{Entropy projection}
-\begin{itemize}
-\item Test  Projection of 
-\[
-\LRp{\tilde{\bm{v}}_i-\tilde{\bm{v}}_j}^T \bm{f}_S\LRp{\bm{u}_i,\bm{u}_j} \neq \psi(\bm{u}_i) - \psi(\bm{u}_j).
-\]
-\item 
-\item (Online) Entropy projection results in an entropy stable ROM
-\begin{gather*}
-{\tilde{\bm{u}} = \bm{u}\LRp{\bm{V} \bm{V}^{\dagger} \bm{v}\LRp{\bm{V} \bm{u}_N}}}, \qquad \LRp{\bm{F}}_{ij} = \bm{f}_S\LRp{\tilde{\bm{u}}_i,\tilde{\bm{u}}_j}.
-\end{gather*}
-For accuracy, compute POD basis from snapshots of both conservative and entropy variables.  
-\end{itemize}
-}
-
-\section{Entropy stable hyper-reduction}
-\frame[noframenumbering]{
-\frametitle{Talk outline}
-\tableofcontents[currentsection]
-}
-
-\frame{
-\frametitle{Challenges for modal formulations}
-\vspace{-.5em}
-\begin{itemize}
-\item Challenge 1: entropy variables are not contained in the finite element test space!  If $\bm{u}\in P^N$, then in general, $\bm{v}(\bm{u}) \not\in P^N$.  
-\vspace{1.5em}
-\item Challenge 2: inter-element coupling more complicated and expensive.
-\end{itemize}
-%\vspace{-.5em}
-\begin{figure}
-\centering
-\begin{overlayarea}{.525\textwidth}{.4\textheight}
-\only<1>{\includegraphics[width=\textwidth]{dg_coupling.png}\caption*{\footnotesize Standard DG coupling (through face points)}}
-\only<2>{\includegraphics[width=\textwidth]{gsbp_coupling.png}\caption*{\footnotesize Entropy stable DG coupling (all-to-all)}}
 \end{overlayarea}
-\end{figure}
 }
 
 \frame{
-\frametitle{Challenge 1: entropy projection}
+\frametitle{Deriving a discrete entropy balance}
 
 \begin{itemize}
-\item DG: cannot test with entropy variables, only with polynomials.
-\vspace{1em}
-\item<2-> Let $\bm{u}_N$ be a polynomial.  
-%Use $L^2$ projection of entropy variables 
+\item Entropy variables are not in ROM \textit{test space}.   Solution: test with coefficients of the projection (pseudoinverse) of the entropy variables 
+\begin{align*}
+\LRp{\bm{V}^\dagger \bm{v}\LRp{\bm{V}\bm{u}_N}}^T\LRp{\Delta x  \bm{V}^T\bm{V}\td{\bm{u}_N}{t} + 2\bm{V}^T \LRp{{\bm{Q}}\circ \bm{F}}\bm{1}} = 0 
+\end{align*}
+\vspace{0em}
+\item Recovers time derivative of discrete entropy
+\begin{align*}
+\LRp{\bm{V}^\dagger \bm{v}\LRp{\bm{V}\bm{u}_N}}^T \bm{V}^T\bm{V}\td{\bm{u}_N}{t} &= \bm{v}\LRp{\bm{V}\bm{u}_N}^T \note{\underbrace{\LRp{\bm{V}^T\bm{V}\bm{V}^{\dagger}}^T}_{\bm{V}}} \td{\bm{u}_N}{t} \\
+&= \LRu{\pd{S}{\bm{u}}}_{\LRp{\bm{V}\bm{u}_N}}^T \td{\LRp{\note{\bm{V}} \bm{u}_N}}{t} = \bm{1}^T\td{S\LRp{\bm{V}\bm{u}_N}}{t}
+\end{align*}
+%\vspace{0em}
+%\item Entropy stability: evaluate $\bm{Q}\circ\bm{F}$ using projected entropy variables, enrich snapshots with entropy variables to ensure accuracy.
+%\begin{gather*}
+%\tilde{\bm{u}} = \bm{u}\LRp{\bm{V} \bm{V}^\dagger \bm{v}\LRp{\bm{V} \bm{u}_N}}, \qquad \LRp{\bm{F}}_{ij} = \bm{f}_S\LRp{\tilde{\bm{u}}_i,\tilde{\bm{u}}_j}
+%\end{gather*}
+\end{itemize}
+}
+
+\frame{
+\frametitle{Evaluating fluxes using entropy projection}
+\begin{itemize}
+\item Projected entropy variables are no longer mappings of the conservative variables!  Let $\tilde{\bm{v}} = \bm{V}\bm{V}^\dagger \bm{v}\LRp{\bm{V}\bm{u}_N}$, then 
+\begin{align*}
+\boxed{\tilde{\bm{v}}_i \neq \bm{v}\LRp{\bm{u}_i}} \Longleftrightarrow \boxed{\LRp{\tilde{\bm{v}}_i - \tilde{\bm{v}}_j}^T\bm{f}_S\LRp{{\bm{u}}_i,{\bm{u}}_j} \neq {\psi(\bm{u}_i) - \psi(\bm{u}_j)}}
+\end{align*}
+\item<2-> Fix: evaluate flux using projected entropy variables, enrich snapshots with entropy variables to ensure accuracy.
+\begin{gather*}
+\tilde{\bm{u}} = \bm{u}\LRp{\bm{V} \bm{V}^\dagger \bm{v}\LRp{\bm{V} \bm{u}_N}}.  %\qquad \LRp{\bm{F}}_{ij} = \bm{f}_S\LRp{\tilde{\bm{u}}_i,\tilde{\bm{u}}_j}
+\end{gather*}
+\item<3-> Modified Galerkin projection ROM is discretely entropy stable  
+\[
+\Delta x {\bm{V}^T\bm{V}} \td{\bm{u}_N}{t} + 2\bm{V}^T \LRp{{\bm{Q}}\circ \bm{F}}\bm{1} = 0, \qquad \bm{F}_{ij} = \bm{f}_S\LRp{\tilde{\bm{u}}_i,\tilde{\bm{u}}_j}.
+\]
+\end{itemize}
+}
+
+%\frame{
+%\frametitle{Entropy projection}
+%\begin{itemize}
+%\item Test  Projection of 
 %\[
-%\int_{D^k} P_N \bm{v}\LRp{\bm{u}_N} \bm{w} = \int_{D^k} \bm{v}\LRp{\bm{u}_N} \bm{w}, \qquad \forall \bm{w}\in \LRp{P^N}^d. 
+%\LRp{\tilde{\bm{v}}_i-\tilde{\bm{v}}_j}^T \bm{f}_S\LRp{\bm{u}_i,\bm{u}_j} \neq \psi(\bm{u}_i) - \psi(\bm{u}_j).
 %\]
 %\item 
-Testing with the \note{$L^2$ projection of the entropy variables} $P_N \bm{v}\LRp{\bm{u}_N}$ recovers evolution of entropy
-\[
-\int_{D^k} P_N \bm{v}\LRp{\bm{u}_N}^T\pd{\bm{u}_N}{t} = \int_{D^k} \underbrace{\bm{v}\LRp{\bm{u}_N}^T}_{\pd{S(\bm{u})}{\bm{u}}}\pd{\bm{u}_N}{t}  =  \int_{D^k}\pd{S(\bm{u}_N)}{t} 
-\]
-\vspace{.01em}
-\item<3-> For consistency with the test function $P_N \bm{v}\LRp{\bm{u}_N}$, spatial formulation is evaluated using projected entropy variables $\tilde{\bm{u}} = \bm{u}\LRp{P_N \bm{v}\LRp{\bm{u}_N}}$.  
-\[
-\LRp{\bm{v}_i-\bm{v}_j}^T \bm{f}_S\LRp{\bm{u}_i,\bm{u}_j} \neq {\psi(\bm{u}_i)-\psi(\bm{u}_j)} \quad \text{if  } \bm{v}_i \neq \bm{v}\LRp{\bm{u}_i}.
-\]
-\end{itemize}
-
-}
-%\frame{
-%\frametitle{Projection matrices for general bases + quadrature}
-%\vspace{-.5em}
-%\begin{figure}
-%\centering
-%\includegraphics[width=.7\textwidth]{figs/polymap1.pdf}
-%\end{figure}
-%\vspace{-.7em}
-%\begin{itemize}
-%\item Given volume + surface quadratures $(\bm{x}^q_i,\bm{w}^q_i)$, $(\bm{x}^f_i, \bm{w}^f_i)$ and basis functions $\phi_i(\bm{x})$, define interpolation and weight matrices 
-%\begin{align*}
-%\LRp{\bm{V}_q}_{ij} = \phi_j(\bm{x}^q_i), \qquad \LRp{\bm{V}_f}_{ij} = \phi_j(\bm{x}^f_i),\\
-%\bm{W} = {\rm diag}\LRp{\bm{w}^q}, \qquad \bm{W}_f = {\rm diag}\LRp{\bm{w}^f}.
-%\end{align*}
-%\item $L^2$ projection matrix $\bm{P}_q$: discretize $L^2$ projection with quadrature  %$\bm{P}_q = \bm{M}^{-1}\bm{V}_q^T\bm{W}$%and \note{lifting} matrices
-%\[
-%%\LRp{P_N u, v} = \LRp{u,v} \quad \forall v\in P^N \quad \Longrightarrow \quad 
-%\bm{P}_q = \bm{M}^{-1}\bm{V}_q^T\bm{W}, \qquad \bm{M} = \bm{V}_q^T\bm{W}\bm{V}_q \quad \text{ (mass matrix)}
-%\]
-%%\begin{gather*}
-%%\bm{P}_q = \bm{M}^{-1}\bm{V}_q^T\bm{W}.%, \qquad \bm{W} = {\rm diag}\LRp{\bm{w}^q}, \qquad \bm{W}_f = {\rm diag}\LRp{\bm{w}^f}.
-%%%\bm{P}_q = \bm{M}^{-1}\bm{V}_q^T\bm{W}, 
-%%%\qquad \bm{L}_f = \bm{M}^{-1}\bm{V}_f^T\bm{W}_f,\\
-%%%\bm{W} = {\rm diag}\LRp{\bm{w}^q}, \qquad \bm{W}_f = {\rm diag}\LRp{\bm{w}^f}.
-%%\end{gather*}
+%\item (Online) Entropy projection results in an entropy stable ROM
+%\begin{gather*}
+%{\tilde{\bm{u}} = \bm{u}\LRp{\bm{V} \bm{V}^{\dagger} \bm{v}\LRp{\bm{V} \bm{u}_N}}}, \qquad \LRp{\bm{F}}_{ij} = \bm{f}_S\LRp{\tilde{\bm{u}}_i,\tilde{\bm{u}}_j}.
+%\end{gather*}
+%For accuracy, compute POD basis from snapshots of both conservative and entropy variables.  
 %\end{itemize}
 %}
 
-\frame{
-\frametitle{Challenge 2: efficient interface fluxes}
-\begin{figure}
-\centering
-\includegraphics[width=.45\textwidth]{sbp_coupling.png}
-\hspace{.5em}
-\includegraphics[width=.45\textwidth]{gsbp_coupling.png}
-\caption*{\footnotesize Entropy stable interface coupling with/without boundary nodes}
-\end{figure}
-\vspace{-.5em}
-\begin{itemize}
-\item For general formulations, $\bm{Q}$ satisfies a \note{generalized} SBP property
-\[
-\bm{Q}+\bm{Q}^T = \note{\bm{E}^T\bm{B}\bm{E}}, \qquad \bm{E} = \text{ interpolates volume to surface} %\bm{B}.
-\]
-\item Proof of entropy stability: SBP converts volume terms into boundary terms, which \note{cancel with interface flux terms}.
-\end{itemize}
-}
-
-\frame{
-\frametitle{Construction of $\bm{Q}, \bm{E}$ for DG methods}
-\begin{figure}
-\centering
-\includegraphics[width=.85\textwidth]{figs/Emap.png}
-\end{figure}
-\vspace{-.5em}
-\begin{itemize}
-\item Let $\bm{V}_q, \bm{V}_f$ interpolate to quadrature, $\bm{W} = $ diag.\ weight matrix.
-\item Define $\bm{Q} = \bm{P}_q^T\hat{\bm{Q}}\bm{P}_q$ in terms of ``modal'' $\hat{\bm{Q}}$
-\[
-\hat{\bm{Q}}_{ij} = \int \pd{\phi_j}{x}\phi_i, \qquad \bm{P}_q = \bm{M}^{-1}\bm{V}_q^T\bm{W}, \qquad \bm{M} = \bm{V}_q^T\bm{W}\bm{V}_q, 
-\]
-\item If $\bm{Q}+\bm{Q}^T = \note{\bm{E}^T\bm{B}\bm{E}}$ (generalized SBP property), then interface fluxes must also involve $\bm{E}$ for entropy stability!
-%\item Define interpolation matrices given basis $\phi_i(\bm{x})$ + volume/surface quadratures $(\bm{x}^q_i,\bm{w}^q_i)$, $(\bm{x}^f_i, \bm{w}^f_i)$, 
-%\begin{align*}
-%\LRp{\bm{V}_q}_{ij} = \phi_j(\bm{x}^q_i), \qquad \LRp{\bm{V}_f}_{ij} = \phi_j(\bm{x}^f_i).
-%%\bm{W} = {\rm diag}\LRp{\bm{w}^q}, \qquad \bm{W}_f = {\rm diag}\LRp{\bm{w}^f}.
-%\end{align*}
-%\item $\bm{E}$ is the product of face interpolation $\bm{V}_f$ and $L^2$ projection $\bm{P}_q$
-%\[
-%\bm{P}_q = \bm{M}^{-1}\bm{V}_q^T\bm{W}, \qquad \bm{M} = \bm{V}_q^T\bm{W}\bm{V}_q, \qquad \bm{W} = {\rm diag}\LRp{\bm{w}^q}.
-%\]
-\end{itemize}
-
-}
-
-\frame{
-\setcounter{subfigure}{0}
-\frametitle{Efficient interface fluxes via ``hybridization''} 
-\vspace{-1em}
-\begin{figure}
-\centering
-\subfloat[Derivative approx.\ w/correction]{%
-\begin{tikzpicture}
-\begin{axis}[
-    width=.49\textwidth,
-    height=.4\textheight,
-    ymin=-2, ymax=2.5,
-    xticklabels={,,},
-    xmajorgrids=true, ymajorgrids=true, grid style=dashed,
-    legend entries={Orig, New},
-    legend pos=north east, legend cell align=left, legend style={font=\tiny},	
-]
-\pgfplotsset{
-%cycle list={{blue, only marks, mark=*}, {blue,dashed}, {red, only marks,mark=square*},{red,dashed},{black}}
-cycle list={{blue,dashed}, {red,dashed},{black}}
-}
-%\addlegendimage{blue, mark=*}
-%\addlegendimage{red, mark=square*}
-\addlegendimage{blue,dashed}
-\addlegendimage{red,dashed}
-\addlegendimage{black}
-
-%\addplot+[semithick, mark options={solid, fill=markercolor}]
-%coordinates{(-0.93247,-0.677965)(-0.661209,1.35632)(-0.238619,1.07263)(0.238619,-1.07263)(0.661209,-1.35632)(0.93247,0.677965)};
-
-\addplot+[semithick, mark options={solid, fill=markercolor}]
-coordinates{(-1,-1.56577)(-0.959184,-1.00891)(-0.918367,-0.51366)(-0.877551,-0.0774098)(-0.836735,0.302464)(-0.795918,0.628585)(-0.755102,0.903575)(-0.714286,1.13006)(-0.673469,1.31065)(-0.632653,1.44798)(-0.591837,1.54466)(-0.55102,1.60333)(-0.510204,1.62659)(-0.469388,1.61708)(-0.428571,1.57742)(-0.387755,1.51022)(-0.346939,1.41812)(-0.306122,1.30372)(-0.265306,1.16966)(-0.22449,1.01856)(-0.183673,0.85303)(-0.142857,0.675704)(-0.102041,0.489201)(-0.0612245,0.296143)(-0.0204082,0.0991513)(0.0204082,-0.0991513)(0.0612245,-0.296143)(0.102041,-0.489201)(0.142857,-0.675704)(0.183673,-0.85303)(0.22449,-1.01856)(0.265306,-1.16966)(0.306122,-1.30372)(0.346939,-1.41812)(0.387755,-1.51022)(0.428571,-1.57742)(0.469388,-1.61708)(0.510204,-1.62659)(0.55102,-1.60333)(0.591837,-1.54466)(0.632653,-1.44798)(0.673469,-1.31065)(0.714286,-1.13006)(0.755102,-0.903575)(0.795918,-0.628585)(0.836735,-0.302464)(0.877551,0.0774098)(0.918367,0.51366)(0.959184,1.00891)(1,1.56577)};
-
-%\addplot+[semithick, mark options={solid, fill=markercolor}]
-%coordinates{(-0.93247,-0.194074)(-0.661209,1.16978)(-0.238619,1.20913)(0.238619,-1.20913)(0.661209,-1.16978)(0.93247,0.194074)};
-
-\addplot+[semithick, mark options={solid, fill=markercolor}]
-coordinates{(-1,-0.434491)(-0.959184,-0.303266)(-0.918367,-0.130624)(-0.877551,0.0698403)(-0.836735,0.286078)(-0.795918,0.507515)(-0.755102,0.724981)(-0.714286,0.930644)(-0.673469,1.11794)(-0.632653,1.28151)(-0.591837,1.41712)(-0.55102,1.5216)(-0.510204,1.59278)(-0.469388,1.62942)(-0.428571,1.63111)(-0.387755,1.59825)(-0.346939,1.53198)(-0.306122,1.43404)(-0.265306,1.30681)(-0.22449,1.15314)(-0.183673,0.976347)(-0.142857,0.78012)(-0.102041,0.568459)(-0.0612245,0.345602)(-0.0204082,0.115959)(0.0204082,-0.115959)(0.0612245,-0.345602)(0.102041,-0.568459)(0.142857,-0.78012)(0.183673,-0.976347)(0.22449,-1.15314)(0.265306,-1.30681)(0.306122,-1.43404)(0.346939,-1.53198)(0.387755,-1.59825)(0.428571,-1.63111)(0.469388,-1.62942)(0.510204,-1.59278)(0.55102,-1.5216)(0.591837,-1.41712)(0.632653,-1.28151)(0.673469,-1.11794)(0.714286,-0.930644)(0.755102,-0.724981)(0.795918,-0.507515)(0.836735,-0.286078)(0.877551,-0.0698403)(0.918367,0.130624)(0.959184,0.303266)(1,0.434491)};
-
-\addplot+[semithick, mark options={solid, fill=markercolor}]
-coordinates{(-1,0.146525)(-0.959184,0.193522)(-0.918367,0.251752)(-0.877551,0.322529)(-0.836735,0.406852)(-0.795918,0.50522)(-0.755102,0.617438)(-0.714286,0.742415)(-0.673469,0.877994)(-0.632653,1.02082)(-0.591837,1.1663)(-0.55102,1.30861)(-0.510204,1.44089)(-0.469388,1.55553)(-0.428571,1.64452)(-0.387755,1.70003)(-0.346939,1.71492)(-0.306122,1.68342)(-0.265306,1.60163)(-0.22449,1.46805)(-0.183673,1.2839)(-0.142857,1.05327)(-0.102041,0.783025)(-0.0612245,0.482507)(-0.0204082,0.162994)(0.0204082,-0.162994)(0.0612245,-0.482507)(0.102041,-0.783025)(0.142857,-1.05327)(0.183673,-1.2839)(0.22449,-1.46805)(0.265306,-1.60163)(0.306122,-1.68342)(0.346939,-1.71492)(0.387755,-1.70003)(0.428571,-1.64452)(0.469388,-1.55553)(0.510204,-1.44089)(0.55102,-1.30861)(0.591837,-1.1663)(0.632653,-1.02082)(0.673469,-0.877994)(0.714286,-0.742415)(0.755102,-0.617438)(0.795918,-0.50522)(0.836735,-0.406852)(0.877551,-0.322529)(0.918367,-0.251752)(0.959184,-0.193522)(1,-0.146525)};
-\end{axis}
-\end{tikzpicture}
-}%
-\subfloat[$L^2$ error for degrees $N = 1,\ldots,15$]{%
-\label{subfig:dsbp2}
-\begin{tikzpicture}
-\begin{semilogyaxis}[
-    width=.49\textwidth,
-    height=.4\textheight,
-%    xlabel={Degree $N$},
-%    ylabel={$L^2$ errors}, 
-%    xmin=.0125, xmax=.75,
-%    ymin=-2, ymax=2.25,
-    xticklabels={,,},
-    xmajorgrids=true, ymajorgrids=true, grid style=dashed,
-    legend entries={Orig, New},
-    legend pos=south west, legend cell align=left, legend style={font=\tiny},	
-]
-\pgfplotsset{
-cycle list={{blue, mark=*}, {red, mark=square*}}
-}
-%\addlegendimage{blue, mark=*}
-%\addlegendimage{red, mark=square*}
-%\addlegendimage{black, dashed}
-
-\addplot+[semithick, mark options={solid, fill=markercolor}]
-coordinates{(1,1.67087)(2,1.84788)(3,1.29689)(4,1.14406)(5,0.67189)(6,0.4428)(7,0.242532)(8,0.124111)(9,0.0657786)(10,0.0272413)(11,0.0141812)(12,0.00491087)(13,0.00252903)(14,0.000750851)(15,0.000383985)};
-
-\addplot+[semithick, mark options={solid, fill=markercolor}]
-coordinates{(1,1.37796)(2,1.23235)(3,0.769706)(4,0.682916)(5,0.348496)(6,0.252957)(7,0.120617)(8,0.0691975)(9,0.0323286)(10,0.0149469)(11,0.00695358)(12,0.00266351)(13,0.00124093)(14,0.000403653)(15,0.000188708)};
-
-\end{semilogyaxis}
-\end{tikzpicture}
-}%
-\end{figure}
-
-\begin{itemize}
-\item<1-> Denote $L^2$ projection by $P_N$.  Solve for $f\pd{g}{x} \approx u(\bm{x}) \in P^N$, 
-\[
-\int_{D^k}uv  = \int_{D^k}{f\pd{P_Ng}{x}v} + \int_{\partial D^k}{(f-P_Nf)\frac{\LRp{gv + P_N(gv)}}{2}}n_x, \quad \forall v\in P^N.
-\]
-\item<2-> Equivalent to a block SBP operator, combine with flux differencing.
-\begin{align*}
-\bm{Q}_h  &= \LRs{
-\begin{array}{cc}
-\bm{Q} - \frac{1}{2}\bm{E}^T\bm{B}\bm{E} &  \frac{1}{2}\bm{E}^T\bm{B}\\
--\frac{1}{2}\bm{B}\bm{E} & \frac{1}{2}\bm{B}
-\end{array}}, 
-\qquad 
-\note{\pd{}{x} \approx \bm{M}^{-1}\LRs{\begin{array}{c} \bm{V}_q \\ \bm{V}_f \end{array}}^T \bm{Q}_h} 
-\end{align*}
-\end{itemize}
-}
-
-
-%\frame{
-%%\frametitle{Entropy stable schemes: a brief derivation}
-%\vspace{1em}
-%\begin{itemize}
-%%\item Define $\bm{f}_S, \bm{f}^*$ using Tadmor's entropy conservative numerical flux
-%%\begin{align*}
-%%%\bm{f}_S(\bm{u},\bm{u}) &= \bm{f}(\bm{u}), \qquad \text{(consistency)} \\
-%%%\bm{f}_S(\bm{u},\bm{v}) &= \bm{f}_S(\bm{v},\bm{u}),\qquad \text{(symmetry)} \\
-%%\LRp{\bm{v}_L - \bm{v}_R}^T \bm{f}_S\LRp{\bm{u}_L,\bm{u}_R} &= \psi_L - \psi_R, \qquad \text{(conservation)}.
-%%\end{align*}
-%%\vspace{.5em}
-%\item Tadmor's entropy conservative condition
-%\[
-%\LRp{\bm{v}_L - \bm{v}_R}^T \bm{f}_S\LRp{\bm{u}_L,\bm{u}_R} = \psi_L - \psi_R, \qquad \text{(conservation)}.
-%\]
-%\vspace{.01em}
-%\item Multiply by $\bm{v}^T$ to derive semi-discrete entropy balance: 
-%\begin{overlayarea}{\textwidth}{.55\textheight}
-%\[
-%\bm{v}^T\bm{M}\td{\bm{u}}{t} + \bm{v}^T\LRp{\LRp{\bm{Q}-\bm{Q}^T}\circ\bm{F}}\bm{1} + \bm{v}^T\bm{B}\bm{f}^* = 0.
-%\]
-%\uncover<2->{
-%\[
-%\Longrightarrow \bm{1}^T\bm{M}\td{S(\bm{u})}{t} + \sum_{ij} \bm{Q}_{ij} \underbrace{\note{\LRp{\bm{v}_i-\bm{v}_j}^T \bm{f}_S\LRp{\bm{u}_i,\bm{u}_j}}}_{\text{Tadmor's condition}} + \bm{v}^T\bm{B}\bm{f}^* = 0.
-%\]
-%}
-%\uncover<3->{
-%\[
-%\only<1-3>{\Longrightarrow \bm{1}^T\bm{M}\td{S(\bm{u})}{t} + \sum_{ij} \bm{Q}_{ij} \note{\LRp{\psi(\bm{u}_i)-\psi(\bm{u}_j)}} + \bm{v}^T\bm{B}\bm{f}^* = 0.}
-%\only<4>{\Longrightarrow \bm{1}^T\bm{M}\td{S(\bm{u})}{t} + \note{\bm{\psi}^T\bm{Q}\bm{1} - \bm{1}^T\bm{Q}\bm{\psi}} + \bm{v}^T\bm{B}\bm{f}^* = 0.}
-%\only<5>{\Longrightarrow \bm{1}^T\bm{M}\td{S(\bm{u})}{t} + \bm{1}^T\bm{B}\LRp{\bm{v}^T\bm{f}^* - \bm{\psi}}  = 0.}
-%\only<6>{\Longrightarrow \bm{1}^T\bm{M}\td{S(\bm{u})}{t} + \bm{1}^T\bm{B}\LRp{\bm{v}^T\bm{f}^* - \bm{\psi}}  \leq 0, \quad \text{(added dissipation)}.}
-%\]
-%}
-%\end{overlayarea}
-%\end{itemize}
-%\let\thefootnote\relax\footnotetext{\tiny Tadmor, Eitan (1987), Fisher and Carpenter (2014), Gassner, Winters, and Kopriva (2016).}
-%}
-
-%\frame{
-%\frametitle{Projection matrices for general bases + quadrature}
-%\vspace{-.5em}
-%\begin{figure}
-%\centering
-%\includegraphics[width=.7\textwidth]{figs/polymap1.pdf}
-%\end{figure}
-%\vspace{-.7em}
-%\begin{itemize}
-%\item Given volume + surface quadratures $(\bm{x}^q_i,\bm{w}^q_i)$, $(\bm{x}^f_i, \bm{w}^f_i)$ and basis functions $\phi_i(\bm{x})$, define interpolation and weight matrices 
-%\begin{align*}
-%\LRp{\bm{V}_q}_{ij} = \phi_j(\bm{x}^q_i), \qquad \LRp{\bm{V}_f}_{ij} = \phi_j(\bm{x}^f_i),\\
-%\bm{W} = {\rm diag}\LRp{\bm{w}^q}, \qquad \bm{W}_f = {\rm diag}\LRp{\bm{w}^f}.
-%\end{align*}
-%\item $L^2$ projection matrix $\bm{P}_q$: discretize $L^2$ projection with quadrature  %$\bm{P}_q = \bm{M}^{-1}\bm{V}_q^T\bm{W}$%and \note{lifting} matrices
-%\[
-%%\LRp{P_N u, v} = \LRp{u,v} \quad \forall v\in P^N \quad \Longrightarrow \quad 
-%\bm{P}_q = \bm{M}^{-1}\bm{V}_q^T\bm{W}, \qquad \bm{M} = \bm{V}_q^T\bm{W}\bm{V}_q \quad \text{ (mass matrix)}
-%\]
-%%\begin{gather*}
-%%\bm{P}_q = \bm{M}^{-1}\bm{V}_q^T\bm{W}.%, \qquad \bm{W} = {\rm diag}\LRp{\bm{w}^q}, \qquad \bm{W}_f = {\rm diag}\LRp{\bm{w}^f}.
-%%%\bm{P}_q = \bm{M}^{-1}\bm{V}_q^T\bm{W}, 
-%%%\qquad \bm{L}_f = \bm{M}^{-1}\bm{V}_f^T\bm{W}_f,\\
-%%%\bm{W} = {\rm diag}\LRp{\bm{w}^q}, \qquad \bm{W}_f = {\rm diag}\LRp{\bm{w}^f}.
-%%\end{gather*}
-%\end{itemize}
-%}
-
-
-%\frame{
-%\frametitle{A ``decoupled'' SBP operator}% Quadrature-based ``finite difference'' matrices}
-%
-%\begin{figure}
-%\centering
-%\includegraphics[width=.85\textwidth]{figs/Emap.png}
-%\end{figure}
-%
-%\begin{itemize}
-%%\item Matrix $\bm{D}^i_q$: evaluates $i$th derivative of $L^2$ projection $P_N$ at $\bm{x}^q$.
-%%\[
-%%\bm{D}^i_q = \bm{V}_q\bm{D}^i\bm{P}_q, \qquad \bm{D}^i \quad \text{exactly differentiates polynomials.}
-%%\]
-%\item Use $\bm{P}_q$ to construct boundary interp.\ matrix + nodal operator $\bm{Q}$
-%\[
-%\bm{E} = \bm{V}_f\bm{P}_q, \qquad \bm{Q} = \bm{P}_q^T \hat{\bm{Q}}\bm{P}_q, \qquad \hat{\bm{Q}} = \text{ ``modal'' operator}.
-%\]
-%%\item Generalized SBP: define boundary interpolation matrix $\bm{E} = \bm{V}_f\bm{P}_q$
-%%\begin{gather*}
-%%\bm{Q}_i + {\bm{Q}_i}^T = \bm{E}^T{\bm{B}_i} \bm{E}, %\LRp{\bm{V}_f\bm{P}_q}^T{\bm{B}_i}\bm{V}_f\bm{P}_q, 
-%% \qquad \bm{B}_i = \bm{W}_f{\rm diag}\LRp{\bm{n}_i}\\[.5em]
-%%\Longrightarrow \boxed{\int_{\hat{D}} \pd{P_N u}{x_i}v + \int_{\hat{D}} u\pd{P_N v}{x_i} = \int_{\partial \hat{D}} \note{\LRp{P_N u}\LRp{P_N v}} \hat{n}_i.}
-%%\end{gather*}
-%\item \note{Decoupled} SBP operator for arbitrary volume/surface quadratures.
-%\begin{align*}
-%\bm{Q}_h  &= \LRs{
-%\begin{array}{cc}
-%\bm{Q} - \frac{1}{2}\bm{E}^T\bm{B}\bm{E} &  \frac{1}{2}\bm{E}^T\bm{B}\\
-%-\frac{1}{2}\bm{B}\bm{E} & \frac{1}{2}\bm{B}
-%\end{array}}, 
-%\qquad 
-%\pd{}{x} \approx \bm{M}^{-1}\LRs{\begin{array}{c} \bm{V}_q \\ \bm{V}_f \end{array}}^T \bm{Q}_h %\bm{u}
-%\label{eq:DN}
-%\end{align*}
-%%\item If $\bm{Q} + \bm{Q}^T = \bm{E}^T\bm{B}\bm{E}$, then the block matrix $\bm{Q}_h$ satisfies 
-%%\begin{gather*}
-%%\boxed{\bm{Q}_h + {\bm{Q}_h}^T = \begin{bmatrix}
-%%\bm{0} &\\
-%%& \bm{B}\end{bmatrix}} \sim \boxed{\int_{-1}^1 \pd{P_Nu}{x} v + u\pd{P_Nv}{x} = \LRu{uv}_{-1}^1.}
-%%\end{gather*}
-%%\item $\bm{Q}_h$ approximates $f\pd{g}{x}$ using function values at $\bm{x} = [\bm{x}_{\rm vol}, \bm{x}_{\rm face}]$ 
-%%\[
-%%f\pd{g}{x} \approx \bm{M}^{-1}\LRs{\begin{array}{c} \bm{V}_q \\ \bm{V}_f \end{array}}^T {\rm diag}\LRp{\bm{f}}\bm{Q}_h \bm{g}, \qquad \bm{f}_i, \bm{g}_i = f(\bm{x}_i), g(\bm{x}_i).
-%%\]
-%%\item Reduces to traditional SBP operator under appropriate quadrature. 
-%\end{itemize}
-%%\vspace{-.75em}
-%%\vspace{-.5em}
-%}
-
-
-%\frame{
-%\frametitle{hybridized SBP operators add boundary corrections}
-%\vspace{-.5em}
-%\begin{figure}
-%\centering
-%\subfloat[Derivative approximations]{
-%\label{subfig:dsbp1}
-%\begin{tikzpicture}
-%\begin{axis}[
-%    width=.5\textwidth,
-%%    xlabel={$x$ coordinate},
-%%    ylabel={$\pd{u}{x}$}, 
-%%    xmin=.0125, xmax=.75,
-%    ymin=-2, ymax=2.5,
-%    legend pos=north east, legend cell align=left, legend style={font=\tiny},	
-%    xmajorgrids=true, ymajorgrids=true, grid style=dashed,
-%    legend entries={GSBP, Decoupled, Exact}    
-%]
-%\pgfplotsset{
-%cycle list={{blue, only marks, mark=*}, {blue}, {red, only marks,mark=square*},{red},{black,dashed}}
-%}
-%\addlegendimage{blue, mark=*}
-%\addlegendimage{red, mark=square*}
-%\addlegendimage{black, dashed}
-%
-%\addplot+[semithick, mark options={solid, fill=markercolor}]
-%coordinates{(-0.93247,-0.677965)(-0.661209,1.35632)(-0.238619,1.07263)(0.238619,-1.07263)(0.661209,-1.35632)(0.93247,0.677965)};
-%
-%\addplot+[semithick, mark options={solid, fill=markercolor}]
-%coordinates{(-1,-1.56577)(-0.959184,-1.00891)(-0.918367,-0.51366)(-0.877551,-0.0774098)(-0.836735,0.302464)(-0.795918,0.628585)(-0.755102,0.903575)(-0.714286,1.13006)(-0.673469,1.31065)(-0.632653,1.44798)(-0.591837,1.54466)(-0.55102,1.60333)(-0.510204,1.62659)(-0.469388,1.61708)(-0.428571,1.57742)(-0.387755,1.51022)(-0.346939,1.41812)(-0.306122,1.30372)(-0.265306,1.16966)(-0.22449,1.01856)(-0.183673,0.85303)(-0.142857,0.675704)(-0.102041,0.489201)(-0.0612245,0.296143)(-0.0204082,0.0991513)(0.0204082,-0.0991513)(0.0612245,-0.296143)(0.102041,-0.489201)(0.142857,-0.675704)(0.183673,-0.85303)(0.22449,-1.01856)(0.265306,-1.16966)(0.306122,-1.30372)(0.346939,-1.41812)(0.387755,-1.51022)(0.428571,-1.57742)(0.469388,-1.61708)(0.510204,-1.62659)(0.55102,-1.60333)(0.591837,-1.54466)(0.632653,-1.44798)(0.673469,-1.31065)(0.714286,-1.13006)(0.755102,-0.903575)(0.795918,-0.628585)(0.836735,-0.302464)(0.877551,0.0774098)(0.918367,0.51366)(0.959184,1.00891)(1,1.56577)};
-%
-%\addplot+[semithick, mark options={solid, fill=markercolor}]
-%coordinates{(-0.93247,-0.194074)(-0.661209,1.16978)(-0.238619,1.20913)(0.238619,-1.20913)(0.661209,-1.16978)(0.93247,0.194074)};
-%
-%\addplot+[semithick, mark options={solid, fill=markercolor}]
-%coordinates{(-1,-0.434491)(-0.959184,-0.303266)(-0.918367,-0.130624)(-0.877551,0.0698403)(-0.836735,0.286078)(-0.795918,0.507515)(-0.755102,0.724981)(-0.714286,0.930644)(-0.673469,1.11794)(-0.632653,1.28151)(-0.591837,1.41712)(-0.55102,1.5216)(-0.510204,1.59278)(-0.469388,1.62942)(-0.428571,1.63111)(-0.387755,1.59825)(-0.346939,1.53198)(-0.306122,1.43404)(-0.265306,1.30681)(-0.22449,1.15314)(-0.183673,0.976347)(-0.142857,0.78012)(-0.102041,0.568459)(-0.0612245,0.345602)(-0.0204082,0.115959)(0.0204082,-0.115959)(0.0612245,-0.345602)(0.102041,-0.568459)(0.142857,-0.78012)(0.183673,-0.976347)(0.22449,-1.15314)(0.265306,-1.30681)(0.306122,-1.43404)(0.346939,-1.53198)(0.387755,-1.59825)(0.428571,-1.63111)(0.469388,-1.62942)(0.510204,-1.59278)(0.55102,-1.5216)(0.591837,-1.41712)(0.632653,-1.28151)(0.673469,-1.11794)(0.714286,-0.930644)(0.755102,-0.724981)(0.795918,-0.507515)(0.836735,-0.286078)(0.877551,-0.0698403)(0.918367,0.130624)(0.959184,0.303266)(1,0.434491)};
-%
-%\addplot+[semithick, mark options={solid, fill=markercolor}]
-%coordinates{(-1,0.146525)(-0.959184,0.193522)(-0.918367,0.251752)(-0.877551,0.322529)(-0.836735,0.406852)(-0.795918,0.50522)(-0.755102,0.617438)(-0.714286,0.742415)(-0.673469,0.877994)(-0.632653,1.02082)(-0.591837,1.1663)(-0.55102,1.30861)(-0.510204,1.44089)(-0.469388,1.55553)(-0.428571,1.64452)(-0.387755,1.70003)(-0.346939,1.71492)(-0.306122,1.68342)(-0.265306,1.60163)(-0.22449,1.46805)(-0.183673,1.2839)(-0.142857,1.05327)(-0.102041,0.783025)(-0.0612245,0.482507)(-0.0204082,0.162994)(0.0204082,-0.162994)(0.0612245,-0.482507)(0.102041,-0.783025)(0.142857,-1.05327)(0.183673,-1.2839)(0.22449,-1.46805)(0.265306,-1.60163)(0.306122,-1.68342)(0.346939,-1.71492)(0.387755,-1.70003)(0.428571,-1.64452)(0.469388,-1.55553)(0.510204,-1.44089)(0.55102,-1.30861)(0.591837,-1.1663)(0.632653,-1.02082)(0.673469,-0.877994)(0.714286,-0.742415)(0.755102,-0.617438)(0.795918,-0.50522)(0.836735,-0.406852)(0.877551,-0.322529)(0.918367,-0.251752)(0.959184,-0.193522)(1,-0.146525)};
-%\end{axis}
-%\end{tikzpicture}
-%}
-%\subfloat[$L^2$ error w.r.t.\ degree $N$]{
-%\label{subfig:dsbp2}
-%\begin{tikzpicture}
-%\begin{semilogyaxis}[
-%    width=.5\textwidth,
-%%    xlabel={Degree $N$},
-%%    ylabel={$L^2$ errors}, 
-%%    xmin=.0125, xmax=.75,
-%%    ymin=-2, ymax=2.25,
-%    legend pos=south west, legend cell align=left, legend style={font=\tiny},	
-%    xmajorgrids=true, ymajorgrids=true, grid style=dashed,
-%    legend entries={GSBP, Decoupled}    
-%]
-%\pgfplotsset{
-%cycle list={{blue, mark=*}, {red, mark=square*}}
-%}
-%%\addlegendimage{blue, mark=*}
-%%\addlegendimage{red, mark=square*}
-%%\addlegendimage{black, dashed}
-%
-%\addplot+[semithick, mark options={solid, fill=markercolor}]
-%coordinates{(1,1.67087)(2,1.84788)(3,1.29689)(4,1.14406)(5,0.67189)(6,0.4428)(7,0.242532)(8,0.124111)(9,0.0657786)(10,0.0272413)(11,0.0141812)(12,0.00491087)(13,0.00252903)(14,0.000750851)(15,0.000383985)};
-%
-%\addplot+[semithick, mark options={solid, fill=markercolor}]
-%coordinates{(1,1.37796)(2,1.23235)(3,0.769706)(4,0.682916)(5,0.348496)(6,0.252957)(7,0.120617)(8,0.0691975)(9,0.0323286)(10,0.0149469)(11,0.00695358)(12,0.00266351)(13,0.00124093)(14,0.000403653)(15,0.000188708)};
-%
-%\end{semilogyaxis}
-%\end{tikzpicture}
-%}
-%%\caption{Approximations of derivatives of a Gaussian $e^{-4x^2}$ using the generalized SBP operator $\bm{D}$ and the hybridized SBP operator $\bm{Q}_h$ via (\ref{eq:qn}).  In Figure~\ref{subfig:dsbp1}, the colored circles and squares denote values at Gauss points for a degree $N = 5$ approximation.  Figure~\ref{subfig:dsbp2} shows the convergence of $L^2$ errors as $N$ increases. }
-%\label{fig:dsbpcorrect}
-%\end{figure}
-%\vspace{-1em}
-%\begin{itemize}
-%%\item Combine $\bm{D}^P_N$ with $L^2$ projection to approximate derivatives.
-%%\vspace{.25em}
-%%\vspace{.25em}
-%\item Equivalent to a variational problem for a polynomial $u(\bm{x}) \approx f\pd{g}{x}$.
-%\[
-%\int_{-1}^1u(\bm{x})v(\bm{x})  = \int_{-1}^1 {f\pd{P_Ng}{x}v} + \LRu{(g-P_Ng)\frac{\LRp{fv + P_N(fv)}}{2}}_{-1}^1.
-%\]
-%\end{itemize}
-%}
-
-
-\frame{
-\frametitle{Entropy stable schemes using hybridized SBP operators}
-
-\begin{itemize}
-\item Replace SBP operator with hybridized SBP operator
-\begin{overlayarea}{\textwidth}{.18\textheight}
-\[
-\only<1>{\bm{M}\td{\bm{u}_h}{t} + \note{2\LRp{\bm{Q}\circ\bm{F}}\bm{1}} + \note{\bm{B}}\LRp{\bm{f}^* - \bm{f}(\bm{u})} = 0.}%, \qquad \text{(standard SBP)}}
-\only<2->{\bm{M}\td{\bm{u}_h}{t} + \note{2\begin{bmatrix}\bm{V}_q \\ \bm{V}_f\end{bmatrix}^T \LRp{\bm{Q}_h\circ\bm{F}}\bm{1}} + \note{\bm{V}_f^T\bm{B}}\LRp{\bm{f}^* - \bm{f}(\bm{u})} = 0.}
-\]
-\end{overlayarea}
-\item<3-> $\bm{F}$ is the matrix of flux evaluations between solution values at \textit{both} volume and face nodes using \note{entropy projection}:
-\[
-\LRp{\bm{F}}_{ij} = \bm{f}_S\LRp{\tilde{\bm{u}}_i,\tilde{\bm{u}}_j}, \qquad \tilde{\bm{u}} = \text{ evaluate } \bm{u}\LRp{P_N\bm{v}(\bm{u}_h)}.
-\]
-\vspace{.01em}
-\item<4-> Entropy stability if $\bm{Q}_h\bm{1} = \bm{0}$ $\Longrightarrow$ equivalent to either GSBP or \note{weak} SBP condition related to quadrature accuracy.
-\[
-\bm{Q} + \bm{Q}^T = \bm{E}^T\bm{B}\bm{E} \quad \Longrightarrow \quad 
-%\begin{cases}
-\note{\bm{Q}^T\bm{1} = \bm{E}^T\bm{B}\bm{1}}
-%\\
-%\bm{Q}\bm{1} = \bm{0}
-%\end{cases},
- \quad \text{(weaker conditions)}
-\]
-\end{itemize}
-
-\let\thefootnote\relax\footnotetext{\tiny Chan (2019). \textit{Skew-symmetric entropy stable modal discontinuous Galerkin formulations}.}
-\let\thefootnote\relax\footnotetext{\tiny Chan (2018). \textit{On discretely entropy conservative and entropy stable discontinuous Galerkin methods.}}
-%\let\thefootnote\relax\footnotetext{\tiny Parsani et al.\ (2016), \textit{Entropy Stable Staggered Grid Discontinuous Spectral Collocation Methods}}
-}
-
-
-%\frame{
-%\frametitle{Entropy conservative finite volume fluxes}
-%
-%\begin{itemize}
-%\item<1-> Tadmor's entropy conservative numerical flux: 
-%\begin{align*}
-%\bm{f}_S(\bm{u},\bm{u}) &= \bm{f}(\bm{u}), \qquad \text{(consistency)} \\
-%\bm{f}_S(\bm{u},\bm{v}) &= \bm{f}_S(\bm{v},\bm{u}),\qquad \text{(symmetry)} \\
-%\LRp{\bm{v}_L - \bm{v}_R}^T \bm{f}\LRp{\bm{u}_L,\bm{u}_R} &= \psi_L - \psi_R, \qquad \text{(conservation)}.
-%\end{align*}
-%\item<2-> Example: entropy conservative flux for Burgers' equation 
-%\[
-%f_S(u_L,u_R) = \frac{1}{6}\LRp{u_L^2 + u_Lu_R + u_R^2}.
-%\]
-%\item<3-> Flux differencing: use finite volume fluxes to evaluate derivatives.% in DG methods.
-%%\item<3-> Flux differencing for Burgers' equation: let $u_L = u(x), u_R = u(y)$
-%%\begin{align*}
-%%&f_S(u(x),u(y)) = \frac{1}{6}\LRp{u(x)^2 + u(x)u(y) + u(y)^2},\\
-%%&\pd{{f}({u})}{x} \Longrightarrow \note{\LRu{2\pd{f_S\LRp{u(x),u(y)}}{x}}_{y=x}} = \frac{1}{3}\pd{u^2}{x} + \frac{1}{3}u\pd{u}{x} + \frac{1}{3}u^2\cancel{\pd{1}{x}}.
-%%\end{align*}
-%\end{itemize}
-%
-%\let\thefootnote\relax\footnotetext{\tiny Tadmor, Eitan (1987). \textit{The numerical viscosity of entropy stable schemes for systems of conservation laws. I.}}
-%}
-
-
-%
-%\frame{
-%\frametitle{Flux differencing: implementational details}
-%\begin{itemize}
-%%\item Flux differencing necessary for general nonlinear conservation laws (compressible Euler), not for split forms (Burgers, shallow water).  
-%\item Define ${\bm{F}}$ by evaluating $\bm{f}_S$ at all combinations of quadrature points
-%\[
-%\LRp{\bm{F}}_{ij} = \bm{f}_S\LRp{u(\bm{x}_i),u(\bm{x}_j)}, \qquad \bm{x} = \LRs{\bm{x}^q,\bm{x}^f}^T.
-%\]
-%\item Discretize variational formulation of flux differencing using quadrature and hybridized SBP operator $\bm{Q}_h$%: for $v(x) \in P^N$, % + polynomial $L^2$ projection and lifting matrices.
-%\begin{align*}
-%\int_{\hat{D}} &\LRu{2\pd{f_S\LRp{u(x),u(y)}}{x}}_{y=x} v(x), \qquad \forall v \in P^N \\
-%&\qquad \Longrightarrow 
-%%\LRs{\begin{array}{cc} \bm{P}_q & \bm{L}_f\end{array}} {\rm diag}{\LRp{2\bm{D}_N \bm{F}}}.
-%\LRs{\begin{array}{c} \bm{V}_q \\ \bm{V}_f\end{array}}^T {\rm diag}{\LRp{2\bm{Q}_h \bm{F}}}.
-%\end{align*}
-%%\vspace{.001em}
-%\item Simpler \note{Hadamard product} reformulation: evaluate $\bm{F}$ on-the-fly 
-%\[
-%%{\rm diag}{\LRp{2\bm{D}_N \bm{F}}} = \LRp{2\bm{D}_N \circ \bm{F}}\bm{1}.
-%{\rm diag}{\LRp{2\bm{Q}_h \bm{F}}} = \LRp{2\bm{Q}_h \circ \bm{F}}\bm{1}.
-%\]
-%\end{itemize}
-%
-%%\let\thefootnote\relax\footnotetext{\tiny Chandrashekar (2013). \textit{Kinetic energy preserving and entropy stable FV schemes for compressible Euler and NS equations.}}
-%}
-
-
-%% =================================================
-
-%\frame{
-%\frametitle{Flux differencing circumvents the chain rule} 
-%
-%\vspace{-.5em}
-%\begin{itemize}
-%\item Test with entropy variables $\tilde{\bm{v}}$, integrate, and use SBP property:
-%\[
-%\tilde{\bm{v}}^T\LRp{2\bm{Q}_h \circ \bm{F}}\bm{1} = \tilde{\bm{v}}^T\LRp{\LRp{
-%%\LRs{\begin{array}{cc}
-%%0 &\\
-%%& \bm{W}_f\bm{n}
-%%\end{array}}
-%\bm{B}_N
-% + \bm{Q}_h - \bm{Q}_h^T} \circ \bm{F}}\bm{1}.
-%\]
-%\item Only boundary terms appear in final estimate; volume terms become boundary terms using properties of $\LRp{\bm{F}}_{ij} = \bm{f}_S\LRp{\tilde{\bm{u}}_i,\tilde{\bm{u}}_j}$
-%%\vspace{-.5em}
-%\begin{overlayarea}{\textwidth}{.31\textheight}
-%\begin{align*}
-%\tilde{\bm{v}}^T\LRp{\LRp{\bm{Q}_h - \bm{Q}_h^T} \circ \bm{F}}\bm{1} 
-%&= \tilde{\bm{v}}^T\LRp{\bm{Q}_h \circ \bm{F}}\bm{1} - \bm{1}^T\LRp{\bm{Q}_h \circ \bm{F}}\tilde{\bm{v}}  \\
-%\only<1>{&= \sum_{i,j} \LRp{\bm{Q}_h}_{ij} \textcolor{red}{\LRp{\tilde{\bm{v}}_i - \tilde{\bm{v}}_j}^T\bm{f}_S\LRp{\tilde{\bm{u}}_i,\tilde{\bm{u}}_j}}.}
-%\only<2>{&= \sum_{i,j} \LRp{\bm{Q}_h}_{ij} \textcolor{red}{\LRp{\psi(\tilde{\bm{u}}_i)-\psi(\tilde{\bm{u}}_j)}.}}
-%\only<3>{&= \textcolor{red}{\bm{1}^T\bm{Q}_h \bm{\psi} - \bm{\psi}^T\bm{Q}_h\bm{1} = \bm{1}^T\bm{Q}_h \bm{\psi} }}
-%\only<4->{&= \textcolor{red}{\bm{1}^T\LRp{\bm{B}_N-\bm{Q}_h^T} \bm{\psi} = \bm{1}^T\bm{B}_N\bm{\psi}.
-%}}
-%\end{align*}
-%\end{overlayarea}
-%%\vspace{.25em}
-%%\item Let $\bm{v}_q$ be entropy variables at quadrature points.  Multiply by $\LRp{\bm{P}_q\bm{v}}^T\bm{M}$
-%%\[
-%%\bm{v}_q^T \bm{P}_q^T \bm{M} \td{\hat{\bm{u}}}{t} = \bm{v}_q^T \bm{W} \bm{V}_q \bm{M}^{-1}\bm{M} \td{\hat{\bm{u}}}{t} = \bm{v}_q^T \bm{W}  \td{\LRp{\bm{V}_q\hat{\bm{u}}}}{t} = .  
-%%\]
-%\item<5-> Proof uses \note{$\LRp{\tilde{\bm{v}}_i - \tilde{\bm{v}}_j}^T\bm{f}_S\LRp{\tilde{\bm{u}}_i,\tilde{\bm{u}}_j} = \psi(\tilde{\bm{u}}_i)-\psi(\tilde{\bm{u}}_j)$}:   
-%%$\tilde{\bm{v}} = \bm{v}(\tilde{\bm{u}})$; the 
-%requires entropy variables $\tilde{\bm{v}}$ to be a function of conservative variables $\tilde{\bm{u}}$. %; modify conservative variables $\tilde{\bm{u}}$ to ensure test function $\bm{v}(\tilde{\bm{u}}) = P_N\bm{v}(\bm{u}) \in P^N$.
-%%\item<4-> Proof requires $\bm{v} = \bm{v}(\bm{u})$ \textcolor{red}{pointwise}; modify conservative variables $\tilde{\bm{u}}$ to ensure test function $\bm{v}(\tilde{\bm{u}}) = P_N\bm{v}(\bm{u}) \in P^N$.
-%\end{itemize} 
-%}
-%
-
-%\frame{
-%\frametitle{Illustration of main steps of ESDG}
-%\begin{columns}
-%\hspace{-1em}
-%\begin{column}{.48\textwidth}
-%\vspace{-1em}
-%\begin{figure}
-%%\centering
-%\begin{overlayarea}{.75\textwidth}{.425\textheight}
-%\only<1>{\includegraphics[height=.42\textheight]{figs/gsbp_tri1.png}}
-%\only<2>{\includegraphics[height=.42\textheight]{figs/gsbp_tri2.png}}
-%\only<3>{\includegraphics[height=.42\textheight]{figs/gsbp_tri3.png}}
-%\only<4>{\includegraphics[height=.42\textheight]{figs/gsbp_tri4.png}}
-%\end{overlayarea}
-%\end{figure}
-%\end{column}
-%\hspace{3em}
-%\begin{column}{.5\textwidth}
-%\[
-%\only<1>{
-%\LRp{\underbrace{\begin{bmatrix}
-%\bm{A} & \bm{B}\\
-%-\bm{B}^T & \bm{C}
-%\end{bmatrix}}_{\bm{Q}_h^i} \circ
-%\underbrace{\begin{bmatrix}
-%\bm{F}^{vv}_S & \bm{F}^{vf}_S\\
-%\bm{F}^{fv}_S & \bm{F}^{ff}_S
-%\end{bmatrix}}_{\bm{F}} } \bm{1}
-%}
-%\only<2>{
-%\LRp{\underbrace{\begin{bmatrix}
-%\note{\bm{A}} & \bm{B}\\
-%-\bm{B}^T & \bm{C}
-%\end{bmatrix}}_{\bm{Q}_h^i} \circ
-%\underbrace{\begin{bmatrix}
-%\note{\bm{F}^{vv}_S} & \bm{F}^{vf}_S\\
-%\bm{F}^{fv}_S & \bm{F}^{ff}_S
-%\end{bmatrix}}_{\bm{F}} } \bm{1}
-%}
-%\only<3>{
-%\LRp{\underbrace{\begin{bmatrix}
-%\bm{A} & \bm{B}\\
-%-\bm{B}^T & \note{\bm{C}}
-%\end{bmatrix}}_{\bm{Q}_h^i} \circ
-%\underbrace{\begin{bmatrix}
-%\bm{F}^{vv}_S & \bm{F}^{vf}_S\\
-%\bm{F}^{fv}_S & \note{\bm{F}^{ff}_S}
-%\end{bmatrix}}_{\bm{F}} } \bm{1}
-%}
-%\only<4>{
-%\LRp{\underbrace{\begin{bmatrix}
-%\bm{A} & \note{\bm{B}}\\
-%\note{-\bm{B}^T} & \bm{C}
-%\end{bmatrix}}_{\bm{Q}_h^i} \circ
-%\underbrace{\begin{bmatrix}
-%\bm{F}^{vv}_S & \note{\bm{F}^{vf}_S}\\
-%\note{\bm{F}^{fv}_S} & \bm{F}^{ff}_S
-%\end{bmatrix}}_{\bm{F}} } \bm{1}
-%}
-%\]
-%\end{column}
-%\end{columns}
-%\vspace{.5em}
-%\begin{itemize}
-%\item<1-> Interpolate \note{projected entropy variables $P_N \bm{v}(\bm{u})$} to all nodes.  
-%%\vspace{.5em}
-%\item<2-> Compute interactions $\bm{f}_S(\bm{u}_L, \bm{u}_R)$ between \note{volume quadrature nodes}.
-%%\vspace{.5em}
-%\item<3-> Compute interactions between \note{surface nodes} of neighboring elements
-%\item<4-> Compute interactions between \note{volume and surface} nodes.
-%\end{itemize} 
-%}
-
-
-%% =================================================
-
-
+\section{Entropy stable hyper-reduction}
 
 \frame[noframenumbering]{
 \frametitle{Talk outline}
 \tableofcontents[currentsection,currentsubsection]
 }
 
-\frame{
-\frametitle{Projection-based reduced order models (ROMs)}
-\vspace{-.5em}
-\begin{figure}
-\centering
-\includegraphics[width=.65\textwidth]{figs/POD_illustration.png}
-\end{figure}
-\vspace{-.5em}
-\begin{itemize}
-\item Goal: reduce cost of many-query scenarios (design space exploration).
-\item Main steps: \note{offline} training phase with full order model (FOM), cheap \note{online} phase with reduced order model (ROM).
-\end{itemize} 
+%\frame[noframenumbering]{
+%\frametitle{Talk outline}
+%\tableofcontents[currentsection]
+%}
 
-\uncover<2>{
-\begin{center}
-\minibox[frame]{Challenge: ROMs inherit stability of FOM for elliptic PDEs,\\
-but not for nonlinear hyperbolic problems!}
-\end{center}
-}
 
-\let\thefootnote\relax\footnotetext{\tiny Figure adapted from Brunton, Proctor, Kutz (2016), \textit{Discovering governing equations from data \ldots}.}
-}
 
 
 \frame{
@@ -1426,42 +861,16 @@ Problem: cost of evaluating ROM nonlinear terms scales with\\
 }
 
 \frame{
-\frametitle{Determining empirical cubature points (ECP) and weights}
-
-\begin{itemize}
-\item Goal: integrate a target basis to some accuracy.
-\vspace{1em}
-\item Offline step: greedy selection of hyper-reduction points
-\begin{itemize}
-\item Project residual onto remaining rows of basis matrix.
-\item Find ``most positive'' point of projected residual.
-\item Solve (nonlinear) least squares for (positive) quadrature weights.
-\end{itemize}
-\vspace{1em}
-\item Target basis: products of modes
-\[
-{\rm span}\LRc{\phi_i(\bm{x})\phi_j(\bm{x}), \quad 1\leq i,j \leq N}.
-\]
-Reduce costs by substituting leading POD modes.  
-%\vspace{1em}
-%\item Number of EC points depends on FOM viscosity, smoothness.  
-\end{itemize}
-
-\let\thefootnote\relax\footnotetext{\tiny Hernandez, Caicedo, Ferrer (2017).  \textit{Dimensional hyper-reduction of nonlinear finite element models via empirical cubature.}}
-}
-
-
-\frame{
 \frametitle{Entropy stability and standard hyper-reduction}
 
 \begin{itemize}
-\item How to hyper-reduce $\LRp{\bm{Q}\circ \bm{F}}$?  Construct a \textit{sampled} matrix $\bm{Q}_s$ from $\bm{Q}$.  Need \note{$\bm{Q}_s = -\bm{Q}_s^T$} and \note{$\bm{Q}_s\bm{1} = \bm{0}$} for entropy stability.
+\item How to hyper-reduce $\LRp{\bm{Q}\circ \bm{F}}$?  Sample the full order matrix $\bm{Q}$ to construct a hyper-reduced \note{nodal differentiation matrix} $\bm{Q}_s$.  %Need \note{$\bm{Q}_s = -\bm{Q}_s^T$} and \note{$\bm{Q}_s\bm{1} = \bm{0}$} for entropy stability.
 \vspace{2em}
 \item Options: sub-sample rows and columns of full matrix $\bm{Q}$ or approximate $\bm{Q}$ by weighted sum of local skew matrices $\bm{Q}_e$.  
 \[
 \bm{Q} = \sum_{e=1}^K \bm{Q}_e \approx \bm{Q}_s = \sum_{e = 1}^K \bm{w}_e \bm{Q}_e, \qquad \bm{w} \text{ sparse}.
 \]
-\uncover<2->{Problems: either \note{$\bm{Q}_s$ loses skew-symmetry} or \note{$\bm{Q}_s\bm{1}\neq \bm{0}$}.}
+\uncover<2->{Problems: either \note{$\bm{Q}_s \neq \bm{Q}_s^T$} or \note{$\bm{Q}_s\bm{1}\neq \bm{0}$}.}
 %\vspace{1.5em}
 %\item<5-> Project $\bm{Q}$ onto reduced basis $\bm{V}^T\bm{Q} \bm{V}$.
 \end{itemize}
@@ -1474,55 +883,80 @@ Reduce costs by substituting leading POD modes.
 \frametitle{Two-step hyper-reduction: compress and project}
 %\begin{overlayarea}{\textwidth}{\textheight}
 %\vspace{1em}
-\begin{itemize}
-\item<1-> Step 1: construct a \textit{modal} $\bm{Q}$ using an expanded ``test'' basis $\bm{V}_t$
+\vspace{-1em}
+\only<1>{
+\begin{figure}
+\centering
+\includegraphics[width=.7\textwidth]{modalQ.png}
+\end{figure}
+Step 1: compress $\bm{Q}$ using an expanded ``test'' basis $\bm{V}_t$
 \[
-\bm{V}_t^T\bm{Q}\bm{V}_t, \qquad \bm{1}\in \mathcal{R}\LRp{\bm{V}_t}
-% = {\rm orth}\LRp{
-%\begin{bmatrix} 
-%\bm{V} & \bm{1}
-%\end{bmatrix}}
+\bm{V}_t^T\bm{Q}\bm{V}_t, \qquad \bm{V}_t^T\bm{Q}\bm{u}\approx \bm{V}_t^T\bm{Q}\bm{V}_t\bm{u}_N \quad \text{if } \bm{u}\approx \bm{V}_t\bm{u}_N
 \]
-%\vspace{1em}
-\item<2-> Step 2: determine test basis coefficients using hyper-reduced points.  
-%\item<2-> Compute \note{empirical cubature} points + projection for $\bm{Q}_s$
+Exactly differentiates constants if $\bm{1}\in \mathcal{R}\LRp{\bm{V}_t}$!
+}
+
+\only<2>{
+\begin{figure}
+\centering
+\includegraphics[width=.7\textwidth]{Ptest.png}
+\end{figure}
+Step 2: determine test basis coefficients using hyper-reduced points.  
 \begin{gather*}
-%\bm{W}_{ij} = w_{ii}\delta_{ij}, \quad 
-\bm{M}_t = \bm{V}_t(\mathcal{I},:)^T\bm{W}\bm{V}_t(\mathcal{I},:), \qquad \bm{P}_t = \bm{M}_t^{-1}\bm{V}_t(\mathcal{I},:)^T\bm{W}.%, \qquad \text{ discrete projection}
-%\bm{Q}_s = \bm{P}_t^T \LRp{\bm{V}_t^T\bm{Q}\bm{V}_t} \bm{P}_t. 
+\bm{M}_t = \bm{V}_t(\mathcal{I},:)^T\bm{W}\bm{V}_t(\mathcal{I},:), \qquad \bm{P}_t = \bm{M}_t^{-1}\bm{V}_t(\mathcal{I},:)^T\bm{W}.
 \end{gather*}
-Here, $\bm{P}_t$ is a weighted projection onto the test basis.  %(can also use Gappy POD).
-%\item<2-> Compression + sampling ensure $\bm{Q}_t\bm{1} = 0$ and $\bm{Q}_t = -\bm{Q}_t^T$ (on periodic domains) for entropy stability.
-%\[
-%\underbrace{\bm{V}(\mathcal{I},:)^T\bm{W}\bm{V}(\mathcal{I},:)}_{\bm{M}_N} \td{\bm{u}_N}{t} + \bm{V}(\mathcal{I},:)^T \LRp{\bm{Q}_t\circ \bm{F}}\bm{1} = 0.
-%\]
-\vspace{1em}
-\item<3-> Step 3 (combine Steps 1 and 2): define 
+$\bm{P}_t$ is a weighted projection onto the test basis, reproduces $\mathcal{R}\LRp{\bm{V}_t}$ exactly.
+}
+
+\only<3>{
+\begin{figure}
+\centering
+\includegraphics[width=.95\textwidth]{Qs.png}
+\end{figure}
+Step 3: combine Steps 1 and 2 by defining  
 \[
 \bm{Q}_s = \bm{P}_t^T\LRp{\bm{V}_t^T\bm{Q}\bm{V}_t}\bm{P}_t
 \]
 Then, $\bm{Q}_s = -\bm{Q}_s^T$ and $\bm{Q}_s\bm{1} = \bm{0}$!
-\end{itemize}
-%\end{overlayarea}
+}
+%\begin{itemize}
+%\item<1-> Step 1: construct ``modal'' $\bm{Q}$ using an expanded ``test'' basis $\bm{V}_t$
+%\[
+%\bm{V}_t^T\bm{Q}\bm{V}_t, \qquad \bm{1}\in \mathcal{R}\LRp{\bm{V}_t}
+%\]
+%\item<2-> Step 2: determine test basis coefficients using hyper-reduced points.  
+%\begin{gather*}
+%\bm{M}_t = \bm{V}_t(\mathcal{I},:)^T\bm{W}\bm{V}_t(\mathcal{I},:), \qquad \bm{P}_t = \bm{M}_t^{-1}\bm{V}_t(\mathcal{I},:)^T\bm{W}.
+%\end{gather*}
+%Here, $\bm{P}_t$ is a weighted projection onto the test basis.  
+%\vspace{1em}
+%\item<3-> Step 3: combine Steps 1 and 2 by defining  
+%\[
+%\bm{Q}_s = \bm{P}_t^T\LRp{\bm{V}_t^T\bm{Q}\bm{V}_t}\bm{P}_t
+%\]
+%Then, $\bm{Q}_s = -\bm{Q}_s^T$ and $\bm{Q}_s\bm{1} = \bm{0}$!
+%\end{itemize}
 
-\let\thefootnote\relax\footnotetext{\tiny Hernandez, Caicedo, Ferrer (2017).  \textit{Dimensional hyper-reduction of nonlinear finite element models via empirical cubature.}}
-%\let\thefootnote\relax\footnotetext{\tiny Everson, Sirovich (1995).  \textit{Karhunen--Loeve procedure for gappy data.}}
+%\let\thefootnote\relax\footnotetext{\tiny Hernandez, Caicedo, Ferrer (2017).  \textit{Dimensional hyper-reduction of nonlinear finite element models via empirical cubature.}}
 }
 
 \frame{
+\frametitle{Choosing the test basis}
+\setcounter{subfigure}{0}
+\vspace{-.5em}
 \begin{itemize}
 \item Problem: modes $\bm{V}_t$ may sample $\bm{Q}\bm{V}$ very poorly, e.g., $\bm{V}_t^T\bm{Q}\bm{V}_t\approx \bm{0}$!
-\vspace{-1.5em}
+\vspace{-1.25em}
 \begin{figure}
 \centering
-\subfloat[\scriptsize Shock snapshots]{\includegraphics[width=.3\textwidth]{figs/burg_snaps.png}}
+\subfloat[\scriptsize Shock snapshots]{\includegraphics[width=.29\textwidth]{figs/burg_snaps.png}}
 \hspace{.1em}
-\subfloat[\scriptsize Modes (columns of $\bm{V}$)]{\includegraphics[width=.3\textwidth]{figs/burg3modes.png}}
+\subfloat[\scriptsize Modes (columns of $\bm{V}$)]{\includegraphics[width=.29\textwidth]{figs/burg3modes.png}}
 \hspace{.1em}
-\subfloat[\scriptsize Mode derivatives $\bm{Q}\bm{V}$]{\includegraphics[width=.3\textwidth]{figs/burg3modes_diff.png}}
+\subfloat[\scriptsize Mode derivatives $\bm{Q}\bm{V}$]{\includegraphics[width=.29\textwidth]{figs/burg3modes_diff.png}}
 \end{figure}
 \vspace{.5em}
-\item Fix: sample $\bm{Q}$ using an expanded ``test'' basis $\bm{V}_t$ 
+\item<2-> Fix: sample $\bm{Q}$ using an expanded ``test'' basis $\bm{V}_t$ 
 \begin{gather*}
 \bm{V}_t = {\rm orth}\LRp{
 \begin{bmatrix} 
@@ -1530,26 +964,56 @@ Then, $\bm{Q}_s = -\bm{Q}_s^T$ and $\bm{Q}_s\bm{1} = \bm{0}$!
 \end{bmatrix}}, \qquad
 \bm{V}_t^T\bm{Q}\bm{V}_t \in \mathbb{R}^{(2N+1) \times (2N+1)}. %\mathbb{R}^{(d+1)N+1 \times (d+1)N+1}.
 \end{gather*}
-$\bm{Q}_s = \bm{P}_t^T\LRp{\bm{V}_t^T\bm{Q}\bm{V}_t}\bm{P}_t$ is now accurate + $\bm{Q}_s = -\bm{Q}_s^T$ + $\bm{Q}_s\bm{1} = \bm{0}$.
+$\bm{Q}_s = \bm{P}_t^T\LRp{\bm{V}_t^T\bm{Q}\bm{V}_t}\bm{P}_t$ is accurate, $\bm{Q}_s = -\bm{Q}_s^T,$ and $\bm{Q}_s\bm{1} = \bm{0}$.
 \end{itemize}
 
 \let\thefootnote\relax\footnotetext{\tiny Carlberg, Barone, Antil (2017).  \textit{Galerkin v. least-squares Petrov--Galerkin projection in nonlinear model reduction.}}
 }
 
+
+\frame{
+\frametitle{Determining empirical cubature points (ECP) and weights}
+
+\begin{itemize}
+\item Goal: integrate a target basis to some accuracy.
+\vspace{1em}
+\item Offline step: greedy selection of hyper-reduction points
+\begin{itemize}
+\item Project residual onto remaining rows of basis matrix.
+\item Find ``most positive'' point of projected residual.
+\item Solve constrained least squares for positive quadrature weights.
+\end{itemize}
+\vspace{1em}
+\item Target basis: products of modes
+\[
+{\rm span}\LRc{\phi_i(\bm{x})\phi_j(\bm{x}), \quad 1\leq i,j \leq N}.
+\]
+Reduce costs by substituting leading POD modes.  
+\end{itemize}
+
+\let\thefootnote\relax\footnotetext{\tiny Hernandez, Caicedo, Ferrer (2017).  \textit{Dimensional hyper-reduction of nonlinear finite element models via empirical cubature.}}
+}
+
+
 \frame{
 \frametitle{Hyper-reduction: empirical cubature}
 
 \begin{itemize}
-\item Greedy algorithm constructs an approximate quadrature which integrates a target space to some tolerance.
-\vspace{1em}
-\item Target space motivated by inner products of POD basis: most accurate + smallest number of points in practice
+\item Approximate inner products of POD basis: most accurate + smallest number of points in practice
 \[
-\text{Target space } = {\rm span}\LRc{\phi_i(\bm{x})\phi_j(\bm{x}), \quad 1\leq i,j \leq N}.
+\bm{V}^T\bm{V} \approx \bm{V}\LRp{\mathcal{I},:}^T\bm{W}\bm{V}\LRp{\mathcal{I},:}.
 \]
 %\vspace{.01em}
-\item<2-> Problem: target space ignores rest of expanded test basis.  Test mass matrix $\bm{M}_t$ may be singular $\Longrightarrow$ projection matrix $\bm{P}_t$ undefined!  
+\item<2-> \note{Problem}: target space focuses on $\bm{V}$, ignores rest of test basis 
+\[
+\bm{V}_t = {\rm orth}\LRp{
+\begin{bmatrix} 
+\bm{V} & \bm{1} & \bm{Q}\bm{V} 
+\end{bmatrix}}
+\]
+Reduced test mass matrix $\bm{M}_t = \bm{V}_t\LRp{\mathcal{I},:}^T\bm{W}\bm{V}_t\LRp{\mathcal{I},:}$ may be singular $\Longrightarrow$ projection matrix $\bm{P}_t$ undefined!  
 \vspace{1em}
-\item<3> Fix: add ``stabilizing'' points which target the near null space of $\bm{M}_t$.  
+\item<3> Fix: add ``stabilizing'' points to integrate the near null space of $\bm{M}_t$.  
 \end{itemize} 
 
 \let\thefootnote\relax\footnotetext{\tiny An, Kim, James (2009).  \textit{Optimizing cubature for efficient integration of subspace deformations}.}
@@ -1557,15 +1021,39 @@ $\bm{Q}_s = \bm{P}_t^T\LRp{\bm{V}_t^T\bm{Q}\bm{V}_t}\bm{P}_t$ is now accurate + 
 }
 
 \frame{
+\frametitle{Hyper-reduction of viscous terms}
+
+\begin{itemize}
+\item The diffusion matrix $\bm{K}$ can be decomposed as
+\[
+\bm{K} = \bm{D}^T\bm{D}, \qquad \bm{D} = \frac{1}{\Delta x}\begin{bmatrix}
+-1 & 1 & & &\\
+& -1 & 1 &&\\
+& & \ddots & \ddots &\\
+& & & -1  & 1
+\end{bmatrix}
+\]
+\item Rewrite derivatives in terms of entropy variables
+\[
+-\pdn{\bm{u}}{\bm{x}}{2} = -\pd{}{x}\LRp{\pd{\bm{u}}{\bm{v}}\pd{\bm{v}}{x}}, \qquad \pd{\bm{u}}{\bm{v}} \text{ is SPD if entropy is convex}
+\]
+\item Hyper-reduce $\bm{K}$ by sampling and weighting rows of $\bm{D}$
+\[
+\boxed{\bm{v}^T\bm{K}\bm{u}} \Longleftrightarrow \boxed{\bm{v}_N^T\bm{D}\LRp{\mathcal{I}_D,:}^T\bm{W}_D\bm{H} \bm{D}\LRp{\mathcal{I}_D,:} \bm{v}_N} \qquad \bm{H}_{ii} = \LRu{\pd{\bm{u}}{\bm{v}}}_{x_i}
+\]
+\end{itemize}
+
+}
+
+\frame{
 \frametitle{Summary: entropy stable ROMs on periodic domains}
 
-%\note{Summarize here}
 \vspace{-.25em}
 \begin{itemize}
 \item Two-step hyper-reduction of $\LRp{\bm{Q}\circ \bm{F}}$: compress and project
 \begin{itemize}
-\item Compress $\bm{Q}$ onto expanded test basis spanning $\bm{1}$, $\bm{V}$, and $\bm{Q}\bm{V}$.
-\item Project hyper-reduced point values onto modes of test basis 
+\item Test basis $\bm{V}_t$ spans $\bm{1}$, $\bm{V}$, and $\bm{Q}\bm{V}$.
+\item Project sampled values onto modes of test basis 
 \[
 \bm{Q}_s = \bm{P}_t^T\LRp{\bm{V}_t^T\bm{Q}\bm{V}_t}\bm{P}_t
 \]
@@ -1574,7 +1062,7 @@ $\bm{Q}_s = \bm{P}_t^T\LRp{\bm{V}_t^T\bm{Q}\bm{V}_t}\bm{P}_t$ is now accurate + 
 %\vspace{1em}
 \item Entropy stable reduced order model with hyper-reduction:
 \begin{gather*}
-{\bm{V}(\mathcal{I},:)^T\bm{W}\bm{V}(\mathcal{I},:)} \td{\bm{u}_N}{t} + 2\bm{V}(\mathcal{I},:)^T \LRp{\bm{Q}_s\circ \bm{F}}\bm{1} = 0,\\
+{\bm{V}(\mathcal{I},:)^T\bm{W}\bm{V}(\mathcal{I},:)} \td{\bm{u}_N}{t} + 2\bm{V}(\mathcal{I},:)^T \LRp{\bm{Q}_s\circ \bm{F}}\bm{1} = \text{viscous terms},\\
 %\underbrace{\bm{V}(\mathcal{I},:)^T\bm{W}\bm{V}(\mathcal{I},:)}_{\bm{M}_N} \td{\bm{u}_N}{t} + \bm{V}(\mathcal{I},:)^T \LRp{\bm{Q}_s\circ \bm{F}}\bm{1} = 0.
 %{\bm{V}(\mathcal{I},:)^T\bm{W}\bm{V}(\mathcal{I},:)} \td{\bm{u}_N}{t} + \bm{V}(\mathcal{I},:)^T \LRp{\bm{Q}_s\circ \bm{F}}\bm{1} = 0,\\
 {\bm{F}}_{ij} = \bm{f}_S\LRp{\tilde{\bm{u}}_i,\tilde{\bm{u}}_j}, \quad \tilde{\bm{u}} = \bm{u}\LRp{\bm{V}(\mathcal{I},:)\bm{P} \bm{v}\LRp{\bm{V}\bm{u}_N}},
@@ -1586,42 +1074,92 @@ where $\bm{P}$ is the hyper-reduced projection onto POD modes.
 \end{itemize}
 }
 
+%\frame{
+%\frametitle{Comparison with other ROMs}
+%
+%\begin{itemize}
+%\item Stable ROMs exist for 
+%\item 
+%\end{itemize}
+%
+%\let\thefootnote\relax\footnotetext{\tiny Afkham et al.\ (2018). \textit{Conservative Model Order Reduction for Fluid Flow}.}
+%}
+
+\subsection{Non-periodic boundary conditions}
+
+\frame[noframenumbering]{
+\frametitle{Talk outline}
+\tableofcontents[currentsection]
+}
+
+
 \frame{
-\frametitle{Non-periodic boundary conditions}
+\frametitle{Non-periodic domains and summation by parts}
 
 \begin{itemize}
-%\item Non-periodic domains: full order matrix $\bm{Q}$ is \textit{nearly} skew-symmetric
-%\[
-%\bm{Q} = \bm{S} + \bm{B}, \qquad \bm{S} = \begin{bmatrix} 
-% 0& 1 & 0\\
-%-1& 0 &1\\
-%0& -1 & 0
-%\end{bmatrix}, \qquad \bm{B} = \begin{bmatrix} -1 & &\\
-%&0&\\
-%&&1
-%\end{bmatrix}
-%\]
-\item Weak boundary conditions using hybridized SBP operators + DG numerical flux.  
+\item<1-> Full order matrix $\bm{Q}$ mimics integration by parts
+\[
+\bm{Q} =\frac{1}{2} \begin{bmatrix}
+-1 & 1 & & \\
+-1 & 0 & 1 &\\
+& \ddots & \ddots & 1 \\
+ & & -1  & 1
+\end{bmatrix}, \qquad \bm{Q} = -\bm{Q}^T + \underbrace{\begin{bmatrix}
+-1 &  && \\
+ & 0 && \\
+& & \ddots  &  \\
+ & & & 1
+\end{bmatrix}}_{\bm{B}},
+\]
+\item Enforce boundary conditions \textit{weakly} using numerical flux $\bm{f}_S(\bm{u},\bm{u}^+)$
+\[
+\only<1>{\boxed{2\LRp{\bm{Q}\circ\bm{F}}} \Longrightarrow \boxed{\LRp{\LRp{\bm{Q}-\bm{Q}^T}\circ\bm{F}} + \bm{B}\bm{f}(\bm{u}).}}
+\only<2>{\boxed{2\LRp{\bm{Q}\circ\bm{F}}} \Longrightarrow \boxed{\LRp{\LRp{\bm{Q}-\bm{Q}^T}\circ\bm{F}} + \bm{B}\note{\bm{f}_S(\bm{u},\bm{u}^+)}}.}
+\]
+\end{itemize}
+}
+
+
+\frame{
+\frametitle{Reduced bases and summation by parts}
+
+\begin{itemize}
+\item No summation by parts property for reduced $\bm{Q}_s$!  
+\[
+\bm{Q}_s = \bm{P}_t^T\LRp{\bm{V}_t^T \bm{Q}\bm{V}_t}\bm{P}_t, \qquad \bm{Q}_s \neq -\bm{Q}_s^T + \bm{B}.
+\]
+\vspace{.01em}
+\item Augmented ``hybridized'' matrix satisfies $\bm{Q}_h\bm{1} = \bm{0}$ in 1D
+\[
+\bm{Q}_h = \frac{1}{2}\begin{bmatrix}
+\bm{Q}_s - \bm{Q}_s^T &\bm{E}^T\bm{B}\\
+- \bm{B}\bm{E} &\bm{B}
+\end{bmatrix}, \qquad \bm{Q}_h = -\bm{Q}_h^T + \begin{bmatrix} \bm{0} & \\ & \bm{B}\end{bmatrix}
+\]
+$\bm{E}$ extrapolates from sampled volume points to sampled surface points.
+\end{itemize}
+
+\let\thefootnote\relax\footnotetext{\tiny Chan (2018). \textit{On discretely entropy conservative and entropy stable discontinuous Galerkin methods.}}
+\let\thefootnote\relax\footnotetext{\tiny Chan (2019). \textit{Skew-symmetric entropy stable modal discontinuous Galerkin formulations}.}
+}
+
+\frame{
+\frametitle{Surface hyper-reduction}
+\begin{itemize}
+\item In 2D/3D, entropy stability requires surface weights $\bm{w}_f$ to satisfy a constraints involving surface interpolation matrix $\bm{V}_{f}$.  
 \vspace{1em}
-\item Can add entropy-dissipative penalization terms (e.g., Lax-Friedrichs).
-%\[
-%\bm{Q}_h = \begin{bmatrix}
-%\bm{Q}-\bm{Q}^T & \bm{E}^T\bm{B}\\
-%-\bm{B}\bm{E} & 
-%\end{bmatrix}
-%\]
-\vspace{1em}
-\item In 2D/3D, entropy stability requires surface quadrature weights $\bm{w}_f$ to satisfy a weak SBP property involving surface interpolation matrix $\bm{V}_f$.  
-\begin{align*}
-\bm{V}_t^T \bm{Q}_x^T\bm{1} &= \bm{V}_f^T \LRp{\bm{n}_x \circ \note{\bm{w}_f}},\\
-\bm{V}_t^T \bm{Q}_y^T\bm{1} &= \bm{V}_f^T \LRp{\bm{n}_y \circ \note{\bm{w}_f}}.
-\end{align*}
-Enforce conditions using constrained LP hyper-reduction.
+\item Enforce conditions using dual simplex method with constraints
+\begin{gather*}
+\min \bm{1}^T\bm{w}_f \quad s.t.\\
+\bm{w}_f \geq \bm{0}, \\
+\bm{V}_{f}^T\diag{\note{\bm{w}_f}} \bm{V}_f \approx \Delta x \bm{V}_f^T\bm{V}_f, \\
+\bm{V}_t^T \bm{Q}_x^T\bm{1} = \bm{V}_{f}^T \LRp{\bm{n}_x \circ {\bm{w}_f}},\\
+\bm{V}_t^T \bm{Q}_y^T\bm{1} = \bm{V}_{f}^T \LRp{\bm{n}_y \circ {\bm{w}_f}}.
+\end{gather*}
+Dual simplex method seeks a \textit{sparse} solution $\bm{w}_f$.
 \end{itemize}
 
 \let\thefootnote\relax\footnotetext{\tiny Patera and Yano (2017). \textit{An LP empirical quadrature procedure for parametrized functions}.}
-\let\thefootnote\relax\footnotetext{\tiny Chan (2018). \textit{On discretely entropy conservative and entropy stable discontinuous Galerkin methods.}}
-\let\thefootnote\relax\footnotetext{\tiny Chan (2019). \textit{Skew-symmetric entropy stable modal discontinuous Galerkin formulations}.}
 }
 
 
@@ -1730,7 +1268,7 @@ Number of stabilizing points & 3& 21 & 36 & 28 \\
 
 \frame{
 \frametitle{Error with and without hyper-reduction}
-\vspace{-.5em}
+%\vspace{-.25em}
 \begin{figure}
 \centering
 \includegraphics[width=.65\textwidth]{figs/euler_error_hypred_comparison_K2500.png}
@@ -1740,7 +1278,7 @@ Number of stabilizing points & 3& 21 & 36 & 28 \\
 
 \frame{
 \frametitle{Smoothed 2D Kelvin-Helmholtz instability}
-\vspace{-.5em}
+%\vspace{-.25em}
 \begin{figure}
 \centering 
 \only<1>{
@@ -1772,7 +1310,7 @@ Number of stabilizing points & 3& 21 & 36 & 28 \\
 \hspace{.5em}
 \subfloat[ROM w/reduced quad.\ points]{\includegraphics[width=.4525\textwidth]{figs/pulse2d_ROM_pts.png}}
 }
-\caption{FOM with $10000$ points, viscosity $\epsilon = .5\Delta x$.  ROM with $25$ modes, $306$ reduced volume points, 82 reduced surface points, $.57 \%$ error at $T = .25$.}
+\caption{FOM with $22500$ points, viscosity $\epsilon = .5\Delta x$.  ROM with $25$ modes, $306$ reduced volume points, 82 reduced surface points, $.57 \%$ error at $T = .25$.}
 \end{figure}
 
 }
@@ -1908,12 +1446,12 @@ Number of stabilizing points & 3& 21 & 36 & 28 \\
 \frametitle{Summary and future work}
 
 \begin{itemize}
-\item Entropy stable modal formulations are flexible, with applications to simplicial elements, tensor product elements, and ROMs.
+\item Entropy stable ROMs reproduce a semi-discrete entropy inequality.
 %\vspace{.25em}
 %\item Current work: ROM, positivity preservation.  
 \vspace{.25em}
-%\item Current work: hybrid and non-conforming meshes, multi-GPU.
-%\vspace{.25em}
+\item Current work: implicit solvers, approximation of transport and shocks.  
+\vspace{.25em}
 \item This work is supported by DMS-1719818 and DMS-1712639. 
 \end{itemize}
 \vspace{.25em}

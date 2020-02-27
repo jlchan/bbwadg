@@ -57,7 +57,7 @@ kernel void rk_volume(const    int K,
     shared dfloat sUr[p_KblkV][p_Np], sUs[p_KblkV][p_Np], sUt[p_KblkV][p_Np];
     shared dfloat sG[p_KblkV][p_Nvgeo];
 
-    // lapp has to survive multiple inner loops
+    // has to survive multiple inner loops
     for(int k2 = 0; k2 < p_KblkV; ++k2; inner1){
 
 

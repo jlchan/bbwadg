@@ -2,6 +2,7 @@ clear
 K = 200;
 %FinalTime = .35;
 FinalTime = 2.5;
+FinalTime = 3;
 CFL = 1;
 
 xv = linspace(-1,1,K+1)';

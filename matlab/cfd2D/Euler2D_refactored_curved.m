@@ -343,7 +343,7 @@ rhovM  = U3(q1M,q2M,q3M,q4M);
 EM     = U4(q1M,q2M,q3M,q4M);
 uM     = rhouM./rhoM;
 vM     = rhovM./rhoM;
-betafq = beta(rhoM,uM,vM,EM);
+betaM = beta(rhoM,uM,vM,EM);
 
 rhoP  = U1(q1P,q2P,q3P,q4P);
 rhouP = U2(q1P,q2P,q3P,q4P);
@@ -351,6 +351,7 @@ rhovP = U3(q1P,q2P,q3P,q4P);
 EP    = U4(q1P,q2P,q3P,q4P);
 uP    = rhouP./rhoP;
 vP    = rhovP./rhoP;
+betaP = beta(rhoP,uP,vP,EP);
 
 % Lax-Friedrichs penalization
 global gamma tau
@@ -366,10 +367,11 @@ Lf2 = tau*LFc.*(rhoP.*uP-rhoM.*uM);
 Lf3 = tau*LFc.*(rhoP.*vP-rhoM.*vM);
 Lf4 = tau*LFc.*(EP-EM);
 
-fSf1 = nxJ.*fxS1(rhoM,uM,vM,EM,rhoP,uP,vP,EP) + nyJ.*fyS1(rhoM,uM,vM,EM,rhoP,uP,vP,EP);
-fSf2 = nxJ.*fxS2(rhoM,uM,vM,EM,rhoP,uP,vP,EP) + nyJ.*fyS2(rhoM,uM,vM,EM,rhoP,uP,vP,EP);
-fSf3 = nxJ.*fxS3(rhoM,uM,vM,EM,rhoP,uP,vP,EP) + nyJ.*fyS3(rhoM,uM,vM,EM,rhoP,uP,vP,EP);
-fSf4 = nxJ.*fxS4(rhoM,uM,vM,EM,rhoP,uP,vP,EP) + nyJ.*fyS4(rhoM,uM,vM,EM,rhoP,uP,vP,EP);
+[FxS1 FxS2 FxS3 FxS4 FyS1 FyS2 FyS3 FyS4] = euler_flux_2d(rhoM,rhoP,uM,uP,vM,vP,betaM,betaP);
+fSf1 = nxJ.*FxS1 + nyJ.*FyS1;
+fSf2 = nxJ.*FxS2 + nyJ.*FyS2;
+fSf3 = nxJ.*FxS3 + nyJ.*FyS3;
+fSf4 = nxJ.*FxS4 + nyJ.*FyS4;
 fSf1 = fSf1  - .5*Lf1;
 fSf2 = fSf2  - .5*Lf2;
 fSf3 = fSf3  - .5*Lf3;
@@ -381,7 +383,7 @@ fSf4 = fSf4  - .5*Lf4;
 rhoN  = [rhoq; rhoM];
 uN    = [uq; uM];
 vN    = [vq; vM];
-betaN = [betaq;betafq];
+betaN = [betaq;betaM];
 
 divF1 = zeros(size(DNr,1),K);
 divF2 = zeros(size(DNr,1),K);
@@ -395,19 +397,7 @@ for e = 1:K
     [betax, betay] = meshgrid(betaN(:,e)); % no need to compute E 
     
     % optimized flux evaluations for compressible Euler
-    rholog = logmean(rhox,rhoy);
-    rhoavg = avg(rhox,rhoy);
-    uavg = avg(ux,uy);
-    vavg = avg(vx,vy);
-    vnavg = 2*(uavg.^2 + vavg.^2) - (avg(ux.^2,uy.^2) + avg(vx.^2,vy.^2));
-    pa = rhoavg./(2*avg(betax,betay));
-    
-    FxS1 = rholog.*uavg;      FyS1 = rholog.*vavg;
-    FxS2 = FxS1.*uavg + pa;   FyS2 = FyS1.*uavg;
-    FxS3 = FyS2;              FyS3 = FyS1.*vavg + pa;
-    f4aux = rholog./(2*(gamma-1)*logmean(betax,betay)) + pa + .5*rholog.*vnavg;
-    FxS4 = f4aux.*uavg;
-    FyS4 = f4aux.*vavg;
+    [FxS1 FxS2 FxS3 FxS4 FyS1 FyS2 FyS3 FyS4] = euler_flux_2d(rhox,rhoy,ux,uy,vx,vy,betax,betay);
     
     % split form for curved elements
     [rxJ1, rxJ2] = meshgrid([rxJ(:,e);rxJf(:,e)]);
@@ -468,16 +458,31 @@ if 0
     p = rho.^gamma;    
 end
 
-if 0 % sod
-    x0 = 0;
-    rhoL = 1; rhoR = .125;
-    pL = 1; pR = .1;        
-    
-    rho = (rhoL*(x < x0) + rhoR*(x > x0));
-    u = 0*x;
-    v = 0*x;
-    p = (pL*(x < x0) + pR*(x > x0));
-    
 end
+
+
+function [FxS1 FxS2 FxS3 FxS4 FyS1 FyS2 FyS3 FyS4] = euler_flux_2d(rhoL,rhoR,uL,uR,vL,vR,betaL,betaR)
+
+gamma = 1.4;
+
+% optimized evaluations
+rholog = logmean(rhoL,rhoR);
+rhoavg = .5*(rhoL+rhoR);
+uavg = .5*(uL+uR);
+vavg = .5*(vL+vR);
+vnavg = uL.*uR + vL.*vR; 
+pa = rhoavg./(betaL+betaR);
+
+EavgPavg = rholog./(2*(gamma-1)*logmean(betaL,betaR)) + pa + .5*rholog.*vnavg;
+
+FxS1 = rholog.*uavg;      
+FxS2 = FxS1.*uavg + pa;   
+FxS3 = FxS1.*vavg;              
+FxS4 = EavgPavg.*uavg;
+
+FyS1 = rholog.*vavg;
+FyS2 = FxS3;
+FyS3 = FyS1.*vavg + pa;
+FyS4 = EavgPavg.*vavg;
 
 end

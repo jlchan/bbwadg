@@ -1,6 +1,8 @@
 clear
-K = 200;
-FinalTime = .15;
+K = 150;
+FinalTime = .1;
+% FinalTime = .25;
+
 xv = linspace(-1,1,K+1)';
 x1D = .5*(xv(1:end-1)+xv(2:end));
 x = x1D;
@@ -9,9 +11,10 @@ dx = 1/K;
 CFL = .5;
 Nmodes = 25;
 tau = .1*dx;
-tau = 1e-3;
+% tau = 2e-3;
 
 snapshot_file = 'Usnap_euler2d_wall';
+% snapshot_file = 'Usnap_euler2d_shock';
 
 e = ones(K-1,1);
 S = diag(e,1)-diag(e,-1);
@@ -101,8 +104,20 @@ u4 = Usnap((1:K^2) + 3*K^2,:);
     V1(u1,u2,u3,u4) V2(u1,u2,u3,u4) V3(u1,u2,u3,u4) V4(u1,u2,u3,u4)],0); 
 sig = diag(Sr); 
 
+sigU = svd([u1 u2 u3 u4]);
+semilogy(sigU,'bo','linewidth',2,'markersize',10)
+hold on
+semilogy(sig,'r.','linewidth',2,'markersize',16)
+ylim([1e-10,1e5])
+grid on
+set(gca,'fontsize',15)
+h = legend('Without enrichment','With enrichment');
+set(h,'fontsize',15)
+xlabel('Index','fontsize',15)
+
+keyboard
 % figure(1)
-% semilogy(sig,'--','linewidth',2,'markersize',10)
+
 % hold on
 % grid on
 % set(gca,'fontsize',16)
@@ -112,7 +127,6 @@ Vr = Vr(:,1:Nmodes);
 Vrp = Vr;
 
 tol = sum(sig(Nmodes+1:end).^2)/sum(sig.^2)
-
 
 %% make test ops
 
@@ -178,7 +192,7 @@ if 1
         disp('Done building Vmass')
         
         % reduce target space        
-        tic; [Vmass,Smass,~] = rsvd(Vmass,50*Nmodes); toc
+        tic; [Vmass,Smass,~] = rsvd(Vmass,25*Nmodes); toc
         smass = diag(Smass);
         smass_energy = sqrt(1 - (cumsum(smass.^2)./sum(smass.^2)));
         Vmass = Vmass(:,smass_energy > tol);        
@@ -191,8 +205,7 @@ if 1
         
     else
         wr = wq0; id = 1:length(wq0);
-    end
-    
+    end    
     
     % check if test mass matrices are nonsingular
     Mtestx = Vtestx(id,:)'*diag(wr)*Vtestx(id,:);    
@@ -305,7 +318,7 @@ if 1
         end
         disp('Done building Vfmass')
         
-        [Vfmass,Smass,~] = rsvd(Vfmass,50*Nmodes);
+        [Vfmass,Smass,~] = rsvd(Vfmass,25*Nmodes);
         smass = diag(Smass);
         smass_energy = sqrt(1 - (cumsum(smass.^2)./sum(smass.^2)));
 %         Vfmass = Vfmass(:,smass_energy > 1e-13); % in 1D
@@ -355,7 +368,7 @@ if 1
     bxids = find(abs(abs(nx)-1) < 1e-10);
     byids = find(abs(abs(ny)-1) < 1e-10);
             
-%     clear Vtestx Vtesty Ptestx Ptesty
+    clear Vtestx Vtesty Ptestx Ptesty
 
 end
 
@@ -470,6 +483,7 @@ for i = 1:Nsteps
         uN = [uN;uM];
         vN = [vN;vM];
         EN = [EN;EM];
+        betaN = beta(rhoN,uN,vN,EN);
         
         r1 = zeros(NT,1);
         r2 = zeros(NT,1);
@@ -494,12 +508,20 @@ for i = 1:Nsteps
                 [rhox rhoy] = meshgrid(rhoN(id1),rhoN(id2));
                 [ux uy]     = meshgrid(uN(id1),uN(id2));
                 [vx vy]     = meshgrid(vN(id1),vN(id2));
-                [Ex Ey]     = meshgrid(EN(id1),EN(id2));
+                %[Ex Ey]     = meshgrid(EN(id1),EN(id2));
+                [betax betay]     = meshgrid(betaN(id1),betaN(id2));                                
                 
-                r1(id1) = r1(id1) + (sum(Qxij.*fxS1(rhox,ux,vx,Ex,rhoy,uy,vy,Ey)',2) + sum(Qyij.*fyS1(rhox,ux,vx,Ex,rhoy,uy,vy,Ey)',2));
-                r2(id1) = r2(id1) + (sum(Qxij.*fxS2(rhox,ux,vx,Ex,rhoy,uy,vy,Ey)',2) + sum(Qyij.*fyS2(rhox,ux,vx,Ex,rhoy,uy,vy,Ey)',2));
-                r3(id1) = r3(id1) + (sum(Qxij.*fxS3(rhox,ux,vx,Ex,rhoy,uy,vy,Ey)',2) + sum(Qyij.*fyS3(rhox,ux,vx,Ex,rhoy,uy,vy,Ey)',2));
-                r4(id1) = r4(id1) + (sum(Qxij.*fxS4(rhox,ux,vx,Ex,rhoy,uy,vy,Ey)',2) + sum(Qyij.*fyS4(rhox,ux,vx,Ex,rhoy,uy,vy,Ey)',2));
+                [FxS1 FxS2 FxS3 FxS4 FyS1 FyS2 FyS3 FyS4] = ...
+                    euler_flux_2d(rhox,rhoy,ux,uy,vx,vy,betax,betay);
+                r1(id1) = r1(id1) + (sum(Qxij.*FxS1',2) + sum(Qyij.*FyS1',2));
+                r2(id1) = r2(id1) + (sum(Qxij.*FxS2',2) + sum(Qyij.*FyS2',2));
+                r3(id1) = r3(id1) + (sum(Qxij.*FxS3',2) + sum(Qyij.*FyS3',2));
+                r4(id1) = r4(id1) + (sum(Qxij.*FxS4',2) + sum(Qyij.*FyS4',2));
+
+%                 r1(id1) = r1(id1) + (sum(Qxij.*fxS1(rhox,ux,vx,Ex,rhoy,uy,vy,Ey)',2) + sum(Qyij.*fyS1(rhox,ux,vx,Ex,rhoy,uy,vy,Ey)',2));
+%                 r2(id1) = r2(id1) + (sum(Qxij.*fxS2(rhox,ux,vx,Ex,rhoy,uy,vy,Ey)',2) + sum(Qyij.*fyS2(rhox,ux,vx,Ex,rhoy,uy,vy,Ey)',2));
+%                 r3(id1) = r3(id1) + (sum(Qxij.*fxS3(rhox,ux,vx,Ex,rhoy,uy,vy,Ey)',2) + sum(Qyij.*fyS3(rhox,ux,vx,Ex,rhoy,uy,vy,Ey)',2));
+%                 r4(id1) = r4(id1) + (sum(Qxij.*fxS4(rhox,ux,vx,Ex,rhoy,uy,vy,Ey)',2) + sum(Qyij.*fyS4(rhox,ux,vx,Ex,rhoy,uy,vy,Ey)',2));
             end
         end                
 
@@ -530,6 +552,20 @@ for i = 1:Nsteps
         E    = E     + rk4b(INTRK)*res4;
     end
     
+    Uhi = reshape(Vrp*[rho rhou rhov E],K*K,4); 
+    rhoROM = Uhi(:,1);
+    rhouROM = Uhi(:,2);
+    rhovROM = Uhi(:,3);
+    EROM = Uhi(:,4);    
+    entropyROM(i) = sum(sum(-rhoROM.*sfun(rhoROM,rhouROM,rhovROM,EROM)))*dx^2;
+    
+    Uhi = reshape(Usnap(:,i),K*K,4); 
+    rhoFOM = Uhi(:,1);
+    rhouFOM = Uhi(:,2);
+    rhovFOM = Uhi(:,3);
+    EFOM = Uhi(:,4);
+    entropyFOM(i) = sum(sum(-rhoFOM.*sfun(rhoFOM,rhouFOM,rhovFOM,EFOM)))*dx^2;
+    
     if mod(i,5) == 0 || i==Nsteps
         surf(x,y,reshape(Vrp*rho,K,K))
         shading interp
@@ -545,6 +581,11 @@ for i = 1:Nsteps
     
 end
 
+figure
+minS = min(min(entropyROM),min(entropyFOM));
+semilogy(entropyFOM-minS,'-','linewidth',2)
+hold on
+semilogy(entropyROM-minS,'--','linewidth',2)
 
 %%
 Usnapi = reshape(Usnap(:,i),K*K,4);

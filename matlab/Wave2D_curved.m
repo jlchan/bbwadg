@@ -5,8 +5,8 @@ function  Wave2D_curved
 
 Globals2D;
 
-N = 3;
-nref = 0;
+N = 5;
+nref = 1;
 useJprojection = 1;
 FinalTime = 1;
 
@@ -121,7 +121,7 @@ for e = 1:K
 end
 
 global tau;
-tau = 0;
+tau = 1;
 
 
 %%
@@ -178,9 +178,9 @@ alpha0 = alpha(2); rad = sqrt(x.^2+y.^2);
 
 p = besselj(0, alpha0*rad);
 
-% d = 25; x0 = -1/3; y0 = 1/3;
-% p = exp(-d*sqrt((x-x0).^2 + (y-y0).^2)) + exp(-10*sqrt((x+x0).^2 + (y+y0).^2));
-p = exp(-25*(x.^2 + y.^2));
+d = 25; x0 = -1/3; y0 = 1/3;
+p = exp(-d*sqrt((x-x0).^2 + (y-y0).^2)) + exp(-10*sqrt((x+x0).^2 + (y+y0).^2));
+% p = exp(-d*(x.^2 + y.^2));
 u = zeros(Np, K); v = zeros(Np, K);
 
 

@@ -7,8 +7,7 @@ Globals2D
 
 if nargin==0
     %     Nin = 4; K1D = 16;
-    Nin = 3; K1D = 2; c_flag = 0;
-    FinalTime = .5;
+    Nin = 4; K1D = 16; c_flag = 0;
     cfun = @(x,y) ones(size(x));
 %     cfun = @(x,y) 1 + .5*sin(pi*x).*sin(pi*y); % smooth velocity
 %     cfun = @(x,y) (1 + .5*sin(2*pi*x).*sin(2*pi*y) + (y > 0)); % piecewise smooth velocity
@@ -16,7 +15,8 @@ if nargin==0
 %     cfun = @(x,y) 2 + sin(2*pi*sin(x));
 end
 N = Nin;
-
+FinalTime = .5;
+    
 % filename = 'Grid/Other/block2.neu';
 % filename = 'Grid/Maxwell2D/Maxwell05.neu';
 % [Nv, VX, VY, K, EToV] = MeshReaderGambit2D(filename);
@@ -95,7 +95,7 @@ end
 
 
 %% check eigenvalues of DG matrix 
-if 1 && nargin==0
+if 0 && nargin==0
     e = zeros(3*Np*K,1);
     A = zeros(3*Np*K);
     for i = 1:3*Np*K
@@ -134,7 +134,7 @@ resu = zeros(Np,K); resv = zeros(Np,K); resp = zeros(Np,K);
 % compute time step size
 CN = (N+1)^2/2; % guessing...
 %dt = 1/(CN*max(abs(sJ(:)))*max(abs(1./J(:))));
-dt = 1/(max(cq(:))*CN*max(Fscale(:)));
+dt = 2/(max(cq(:))*CN*max(Fscale(:)));
 
 % outer time step loop
 tstep = 0;

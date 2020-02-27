@@ -18,7 +18,7 @@ tf = [s2; s2; s2; s2; -e; e];
 Vf = Vandermonde3DHex(N,rf,sf,tf)/Vandermonde3DHex(N,r,s,t);
 NODETOL = 1e-8;
 
-a = .0;
+a = .1;
 dx = sin(pi*(1+r)/2).*sin(pi*(1+s)/2).*sin(pi*(1+t)/2);
 dy = 0;
 dz = 0;

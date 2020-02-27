@@ -1,16 +1,19 @@
-
-clear all
+% clear all
 
 Globals2D
 
-N = 3; K1D = 2; 
+N = 6; K1D = 10;
 useCurved = 1;
 a = 0;
-% a = .125;
+a = .05;
+% a = .25;
+CFL = .5;
 
-computeEigs = 1;
+plotMesh = 0;
+
+computeEigs = 0;
 global tau
-tau = 0;
+tau = 1;
 
 FinalTime = 1;
 
@@ -62,10 +65,11 @@ Psq = M\(Dsq'*diag(wq));
 if useCurved
     
     % warp mesh
+    kc = 3;
     Lx = 1; Ly = 1;
     x0 = 0; y0 = 0;
-    x = x + Lx*a*cos(1/2*pi*(x-x0)/Lx).*cos(3/2*pi*(y-y0)/Ly);
-    y = y + Ly*a*sin(3/2*pi*(x-x0)/Lx).*cos(1/2*pi*(y-y0)/Ly);
+    x = x + Lx*a*cos(kc*1/2*pi*(x-x0)/Lx).*cos(kc*3/2*pi*(y-y0)/Ly);
+    y = y + Ly*a*sin(kc*3/2*pi*(x-x0)/Lx).*cos(kc*1/2*pi*(y-y0)/Ly);
     
     xq = Vq*x; yq = Vq*y;
     xp = Vp*x; yp = Vp*y;
@@ -91,9 +95,9 @@ if useCurved
     nyq = nyJ./Jf;
     sJq = sqrt(nxq.^2 + nyq.^2);
     nxq = nxq./sJq; nyq = nyq./sJq;
-    sJq = sJq.*Jf;       
-   
-    if 0
+    sJq = sJq.*Jf;
+    
+    if plotMesh
         rp1D = linspace(-1,1,100)';
         Vp1D = Vandermonde1D(N,rp1D)/Vandermonde1D(N,JacobiGL(0,0,N));
         Vfp = kron(eye(Nfaces),Vp1D);
@@ -102,12 +106,14 @@ if useCurved
         plot(xfp,yfp,'k.')
         hold on
         xfq = Vfq*x;  yfq = Vfq*y;
-        plot(xfq,yfq,'o'); hold on
-        quiver(xfq,yfq,nxq,nyq)
+        axis equal
+        axis off
+%         plot(xfq,yfq,'o'); hold on
+%         quiver(xfq,yfq,nxq,nyq)
         L2err = nan;
         return
     end
-
+    
 end
 
 
@@ -118,9 +124,10 @@ end
 
 k = 1; % frequency of solution
 W = (2*k-1)/2*pi;
-% p = cos(W*x).*cos(W*y);
-x0 = 0; y0 = .25;
-p = exp(-200*((x-x0).^2 + (y-y0).^2));
+p = cos(W*x).*cos(W*y);
+
+% x0 = 0; y0 = .25;
+% p = exp(-200*((x-x0).^2 + (y-y0).^2));
 u = zeros(Np, K); v = zeros(Np, K);
 
 %% check eigenvalues of DG matrix
@@ -144,10 +151,10 @@ if computeEigs
     hold on;
     plot(lam,'o')
     title(sprintf('Largest real part = %e',max(real(lam))))
-
+    
     return
-
-M = Vq'*diag(wq)*Vq; Mh = kron(spdiag(J(1,:)),M);
+    
+    M = Vq'*diag(wq)*Vq; Mh = kron(spdiag(J(1,:)),M);
     
 end
 
@@ -162,7 +169,7 @@ resu = zeros(Np,K); resv = zeros(Np,K); resp = zeros(Np,K);
 % compute time step size
 CN = (N+1)^2/2; % guessing...
 %dt = 1/(CN*max(abs(sJ(:)))*max(abs(1./J(:))));
-dt = 1/(CN*max(Fscale(:)));
+dt = CFL*2/(CN*max(Fscale(:)));
 
 % outer time step loop
 tstep = 0;
@@ -174,7 +181,7 @@ while (time<FinalTime)
         
         timelocal = time + rk4c(INTRK)*dt;
         
-        [rhsp, rhsu, rhsv] = acousticsRHS2D_skew(p,u,v,timelocal);                
+        [rhsp, rhsu, rhsv] = acousticsRHS2D_skew(p,u,v,timelocal);
         
         % initiate and increment Runge-Kutta residuals
         resp = rk4a(INTRK)*resp + dt*rhsp;
@@ -193,7 +200,8 @@ while (time<FinalTime)
         vv = Vp*p;
         pp = log(abs(vv));
         color_line3(xp,yp,vv,vv,'.');
-        axis tight        
+        axis tight
+        title(sprintf('Time = %g\n',time))
         drawnow
     end
     
@@ -214,7 +222,7 @@ for e = 1:K
     L2err2 = L2err2 + J(1,e)*sum(wq.*diff.^2);
 end
 
-L2err = sqrt(sum(L2err2));
+L2err = sqrt(sum(L2err2))
 % if nargin==0
 %     title(sprintf('L2 error at time %f = %e\n',FinalTime,L2err))
 % end

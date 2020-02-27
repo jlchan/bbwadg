@@ -11,6 +11,7 @@ dx = aa*sin(1*pi*(x-7.5)/7.5);
 dy = aa*sin(2*pi*(y-10)/10);
 dz = aa*sin(pi*(z-2.5)/2.5);
 
+gamma = 1.4;
 c1 = 7.5;
 c2 = 7.5;
 t = 5;

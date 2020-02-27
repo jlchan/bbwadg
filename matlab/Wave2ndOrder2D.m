@@ -2,9 +2,9 @@ clear all -globals
 Globals2D
 
 N = 5;
-K1D = 8;
+K1D = 16;
 FinalTime = .50;
-CFL = .9;
+CFL = .75;
 
 global tau
 tau = 1;
@@ -51,6 +51,7 @@ nsJ = nsJ(:);
 x0 = 0;
 y0 = 0;
 p = exp(-10^2*((x-x0).^2 + (y-y0).^2));
+p = sin(pi*x).*sin(pi*y);
 
 global cq
 cq = 1 + .25*sin(pi*xq).*sin(pi*yq);
@@ -97,6 +98,8 @@ for i = 1:Nsteps
     end
         
 end
+
+pex = sin(pi*x).*sin(pi*y)*cos(pi*t);
 
 % simple straightforward version with physical geofacs
 function [p pprev] = rhs2ndOrder(p,pprev,dt)

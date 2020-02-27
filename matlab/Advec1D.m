@@ -6,10 +6,10 @@
 Globals1D;
 
 % Order of polymomials used for approximation
-N = 1;
-K1D = 128;
+N = 8;
+K1D = 32;
 CFL = .5;
-FinalTime = 20;
+FinalTime = 2;
 global tau
 tau = 1;
 
@@ -42,6 +42,7 @@ u = Pq*uex(xq);
 [~,wGLL] = JacobiGL(0,0,N);
 % LIFT = diag(1./wGLL)*M*LIFT;
 F = V*diag([1; zeros(N,1)])/V;
+F = eye(N+1);
 u = F*u;
 
 % Solve Problem
@@ -93,7 +94,7 @@ plot(xp,pp,'r--','linewidth',2);
 % axis([-1,1,-.25,1.25])
 set(gca,'fontsize',15)
 grid on
-% 
+
 % figure(2)
 % semilogy((1:Nsteps)*dt,energy,'--','linewidth',2)
 % hold on

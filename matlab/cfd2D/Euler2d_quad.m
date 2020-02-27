@@ -8,7 +8,7 @@ a = .25; % warping factor
 N = 3;
 K1D = 20;
 
-Mgeo = 3;
+Mgeo = N;
 [rq1D_face wq1D_face] = JacobiGQ(0,0,N); 
 % [rq1D_face wq1D_face] = JacobiGL(0,0,N); 
 % [rq1D_face wq1D_face] = clenshaw_curtis(N+Mgeo-2); 

@@ -6,8 +6,8 @@ function L2err = Elasticity2D_Lamb(Nin,K1D)
 Globals2D
 
 if nargin==0
-    K1D = 4;
-    N = 3;
+    K1D = 2;
+    N = 4;
 else
     N = Nin;    
 end
@@ -20,7 +20,7 @@ FinalTime = 5;
 a = 0;
 % a = .1;
 useCurved = 1;
-computeEigs = 0;
+computeEigs = 1;
 
 [Nv, VX, VY, K, EToV] = unif_tri_mesh(2*K1D,K1D);
 VY = (VY+1)/2-.5;
@@ -200,6 +200,7 @@ if computeEigs
     %         drawnow
     max(abs(lam))
     L2err = nan;
+    keyboard
     return
 end
 

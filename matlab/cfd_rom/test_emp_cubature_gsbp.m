@@ -75,6 +75,18 @@ disp('Done with Vmass svd')
 
 [wq2 idv] = get_empirical_cubature(Vmass,dx^2*ones(size(x(:))),tol,inf);
 
+plot(x(idv),y(idv),'b.','linewidth',2,'markersize',32)
+axis equal
+grid on
+hold on
+[xx yy] = meshgrid(xv);
+for i = 1:K+1
+    plot(xx(i,:),yy(i,:),'k-','linewidth',1)    
+    plot(xx(:,i),yy(:,i),'k-','linewidth',1)    
+end
+axis off
+return
+
 ee = ones(size(x1D));
 xf = [x1D; x1D(end)*ee; x1D; -x1D(end)*ee];
 yf = [-x1D(end)*ee; x1D; x1D(end)*ee; x1D];
