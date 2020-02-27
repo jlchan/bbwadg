@@ -1,0 +1,52 @@
+
+\documentclass[a4paper]{article} %
+\usepackage{graphicx,amssymb} %
+
+\textwidth=15cm \hoffset=-1.2cm %
+\textheight=25cm \voffset=-2cm %
+
+\pagestyle{empty} %
+
+\date{} %
+
+\def\keywords#1{\begin{center}{\bf Keywords}\\{#1}\end{center}} %
+
+
+
+% Please, do not change any of the above lines
+
+
+
+
+\begin{document}
+
+% Type down your paper title
+\title{Extensions of entropy stable nodal discontinuous Galerkin schemes}
+
+% Authors
+\author{Jesse Chan, \\ %
+       Rice University (USA) \\ \\ % Affiliation 1
+       \tt{jesse.chan@rice.edu} % Only one corresponding e-mail
+       }%
+
+
+\maketitle
+
+\thispagestyle{empty}
+
+% The abstract
+
+\begin{abstract}
+High order discontinuous Galerkin (DG) methods provide improved accuracy and low numerical dispersion/dissipation for simulations of nonlinear conservation laws.  However, these methods also tend to suffer from instability in practice, requiring filtering, limiting, or artificial dissipation to prevent solution blow up.  \textit{Entropy stable} nodal DG methods based on summation-by-parts (SBP) operators and flux differencing address this instability by ensuring satisfaction of a semi-discrete entropy inequality.  In this talk, we will present extensions of entropy stable DG methods to more general nodal points, which provide improved accuracy on warped and non-conforming meshes.  
+\end{abstract}
+
+\keywords{High order, discontinuous Galerkin, entropy stability} % Write down at least 3 Keywords
+
+
+
+% \section{Introduction}
+
+
+
+
+\end{document}
