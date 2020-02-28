@@ -1,0 +1,553 @@
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+
+\usepackage{verbatimbox}
+
+\usepackage{amsmath, amsfonts, amssymb, amsthm}
+\usepackage{hyperref}
+\hypersetup{colorlinks,
+citecolor=blue
+}
+\usepackage{MnSymbol}% http://ctan.org/pkg/mnsymbol
+
+% ===================================== 
+\usepackage{stackengine}
+\stackMath
+\newlength\matfield
+\newlength\tmplength
+\def\matscale{1.}
+\newcommand\dimbox[3]{%
+  \setlength\matfield{\matscale\baselineskip}%
+  \setbox0=\hbox{\vphantom{X}\smash{#3}}%
+  \setlength{\tmplength}{#1\matfield-\ht0-\dp0}%
+  \fboxrule=1pt\fboxsep=-\fboxrule\relax%
+  \fbox{\makebox[#2\matfield]{\addstackgap[.5\tmplength]{\box0}}}%
+}
+\newcommand\raiserows[2]{%
+   \setlength\matfield{\matscale\baselineskip}%
+   \raisebox{#1\matfield}{#2}%
+}
+\newcommand\matbox[5]{
+  \stackunder{\dimbox{#1}{#2}{$#5$}}{\scriptstyle(#3\times #4)}%
+}
+% ===================================== 
+\usepackage{graphicx, color, bm}
+\usepackage{subfig}
+\usepackage{tikz,pgfplots,pgfplotstable}
+%\usepackage{fullpage}
+
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\newenvironment{myproof}[1][\proofname]{%
+  \proof Proof of #1%
+}{\endproof}
+
+\renewcommand{\hat}{\widehat}
+\renewcommand{\tilde}{\widetilde}
+
+%% d in integrand
+\newcommand*\diff[1]{\mathop{}\!{\mathrm{d}#1}}
+\newcommand{\diag}[1]{{\rm diag}\LRp{#1}}
+\newcommand{\td}[2]{\frac{{\rm d}#1}{{\rm d}{\rm #2}}}
+\newcommand{\pd}[2]{\frac{\partial#1}{\partial#2}}
+\newcommand{\nor}[1]{\left\| #1 \right\|}
+\newcommand{\LRp}[1]{\left( #1 \right)}
+\newcommand{\LRs}[1]{\left[ #1 \right]}
+\newcommand{\LRa}[1]{\left\langle #1 \right\rangle}
+\newcommand{\LRb}[1]{\left| #1 \right|}
+\newcommand{\LRc}[1]{\left\{ #1 \right\}}
+\newcommand{\LRceil}[1]{\left\lceil #1 \right\rceil}
+\newcommand{\LRl}[1]{\left. #1 \right|}
+\newcommand{\pdn}[3]{\frac{\partial^{#3}#1}{\partial#2^{#3}}}
+\newcommand{\Grad} {\ensuremath{\nabla}}
+\newcommand{\jump}[1] {\ensuremath{\llbracket#1\rrbracket}}
+\newcommand{\avg}[1] {\ensuremath{\LRc{\!\LRc{#1}\!}}}
+
+\newcommand{\note}[1]{{\color{blue}{#1}}}
+\newcommand{\bnote}[1]{{\color{blue}{#1}}}
+\newcommand{\rnote}[1]{{\color{red}{#1}}}
+
+\newcommand{\eq}[1]{\begin{align*}#1\end{align*}}
+\newcommand{\eqlab}[1]{\begin{align}#1\end{align}}
+\newcommand{\bmat}[1]{\begin{bmatrix}#1\end{bmatrix}}
+
+\title{Explicit Jacobian matrix formulas for entropy stable summation-by-parts schemes}
+\author{Jesse Chan, Christina Taylor}
+\date{}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+Entropy stable schemes replicate an entropy inequality at the semi-discrete level.  These schemes rely on an algebraic summation-by-parts (SBP) structure and a technique referred to as flux differencing, which has been explored and optimized in the context of matrix-free time-explicit solvers.  In this work, we provide simple and explicit formulas for Jacobian matrices for the semi-discrete systems of ODEs produced by entropy stable discretizations.  These formulas are derived based on the structure of flux differencing and automatic differentiation (AD).  Numerical results demonstrate the efficiency and utility of these Jacobian formulas, and apply them in the context of two-derivative explicit time-stepping schemes and implicit time-stepping.  
+\end{abstract}
+
+\section{Introduction}
+
+This paper is concerned with the numerical solution of systems of nonlinear conservation laws.  Let $\Omega$ denote some domain with boundary $\partial \Omega$.  Nonlinear conservation laws are expressed as a system of nonlinear partial differential equations (PDEs) 
+\begin{equation}
+\pd{\bm{u}}{t}  + \sum_{i=1}^d\pd{\bm{f}_i(\bm{u})}{x_i} = 0, \qquad 
+S(\bm{u}) \text{ convex}, \qquad
+\bm{v}(\bm{u}) = \pd{S}{\bm{u}},
+\label{eq:nonlineqs}
+\end{equation}
+where $\bm{u}\in \mathbb{R}^n$ are the conservative variables, $\bm{f}_i$ are nonlinear fluxes, and $\bm{v}(\bm{u})$ are the \textit{entropy variables} with respect to the entropy $S(\bm{u})$.  By multiplying (\ref{eq:nonlineqs}) by the entropy variables, vanishing viscosity solutions \cite{kruvzkov1970first} of many fluid systems \cite{hughes1986new, chen2017entropy} can be shown to satisfy the following entropy inequality
+\begin{equation}
+\int_{\Omega}\pd{S(\bm{u})}{t}\diff{\bm{x}} + \sum_{i=1}^d \int_{\partial \Omega} \LRp{\bm{v}^T\bm{f}_i(\bm{u}) - \psi_i(\bm{u})}n_i \leq 0\label{eq:entropyineq},
+\end{equation}
+where $n_i$ denotes the $i$th component of the outward normal vector.  The entropy inequality (\ref{eq:entropyineq}) is a statement of stability for nonlinear conservation laws \cite{mock1980systems, harten1983symmetric}.  
+
+High order entropy stable schemes (see for example \cite{carpenter2014entropy, gassner2016split, chen2017entropy, crean2018entropy, chan2017discretely}) reproduce this entropy inequality at the semi-discrete level.  The resulting methods display significantly improved robustness while retaining high order accuracy \cite{winters2018comparative, rojas2019robustness}.  These schemes are based on entropy conservative finite volume fluxes \cite{tadmor1987numerical}, which are extended to high order discretizations through a procedure referred to as flux differencing.  These methods have mainly been tested in the context of explicit time-stepping.  However, recent works have applied entropy stable methods to both the space-time and implicit settings \cite{friedrich2018entropy, hicken2020entropy}.  
+
+Both space-time and implicit time discretizations require the solution of a system of nonlinear equations.  This can be done using Newton's method, which involves the Jacobian matrix of the nonlinear equations.  While it is possible to compute the solution to the nonlinear system without explicitly computing the Jacobian matrix using Jacobian-free Newton-Krylov methods \cite{knoll2004jacobian, birken2019subcell}, the Jacobian matrix is also useful for preconditioning \cite{persson2006efficient, persson2008newton}.  In this work, we present explicit formulas for Jacobian matrices of systems resulting from entropy stable formulations.  We also show that computing the Jacobian matrix is not significantly more expensive than evaluating the residual of the nonlinear system.  Finally, we apply the new Jacobian formulas to both explicit two-derivative and implicit time-stepping schemes.
+
+%, which are defined as follows.  Let $\bm{u}_L,\bm{u}_R$ denote left and right solution states.  Entropy conservative fluxes in the sense of Tadmor \cite{tadmor1987numerical} are defined as a set of bivariate symmetric and consistent functions $\bm{f}_{i,S}(\bm{u}_L,\bm{u}_R)$ such that 
+%\[
+%\LRp{\bm{v}_L -\bm{v}_R}^T\bm{f}_{i,S}(\bm{u}_L,\bm{u}_R) = \psi_i(\bm{u}_L) - \psi_i(\bm{u}_R), \qquad i = 1,\ldots,d.
+%\]
+%\note{Todo: finish}
+
+\section{Explicit Jacobian formulas}
+
+For clarity of presentation, we consider first a scalar nonlinear conservation law in one spatial dimension
+\eqlab{
+\pd{u}{t} + \pd{f(u)}{x} = 0. \label{eq:ncl}
+}
+We assume without loss of generality periodic boundary conditions, which will simplify the presentation of the main results.  Extensions to non-periodic boundaries are treated in Section~\ref{eq:npbc}.  The generalization to systems of nonlinear conservation laws and higher dimensions is also postponed until Section~\ref{sec:systems}.  
+
+Let $f_S(x,y)$ denote a bivariate scalar flux function which is symmetric and consistent.  Suppose $\bm{u}$ is a vector of nodal values of the solution.  Define the vector $\bm{f} = \bm{f}(\bm{u})$ approximating the flux derivative $\pd{f(u)}{x}$ as 
+\eqlab{
+\bm{f}(\bm{u}) = 2\LRp{\bm{Q}\circ \bm{F}}\bm{1}, \qquad \bm{F}_{ij} = f_S(\bm{u}_i,\bm{u}_j),
+\label{eq:fu}
+}
+where $\bm{Q}$ is a discretization matrix to be specified later.  The simplest entropy stable numerical schemes based on flux differencing discretize (\ref{eq:ncl}) via the system of ODEs
+\[
+\bm{M}\td{\bm{u}}{t} + \bm{f}(\bm{u}) = \bm{0}.
+\]
+where $\bm{M}$ is a diagonal mass (norm) matrix with positive entries.  If $f_S(x,y)$ is entropy conservative and $\bm{Q}$ is skew-symmetric, then the resulting scheme is also discretely entropy conservative.  An entropy stable scheme can be constructed from an entropy conservative scheme by adding appropriate terms which dissipate entropy \cite{chen2017entropy, upperman2019entropy, hicken2020entropy}. 
+
+
+We are interested in computing the Jacobian matrix $\pd{\bm{f}}{\bm{u}}$. Let $\diag{\bm{x}}$ denote the diagonal matrix with the vector $\bm{x}$ on the diagonal, and let $\diag{\bm{A}}$ denote the vector diagonal of $\bm{A}$.  Then, we have the following lemma:
+\begin{lemma}
+\label{lemma:explicitJ}
+Suppose that $\bm{Q} = \pm\bm{Q}^T$.  Then, the Jacobian matrix of (\ref{eq:fu}) can be expressed as either
+\eq{
+%\pd{\bm{f}}{\bm{u}} &= 2\LRp{\bm{Q}\circ \bm{F_y}} \pm \diag{\bm{1}^T\LRp{2\LRp{\bm{Q} + \diag{\diag{\bm{Q}}}}\circ \bm{F_y}}}\\
+%\pd{\bm{f}}{\bm{u}} &= 2\LRp{\bm{Q}\circ \bm{F_x}^T} \pm \diag{\LRp{2\LRp{\bm{Q}+\diag{\diag{\bm{Q}}}}\circ \bm{F_x}}\bm{1}}
+\pd{\bm{f}}{\bm{u}} &= 2\LRp{\bm{Q}\circ \bm{F_y}} \pm \diag{\bm{1}^T\LRp{2\bm{Q}\circ \bm{F_y}}}\\
+\pd{\bm{f}}{\bm{u}} &= 2\LRp{\bm{Q}\circ \bm{F_x}^T} \pm \diag{\LRp{2\bm{Q} \circ \bm{F_x}}\bm{1}}
+}
+where the matrices $\bm{F}_x,\bm{F}_y$ is 
+\[
+\LRp{\bm{F}_x}_{ij} = \LRl{\pd{f_S}{x}}_{\bm{u}_i,\bm{u}_j}, \qquad \LRp{\bm{F}_y}_{ij} = \LRl{\pd{f_S}{y}}_{\bm{u}_i,\bm{u}_j}.
+\]
+\end{lemma}
+\begin{proof}
+We will prove the first formula involving $\bm{F}_y$.  The second formula follows via symmetry and similar steps.  By the chain rule,
+\begin{align*}
+\LRp{\pd{\bm{f}}{\bm{u}}}_{ij} &= \pd{\bm{f}_i}{\bm{u}_j} =  \sum_{k} 2\bm{Q}_{ik} \pd{}{\bm{u}_j}f_S\LRp{\bm{u}_i,\bm{u}_k}\\
+&= \sum_{k} 2\bm{Q}_{ik} \LRp{\LRl{ \pd{f_S}{x}}_{\bm{u}_i,\bm{u}_k}\pd{\bm{u}_i}{\bm{u}_j} + \LRl{\pd{f_S}{y}}_{\bm{u}_i,\bm{u}_k} \pd{\bm{u}_k}{\bm{u}_j}}
+\end{align*}
+If $i\neq j$, then $\pd{\bm{u}_k}{\bm{u}_j} = \delta_{jk}$ and
+\begin{align*}
+\pd{\bm{f}_i}{\bm{u}_j} &= 2\bm{Q}_{ij} \LRl{\pd{f_S}{y}}_{\bm{u}_i,\bm{u}_j}.
+\end{align*}
+When $i=j$, $\pd{\bm{u}_i}{\bm{u}_j} = \pd{\bm{u}_i}{\bm{u}_i} = 1$, and 
+\begin{align*}
+\pd{\bm{f}_i}{\bm{u}_i} &= 
+\LRp{\sum_{k} 2 \bm{Q}_{ik} \LRl{\pd{f_S}{x}}_{\bm{u}_i,\bm{u}_k}} + 2\bm{Q}_{ii}\LRl{\pd{f_S}{y}}_{\bm{u}_i,\bm{u}_i}.
+\end{align*}
+The term $2\bm{Q}_{ii}\LRl{\pd{f_S}{y}}_{\bm{u}_i,\bm{u}_i}$ is the diagonal of the matrix $2\LRp{\bm{Q}\circ \bm{F_y}}$, and we can simplify the first summation term.  By the symmetry of $f_S(x,y)$, we have that
+\[
+\LRl{\pd{f_S}{y}}_{x,y} = \LRl{\pd{f_S}{x}}_{y,x}
+\]
+Thus, by $\bm{Q} = \pm\bm{Q}^T$, 
+\begin{align*}
+\sum_k 2\bm{Q}_{ik} \LRl{\pd{f_S}{x}}_{\bm{u}_i,\bm{u}_k} &= \sum_k 2\bm{Q}_{ik} \LRl{\pd{f_S}{y}}_{\bm{u}_k,\bm{u}_i}\\
+&= \LRp{\LRp{2\bm{Q}\circ \bm{F_y}^T} \bm{1}}_i = \LRp{\pm\bm{1}^T\LRp{2\bm{Q}\circ \bm{F_y}}}_i.
+\end{align*}
+\end{proof}
+%Rearranging the steps of this proof implies that the Jacobian can also be expressed as 
+While we consider only symmetric and skew-symmetric matrices $\bm{Q}$ in this work, one can use this lemma to compute the Jacobian $\pd{\bm{f}}{\bm{u}}$ for arbitrary matrices $\bm{Q}$ since any real matrix can be decomposed into symmetric and skew parts
+\[
+\bm{Q} = \frac{1}{2} \LRp{\bm{Q}+\bm{Q}^T} +  \frac{1}{2} \LRp{\bm{Q}-\bm{Q}^T}.
+\]
+Two applications of Lemma~\ref{lemma:explicitJ} then provide a formula for the Jacobian of (\ref{eq:fu}).  
+
+\subsection{Computing derivatives of bivariate flux functions}
+
+The aforementioned proofs require partial derivatives of flux functions $f_S(u_L,u_R)$ with respect to at least one argument.  While this can be done by hand for simple fluxes, it rapidly becomes cumbersome for complex or piecewise-defined flux functions such as the logarithmic mean \cite{ismail2009affordable, winters2019entropy}.  This can be avoided by using Automatic Differentiation (AD) \cite{griewank2008evaluating}.  AD is distinct from both symbolic differentiation and finite difference approximations in that it does not return an explicit expression for derivatives, but is still able to evaluate derivatives accurately up to machine precision.  Given a computational function, AD returns a second black-box function which evaluates the derivative.  
+
+In this work, we utilize the Julia implementation of forward-mode automatic differentiation provided by \verb+ForwardDiff.jl+ \cite{RevelsLubinPapamarkou2016}.  The procedure is remarkably simple: given some flux function \verb+f(x,y)+, \verb+ForwardDiff.jl+ returns the derivative with respect to either $x$ or $y$ as another function.  For example, defining the function $\LRl{\pd{f}{y}}_{x,y}$ is a one-line operation:
+\begin{verbbox}
+dfdy(x,y) = ForwardDiff.derivative(y->f(x,y),y)
+\end{verbbox}
+\begin{figure}[!h]
+\centering
+\theverbbox
+\end{figure}
+\\
+This simple API is made possible by the flexible Julia type system  \cite{bezanson2017julia}.  
+
+In principle, AD can be directly applied to $\bm{f}(\bm{u})$ to compute the Jacobian matrix.  However, because AD scales with the number of inputs and outputs, the cost of applying AD directly to $\bm{f}(\bm{u})$ increases as the discretization resolution increases.  In contrast, using the approach in this paper, the entries of the Jacobian matrix can be computed for roughly the same cost as a single evaluation of $\bm{f}(\bm{u})$.  Moreover, explicit Jacobian formulas enable implementations to take advantage of sparsity in $\bm{Q}$ when assembling the Jacobian matrix.  
+
+\section{Examples of matrices which appear in entropy stable numerical schemes}
+
+In this section, we give some examples of matrices $\bm{Q}$ which appear in entropy stable numerical discretizations.  We assume periodicity, which ensures a skew-symmetric structure.  The treatment of non-periodic
+
+\subsection{Finite volume methods}
+
+The spatial discretization for a finite volume scheme can be reformulated in terms of (\ref{eq:fu}) \cite{chan2019entropy}.  Suppose that the 1D interval $[-1,1]$ is decomposed into $K$ non-overlapping elements of size $h$.  An entropy conservative finite volume scheme is given as
+\eq{
+\td{u_1}{t} &+ \frac{f_S(u_{2},u_1) - f_S(u_1,u_{K})}{h} = 0\\
+\td{u_i}{t} &+ \frac{f_S(u_{i+1},u_i) - f_S(u_i,u_{i-1})}{h} = 0, \qquad i = 2,\ldots, K-1,\\
+\td{u_K}{t} &+ \frac{f_S(u_{1},u_K) - f_S(u_K,u_{K-1})}{h} = 0,
+}
+where $u_i$ denotes the average value of the solution on each element and $f_S$ is an entropy conservative flux.  Let $\bm{M} = h\bm{I}$ and let $\bm{Q}$ be the periodic second-order central difference matrix
+\[
+\bm{Q} = \frac{1}{2}\begin{bmatrix}
+0 & 1 & &\ldots & -1\\
+-1 & 0 & 1 &&  \\
+& -1 & 0 & 1 &  \\
+ & & & \ddots &  \\
+1 & &\ldots  & -1 & 0
+\end{bmatrix}.
+\]
+Then, an entropy finite volume scheme is equivalent to 
+\[
+\td{\bm{u}}{t} + 2\LRp{\bm{Q}\circ\bm{F}}\bm{1} = \bm{0}, \qquad \bm{F}_{ij} = f_S(u_i,u_j)
+\]
+where $\bm{u} = \LRs{u_1,\ldots, u_K}^T$ is the vector of solution values.  
+
+\subsection{Multi-block summation-by-parts finite differences}
+
+We next consider a multi-element summation-by-parts (SBP) finite element discretization \cite{kreiss1974finite, carpenter1999stable}.  Suppose again that the domain $[-1,1]$ is decomposed into $K$ non-overlapping elements $D^k$ of size $h$.  Let ${\bm{M}}, {\bm{Q}} \in \mathbb{R}^{N_p\times N_p}$ denote diagonal mass (norm) and nodal differentiation matrices, such that ${\bm{M}}^{-1}{\bm{Q}}$ approximates the first derivative on a reference interval and is exact for polynomials up to degree $N$.  The operators ${\bm{M}}, {\bm{Q}}$ satisfy an SBP property if
+\eqlab{
+{\bm{Q}}+{\bm{Q}}^T = {\bm{B}}, \qquad 
+{\bm{B}} = \bmat{
+-1 & & & \\
+& 0 & & \\
+& & \ddots & \\
+& & & 1 
+}.
+\label{eq:fvQ}
+}
+We note that nodal discontinuous Galerkin spectral element (DG-SEM) discretizations \cite{kopriva2009implementing} also fall into a SBP framework \cite{gassner2013skew}, and are thus also included in this framework.  
+
+These matrices can be used to construct entropy conservative high order discretizations.  Let $J = h/2$ is the Jacobian of the mapping from the reference element $[-1,1]$ to a physical interval of size $h$ and let $\bm{F}^k_{ij} = f_S(u_{i,k},u_{j,k})$ denote the matrix of flux interactions between different nodes on the element $D^k$.  A local formulation on the element $D^k$ is given by
+\eqlab{
+J_k {\bm{M}} \td{\bm{u}_k}{t} + 2\LRp{{\bm{Q}} \circ \bm{F}^k}\bm{1} + \bm{B}\LRp{\bm{f}^*-f(\bm{u}_k)}   = \bm{0}, \qquad \bm{f}^* = \bmat{
+f_S(u_{1,k}^+,u_{1,k})\\
+0\\
+\vdots\\
+f_S(u_{N_p,k}^+,u_{N_p,k})
+},
+\label{eq:sbp1D}
+}
+where $u_{1,k}^+, u_{N_p,k}^+$ denote the exterior values of $u_{1,k}, u_{N_p,k}$ on neighboring elements.  Assuming that the elements are ordered from left to right in ascending order, for interior element indices $1 < k < K$, these are given by
+\[
+u_{1,k}^+ = u_{N_p,k-1}, \qquad u_{N_p,k}^+ = u_{1,k+1}.
+\]
+In other words, the first node on $D^k$ is connected to the last node on the previous element, and the last node on $D^k$ is connected to the first node on the next element.
+
+For periodic boundary conditions, this local formulation can be understood as inducing a global skew-symmetric matrix.  To show this, we first use the SBP property to rewrite (\ref{eq:sbp1D}) in a skew-symmetric form \cite{chan2019skew}
+\eqlab{
+J_k {\bm{M}} \td{\bm{u}_k}{t} + \LRp{\LRp{\bm{Q}-\bm{Q}^T} \circ \bm{F}^k}\bm{1} + \bm{B}\bm{f}^* = \bm{0}.
+%\qquad 
+%\bm{f}^* = \bmat{
+%f_S(u_{1,k}^+,u_{1,k})\\
+%0\\
+%\vdots\\
+%f_S(u_{n,k}^+,u_{n,k})
+%},
+\label{eq:sbp1D}
+}
+We now define a global vector $\bm{u}_{\Omega} = \LRs{\bm{u}_1, \bm{u}_2, \ldots, \bm{u}_K}^T$.  Let the global flux matrix be defined as
+\[
+\bm{F} = \bmat{
+\bm{F}_{11} & \ldots & \bm{F}_{1K}\\
+\vdots & \ddots & \vdots\\
+\bm{F}_{K1} & \ldots & \bm{F}_{KK}
+}, \qquad \LRp{\bm{F}_{k_1,k_2}}_{ij} = f_S(\bm{u}_{k_1,i}, \bm{u}_{k_2,j}).
+\]
+The blocks of the matrix $\bm{F}$ capture flux interactions between solution values at different nodes and elements.  
+The local formulations can now be concatenated into a single skew-symmetric matrix
+\[
+\bm{M}_{\Omega}\td{\bm{u}_{\Omega}}{t} + 2\LRp{\bm{Q}_{\Omega}\circ \bm{F}}\bm{1} = \bm{0},
+\]
+where $\bm{M}_{\Omega}$ is the block-diagonal matrix with blocks $J_k\bm{M}$, and 
+\eqlab{
+\bm{Q}_{\Omega} = \frac{1}{2}\bmat{
+\bm{S} &\bm{B}_R & & -\bm{B}_L\\
+-\bm{B}_L& \bm{S} & \bm{B}_R&\\
+& -\bm{B}_L & \ddots & \bm{B}_R\\
+\bm{B}_R& & -\bm{B}_L & \bm{S}
+}, \qquad \bm{S} = \LRp{\bm{Q}-\bm{Q}^T},
+\label{eq:sbpmat}
+}
+where the matrices $\bm{B}_L,\bm{B}_R$ are zeros except for a single entry
+\[
+\bm{B}_L = \bmat{
+ & &1\\
+& \udots & \\
+0 & & 
+}, \qquad \bm{B}_R = \bm{B}_L^T = \bmat{
+ & & 0\\
+& \udots & \\
+1 & & 
+}
+\]
+The matrix $\bm{Q}_{\Omega}$ can be considered a high order generalization of the finite volume matrix (\ref{eq:fvQ}).  Similar ``global SBP operator'' approaches were used to construct simultaneous approximation (SBP-SAT) interface coupling terms in \cite{crean2018entropy, chan2018efficient, fernandez2019entropy}.  
+
+The generalization to higher dimensional domains and curved geometric mappings is straightforward, but notationally much more complicated.  The construction of skew matrices $\bm{Q}_{\Omega}$ follows from approaches detailed in \cite{crean2018entropy, chan2017discretely, chan2018discretely, chan2018efficient, chan2019skew, hicken2020entropy}.  We omit it for conciseness in this work.  
+
+\subsection{Systems of conservation laws: vector-valued fluxes}
+\label{sec:systems}
+
+It is straightforward to extend the scheme from scalar nonlinear conservation laws to an $n\times n$ system of conservation laws.  Let $\bm{f}_{S}(\bm{u}_L,\bm{u}_R): \mathbb{R}^{n}\times \mathbb{R}^n \rightarrow \mathbb{R}^n$ denote an entropy conservative flux function for a 1D system of conservation laws.  We can modify the arrays and matrices in (\ref{eq:sbpmat}) to account for this.
+
+Let $\bm{u}_{\Omega}$ now denote a vector of vectors 
+\[
+\bm{u}_{\Omega} = \bmat{\bm{u}_1\\
+\bm{u}_2\\
+\vdots\\
+\bm{u}_K}, \qquad \bm{u}_k = \bmat{
+\bm{u}_{k,1}\\
+\bm{u}_{k,2}\\
+\vdots\\
+\bm{u}_{k,N_p}
+}, \qquad
+\bm{u}_{k,j} = \bmat{
+\bm{u}_{k,j,1}\\
+\bm{u}_{k,j,2}\\
+\vdots\\
+\bm{u}_{k,j,n}
+}
+\]
+for $k = 1,\ldots, K$ and $j = 1,\ldots, N_p$.  Here, $\bm{u}_{k,j,i}$ denotes the $j$th degree of freedom for the $i$th component of the solution on the $k$th element.   Then, we can define global mass and differentiation matrices $\bm{M}_{\Omega}, \bm{Q}_{\Omega}$ as in (\ref{eq:sbpmat}), with the local blocks $\bm{M}, \bm{Q},\bm{B}_L, \bm{B}_R$ replaced by 
+\eq{
+\bm{M} &\longrightarrow \bm{M} \otimes \bm{I}_n, \qquad 
+\bm{Q} \longrightarrow \bm{Q} \otimes \bm{I}_n,\\
+\bm{B}_L &\longrightarrow \bm{B}_L \otimes \bm{I}_n, \qquad 
+\bm{B}_R \longrightarrow \bm{B}_R \otimes \bm{I}_n,
+}
+where $\bm{I}_n$ is the $n\times n$ identity matrix.  Note that $\bm{Q}_{\Omega}$ as defined in (\ref{eq:sbpmat}) remains skew-symmetric under this new definition.  We also redefine the flux matrix to account for the vector-valued nature of the flux function $\bm{f}_S$ 
+\eqlab{
+\bm{F} = \bmat{
+\bm{F}_{11} & \ldots & \bm{F}_{1K}\\
+\vdots & \ddots & \vdots\\
+\bm{F}_{K1} & \ldots & \bm{F}_{KK}
+}, \qquad \LRp{\bm{F}_{k_1,k_2}}_{ij} = \diag{\bm{f}_S(\bm{u}_{k_1,i}, \bm{u}_{k_2,j})}.\label{eq:fluxsystem}
+}
+%\note{Redefine $\bm{M}_{\Omega}, \bm{Q}_{\Omega}$ using Kronecker product blocks. }
+Then, an entropy conservative scheme is given by
+\[
+\bm{M}_{\Omega}\td{\bm{u}_{\Omega}}{t} + 2\LRp{ \bm{Q}_{\Omega} \circ \bm{F}}\bm{1} = \bm{0}.
+\]
+We note that when computing Jacobians for systems of nonlinear conservation laws $\pd{\bm{f}_S}{\bm{y}}$, the derivative of the flux function is computed with respect to each component of the solution.
+
+
+\section{Generalizations to different numerical settings}
+
+In this section, we discuss how to generalize the explicit construction of Jacobians to different numerical settings, including non-collocation schemes and non-periodic boundary conditions.  
+
+\subsection{Non-collocated schemes: hybridized SBP operators, entropy projection, and over-integration}
+
+Most entropy stable schemes rely on ``collocated'' SBP operators (where the mass matrix $\bm{M}_{\Omega}$ is diagonal) built on nodal sets which include boundary nodes \cite{chen2017entropy, crean2018entropy}.  However, in certain cases, energy and entropy stable SBP schemes constructed using non-diagonal mass matrices \cite{chan2017discretely, chan2019entropy} and more general nodal sets \cite{fernandez2014review, ranocha2018generalised, crean2017high, chan2018efficient} achieve higher accuracy than SBP schemes built on nodal sets which include boundary nodes.  We discuss how to extend explicit Jacobian formulas to such ``modal'' settings.  
+
+\subsubsection{Entropy conservative schemes and hybridized SBP operators}
+
+We now assume that the solution is approximated by 
+\[
+u(\bm{x},t) \approx \sum_{j=1}^{N_p} \hat{\bm{u}}_{k,i}(t) \phi_i(\bm{x}),
+\]
+where $\hat{\bm{u}}_{k,i}$ denotes the coefficients of the solution on an element $D^k$.  We assume two sets of quadrature points: volume quadrature points and weights $\LRc{w_i, \bm{x}_{q,i}}_{i=1}^{N_q}$ and surface quadrature points $\LRc{w_{f,i}, \bm{x}_{f,i}}_{i=1}^{N_f}$.  We assume both quadrature rules are exact for certain classes of integrands as detailed in \cite{chan2019skew, chan2019entropy}.  
+
+Evaluating $\bm{u}(\bm{x},t)$ at quadrature points is equivalent to multiplication by an interpolation matrix $\bm{V}$
+\eq{
+{\bm{V}}_{ij} = \phi_j(\bm{x}_i), \qquad i = 1,\ldots, N_q, \qquad j = 1,\ldots, N_p\\
+\LRp{\bm{V}_f}_{ij} = \phi_j(\bm{x}_{f,i}), \qquad i = 1,\ldots, N_f, \qquad j = 1,\ldots, N_p.
+}
+We can similarly define mass and projection matrices $\bm{M}, \bm{P}$ 
+\[
+\bm{M} = \bm{V}^T\bm{W}\bm{V}, \qquad \bm{P} = \bm{M}^{-1}\bm{V}^T\bm{W},
+\]
+where $\bm{W}$ is a diagonal matrix whose entries are the quadrature weights $w_i$.  We also define a face interpolation matrix
+\[
+\bm{E} = \bm{V}_f\bm{P}
+\]
+which evaluates the solution at face quadrature points.  Finally, we define the matrix $\bm{V}_h$ as the mapping between local coefficients $\hat{\bm{u}}_k$ and combined volume and surface quadrature points
+\[
+\bm{V}_h = \bmat{\bm{V} \\ \bm{V}_f}.
+\]
+These matrices are involved in the application of hybridized SBP operators (originally referred to as decoupled SBP operators) \cite{chan2017discretely, chenreview}.  We present the main ideas in a 1D setting, and refer the reader to \cite{crean2018entropy, chan2017discretely, chan2019skew} for details on multi-dimensional settings.  
+
+Given some modal weak differentiation matrix $\hat{\bm{Q}}$ which acts on the basis coefficients $\hat{\bm{u}}_k$, we define a nodal differentiation matrix $\bm{Q} = \bm{P}^T\hat{\bm{Q}}\bm{P}$.  Then, we can define a hybridized SBP operator as 
+\[
+\bm{Q}_h = \frac{1}{2}\bmat{\bm{Q}-\bm{Q}^T & \bm{E}^T\bm{B} \\
+\bm{B}\bm{E} & \bm{B}}, \qquad \bm{B} = \bmat{-1 & \\ & 1}.  
+\]
+The operator $\bm{Q}_h$ can be used to approximate coefficients of the derivative in the basis $\phi_i(\bm{x})$.  Let $f(u)$ denote some function of $u(\bm{x})$, and let $\hat{\bm{u}}$ denote the basis coefficients of $u(\bm{x})$.  Then, 
+\[
+\pd{f(u)}{x}\approx \sum_j {\hat{\bm{f}}}_j \phi_j(\bm{x}), \qquad \hat{\bm{f}} = \bm{M}^{-1}\bm{V}_h^T\bm{Q}_h f\LRp{\bm{V}_h\hat{\bm{u}}}
+\]
+
+We now construct global matrices for the multi-element (periodic) case.  We begin by concatenating the local coefficients $\hat{\bm{u}}_{k,i}$ into a global coefficient vector $\hat{\bm{u}}_{\Omega}$.  We also introduce boundary matrices $\bm{B}, \bm{B}_L,\bm{B}_R$ which enforce coupling between different elements and are defined as 
+\[
+\bm{B}_L = \bmat{ & 1\\0 &}, \qquad \bm{B}_R = \bmat{ &0 \\1  &}, \qquad \bm{B} = \bmat{-1 & \\ & 1}.
+\]
+In the multi-dimensional case, the entries of $\bm{B}_L, \bm{B}_R$ correspond instead to outward normals \cite{crean2018entropy, chan2017discretely}.  
+
+We now assume that the global solution $\bm{u}(\bm{x},t) \in \mathbb{R}^n$ is vector-valued, and redefine local matrices so that they act on the global vector of vector-valued coefficients
+\eq{
+\bm{V} &\longrightarrow \bm{I}_K \otimes \LRp{\bm{V} \otimes \bm{I}_n}, \qquad \bm{P} \longrightarrow \bm{I}_K \otimes \LRp{\bm{P}  \otimes \bm{I}_n}\\ 
+\bm{E} &\longrightarrow \bm{I}_K \otimes \LRp{\bm{E}  \otimes \bm{I}_n}, \qquad \bm{V}_h \longrightarrow \bm{I}_K \otimes \LRp{\bm{V}_h  \otimes \bm{I}_n}\\
+\bm{Q} &\longrightarrow \bm{I}_K \otimes \LRp{\bm{Q}  \otimes \bm{I}_n}, \qquad \bm{B} \longrightarrow \bm{I}_K \otimes \LRp{\bm{B}  \otimes \bm{I}_n}\\
+\bm{B}_L &\longrightarrow \bm{I}_K \otimes \LRp{\bm{B}_L  \otimes \bm{I}_n}, \qquad \bm{B}_R \longrightarrow \bm{I}_K \otimes \LRp{\bm{B}_R  \otimes \bm{I}_n}.
+}
+We can also use $\bm{Q}_h$ to construct a globally skew-symmetric differentiation matrix (see also \cite{chan2018efficient}).  Define the matrix $\bm{S} = \bm{Q}-\bm{Q}^T$, and define $\bm{Q}_{\Omega}$ as the global block matrix
+\[
+\bm{Q}_{\Omega} = \frac{1}{2}\LRs{\begin{array}{cc|cc|cc|cc}
+\bm{S} &  \bm{E}^T\bm{B} & &&& && \\
+ - \bm{B}\bm{E} &  & & \bm{B}_R && && -\bm{B}_L\\ [.2em]
+ \hline\\[-1.0em]
+&& \bm{S} &  \bm{E}^T\bm{B}&&&& \\
+& -\bm{B}_L &  - \bm{B}\bm{E} &&& \bm{B}_R&&\\
+ \hline\\[-1.0em]
+&&&& \ddots & \ddots&  \\
+&&&   -\bm{B}_L & \ddots&\ddots&   \ddots&\\
+ \hline\\[-1.0em]
+&&&&&\ddots& \bm{S} &  \bm{E}^T\bm{B} \\
+\bm{B}_R &&& &&-\bm{B}_L &  - \bm{B}\bm{E} &\\
+\end{array}},
+\]
+
+
+It was shown in \cite{parsani2016entropy, chan2017discretely} that, when either the mass matrix is non-diagonal or the nodal set does not contain appropriate boundary points, it is necessary to perform an entropy projection (or extrapolation \cite{chenreview}) step to ensure discrete entropy stability.  Let $\bm{v}(\bm{u})$ denote the entropy variables as a function of the conservative variables, and let $\bm{u}(\bm{v})$ denote the inverse mapping.  We define the entropy projected variables $\tilde{\bm{u}}_{\Omega}$ as
+\[
+\tilde{\bm{u}}_{\Omega} = \bm{u}\LRp{\bm{V}_h\bm{P}\bm{v}\LRp{\bm{V}\hat{\bm{u}}_{\Omega}}}.
+\]
+We redefine the flux block $\bm{F}_{k_1,k_2}$ in (\ref{eq:fluxsystem}) using the entropy projected variables
+\[
+\LRp{\bm{F}_{k_1,k_2}}_{ij} = \diag{\bm{f}_S(\tilde{\bm{u}}_{k_1,i}, \tilde{\bm{u}}_{k_2,j})}
+\]
+Then, an entropy conservative method is given by 
+\[
+\bm{M}_{\Omega}\td{\bm{u}_{\Omega}}{t} + 2\bm{V}^T\LRp{ \bm{Q}_{\Omega} \circ \bm{F}}\bm{1} = \bm{0}.  
+\]
+
+\subsubsection{Jacobian matrices for hybridized SBP schemes}
+
+Redefine the nonlinear term 
+\[
+\bm{f}(\hat{\bm{u}}) = 2\bm{V}^T\LRp{ \bm{Q}_{\Omega} \circ \bm{F}}\bm{1}.
+\]
+We introduce $\pd{\bm{u}}{\bm{v}}$ and $\pd{\bm{v}}{\bm{u}}$ as Jacobians of the conservative variables with respect to the entropy variables and vice versa.  These have been explicitly derived for several equations (for example, the Jacobians for the compressible Navier-Stokes equations are given in \cite{hughes1986new}).  
+
+We can compute the Jacobian of $\bm{f}(\hat{\bm{u}})$ via the chain rule, and illustrate this for an entry $i\neq j$ of the Jacobian
+\[
+\LRp{\pd{\bm{f}}{\hat{\bm{u}}_{\Omega}}}_{ij} =  2 \bm{V}_h^T \pd{}{\LRp{\hat{\bm{u}}_{\Omega}}_j} \LRp{\LRp{\bm{Q}_h\circ\bm{F}}\bm{1}}_i.
+\]
+We focus on the latter term $\pd{}{\hat{\bm{u}}_{\Omega}} \LRp{\bm{Q}_h\circ\bm{F}}\bm{1}$
+\eq{
+\LRp{\pd{}{\hat{\bm{u}}_{\Omega}} \LRp{\bm{Q}_h\circ\bm{F}}\bm{1}}_{ij} &= \pd{}{\hat{\bm{u}}_{\Omega,j}} \sum_{k} \LRp{\bm{Q}_h}_{ik} \bm{f}_S\LRp{\tilde{\bm{u}}_i,\tilde{\bm{u}}_k} \\
+&=  2 \bm{V}_h^T \sum_{k} \LRp{\bm{Q}_h}_{ik} \LRl{\pd{\bm{f}_S}{y}}_{\tilde{\bm{u}}_i,\tilde{\bm{u}}_k} \pd{\tilde{\bm{u}}_i}{\hat{\bm{u}}_{\Omega,j}}
+}
+We define the matrix $\pd{\tilde{\bm{f}}}{\tilde{\bm{u}}}$ as
+\[
+\LRp{\pd{\tilde{\bm{f}}}{\tilde{\bm{u}}}}_{ij} = \LRp{\bm{Q}_h}_{ij} \LRl{\pd{\bm{f}_S}{y}}_{\tilde{\bm{u}}_i,\tilde{\bm{u}}_j} = \LRp{\bm{Q}_h\circ \bm{F}_y}_{ij}.
+\]
+Let $\tilde{\bm{v}} = \bm{V}_h\bm{P}\bm{v}\LRp{\bm{V}\hat{\bm{u}}_{\Omega}}$ denote the projected entropy variables at evaluated at volume quadrature points.
+The vector $\pd{\tilde{\bm{u}}}{\hat{\bm{u}}_{\Omega}}$  can be further expanded as 
+\[
+\pd{\tilde{\bm{u}}}{\hat{\bm{u}}_{\Omega}} = \LRl{\pd{\bm{u}}{\bm{v}}}_{\tilde{\bm{u}}} \bm{V}_h \bm{P} \LRl{\pd{\bm{v}}{\bm{u}}}_{\tilde{\bm{v}}} \bm{V}.
+\]
+where the Jacobian matrices for the maps between conservative and entropy variables are block diagonal matrices given by
+\[
+\LRl{\pd{\bm{u}}{\bm{v}}}_{\tilde{\bm{u}}} = \bmat{
+\LRl{\pd{\bm{u}}{\bm{v}}}_{\tilde{\bm{u}}_1} &&\\
+& \ddots &\\
+&& \LRl{\pd{\bm{u}}{\bm{v}}}_{\tilde{\bm{u}}_K}
+}, \qquad \LRl{\pd{\bm{u}}{\bm{v}}}_{\tilde{\bm{u}}_k} = \bmat{
+\LRl{\pd{\bm{u}}{\bm{v}}}_{\tilde{\bm{u}}_{1,k}} &&\\
+ &\ddots &\\
+&& \LRl{\pd{\bm{u}}{\bm{v}}}_{\tilde{\bm{u}}_{N_p,k}}
+},
+\]
+and the local block $\LRl{\pd{\bm{u}}{\bm{v}}}_{\tilde{\bm{u}}_{j,k}}$ is simply the Jacobian $\pd{\bm{u}}{\bm{v}}$ evaluated at the $j$th nodal value $\tilde{\bm{u}}_{j,k}$ on the $k$th element.
+
+Let $N_p, N_q, N_f$ denote the number of total basis functions, quadrature points, and face quadrature points respectively, and define $N_{\rm total} = N_q + N_f$.  The structure and dimensions of matrices involved in constructing the Jacobian matrix are illustrated as follows:
+\[
+\pd{\bm{f}}{\hat{\bm{u}}_{\Omega}} = \renewcommand\matscale{.67}
+\raiserows{2}{\matbox{3}{7}{N_p}{N_{\rm total}}{\bm{V}_h^T}}
+\raiserows{0}{\matbox{7}{7}{N_{\rm total}}{N_{\rm total}}{\pd{\tilde{\bm{f}}}{\tilde{\bm{u}}}}}
+\raiserows{0}{\matbox{7}{7}{N_{\rm total}}{N_{\rm total}}{\LRl{\pd{\bm{u}}{\bm{v}}}_{\tilde{\bm{u}}}}}
+\raiserows{0}{\matbox{7}{5}{N_{\rm total}}{N_q}{ \bm{V}_h\bm{P} }}
+\raiserows{1}{\matbox{5}{5}{N_q}{N_q}{ \LRl{\pd{\bm{v}}{\bm{u}}}_{\tilde{\bm{v}}} }}
+\raiserows{1}{\matbox{5}{3}{N_q}{N_p}{\bm{V}}}
+\]
+
+\subsection{Non-periodic boundary conditions}
+\label{eq:npbc}
+
+Finally, we consider the case of non-periodic boundary conditions.  \note{Impose BCs by specifying exterior value.}
+
+
+\section{Numerical experiments}
+
+In this section, we compare the computational efficiency of the explicit formulas derived in this paper with other methods for computing the Jacobian.  Additionally, we apply explicit Jacobian formulas to enable two-derivative time-stepping methods \cite{chan2010explicit} and time-implicit discretizations.  
+
+\subsection{Comparisons of computational cost}
+
+\begin{itemize}
+\item Compare cost of evaluating scalar flux function vs cost of evaluating AD derivative (Burgers' flux, rational kernel $1/(a+b)$, and logmean).
+\item Compare cost of computing Jacobian matrix via direct finite differences, \verb+FiniteDiff.jl+, AD applied to $\bm{f}(\bm{u})$, and the explicit Jacobian formula.  
+\end{itemize}
+These computations are performed using a single thread.  Because the steps are trivially parallelizable with high arithmetic intensity, the use of multi-threading or GPU acceleration is not expected to significantly change the relative costs.  
+
+\subsection{Two-derivative time-stepping methods}
+
+Consider a general system of ODEs
+\[
+\td{\bm{u}}{t} + \bm{f}(\bm{u}) = \bm{0}.
+\]
+Two-derivative explicit time-stepping methods are constructed based on the assumption that second derivatives of $\bm{u}$ in time are available \cite{chan2010explicit, christlieb2016explicit}.  The resulting schemes can achieve higher order accuracy with fewer stages and function evaluations compared to standard Runge-Kutta methods.  
+
+Let $\bm{g}(\bm{u})$ denote the second derivative of $\bm{u}$ in time
+\[
+\bm{g}(\bm{u}) = \frac{{\rm d}^2 \bm{u}}{{\rm dt}^2} = \td{}{t} \bm{f}(\bm{u}) = \pd{\bm{f}}{\bm{u}}\td{\bm{u}}{t},
+\]
+where we have used the chain rule in the final step.  The simplest two-derivative method is the second order scheme given in \cite{chan2010explicit} as
+\[
+\bm{u}^{k+1} = \bm{u}^k + \Delta t \bm{f}(\bm{u}^k) + \frac{\Delta t^2}{2} \bm{g}(\bm{u}^k),
+\]
+where $\bm{u}^k$ denotes the solution at the $k$th time-step.  
+
+
+
+\subsection{Time-implicit discretizations}
+
+Jacobian matrices also appear in time-implicit discretizations of nonlinear ODEs.  Consider the implicit midpoint rule 
+\[
+\bm{u}^{k+1} = \bm{u}^k + \Delta t \bm{f}\LRp{\frac{\bm{u}^{k+1} + \bm{u}^k}{2}}.
+\]
+This can be rewritten in the following form
+\eq{
+\bm{r} &= \bm{f}\LRp{\bm{u}^k + \frac{\Delta t}{2}\bm{r}}\\
+\bm{u}^{k+1} &= \bm{u}^k + \Delta t \bm{r}.
+}
+Solving for $\bm{r}$ is a nonlinear equation and can be done via Newton's method
+\eq{
+\bm{u}^\ell &= \bm{u}^k + \frac{\Delta t}{2}\bm{r}^\ell\\
+\bm{r}^{\ell + 1} &= \bm{r}^\ell - \LRp{\bm{I} - \frac{\Delta t}{2}\LRl{\pd{\bm{f}}{\bm{u}}}_{\bm{u}^{\ell}}}^{-1} \LRp{\bm{r}^\ell - \bm{f}\LRp{\bm{u}^\ell}}
+}
+
+\section{Conclusion and acknowledgments}
+
+Jesse Chan gratefully acknowledges support from the National Science Foundation under awards DMS-1719818, DMS-1712639, and DMS-CAREER-1943186.  
+
+\bibliographystyle{unsrt}
+\bibliography{refs}
+
+\end{document}
