@@ -41,6 +41,8 @@ citecolor=blue
 \newenvironment{myproof}[1][\proofname]{%
   \proof Proof of #1%
 }{\endproof}
+\newtheorem*{remark}{Remark}
+
 
 \renewcommand{\hat}{\widehat}
 \renewcommand{\tilde}{\widetilde}
@@ -48,7 +50,7 @@ citecolor=blue
 %% d in integrand
 \newcommand*\diff[1]{\mathop{}\!{\mathrm{d}#1}}
 \newcommand{\diag}[1]{{\rm diag}\LRp{#1}}
-\newcommand{\td}[2]{\frac{{\rm d}#1}{{\rm d}{\rm #2}}}
+\newcommand{\td}[2]{\frac{{\rm d}#1}{{\rm d}{ {#2}}}}
 \newcommand{\pd}[2]{\frac{\partial#1}{\partial#2}}
 \newcommand{\nor}[1]{\left\| #1 \right\|}
 \newcommand{\LRp}[1]{\left( #1 \right)}
@@ -302,51 +304,136 @@ The matrix $\bm{Q}_{\Omega}$ can be considered a high order generalization of th
 
 The generalization to higher dimensional domains and curved geometric mappings is straightforward, but notationally much more complicated.  The construction of skew matrices $\bm{Q}_{\Omega}$ follows from approaches detailed in \cite{crean2018entropy, chan2017discretely, chan2018discretely, chan2018efficient, chan2019skew, hicken2020entropy}.  We omit it for conciseness in this work.  
 
-\subsection{Systems of conservation laws: vector-valued fluxes}
+%\subsection{Dissipative terms}
+%
+%Entropy stable schemes are constructed by adding entropy dissipation to entropy conservative formulations.  We characterize such 
+
+\section{Systems of conservation laws}
 \label{sec:systems}
 
-It is straightforward to extend the scheme from scalar nonlinear conservation laws to an $n\times n$ system of conservation laws.  Let $\bm{f}_{S}(\bm{u}_L,\bm{u}_R): \mathbb{R}^{n}\times \mathbb{R}^n \rightarrow \mathbb{R}^n$ denote an entropy conservative flux function for a 1D system of conservation laws.  We can modify the arrays and matrices in (\ref{eq:sbpmat}) to account for this.
+In this section, we extend the explicit Jacobian formulas from scalar nonlinear conservation laws to an $n\times n$ system of conservation laws.  Let $\bm{f}_{S}(\bm{u}_L,\bm{u}_R): \mathbb{R}^{n}\times \mathbb{R}^n \rightarrow \mathbb{R}^n$ denote an entropy conservative flux function for a 1D system of conservation laws.  We first formulate a system of ODEs by modifying the definition of arrays and matrices in (\ref{eq:sbpmat}).
 
-Let $\bm{u}_{\Omega}$ now denote a vector of vectors 
+Let $\bm{u}_{\Omega}$ denote a vector of vectors 
 \[
 \bm{u}_{\Omega} = \bmat{\bm{u}_1\\
 \bm{u}_2\\
 \vdots\\
-\bm{u}_K}, \qquad \bm{u}_k = \bmat{
-\bm{u}_{k,1}\\
-\bm{u}_{k,2}\\
+\bm{u}_n}, \qquad \bm{u}_i = \bmat{
+\bm{u}_{i,1}\\
+\bm{u}_{i,2}\\
 \vdots\\
-\bm{u}_{k,N_p}
+\bm{u}_{i,K}
 }, \qquad
-\bm{u}_{k,j} = \bmat{
-\bm{u}_{k,j,1}\\
-\bm{u}_{k,j,2}\\
+\bm{u}_{i,k} = \bmat{
+\bm{u}_{i,k,1}\\
+\bm{u}_{i,k,2}\\
 \vdots\\
-\bm{u}_{k,j,n}
+\bm{u}_{i,k,N_p}
 }
 \]
-for $k = 1,\ldots, K$ and $j = 1,\ldots, N_p$.  Here, $\bm{u}_{k,j,i}$ denotes the $j$th degree of freedom for the $i$th component of the solution on the $k$th element.   Then, we can define global mass and differentiation matrices $\bm{M}_{\Omega}, \bm{Q}_{\Omega}$ as in (\ref{eq:sbpmat}), with the local blocks $\bm{M}, \bm{Q},\bm{B}_L, \bm{B}_R$ replaced by 
-\eq{
-\bm{M} &\longrightarrow \bm{M} \otimes \bm{I}_n, \qquad 
-\bm{Q} \longrightarrow \bm{Q} \otimes \bm{I}_n,\\
-\bm{B}_L &\longrightarrow \bm{B}_L \otimes \bm{I}_n, \qquad 
-\bm{B}_R \longrightarrow \bm{B}_R \otimes \bm{I}_n,
-}
-where $\bm{I}_n$ is the $n\times n$ identity matrix.  Note that $\bm{Q}_{\Omega}$ as defined in (\ref{eq:sbpmat}) remains skew-symmetric under this new definition.  We also redefine the flux matrix to account for the vector-valued nature of the flux function $\bm{f}_S$ 
+for $\ell = 1,\ldots, n$, $k = 1,\ldots, K$ and $j = 1,\ldots, N_p$.  Here, $\bm{u}_{\ell,k,j}$ denotes the $j$th degree of freedom for the $\ell$th component of the solution on the $k$th element.  
+%We redefine these matrices as the $n \times n$ block matrices 
+%\eq{
+%&\bm{M}_{\Omega} \longrightarrow \bm{I}_n\otimes \bm{M}_{\Omega} = \bmat{\bm{M}_{\Omega} &  & \\
+%& \ddots & \\
+% &  & \bm{M}_{\Omega}},
+%\\
+%&\bm{Q}_{\Omega} \longrightarrow \bm{e}_n\bm{e}_n^T\otimes \bm{Q}_{\Omega} = 
+%\bmat{\bm{Q}_{\Omega} & \ldots & \bm{Q}_{\Omega}\\
+%\vdots & \ddots & \vdots\\
+%\bm{Q}_{\Omega} & \ldots & \bm{Q}_{\Omega}},
+%}
+%where $\bm{e}_n\in \mathbb{R}^n$ is the vector of all ones, and $\bm{e}_n\bm{e}_n^T$ is the $n\times n$ matrix of all ones.  
+Let $(k_1, j_1)$ and $(k_2, j_2)$ be tuples which correspond to row and column indices of a matrix.  
+We now define the flux matrix $\bm{F}$ as the $n\times n$ block matrix containing flux interactions between different nodes
 \eqlab{
 \bm{F} = \bmat{
-\bm{F}_{11} & \ldots & \bm{F}_{1K}\\
-\vdots & \ddots & \vdots\\
-\bm{F}_{K1} & \ldots & \bm{F}_{KK}
-}, \qquad \LRp{\bm{F}_{k_1,k_2}}_{ij} = \diag{\bm{f}_S(\bm{u}_{k_1,i}, \bm{u}_{k_2,j})}.\label{eq:fluxsystem}
+\bm{F}_1 &&\\
+& \ddots &\\
+&& \bm{F}_n
+}, \qquad \LRp{\bm{F}_\ell}_{(k_1, j_1),(k_2,j_2)} = \LRp{\bm{f}_{S}\LRp{\bm{u}_{:, k_1,j_1},\bm{u}_{:, k_2,j_2}}}_{\ell}.
+\label{eq:fluxsys}
 }
-%\note{Redefine $\bm{M}_{\Omega}, \bm{Q}_{\Omega}$ using Kronecker product blocks. }
-Then, an entropy conservative scheme is given by
-\[
-\bm{M}_{\Omega}\td{\bm{u}_{\Omega}}{t} + 2\LRp{ \bm{Q}_{\Omega} \circ \bm{F}}\bm{1} = \bm{0}.
-\]
-We note that when computing Jacobians for systems of nonlinear conservation laws $\pd{\bm{f}_S}{\bm{y}}$, the derivative of the flux function is computed with respect to each component of the solution.
+where $\bm{u}_{:,k,j}$ denotes the vector containing all solution components at the $k$th element and $j$th node, and each block $\bm{F}_\ell$ for $\ell = 1,\ldots, n$ corresponds to the $\ell$th component of the vector-valued flux evaluated at solution states $\bm{u}_{:,k_1,j_1},\bm{u}_{:,k_2,j_2}$.  
 
+Let $\bm{M}_{\Omega}, \bm{Q}_{\Omega}$ denote the global mass and differentiation matrices in (\ref{eq:sbpmat}).  Then, an entropy conservative scheme is given by
+\[
+\LRp{\bm{I}_n\otimes \bm{M}_{\Omega}}\td{\bm{u}_{\Omega}}{t} + 2\LRp{ \LRp{\bm{e}_n\bm{e}_n^T\otimes \bm{Q}_{\Omega} } \circ \bm{F}}\bm{1} = \bm{0}.
+\]
+where $\bm{e}_n\in \mathbb{R}^n$ is the vector of all ones, and $\bm{e}_n\bm{e}_n^T$ is the $n\times n$ matrix of all ones.  
+
+We now construct explicit Jacobian matrix formulas for systems of nonlinear conservation laws.  The right hand side function $\bm{f}(\bm{u})$ for systems can be rewritten as
+\[
+\bm{f}(\bm{u}) = 2\LRp{ \bm{Q}_{\Omega} \circ \bm{F}}\bm{1} 
+= 2\bmat{(\bm{Q}_{\Omega}\circ \bm{F}_1) \\ 
+\vdots\\
+(\bm{Q}_{\Omega}\circ \bm{F}_n)
+}\bm{1}
+\]
+Then, the Jacobian matrix is 
+\eqlab{
+\pd{\bm{f}}{\bm{u}} &= 2\bmat{
+\bm{Q}_{\Omega}\circ \bm{F}_{1,\bm{u}_1} & \ldots & \bm{Q}_{\Omega}\circ \bm{F}_{1,\bm{u}_n}\\ 
+\vdots & \ddots & \vdots\\
+\bm{Q}_{\Omega}\circ \bm{F}_{n,\bm{u}_1} & \ldots & \bm{Q}_{\Omega}\circ \bm{F}_{n,\bm{u}_n}
+} \label{eq:fluxjac}\\
+&= \LRp{\bm{e}_n\bm{e}_n^T\otimes \bm{Q}_{\Omega}} \circ 
+\bmat{
+\bm{F}_{1,\bm{u}_1} & \ldots &\bm{F}_{1,\bm{u}_{n}}\\
+\vdots & \ddots & \vdots \\
+\bm{F}_{n,\bm{u}_1} & \ldots &\bm{F}_{n,\bm{u}_n}\nonumber
+}.
+}
+Here, the flux matrices $\bm{F}_{i,\bm{u}_j}$ are evaluated via
+\[
+\LRp{\bm{F}_{i,\bm{u}_j}}_{j_1k_1,j_2k_2} = \LRl{\pd{\LRp{\bm{f}_S}_i}{\bm{u}_j}}_{\bm{u}_{:,k_1,j_1},\bm{u}_{:,k_2,j_2}},
+\]
+where $\pd{\LRp{\bm{f}_S}_i}{\bm{u}_{j}}$ denotes the derivative of the $i$th component of the flux $\bm{f}_S\LRp{\bm{u}_L,\bm{u}_R}$ with respect to the $j$th solution component of $\bm{u}_R$.  Thus, each block $\bm{F}_{i,\bm{u}_j}$ corresponds to an entry of the Jacobian of $\bm{f}_S(\bm{u}_L,\bm{u}_R)$).
+
+\begin{remark}
+We note that an alternative ordering of degrees of freedom \cite{crean2018entropy} yields a Jacobian matrix with a more compact bandwidth.   A smaller matrix bandwidth can also be achieved by bandwidth-minimizing algorithms such as the reverse Cuthill-McKee algorithm \cite{cuthill1969reducing}.
+%Let $\bm{u}_{\Omega}$ now denote a vector of vectors 
+%\[
+%\bm{u}_{\Omega} = \bmat{\bm{u}_1\\
+%\bm{u}_2\\
+%\vdots\\
+%\bm{u}_K}, \qquad \bm{u}_k = \bmat{
+%\bm{u}_{k,1}\\
+%\bm{u}_{k,2}\\
+%\vdots\\
+%\bm{u}_{k,N_p}
+%}, \qquad
+%\bm{u}_{k,j} = \bmat{
+%\bm{u}_{k,j,1}\\
+%\bm{u}_{k,j,2}\\
+%\vdots\\
+%\bm{u}_{k,j,n}
+%}
+%\]
+%for $k = 1,\ldots, K$ and $j = 1,\ldots, N_p$.  Here, $\bm{u}_{k,j,i}$ denotes the $j$th degree of freedom for the $i$th component of the solution on the $k$th element.   Define global mass and differentiation matrices $\bm{M}_{\Omega}, \bm{Q}_{\Omega}$ as in (\ref{eq:sbpmat}), with the local blocks $\bm{M}, \bm{Q},\bm{B}_L, \bm{B}_R$ replaced by 
+%\eq{
+%\bm{M} &\longrightarrow \bm{M} \otimes \bm{I}_n, \qquad 
+%\bm{Q} \longrightarrow \bm{Q} \otimes \bm{I}_n,\\
+%\bm{B}_L &\longrightarrow \bm{B}_L \otimes \bm{I}_n, \qquad 
+%\bm{B}_R \longrightarrow \bm{B}_R \otimes \bm{I}_n,
+%}
+%where $\bm{I}_n$ is the $n\times n$ identity matrix.  Note that $\bm{Q}_{\Omega}$ as defined in (\ref{eq:sbpmat}) remains skew-symmetric under this new definition.  We also redefine the flux matrix to account for the vector-valued nature of the flux function $\bm{f}_S$ 
+%\eqlab{
+%\bm{F} = \bmat{
+%\bm{F}_{11} & \ldots & \bm{F}_{1K}\\
+%\vdots & \ddots & \vdots\\
+%\bm{F}_{K1} & \ldots & \bm{F}_{KK}
+%}, \qquad \LRp{\bm{F}_{k_1,k_2}}_{ij} = \diag{\bm{f}_S(\bm{u}_{k_1,i}, \bm{u}_{k_2,j})}.\label{eq:fluxsystem}
+%}
+%Then, an entropy conservative formulation is given by
+%\[
+%\bm{M}_{\Omega}\td{\bm{u}_{\Omega}}{t} + 2\LRp{ \bm{Q}_{\Omega} \circ \bm{F}}\bm{1} = \bm{0}.
+%\]
+%Explicit Jacobians can also be constructed for this ordering.  We omit it for conciseness.
+\end{remark}
+
+
+%\subsection{Explicit Jacobian matrix formulas for systems of nonlinear conservation laws}
 
 \section{Generalizations to different numerical settings}
 
@@ -399,13 +486,6 @@ We now construct global matrices for the multi-element (periodic) case.  We begi
 \]
 In the multi-dimensional case, the entries of $\bm{B}_L, \bm{B}_R$ correspond instead to outward normals \cite{crean2018entropy, chan2017discretely}.  
 
-We now assume that the global solution $\bm{u}(\bm{x},t) \in \mathbb{R}^n$ is vector-valued, and redefine local matrices so that they act on the global vector of vector-valued coefficients
-\eq{
-\bm{V} &\longrightarrow \bm{I}_K \otimes \LRp{\bm{V} \otimes \bm{I}_n}, \qquad \bm{P} \longrightarrow \bm{I}_K \otimes \LRp{\bm{P}  \otimes \bm{I}_n}\\ 
-\bm{E} &\longrightarrow \bm{I}_K \otimes \LRp{\bm{E}  \otimes \bm{I}_n}, \qquad \bm{V}_h \longrightarrow \bm{I}_K \otimes \LRp{\bm{V}_h  \otimes \bm{I}_n}\\
-\bm{Q} &\longrightarrow \bm{I}_K \otimes \LRp{\bm{Q}  \otimes \bm{I}_n}, \qquad \bm{B} \longrightarrow \bm{I}_K \otimes \LRp{\bm{B}  \otimes \bm{I}_n}\\
-\bm{B}_L &\longrightarrow \bm{I}_K \otimes \LRp{\bm{B}_L  \otimes \bm{I}_n}, \qquad \bm{B}_R \longrightarrow \bm{I}_K \otimes \LRp{\bm{B}_R  \otimes \bm{I}_n}.
-}
 We can also use $\bm{Q}_h$ to construct a globally skew-symmetric differentiation matrix (see also \cite{chan2018efficient}).  Define the matrix $\bm{S} = \bm{Q}-\bm{Q}^T$, and define $\bm{Q}_{\Omega}$ as the global block matrix
 \[
 \bm{Q}_{\Omega} = \frac{1}{2}\LRs{\begin{array}{cc|cc|cc|cc}
@@ -422,43 +502,53 @@ We can also use $\bm{Q}_h$ to construct a globally skew-symmetric differentiatio
 \bm{B}_R &&& &&-\bm{B}_L &  - \bm{B}\bm{E} &\\
 \end{array}},
 \]
-
+We also construct global interpolation, projection, and extrapolation matrices
+\eq{
+\bm{V} &\longrightarrow \bm{I}_K \otimes \bm{V}, \qquad \bm{P} \longrightarrow \bm{I}_K \otimes \bm{P} \\ 
+\bm{E} &\longrightarrow \bm{I}_K \otimes \bm{E}, \qquad \bm{V}_h \longrightarrow \bm{I}_K \otimes \bm{V}_h
+}
+Finally, we assume that the global solution $\bm{u}(\bm{x},t) \in \mathbb{R}^n$ is vector-valued, and order the solution coefficients as in Section~\ref{sec:systems}.  
 
 It was shown in \cite{parsani2016entropy, chan2017discretely} that, when either the mass matrix is non-diagonal or the nodal set does not contain appropriate boundary points, it is necessary to perform an entropy projection (or extrapolation \cite{chenreview}) step to ensure discrete entropy stability.  Let $\bm{v}(\bm{u})$ denote the entropy variables as a function of the conservative variables, and let $\bm{u}(\bm{v})$ denote the inverse mapping.  We define the entropy projected variables $\tilde{\bm{u}}_{\Omega}$ as
 \[
 \tilde{\bm{u}}_{\Omega} = \bm{u}\LRp{\bm{V}_h\bm{P}\bm{v}\LRp{\bm{V}\hat{\bm{u}}_{\Omega}}}.
 \]
-We redefine the flux block $\bm{F}_{k_1,k_2}$ in (\ref{eq:fluxsystem}) using the entropy projected variables
+We evaluate each flux block $\bm{F}_{\ell}$ in (\ref{eq:fluxsys}) using the entropy projected variables
 \[
-\LRp{\bm{F}_{k_1,k_2}}_{ij} = \diag{\bm{f}_S(\tilde{\bm{u}}_{k_1,i}, \tilde{\bm{u}}_{k_2,j})}
+\LRp{\bm{F}_\ell}_{(k_1, j_1),(k_2,j_2)} = \LRp{\bm{f}_{S}\LRp{\tilde{\bm{u}}_{:, k_1,j_1},\tilde{\bm{u}}_{:, k_2,j_2}}}_{\ell}.
+%\LRp{\bm{F}_{i,\bm{u}_j}}_{j_1k_1,j_2k_2} = \LRl{\pd{\LRp{\bm{f}_S}_i}{\bm{u}_j}}_{\tilde{\bm{u}}_{:,k_1,j_1},\tilde{\bm{u}}_{:,k_2,j_2}},
 \]
 Then, an entropy conservative method is given by 
 \[
-\bm{M}_{\Omega}\td{\bm{u}_{\Omega}}{t} + 2\bm{V}^T\LRp{ \bm{Q}_{\Omega} \circ \bm{F}}\bm{1} = \bm{0}.  
+\LRp{\bm{I}_n\otimes \bm{M}_{\Omega}}\td{\bm{u}_{\Omega}}{t} + 2\LRp{\bm{I}_n\otimes \bm{V}_h}^T\LRp{ \LRp{\bm{e}_n\bm{e}_n^T\otimes \bm{Q}_{\Omega} } \circ \bm{F}}\bm{1} = \bm{0}.
+%\bm{M}_{\Omega}\td{\bm{u}_{\Omega}}{t} + 2\bm{V}^T\LRp{ \bm{Q}_{\Omega} \circ \bm{F}}\bm{1} = \bm{0}.  
 \]
 
 \subsubsection{Jacobian matrices for hybridized SBP schemes}
 
 Redefine the nonlinear term 
 \[
-\bm{f}(\hat{\bm{u}}) = 2\bm{V}^T\LRp{ \bm{Q}_{\Omega} \circ \bm{F}}\bm{1}.
+\bm{f}(\hat{\bm{u}}) = 2\LRp{\bm{I}_n\otimes \bm{V}_h}^T\LRp{ \LRp{\bm{e}_n\bm{e}_n^T\otimes \bm{Q}_{\Omega}} \circ \bm{F}}\bm{1}.
 \]
 We introduce $\pd{\bm{u}}{\bm{v}}$ and $\pd{\bm{v}}{\bm{u}}$ as Jacobians of the conservative variables with respect to the entropy variables and vice versa.  These have been explicitly derived for several equations (for example, the Jacobians for the compressible Navier-Stokes equations are given in \cite{hughes1986new}).  
 
-We can compute the Jacobian of $\bm{f}(\hat{\bm{u}})$ via the chain rule, and illustrate this for an entry $i\neq j$ of the Jacobian
+We can compute the Jacobian of $\bm{f}(\hat{\bm{u}})$ via the chain rule.  We assume $n=1$ for simplicity, and illustrate this for an entry $i\neq j$ of the Jacobian
 \[
-\LRp{\pd{\bm{f}}{\hat{\bm{u}}_{\Omega}}}_{ij} =  2 \bm{V}_h^T \pd{}{\LRp{\hat{\bm{u}}_{\Omega}}_j} \LRp{\LRp{\bm{Q}_h\circ\bm{F}}\bm{1}}_i.
+\LRp{\pd{\bm{f}}{\hat{\bm{u}}_{\Omega}}}_{ij} =  2 \bm{V}_h^T \pd{}{\LRp{\hat{\bm{u}}_{\Omega}}_j} \LRp{\LRp{\bm{Q}_{\Omega}\circ\bm{F}}\bm{1}}_i.
 \]
-We focus on the latter term $\pd{}{\hat{\bm{u}}_{\Omega}} \LRp{\bm{Q}_h\circ\bm{F}}\bm{1}$
+We focus on the latter term $\pd{}{\hat{\bm{u}}_{\Omega}} \LRp{\bm{Q}_{\Omega}\circ\bm{F}}\bm{1}$
 \eq{
-\LRp{\pd{}{\hat{\bm{u}}_{\Omega}} \LRp{\bm{Q}_h\circ\bm{F}}\bm{1}}_{ij} &= \pd{}{\hat{\bm{u}}_{\Omega,j}} \sum_{k} \LRp{\bm{Q}_h}_{ik} \bm{f}_S\LRp{\tilde{\bm{u}}_i,\tilde{\bm{u}}_k} \\
-&=  2 \bm{V}_h^T \sum_{k} \LRp{\bm{Q}_h}_{ik} \LRl{\pd{\bm{f}_S}{y}}_{\tilde{\bm{u}}_i,\tilde{\bm{u}}_k} \pd{\tilde{\bm{u}}_i}{\hat{\bm{u}}_{\Omega,j}}
+\LRp{\pd{}{\hat{\bm{u}}_{\Omega}} \LRp{\bm{Q}_{\Omega}\circ\bm{F}}\bm{1}}_{ij} &= \pd{}{\hat{\bm{u}}_{\Omega,j}} \sum_{k} \LRp{\bm{Q}_{\Omega}}_{ik} \bm{f}_S\LRp{\tilde{\bm{u}}_i,\tilde{\bm{u}}_k} \\
+&=  2 \bm{V}_h^T \sum_{k} \LRp{\bm{Q}_{\Omega}}_{ik} \LRl{\pd{\bm{f}_S}{y}}_{\tilde{\bm{u}}_i,\tilde{\bm{u}}_k} \pd{\tilde{\bm{u}}_i}{\hat{\bm{u}}_{\Omega,j}}
 }
-We define the matrix $\pd{\tilde{\bm{f}}}{\tilde{\bm{u}}}$ as
+We observe that the term $\pd{\tilde{\bm{u}}_i}{\hat{\bm{u}}_{\Omega,j}}$ does not disappear as it did in the proof of Lemma~\ref{lemma:explicitJ}.  We thus treat the Jacobian matrix in two parts.  First, we define the matrix $\pd{\tilde{\bm{f}}}{\tilde{\bm{u}}}$ as
 \[
-\LRp{\pd{\tilde{\bm{f}}}{\tilde{\bm{u}}}}_{ij} = \LRp{\bm{Q}_h}_{ij} \LRl{\pd{\bm{f}_S}{y}}_{\tilde{\bm{u}}_i,\tilde{\bm{u}}_j} = \LRp{\bm{Q}_h\circ \bm{F}_y}_{ij}.
+\LRp{\pd{\tilde{\bm{f}}}{\tilde{\bm{u}}}}_{ij} = \LRp{\bm{Q}_{\Omega}}_{ij} \LRl{\pd{\bm{f}_S}{y}}_{\tilde{\bm{u}}_i,\tilde{\bm{u}}_j} = \LRp{\bm{Q}_{\Omega}\circ \bm{F}_y}_{ij}.
 \]
-Let $\tilde{\bm{v}} = \bm{V}_h\bm{P}\bm{v}\LRp{\bm{V}\hat{\bm{u}}_{\Omega}}$ denote the projected entropy variables at evaluated at volume quadrature points.
+Now, let $\tilde{\bm{v}}$ denote the projected entropy variables at evaluated at volume quadrature points
+\[
+\tilde{\bm{v}} = \bm{V}_h\bm{P}\bm{v}\LRp{\bm{V}\hat{\bm{u}}_{\Omega}}.
+\]
 The vector $\pd{\tilde{\bm{u}}}{\hat{\bm{u}}_{\Omega}}$  can be further expanded as 
 \[
 \pd{\tilde{\bm{u}}}{\hat{\bm{u}}_{\Omega}} = \LRl{\pd{\bm{u}}{\bm{v}}}_{\tilde{\bm{u}}} \bm{V}_h \bm{P} \LRl{\pd{\bm{v}}{\bm{u}}}_{\tilde{\bm{v}}} \bm{V}.
@@ -475,18 +565,20 @@ where the Jacobian matrices for the maps between conservative and entropy variab
 && \LRl{\pd{\bm{u}}{\bm{v}}}_{\tilde{\bm{u}}_{N_p,k}}
 },
 \]
-and the local block $\LRl{\pd{\bm{u}}{\bm{v}}}_{\tilde{\bm{u}}_{j,k}}$ is simply the Jacobian $\pd{\bm{u}}{\bm{v}}$ evaluated at the $j$th nodal value $\tilde{\bm{u}}_{j,k}$ on the $k$th element.
+and the local block $\LRl{\pd{\bm{u}}{\bm{v}}}_{\tilde{\bm{u}}_{j,k}}$ is the Jacobian matrix $\pd{\bm{u}}{\bm{v}}$ evaluated at the $j$th nodal solution value $\tilde{\bm{u}}_{j,k}$ on the $k$th element.
 
 Let $N_p, N_q, N_f$ denote the number of total basis functions, quadrature points, and face quadrature points respectively, and define $N_{\rm total} = N_q + N_f$.  The structure and dimensions of matrices involved in constructing the Jacobian matrix are illustrated as follows:
 \[
 \pd{\bm{f}}{\hat{\bm{u}}_{\Omega}} = \renewcommand\matscale{.67}
 \raiserows{2}{\matbox{3}{7}{N_p}{N_{\rm total}}{\bm{V}_h^T}}
-\raiserows{0}{\matbox{7}{7}{N_{\rm total}}{N_{\rm total}}{\pd{\tilde{\bm{f}}}{\tilde{\bm{u}}}}}
+\raiserows{0}{\matbox{7}{7}{N_{\rm total}}{N_{\rm total}}{\bm{Q}_{\Omega}\circ\pd{\tilde{\bm{f}}}{\tilde{\bm{u}}}}}
 \raiserows{0}{\matbox{7}{7}{N_{\rm total}}{N_{\rm total}}{\LRl{\pd{\bm{u}}{\bm{v}}}_{\tilde{\bm{u}}}}}
 \raiserows{0}{\matbox{7}{5}{N_{\rm total}}{N_q}{ \bm{V}_h\bm{P} }}
 \raiserows{1}{\matbox{5}{5}{N_q}{N_q}{ \LRl{\pd{\bm{v}}{\bm{u}}}_{\tilde{\bm{v}}} }}
 \raiserows{1}{\matbox{5}{3}{N_q}{N_p}{\bm{V}}}
 \]
+
+We note that several matrices become simplified under common assumptions for entropy stable DG discretizations.  These typically fall into two categories: collocated volume nodes and collocated volume and surface nodes \cite{shadpey2019energy}.  For collocated volume nodes, the solution is represented using a nodal Lagrange basis constructed using $N_q = N_p$ volume quadrature nodes.  Both collocated volume and surface nodes refers to the case when both the volume nodes collocated and the volume quadrature nodes also include surface quadrature nodes as a subset \cite{gassner2013skew, chen2017entropy}.  For example, if only volume nodes are collocated \cite{chan2018efficient}, then $\bm{V} = \bm{I}$.  If both volume and surface nodes are collocated, the system reduces to the simplified system described in Section~\ref{sec:systems} using the fact that $\pd{\bm{u}}{\bm{v}} = \LRp{\pd{\bm{v}}{\bm{u}}}^{-1}$.
 
 \subsection{Non-periodic boundary conditions}
 \label{eq:npbc}
@@ -520,7 +612,7 @@ Let $\bm{g}(\bm{u})$ denote the second derivative of $\bm{u}$ in time
 \]
 where we have used the chain rule in the final step.  The simplest two-derivative method is the second order scheme given in \cite{chan2010explicit} as
 \[
-\bm{u}^{k+1} = \bm{u}^k + \Delta t \bm{f}(\bm{u}^k) + \frac{\Delta t^2}{2} \bm{g}(\bm{u}^k),
+\bm{u}^{k+1} = \bm{u}^k - \Delta t \bm{f}(\bm{u}^k) - \frac{\Delta t^2}{2} \bm{g}(\bm{u}^k),
 \]
 where $\bm{u}^k$ denotes the solution at the $k$th time-step.  
 
@@ -530,18 +622,25 @@ where $\bm{u}^k$ denotes the solution at the $k$th time-step.
 
 Jacobian matrices also appear in time-implicit discretizations of nonlinear ODEs.  Consider the implicit midpoint rule 
 \[
-\bm{u}^{k+1} = \bm{u}^k + \Delta t \bm{f}\LRp{\frac{\bm{u}^{k+1} + \bm{u}^k}{2}}.
+\bm{u}^{k+1} = \bm{u}^k - \Delta t \bm{f}\LRp{\frac{\bm{u}^{k+1} + \bm{u}^k}{2}}.
 \]
-This can be rewritten in the following form
+This can be rewritten in the following form where $\bm{u}^{k+1/2} = \frac{\bm{u}^{k+1}+\bm{u}^k}{2}$
 \eq{
-\bm{r} &= \bm{f}\LRp{\bm{u}^k + \frac{\Delta t}{2}\bm{r}}\\
-\bm{u}^{k+1} &= \bm{u}^k + \Delta t \bm{r}.
+\bm{u}^{k+1/2} &= \bm{u}^k - \frac{\Delta t}{2}\bm{f}\LRp{\bm{u}^{k+1/2}}\\
+\bm{u}^{k+1} &= 2\bm{u}^{k+1/2} - \bm{u}^k.
 }
-Solving for $\bm{r}$ is a nonlinear equation and can be done via Newton's method
+Solving for $\bm{u}^{k+1/2}$ is a nonlinear equation and can be done via Newton's method
 \eq{
-\bm{u}^\ell &= \bm{u}^k + \frac{\Delta t}{2}\bm{r}^\ell\\
-\bm{r}^{\ell + 1} &= \bm{r}^\ell - \LRp{\bm{I} - \frac{\Delta t}{2}\LRl{\pd{\bm{f}}{\bm{u}}}_{\bm{u}^{\ell}}}^{-1} \LRp{\bm{r}^\ell - \bm{f}\LRp{\bm{u}^\ell}}
+%&\bm{u}^{k+1/2} + \frac{\Delta t}{2}\bm{f}\LRp{\bm{u}^{k+1/2}} - \bm{u}^k = \bm{0}\\
+&\bm{u}^{k+1/2,\ell+1} = \\
+&\bm{u}^{k+1/2,\ell} - \LRp{\bm{I} + \frac{\Delta t}{2}\LRl{\pd{\bm{f}}{\bm{u}}}_{\bm{u}^{k+1/2,\ell}}}^{-1}\LRp{\bm{u}^{k+1/2,\ell} + \frac{\Delta t}{2}\bm{f}\LRp{\bm{u}^{k+1/2,\ell}} - \bm{u}^k}.
 }
+
+%Solving for $\bm{r}$ is a nonlinear equation and can be done via Newton's method
+%\eq{
+%\bm{u}^\ell &= \bm{u}^k + \frac{\Delta t}{2}\bm{r}^\ell\\
+%\bm{r}^{\ell + 1} &= \bm{r}^\ell - \LRp{\bm{I} + \frac{\Delta t}{2}\LRl{\pd{\bm{f}}{\bm{u}}}_{\bm{u}^{\ell}}}^{-1} \LRp{\bm{r}^\ell + \bm{f}\LRp{\bm{u}^\ell}}
+%}
 
 \section{Conclusion and acknowledgments}
 
