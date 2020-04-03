@@ -2,15 +2,13 @@ clear
 K = 200;
 %FinalTime = .35;
 FinalTime = 2.5;
-FinalTime = 3;
-FinalTime = .25;
-CFL = .125;
+CFL = 1;
 
 xv = linspace(-1,1,K+1)';
 x = .5*(xv(1:end-1)+xv(2:end));
 dx = (max(xv(:))-min(xv(:)))/K;
 
-tau = .5*dx; 
+tau = .1*dx; 
 
 e = ones(K-1,1);
 
@@ -96,34 +94,10 @@ v = a*sin(2*pi*x).*(exp(-(y-.5).^2/((sig/2).^2))+exp(-(y+.5).^2/((sig/2).^2)));
 u = ff - .5;
 p = 2.5*ones(size(x));
 
-% riemann problem
-d1 = (x>0)&(x<1)&(y>0)&(y<1);
-d2 = (x>-1)&(x<0)&(y>0)&(y<1);
-d3 = (x>-1)&(x<0)&(y>-1)&(y<0);
-d4 = (x>0)&(x<1)&(y>-1)&(y<0);
-rho = .5313*d1 + 1*d2 + .8*d3 + 1*d4;
-u = .7276*d2;
-v = .7276*d4;
-p = (d2+d3+d4)*1 + .4*d1; 
-
-A = eye(K) + diag(ones(K-1,1),1) + diag(ones(K-1,1),-1);
-A(1,end) = 1;
-A(end,1) = 1;
-A = A/3;
-
 rhou = rho.*u;
 rhov = rho.*v;
 E    = p/(gamma-1) + .5*rho.*(u.^2+v.^2);
-
-for i = 1:10
-    rho = (A*rho)*A';
-    rhou = (A*rhou)*A';
-    rhov = (A*rhov)*A';
-    E = (A*E)*A';
-end
-% surf(x,y,rho);shading interp;
-% view(2)
-% return
+% surf(x,y,rho);return
 
 %% 
 

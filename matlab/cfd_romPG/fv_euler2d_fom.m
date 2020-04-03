@@ -1,25 +1,32 @@
-clear
-K = 200;
-%FinalTime = .35;
-FinalTime = 2.5;
-FinalTime = 3;
-FinalTime = .25;
-CFL = .125;
+% clear
+K = 300;
+FinalTime = .1;
+% FinalTime = .25;
+
+CFL = .5;
 
 xv = linspace(-1,1,K+1)';
 x = .5*(xv(1:end-1)+xv(2:end));
-dx = (max(xv(:))-min(xv(:)))/K;
+dx = 1/K;
 
-tau = .5*dx; 
+% tau = .1*dx;
+tau = 2e-3;
+% tau = .5*dx;
 
 e = ones(K-1,1);
+S = diag(e,1)-diag(e,-1);
+S(1,:) = 0; S(:,1) = 0;
+S(end,:) = 0; S(:,end) = 0;
+S(1,2) = 1; S(2,1) = -1;
+S(K-1,K) = 1; S(K,K-1) = -1;
+% S(1,end) = -1; S(end,1) = 1;
+S(1,1) = -1; S(end,end) = 1; % for BCs
 
+S = sparse(S);
 % KSx = sparse(2*eye(K) - abs(S))/dx;
 KS = sparse(2*eye(K) - diag(e,1) - diag(e,-1))/dx;
-KS(1,end) = -1/dx;
-KS(end,1) = -1/dx;
-% KS(1,1) = KS(1,1)/2;
-% KS(K,K) = KS(K,K)/2;
+KS(1,1) = KS(1,1)/2;
+KS(K,K) = KS(K,K)/2;
 
 % make 2D
 [x y] = meshgrid(x);
@@ -45,9 +52,9 @@ U4 = @(V1,V2,V3,V4) rhoeV(V1,V2,V3,V4).*(1-(V2.^2+V3.^2)./(2*V4));
 
 avg = @(x,y) .5*(x+y);
 pfun = @(rho,u,v,E) (gamma-1)*(E-.5*rho.*(u.^2+v.^2));
-beta = @(rho,u,v,E) rho./(2*pfun(rho,u,v,E));
-pavg     = @(rhoL,uL,vL,EL,rhoR,uR,vR,ER)     avg(rhoL,rhoR)./(2*avg(beta(rhoL,uL,vL,EL),beta(rhoR,uR,vR,ER)));
-plogmean = @(rhoL,uL,vL,EL,rhoR,uR,vR,ER) logmean(rhoL,rhoR)./(2*logmean(beta(rhoL,uL,vL,EL),beta(rhoR,uR,vR,ER)));
+betafun = @(rho,u,v,E) rho./(2*pfun(rho,u,v,E));
+pavg     = @(rhoL,uL,vL,EL,rhoR,uR,vR,ER)     avg(rhoL,rhoR)./(2*avg(betafun(rhoL,uL,vL,EL),betafun(rhoR,uR,vR,ER)));
+plogmean = @(rhoL,uL,vL,EL,rhoR,uR,vR,ER) logmean(rhoL,rhoR)./(2*logmean(betafun(rhoL,uL,vL,EL),betafun(rhoR,uR,vR,ER)));
 vnormavg = @(uL,vL,uR,vR) 2*(avg(uL,uR).^2 + avg(vL,vR).^2) - (avg(uL.^2,uR.^2) + avg(vL.^2,vR.^2));
 
 fxS1 = @(rhoL,uL,vL,EL,rhoR,uR,vR,ER) logmean(rhoL,rhoR).*avg(uL,uR);
@@ -62,68 +69,29 @@ fyS4 = @(rhoL,uL,vL,EL,rhoR,uR,vR,ER) (plogmean(rhoL,uL,vL,EL,rhoR,uR,vR,ER)/(ga
 
 %% set initial cond
 
-rho = ones(size(x)) + exp(-50*((x+.5).^2+(y+.5).^2));
-% rho = 1 + (abs(x)<.5).*(abs(y)<.5);
-% xc = x + .5; yc = y + .5;
+rho = ones(size(x)) + exp(-50*((x).^2+(y+.5).^2));
+% % rho = 1 + (abs(x)<.5).*(abs(y)<.5);
+% % xc = x + .5; yc = y + .5;
 % rho = 2*ones(size(x)) + .5*exp(-100*(xc.^2+0*yc.^2)); %.*sin(pi*xc).*sin(pi*yc);
+rho = .5*(ones(size(x)) + (x>0) + (y>0) + (x>0).*(y>0));
 u = zeros(size(x));
 v = zeros(size(x));
 p = rho.^(gamma);
 
-rhou = rho.*u;
-rhov = rho.*v;
-E    = p/(gamma-1) + .5*rho.*(u.^2+v.^2);
-
-% % vortex
-% p = ones(size(x));
-% width = .1;
-% sig = 1000;
-% ff = 1-(1./(1+exp(-sig*(y-width))) + 1./(1+exp(sig*(y+width))));
-% dv = .1*sin(2*pi*x).*ff;
-% du = .5*ff;
-% v = zeros(size(x)) + dv;
-% u = -.5*ones(size(x)) + du;
-% rho = ones(size(x));
-% rhou = rho.*u;
-% rhov = rho.*v;
-% E    = p/(gamma-1) + .5*rho.*(u.^2+v.^2);
-
-% KH instab
-a = .1; sig = .1; %5*sqrt(2)*1e-3;
-ff = 1./(1+exp(-(y+.5)./(sig.^2)))-1./(1+exp(-(y-.5)./(sig.^2)));
-rho = ff + 1;
-v = a*sin(2*pi*x).*(exp(-(y-.5).^2/((sig/2).^2))+exp(-(y+.5).^2/((sig/2).^2)));
-u = ff - .5;
-p = 2.5*ones(size(x));
-
-% riemann problem
-d1 = (x>0)&(x<1)&(y>0)&(y<1);
-d2 = (x>-1)&(x<0)&(y>0)&(y<1);
-d3 = (x>-1)&(x<0)&(y>-1)&(y<0);
-d4 = (x>0)&(x<1)&(y>-1)&(y<0);
-rho = .5313*d1 + 1*d2 + .8*d3 + 1*d4;
-u = .7276*d2;
-v = .7276*d4;
-p = (d2+d3+d4)*1 + .4*d1; 
-
-A = eye(K) + diag(ones(K-1,1),1) + diag(ones(K-1,1),-1);
-A(1,end) = 1;
-A(end,1) = 1;
-A = A/3;
+% d1 = (x>0)&(x<1)&(y>0)&(y<1);
+% d2 = (x>-1)&(x<0)&(y>0)&(y<1);
+% d3 = (x>-1)&(x<0)&(y>-1)&(y<0);
+% d4 = (x>0)&(x<1)&(y>-1)&(y<0);
+% 
+% rho = .5313*d1 + 1*d2 + .8*d3 + 1*d4;
+% u = .7276*d2;
+% v = .7276*d4;
+% p = (d2+d3+d4)*1 + .4*d1;
 
 rhou = rho.*u;
 rhov = rho.*v;
 E    = p/(gamma-1) + .5*rho.*(u.^2+v.^2);
 
-for i = 1:10
-    rho = (A*rho)*A';
-    rhou = (A*rhou)*A';
-    rhov = (A*rhov)*A';
-    E = (A*E)*A';
-end
-% surf(x,y,rho);shading interp;
-% view(2)
-% return
 
 %% 
 
@@ -159,47 +127,53 @@ rhs3 = zeros(size(x));
 rhs4 = zeros(size(x));
 
 interval = 1;
-saveU = 1;
-if saveU
-    Usnap = zeros(4*K*K,ceil(Nsteps/interval));
-    Usnap(:,1) = [rho(:);rhou(:);rhov(:);E(:)];
-end
+Usnap = zeros(4*K*K,ceil(Nsteps/interval));
+Usnap(:,1) = [rho(:);rhou(:);rhov(:);E(:)];
 sk = 2;
 for i = 1:Nsteps
     for INTRK = 1:5                        
         
         u = rhou./rho;
-        v = rhov./rho;
-                            
-        rhoL = [rho(:,end) rho];
-        rhoR = [rho rho(:,1)];
-        uL = [u(:,end) u];
-        uR = [u u(:,1)];
-        vL = [v(:,end) v];
-        vR = [v v(:,1)];
-        EL = [E(:,end) E];
-        ER = [E E(:,1)];
+        v = rhov./rho;    
         
-        rhs1 = dx*diff(fxS1(rhoL,uL,vL,EL,rhoR,uR,vR,ER),[],2);
-        rhs2 = dx*diff(fxS2(rhoL,uL,vL,EL,rhoR,uR,vR,ER),[],2);
-        rhs3 = dx*diff(fxS3(rhoL,uL,vL,EL,rhoR,uR,vR,ER),[],2);
-        rhs4 = dx*diff(fxS4(rhoL,uL,vL,EL,rhoR,uR,vR,ER),[],2);                        
+        beta = betafun(rho,u,v,E);
+            
+        rhoL = [rho(:,1) rho];
+        rhoR = [rho rho(:,end)];
+        uL = [-u(:,1) u];
+        uR = [u -u(:,end)];
+        vL = [v(:,1) v];
+        vR = [v v(:,end)];
+%         EL = [E(:,1) E];
+%         ER = [E E(:,end)];        
+        betaL = [beta(:,1) beta];
+        betaR = [beta beta(:,end)];
+        [FxS1 FxS2 FxS3 FxS4] = ...
+            euler_flux_x(rhoL,rhoR,uL,uR,vL,vR,betaL,betaR);
+
+        rhs1 = dx*diff(FxS1,[],2); %fxS1(rhoL,uL,vL,EL,rhoR,uR,vR,ER),[],2);
+        rhs2 = dx*diff(FxS2,[],2); %fxS2(rhoL,uL,vL,EL,rhoR,uR,vR,ER),[],2);
+        rhs3 = dx*diff(FxS3,[],2); %fxS3(rhoL,uL,vL,EL,rhoR,uR,vR,ER),[],2);
+        rhs4 = dx*diff(FxS4,[],2); %fxS4(rhoL,uL,vL,EL,rhoR,uR,vR,ER),[],2);                        
         
-        rhoL = [rho(end,:); rho];
-        rhoR = [rho; rho(1,:)];
-        uL = [u(end,:); u];
-        uR = [u; u(1,:)];
-        vL = [v(end,:); v];
-        vR = [v; v(1,:)];
-        EL = [E(end,:); E];
-        ER = [E; E(1,:)];
+        rhoL = [rho(1,:); rho];
+        rhoR = [rho; rho(end,:)];
+        uL = [u(1,:); u];
+        uR = [u; u(end,:)];
+        vL = [-v(1,:); v];
+        vR = [v; -v(end,:)];
+%         EL = [E(1,:); E];
+%         ER = [E; E(end,:)];
+        betaL = [beta(1,:); beta];
+        betaR = [beta; beta(end,:)];
+        [FyS1 FyS2 FyS3 FyS4] = euler_flux_y(rhoL,rhoR,uL,uR,vL,vR,betaL,betaR);
         
-        rhs1 = rhs1 + dx*diff(fyS1(rhoL,uL,vL,EL,rhoR,uR,vR,ER),[],1);
-        rhs2 = rhs2 + dx*diff(fyS2(rhoL,uL,vL,EL,rhoR,uR,vR,ER),[],1);
-        rhs3 = rhs3 + dx*diff(fyS3(rhoL,uL,vL,EL,rhoR,uR,vR,ER),[],1);
-        rhs4 = rhs4 + dx*diff(fyS4(rhoL,uL,vL,EL,rhoR,uR,vR,ER),[],1);        
+        rhs1 = rhs1 + dx*diff(FyS1,[],1); %fyS1(rhoL,uL,vL,EL,rhoR,uR,vR,ER),[],1);
+        rhs2 = rhs2 + dx*diff(FyS2,[],1); %fyS2(rhoL,uL,vL,EL,rhoR,uR,vR,ER),[],1);
+        rhs3 = rhs3 + dx*diff(FyS3,[],1); %fyS3(rhoL,uL,vL,EL,rhoR,uR,vR,ER),[],1);
+        rhs4 = rhs4 + dx*diff(FyS4,[],1); %fyS4(rhoL,uL,vL,EL,rhoR,uR,vR,ER),[],1);        
         
-        % add dissipation
+        % add dissipation       
         rhs1 = rhs1 + tau*dx*(KS*rho + rho*KS);
         rhs2 = rhs2 + tau*dx*(KS*rhou + rhou*KS);
         rhs3 = rhs3 + tau*dx*(KS*rhov + rhov*KS);
@@ -220,14 +194,16 @@ for i = 1:Nsteps
         rhov = rhov  + rk4b(INTRK)*res3;
         E    = E  + rk4b(INTRK)*res4;
 
-    end        
+    end
     
-    if saveU && mod(i,interval)==0
+    entropy(i) = sum(sum(-rho.*sfun(rho,rhou,rhov,E)))*dx^2;
+    
+    if mod(i,interval)==0
         Usnap(:,sk) = [rho(:);rhou(:);rhov(:);E(:)];
         sk = sk + 1;
     end
     
-    if mod(i,25) == 0 || i==Nsteps
+    if mod(i,5) == 0
         surf(x,y,reshape(rho,K,K))
         shading interp
         view(2)
@@ -236,5 +212,4 @@ for i = 1:Nsteps
     end
 end
 
-% dS = S-S(1);
-% semilogy(dS,'--','linewidth',2)
+% semilogy(entropy,'--','linewidth',2)

@@ -1,15 +1,13 @@
 clear
 K = 200;
 %FinalTime = .35;
-FinalTime = 3; %2.5;
+FinalTime = 2.5;
 
 xv = linspace(-1,1,K+1)';
 x = .5*(xv(1:end-1)+xv(2:end));
 dx = (max(xv(:))-min(xv(:)))/K;
 
-tau = .5*dx;
-CFL = .125;
-FinalTime = .25;
+tau = .1*dx;
 
 e = ones(K-1,1);
 S = diag(e,1)-diag(e,-1);
@@ -108,8 +106,7 @@ E    = p/(gamma-1) + .5*rho.*(u.^2+v.^2);
 
 %% make ROM ops
 
-%load Usnap_euler2d_kh.mat
-load Usnap_euler2d_riemann.mat
+load Usnap_euler2d_kh.mat
 
 U0 = reshape(Usnap(:,1),K^2,4);
 Us1 = Usnap(1:K^2,:);
@@ -120,21 +117,10 @@ Us4 = Usnap((1:K^2) + 3*K^2,:);
 [Vr, Sr, ~] = svd([Us1 Us2 Us3 Us4 V1(Us1,Us2,Us3,Us4) V2(Us1,Us2,Us3,Us4) V3(Us1,Us2,Us3,Us4) V4(Us1,Us2,Us3,Us4)],0);
 sig = diag(Sr);
 disp('Done with Vr svd')
+% semilogy(sig,'o')
+keyboard
 
-sigU = svd([Us1 Us2 Us3 Us4]);
-
-% semilogy(sigU,'bo','linewidth',2,'markersize',10)
-% hold on
-% semilogy(sig,'r.','linewidth',2,'markersize',16)
-% ylim([1e-10,1e5])
-% grid on
-% set(gca,'fontsize',15)
-% h = legend('Without enrichment','With enrichment');
-% set(h,'fontsize',15)
-% xlabel('Index','fontsize',15)
-% keyboard
-
-Nmodes = 50;
+Nmodes = 75;
 tol = sqrt(sum(sig(Nmodes+1:end).^2)/sum(sig.^2))
 % tol = sqrt(sum(sum(dx*(U0 - Vr*[rho rhou rhov E]).^2)))/sqrt(sum(sum(dx*U0.^2)))
 
@@ -245,7 +231,7 @@ if 1
 %         keyboard
 %     end
 %     
-    keyboard
+%     keyboard
 
     
 end
@@ -276,7 +262,7 @@ rk4c = [             0.0  ...
     2802321613138.0/2924317926251.0];
 
 
-dt = CFL*dx;
+dt = 1*dx;
 Nsteps = ceil(FinalTime/dt);
 dt = FinalTime/Nsteps;
 
@@ -341,11 +327,11 @@ for i = 1:Nsteps
                 %[Ex Ey]     = meshgrid(EN(id1),EN(id2));
                 [betax betay]     = meshgrid(betaN(id1),betaN(id2));
                 
-                [FxS1 FxS2 FxS3 FxS4 FyS1 FyS2 FyS3 FyS4] = euler_flux_2d(rhox,rhoy,ux,uy,vx,vy,betax,betay);
-                r1(id1) = r1(id1) + (sum(Qxij.*FxS1',2) + sum(Qyij.*FyS1',2));
-                r2(id1) = r2(id1) + (sum(Qxij.*FxS2',2) + sum(Qyij.*FyS2',2));
-                r3(id1) = r3(id1) + (sum(Qxij.*FxS3',2) + sum(Qyij.*FyS3',2));
-                r4(id1) = r4(id1) + (sum(Qxij.*FxS4',2) + sum(Qyij.*FyS4',2));
+                [FxS1 FxS2 FxS3 FxS4 FyS1 FyS2 FyS3 FyS4] = euler_flux_2d(rhox,rhoy,ux,uy,vx,vy,betax,betay)
+                r1(id1) = r1(id1) + (sum(Qxij.*FxS1',2) + sum(Qyij.*fyS1',2));
+                r2(id1) = r2(id1) + (sum(Qxij.*fxS2',2) + sum(Qyij.*fyS2',2));
+                r3(id1) = r3(id1) + (sum(Qxij.*fxS3',2) + sum(Qyij.*fyS3',2));
+                r4(id1) = r4(id1) + (sum(Qxij.*fxS4',2) + sum(Qyij.*fyS4',2));
                 
 %                 r1(id1) = r1(id1) + (sum(Qxij.*fxS1(rhox,ux,vx,Ex,rhoy,uy,vy,Ey)',2) + sum(Qyij.*fyS1(rhox,ux,vx,Ex,rhoy,uy,vy,Ey)',2));
 %                 r2(id1) = r2(id1) + (sum(Qxij.*fxS2(rhox,ux,vx,Ex,rhoy,uy,vy,Ey)',2) + sum(Qyij.*fyS2(rhox,ux,vx,Ex,rhoy,uy,vy,Ey)',2));
@@ -384,30 +370,4 @@ for i = 1:Nsteps
     end
 end
 
-%%
-Usnapi = reshape(Usnap(:,i),K*K,4);
-Uhi = Vrp*[rho rhou rhov E];
-e = Uhi - Usnapi;
-err = sqrt(sum(sum(dx^2*(e.^2))))/sqrt(sum(sum(dx^2*Uhi.^2)));
-err
-
-figure
-surf(x,y,reshape(Usnapi(:,1),K,K)); 
-shading interp; view(2)
-axis off; axis equal
-% print(gcf,'-dpng','~/Desktop/bbwadg/docs/ESDG_ROM/figs/pulse2d.png')
-
-figure
-surf(x,y,reshape(Uhi(:,1),K,K));
-shading interp; view(2)
-axis off; axis equal; 
-
-% print(gcf,'-dpng','~/Desktop/bbwadg/docs/ESDG_ROM/figs/pulse2d_ROM.png')
-figure
-surf(x,y,reshape(Uhi(:,1),K,K));
-shading interp; view(2)
-axis off; axis equal; 
-
-hold on
-plot3(x(id),y(id),max(Vr*rho)+.1+0*id,'r.','linewidth',2,'markersize',12)
-% plot3(xf(idf),yf(idf),Vf*rho+.1,'b.','linewidth',2,'markersize',12)
+sqrt(sum(sum(dx^2*(Vrp*rho-Us1(:,end)).^2)))/sqrt(sum(sum(dx^2*Us1(:,end))))
