@@ -1,3 +1,0 @@
-\beamer@sectionintoc {1}{Inverting IGA mass matrices }{12}{0}{1}
-\beamer@sectionintoc {2}{Why splines vs $C^0$-FEM? CFL restrictions}{24}{0}{2}
-\beamer@sectionintoc {3}{Optimizing splines for explicit solvers}{30}{0}{3}
