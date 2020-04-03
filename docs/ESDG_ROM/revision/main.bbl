@@ -1,0 +1,523 @@
+\begin{thebibliography}{10}
+
+\bibitem{benner2015survey}
+Peter Benner, Serkan Gugercin, and Karen Willcox.
+\newblock A survey of projection-based model reduction methods for parametric
+  dynamical systems.
+\newblock {\em SIAM review}, 57(4):483--531, 2015.
+
+\bibitem{cagniart2019model}
+Nicolas Cagniart, Yvon Maday, and Benjamin Stamm.
+\newblock Model order reduction for problems with large convection effects.
+\newblock In {\em Contributions to Partial Differential Equations and
+  Applications}, pages 131--150. Springer, 2019.
+
+\bibitem{lall2003structure}
+Sanjay Lall, Petr Krysl, and Jerrold~E Marsden.
+\newblock Structure-preserving model reduction for mechanical systems.
+\newblock {\em Physica D: Nonlinear Phenomena}, 184(1-4):304--318, 2003.
+
+\bibitem{carlberg2015preserving}
+Kevin Carlberg, Ray Tuminaro, and Paul Boggs.
+\newblock {Preserving Lagrangian structure in nonlinear model reduction with
+  application to structural dynamics}.
+\newblock {\em SIAM Journal on Scientific Computing}, 37(2):B153--B184, 2015.
+
+\bibitem{benner2012interpolation}
+Peter Benner and Tobias Breiten.
+\newblock {Interpolation-Based $\mathcal{H}_{2}$-Model Reduction of Bilinear
+  Control Systems}.
+\newblock {\em SIAM Journal on Matrix Analysis and Applications},
+  33(3):859--885, 2012.
+
+\bibitem{gugercin2012structure}
+Serkan Gugercin, Rostyslav~V Polyuga, Christopher Beattie, and Arjan Van
+  Der~Schaft.
+\newblock {Structure-preserving tangential interpolation for model reduction of
+  port-Hamiltonian systems}.
+\newblock {\em Automatica}, 48(9):1963--1974, 2012.
+
+\bibitem{peng2016symplectic}
+Liqian Peng and Kamran Mohseni.
+\newblock {Symplectic model reduction of Hamiltonian systems}.
+\newblock {\em SIAM Journal on Scientific Computing}, 38(1):A1--A27, 2016.
+
+\bibitem{chaturantabut2016structure}
+Saifon Chaturantabut, Chris Beattie, and Serkan Gugercin.
+\newblock {Structure-preserving model reduction for nonlinear port-Hamiltonian
+  systems}.
+\newblock {\em SIAM Journal on Scientific Computing}, 38(5):B837--B865, 2016.
+
+\bibitem{gong2017structure}
+Yuezheng Gong, Qi~Wang, and Zhu Wang.
+\newblock {Structure-preserving Galerkin POD reduced-order modeling of
+  Hamiltonian systems}.
+\newblock {\em Computer Methods in Applied Mechanics and Engineering},
+  315:780--798, 2017.
+
+\bibitem{afkham2017structure}
+Babak~Maboudi Afkham and Jan~S Hesthaven.
+\newblock {Structure preserving model reduction of parametric Hamiltonian
+  systems}.
+\newblock {\em SIAM Journal on Scientific Computing}, 39(6):A2616--A2644, 2017.
+
+\bibitem{afkham2018structure}
+Babak~Maboudi Afkham and Jan~S Hesthaven.
+\newblock {Structure-preserving model-reduction of dissipative Hamiltonian
+  systems}.
+\newblock {\em Journal of Scientific Computing}, pages 1--19, 2018.
+
+\bibitem{farhat2014dimensional}
+Charbel Farhat, Philip Avery, Todd Chapman, and Julien Cortial.
+\newblock Dimensional reduction of nonlinear finite element dynamic models with
+  finite rotations and energy-based mesh sampling and weighting for
+  computational efficiency.
+\newblock {\em International Journal for Numerical Methods in Engineering},
+  98(9):625--662, 2014.
+
+\bibitem{farhat2015structure}
+Charbel Farhat, Todd Chapman, and Philip Avery.
+\newblock Structure-preserving, stability, and accuracy properties of the
+  energy-conserving sampling and weighting method for the hyper reduction of
+  nonlinear finite element dynamic models.
+\newblock {\em International Journal for Numerical Methods in Engineering},
+  102(5):1077--1110, 2015.
+
+\bibitem{bui2007goal}
+Tan Bui-Thanh, Karen Willcox, Omar Ghattas, and Bart van Bloemen~Waanders.
+\newblock Goal-oriented, model-constrained optimization for reduction of
+  large-scale systems.
+\newblock {\em Journal of Computational Physics}, 224(2):880--896, 2007.
+
+\bibitem{carlberg2013gnat}
+Kevin Carlberg, Charbel Farhat, Julien Cortial, and David Amsallem.
+\newblock {The GNAT method for nonlinear model reduction: effective
+  implementation and application to computational fluid dynamics and turbulent
+  flows}.
+\newblock {\em Journal of Computational Physics}, 242:623--647, 2013.
+
+\bibitem{maday2002blackbox}
+Yvon Maday, Anthony~T. Patera, and Dimitrios~V. Rovas.
+\newblock A blackbox reduced-basis output bound method for noncoercive linear
+  problems.
+\newblock In {\em Studies in Mathematics and its Applications}, pages 533--569.
+  Elsevier, 2001.
+
+\bibitem{rozza2007stability}
+Gianluigi Rozza and Karen Veroy.
+\newblock {On the stability of the reduced basis method for Stokes equations in
+  parametrized domains}.
+\newblock {\em Computer methods in applied mechanics and engineering},
+  196(7):1244--1260, 2007.
+
+\bibitem{serre2012reliable}
+Gilles Serre, Philippe Lafon, Xavier Gloerfelt, and Christophe Bailly.
+\newblock {Reliable reduced-order models for time-dependent linearized Euler
+  equations}.
+\newblock {\em Journal of Computational Physics}, 231(15):5176--5194, 2012.
+
+\bibitem{amsallem2012stabilization}
+David Amsallem and Charbel Farhat.
+\newblock Stabilization of projection-based reduced-order models.
+\newblock {\em International Journal for Numerical Methods in Engineering},
+  91(4):358--377, 2012.
+
+\bibitem{rozza2013reduced}
+Gianluigi Rozza, DB~Phuong Huynh, and Andrea Manzoni.
+\newblock {Reduced basis approximation and a posteriori error estimation for
+  Stokes flows in parametrized geometries: roles of the inf-sup stability
+  constants}.
+\newblock {\em Numerische Mathematik}, 125(1):115--152, 2013.
+
+\bibitem{ballarin2015supremizer}
+Francesco Ballarin, Andrea Manzoni, Alfio Quarteroni, and Gianluigi Rozza.
+\newblock {Supremizer stabilization of POD--Galerkin approximation of
+  parametrized steady incompressible Navier--Stokes equations}.
+\newblock {\em International Journal for Numerical Methods in Engineering},
+  102(5):1136--1161, 2015.
+
+\bibitem{carlberg2017galerkin}
+Kevin Carlberg, Matthew Barone, and Harbir Antil.
+\newblock {Galerkin v. least-squares Petrov--Galerkin projection in nonlinear
+  model reduction}.
+\newblock {\em Journal of Computational Physics}, 330:693--734, 2017.
+
+\bibitem{wang2012proper}
+Zhu Wang, Imran Akhtar, Jeff Borggaard, and Traian Iliescu.
+\newblock Proper orthogonal decomposition closure models for turbulent flows: a
+  numerical comparison.
+\newblock {\em Computer Methods in Applied Mechanics and Engineering},
+  237:10--26, 2012.
+
+\bibitem{kalashnikova2014stabilization}
+Irina Kalashnikova, Bart van Bloemen~Waanders, Srinivasan Arunajatesan, and
+  Matthew Barone.
+\newblock Stabilization of projection-based reduced order models for linear
+  time-invariant systems via optimization-based eigenvalue reassignment.
+\newblock {\em Computer Methods in Applied Mechanics and Engineering},
+  272:251--270, 2014.
+
+\bibitem{caiazzo2014numerical}
+Alfonso Caiazzo, Traian Iliescu, Volker John, and Swetlana Schyschlowa.
+\newblock A numerical investigation of velocity--pressure reduced order models
+  for incompressible flows.
+\newblock {\em Journal of Computational Physics}, 259:598--616, 2014.
+
+\bibitem{balajewicz2016minimal}
+Maciej Balajewicz, Irina Tezaur, and Earl Dowell.
+\newblock {Minimal subspace rotation on the Stiefel manifold for stabilization
+  and enhancement of projection-based reduced order models for the compressible
+  Navier--Stokes equations}.
+\newblock {\em Journal of Computational Physics}, 321:224--241, 2016.
+
+\bibitem{barone2009stable}
+Matthew~F Barone, Irina Kalashnikova, Daniel~J Segalman, and Heidi~K
+  Thornquist.
+\newblock {Stable Galerkin reduced order models for linearized compressible
+  flow}.
+\newblock {\em Journal of Computational Physics}, 228(6):1932--1946, 2009.
+
+\bibitem{kalashnikova2010stability}
+I~Kalashnikova and MF~Barone.
+\newblock {On the stability and convergence of a Galerkin reduced order model
+  (ROM) of compressible flow with solid wall and far-field boundary treatment}.
+\newblock {\em International journal for numerical methods in engineering},
+  83(10):1345--1375, 2010.
+
+\bibitem{kalashnikova2014construction}
+Irina Kalashnikova, Matthew~F Barone, Srinivasan Arunajatesan, and Bart~G van
+  Bloemen~Waanders.
+\newblock Construction of energy-stable projection-based reduced order models.
+\newblock {\em Applied Mathematics and Computation}, 249:569--596, 2014.
+
+\bibitem{maboudi2018conservative}
+Babak Maboudi~Afkham, Nicolo Ripamonti, Qian Wang, and Jan~S Hesthaven.
+\newblock Conservative model order reduction for fluid flow.
+\newblock {\em To appear in MS\&A.}, 2019.
+
+\bibitem{fisher2013discretely}
+Travis~C Fisher, Mark~H Carpenter, Jan Nordstr{\"o}m, Nail~K Yamaleev, and
+  Charles Swanson.
+\newblock Discretely conservative finite-difference formulations for nonlinear
+  conservation laws in split form: Theory and boundary conditions.
+\newblock {\em Journal of Computational Physics}, 234:353--375, 2013.
+
+\bibitem{an2008optimizing}
+Steven~S An, Theodore Kim, and Doug~L James.
+\newblock Optimizing cubature for efficient integration of subspace
+  deformations.
+\newblock {\em ACM transactions on graphics (TOG)}, 27(5):165, 2008.
+
+\bibitem{hernandez2017dimensional}
+Joaquin~Alberto Hernandez, Manuel~Alejandro Caicedo, and Alex Ferrer.
+\newblock Dimensional hyper-reduction of nonlinear finite element models via
+  empirical cubature.
+\newblock {\em Computer methods in applied mechanics and engineering},
+  313:687--722, 2017.
+
+\bibitem{tadmor1987numerical}
+Eitan Tadmor.
+\newblock {The numerical viscosity of entropy stable schemes for systems of
+  conservation laws. I}.
+\newblock {\em Mathematics of Computation}, 49(179):91--103, 1987.
+
+\bibitem{tadmor2003entropy}
+Eitan Tadmor.
+\newblock Entropy stability theory for difference approximations of nonlinear
+  conservation laws and related time-dependent problems.
+\newblock {\em Acta Numerica}, 12:451--512, 2003.
+
+\bibitem{fisher2013high}
+Travis~C Fisher and Mark~H Carpenter.
+\newblock {High-order entropy stable finite difference schemes for nonlinear
+  conservation laws: Finite domains}.
+\newblock {\em Journal of Computational Physics}, 252:518--557, 2013.
+
+\bibitem{carpenter2014entropy}
+Mark~H Carpenter, Travis~C Fisher, Eric~J Nielsen, and Steven~H Frankel.
+\newblock {Entropy Stable Spectral Collocation Schemes for the Navier--Stokes
+  Equations: Discontinuous Interfaces}.
+\newblock {\em SIAM Journal on Scientific Computing}, 36(5):B835--B867, 2014.
+
+\bibitem{chen2017entropy}
+Tianheng Chen and Chi-Wang Shu.
+\newblock {Entropy stable high order discontinuous Galerkin methods with
+  suitable quadrature rules for hyperbolic conservation laws}.
+\newblock {\em Journal of Computational Physics}, 345:427--461, 2017.
+
+\bibitem{crean2018entropy}
+Jared Crean, Jason~E Hicken, David C Del~Rey Fern{\'a}ndez, David~W Zingg, and
+  Mark~H Carpenter.
+\newblock {Entropy-stable summation-by-parts discretization of the Euler
+  equations on general curved elements}.
+\newblock {\em Journal of Computational Physics}, 356:410--438, 2018.
+
+\bibitem{chan2017discretely}
+Jesse Chan.
+\newblock {On discretely entropy conservative and entropy stable discontinuous
+  Galerkin methods}.
+\newblock {\em Journal of Computational Physics}, 362:346 -- 374, 2018.
+
+\bibitem{chan2019skew}
+Jesse Chan.
+\newblock {Skew-Symmetric Entropy Stable Modal Discontinuous Galerkin
+  Formulations}.
+\newblock {\em Journal of Scientific Computing}, Aug 2019.
+
+\bibitem{reiss2018shifted}
+Julius Reiss, Philipp Schulze, J{\"o}rn Sesterhenn, and Volker Mehrmann.
+\newblock The shifted proper orthogonal decomposition: A mode decomposition for
+  multiple transport phenomena.
+\newblock {\em SIAM Journal on Scientific Computing}, 40(3):A1322--A1344, 2018.
+
+\bibitem{abgrall2018model}
+R~Abgrall and R~Crisovan.
+\newblock {Model reduction using $L^1$-norm minimization as an application to
+  nonlinear hyperbolic problems}.
+\newblock {\em International Journal for Numerical Methods in Fluids},
+  87(12):628--651, 2018.
+
+\bibitem{rim2018transport}
+Donsub Rim, Scott Moe, and Randall~J LeVeque.
+\newblock Transport reversal for model reduction of hyperbolic partial
+  differential equations.
+\newblock {\em SIAM/ASA Journal on Uncertainty Quantification}, 6(1):118--150,
+  2018.
+
+\bibitem{oleinik1957discontinuous}
+Olga~Arsen'evna Oleinik.
+\newblock Discontinuous solutions of non-linear differential equations.
+\newblock {\em Uspekhi Matematicheskikh Nauk}, 12(3):3--73, 1957.
+
+\bibitem{kruvzkov1970first}
+Stanislav~N Kru{\v{z}}kov.
+\newblock First order quasilinear equations in several independent variables.
+\newblock {\em Mathematics of the USSR-Sbornik}, 10(2):217, 1970.
+
+\bibitem{hughes1986new}
+Thomas~JR Hughes, LP~Franca, and M~Mallet.
+\newblock {A new finite element formulation for computational fluid dynamics:
+  I. Symmetric forms of the compressible Euler and Navier-Stokes equations and
+  the second law of thermodynamics}.
+\newblock {\em Computer Methods in Applied Mechanics and Engineering},
+  54(2):223--234, 1986.
+
+\bibitem{mock1980systems}
+Michael~S Mock.
+\newblock Systems of conservation laws of mixed type.
+\newblock {\em Journal of Differential equations}, 37(1):70--88, 1980.
+
+\bibitem{harten1983symmetric}
+Amiram Harten.
+\newblock On the symmetric form of systems of conservation laws with entropy.
+\newblock {\em Journal of computational physics}, 49(1):151--164, 1983.
+
+\bibitem{guermond2016invariant}
+Jean-Luc Guermond and Bojan Popov.
+\newblock Invariant domains and first-order continuous finite element
+  approximation for hyperbolic systems.
+\newblock {\em SIAM Journal on Numerical Analysis}, 54(4):2466--2489, 2016.
+
+\bibitem{guermond2019invariant}
+Jean-Luc Guermond, Bojan Popov, and Ignacio Tomas.
+\newblock Invariant domain preserving discretization-independent schemes and
+  convex limiting for hyperbolic systems.
+\newblock {\em Computer Methods in Applied Mechanics and Engineering},
+  347:143--175, 2019.
+
+\bibitem{chandrashekar2013kinetic}
+Praveen Chandrashekar.
+\newblock {Kinetic energy preserving and entropy stable finite volume schemes
+  for compressible Euler and Navier-Stokes equations}.
+\newblock {\em Communications in Computational Physics}, 14(5):1252--1286,
+  2013.
+
+\bibitem{ray2016entropy}
+Deep Ray, Praveen Chandrashekar, Ulrik~S Fjordholm, and Siddhartha Mishra.
+\newblock {Entropy stable scheme on two-dimensional unstructured grids for
+  Euler equations}.
+\newblock {\em Communications in Computational Physics}, 19(5):1111--1140,
+  2016.
+
+\bibitem{gassner2016split}
+Gregor~J Gassner, Andrew~R Winters, and David~A Kopriva.
+\newblock {Split form nodal discontinuous Galerkin schemes with
+  summation-by-parts property for the compressible Euler equations}.
+\newblock {\em Journal of Computational Physics}, 327:39--66, 2016.
+
+\bibitem{tadmor2016entropy}
+Eitan Tadmor.
+\newblock Entropy stable schemes.
+\newblock {\em Handbook of Numerical Analysis}, 17:467--493, 2016.
+
+\bibitem{tadmor2006entropy}
+Eitan Tadmor and Weigang Zhong.
+\newblock {Entropy stable approximations of Navier--Stokes equations with no
+  artificial numerical viscosity}.
+\newblock {\em Journal of Hyperbolic Differential Equations}, 3(03):529--559,
+  2006.
+
+\bibitem{upperman2019entropy}
+Johnathon Upperman and Nail~K Yamaleev.
+\newblock {Entropy stable artificial dissipation based on Brenner
+  regularization of the Navier-Stokes equations}.
+\newblock {\em Journal of Computational Physics}, 393:74--91, 2019.
+
+\bibitem{parsani2016entropy}
+Matteo Parsani, Mark~H Carpenter, Travis~C Fisher, and Eric~J Nielsen.
+\newblock {Entropy Stable Staggered Grid Discontinuous Spectral Collocation
+  Methods of any Order for the Compressible Navier--Stokes Equations}.
+\newblock {\em SIAM Journal on Scientific Computing}, 38(5):A3129--A3162, 2016.
+
+\bibitem{ryckelynck2009hyper}
+David Ryckelynck.
+\newblock Hyper-reduction of mechanical models involving internal variables.
+\newblock {\em International Journal for Numerical Methods in Engineering},
+  77(1):75--89, 2009.
+
+\bibitem{barrault2004empirical}
+Maxime Barrault, Yvon Maday, Ngoc~Cuong Nguyen, and Anthony~T Patera.
+\newblock An ‘empirical interpolation’ method: application to efficient
+  reduced-basis discretization of partial differential equations.
+\newblock {\em Comptes Rendus Mathematique}, 339(9):667--672, 2004.
+
+\bibitem{bui2004aerodynamic}
+Tan Bui-Thanh, Murali Damodaran, and Karen~E Willcox.
+\newblock Aerodynamic data reconstruction and inverse design using proper
+  orthogonal decomposition.
+\newblock {\em AIAA journal}, 42(8):1505--1516, 2004.
+
+\bibitem{chaturantabut2010nonlinear}
+Saifon Chaturantabut and Danny~C Sorensen.
+\newblock Nonlinear model reduction via discrete empirical interpolation.
+\newblock {\em SIAM Journal on Scientific Computing}, 32(5):2737--2764, 2010.
+
+\bibitem{drmac2016new}
+Zlatko Drmac and Serkan Gugercin.
+\newblock A new selection operator for the discrete empirical interpolation
+  method---improved a priori error bound and extensions.
+\newblock {\em SIAM Journal on Scientific Computing}, 38(2):A631--A648, 2016.
+
+\bibitem{yano2019lp}
+Masayuki Yano and Anthony~T Patera.
+\newblock {An LP empirical quadrature procedure for reduced basis treatment of
+  parametrized nonlinear PDEs}.
+\newblock {\em Computer Methods in Applied Mechanics and Engineering},
+  344:1104--1123, 2019.
+
+\bibitem{yano2019discontinuous}
+Masayuki Yano.
+\newblock {Discontinuous Galerkin reduced basis empirical quadrature procedure
+  for model reduction of parametrized nonlinear conservation laws}.
+\newblock {\em Advances in Computational Mathematics}, pages 1--34, 2019.
+
+\bibitem{everson1995karhunen}
+Richard Everson and Lawrence Sirovich.
+\newblock {Karhunen--Loeve procedure for gappy data}.
+\newblock {\em JOSA A}, 12(8):1657--1664, 1995.
+
+\bibitem{willcox2006unsteady}
+Karen Willcox.
+\newblock Unsteady flow sensing and estimation via the gappy proper orthogonal
+  decomposition.
+\newblock {\em Computers \& fluids}, 35(2):208--226, 2006.
+
+\bibitem{astrid2008missing}
+Patricia Astrid, Siep Weiland, Karen Willcox, and Ton Backx.
+\newblock Missing point estimation in models described by proper orthogonal
+  decomposition.
+\newblock {\em IEEE Transactions on Automatic Control}, 53(10):2237--2251,
+  2008.
+
+\bibitem{carlberg2011efficient}
+Kevin Carlberg, Charbel Bou-Mosleh, and Charbel Farhat.
+\newblock {Efficient non-linear model reduction via a least-squares
+  Petrov--Galerkin projection and compressive tensor approximations}.
+\newblock {\em International Journal for Numerical Methods in Engineering},
+  86(2):155--181, 2011.
+
+\bibitem{ismail2009affordable}
+Farzad Ismail and Philip~L Roe.
+\newblock {Affordable, entropy-consistent Euler flux functions II: Entropy
+  production at shocks}.
+\newblock {\em Journal of Computational Physics}, 228(15):5410--5436, 2009.
+
+\bibitem{hicken2018family}
+Jason~Edward Hicken and Jared Crean.
+\newblock {A Family of Entropy-Conservative Flux Functions for the Euler
+  Equations}.
+\newblock {\em arXiv preprint arXiv:1807.03832}, 2018.
+
+\bibitem{zakerzadeh2017entropy}
+Mohammad Zakerzadeh and Georg May.
+\newblock {Entropy stable discontinuous Galerkin scheme for the compressible
+  Navier-Stokes equations}.
+\newblock In {\em 55th AIAA Aerospace Sciences Meeting}, page 0084, 2017.
+
+\bibitem{parsani2015entropy}
+Matteo Parsani, Mark~H Carpenter, and Eric~J Nielsen.
+\newblock {Entropy stable wall boundary conditions for the three-dimensional
+  compressible Navier--Stokes equations}.
+\newblock {\em Journal of Computational Physics}, 292:88--113, 2015.
+
+\bibitem{fernandez2014generalized}
+David C Del~Rey Fern{\'a}ndez, Pieter~D Boom, and David~W Zingg.
+\newblock {A generalized framework for nodal first derivative
+  summation-by-parts operators}.
+\newblock {\em Journal of Computational Physics}, 266:214--239, 2014.
+
+\bibitem{fernandez2018simultaneous}
+David C Del~Rey Fern{\'a}ndez, Jason~E Hicken, and David~W Zingg.
+\newblock Simultaneous approximation terms for multi-dimensional
+  summation-by-parts operators.
+\newblock {\em Journal of Scientific Computing}, 75(1):83--110, 2018.
+
+\bibitem{chan2018efficient}
+Jesse Chan, David~C Fernandez, and Mark~H Carpenter.
+\newblock {Efficient entropy stable Gauss collocation methods}.
+\newblock {\em arXiv preprint arXiv:1809.01178}, 2018.
+
+\bibitem{chenreview}
+Tianheng Chen and Chi-Wang Shu.
+\newblock {Review of entropy stable discontinuous Galerkin methods for systems
+  of conservation laws on unstructured simplex meshes}, 2019.
+\newblock Accessed July 25, 2019.
+
+\bibitem{svard2014entropy}
+Magnus Sv{\"a}rd and Hatice {\"O}zcan.
+\newblock {Entropy-stable schemes for the Euler equations with far-field and
+  wall boundary conditions}.
+\newblock {\em Journal of Scientific Computing}, 58(1):61--89, 2014.
+
+\bibitem{lucia2004reduced}
+David~J Lucia, Philip~S Beran, and Walter~A Silva.
+\newblock Reduced-order modeling: new approaches for computational physics.
+\newblock {\em Progress in aerospace sciences}, 40(1-2):51--117, 2004.
+
+\bibitem{knezevic2011reduced}
+David~J Knezevic, Ngoc-Cuong Nguyen, and Anthony~T Patera.
+\newblock {Reduced basis approximation and a posteriori error estimation for
+  the parametrized unsteady Boussinesq equations}.
+\newblock {\em Mathematical Models and Methods in Applied Sciences},
+  21(07):1415--1442, 2011.
+
+\bibitem{munz1989numerical}
+C-D Munz and L~Schmidt.
+\newblock Numerical simulations of compressible hydrodynamic instabiltities
+  with high resolution schemes.
+\newblock In {\em {Nonlinear Hyperbolic Equations—Theory, Computation
+  Methods, and Applications}}, pages 456--465. Springer, 1989.
+
+\bibitem{marley2015reduced}
+Christopher~D Marley, Karthikeyan Duraisamy, and James~F Driscoll.
+\newblock Reduced order modeling of compressible flows with unsteady normal
+  shock motion.
+\newblock In {\em 51st AIAA/SAE/ASEE Joint Propulsion Conference}, page 3988,
+  2015.
+
+\bibitem{lucia2003reduced}
+David~J Lucia, Paul~I King, and Philip~S Beran.
+\newblock Reduced order modeling of a two-dimensional flow with moving shocks.
+\newblock {\em Computers \& Fluids}, 32(7):917--938, 2003.
+
+\end{thebibliography}
